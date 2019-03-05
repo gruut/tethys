@@ -4,6 +4,8 @@
 #include <memory>
 
 namespace appbase {
+  using namespace std;
+
   class ApplicationImpl;
 
   class Application {

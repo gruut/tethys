@@ -1,8 +1,6 @@
 #include "application.hpp"
 
 namespace appbase {
-  using namespace std;
-
   class ApplicationImpl {
 
   };
