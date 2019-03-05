@@ -9,7 +9,10 @@
 
 namespace appbase {
   using namespace std;
+
   namespace po = boost::program_options;
+
+  class ProgramOptions;
 
   class Application {
   public:
@@ -24,19 +27,14 @@ namespace appbase {
   private:
     bool initialize_impl(int argc, char **argv);
     void set_program_options();
-    bool register_mandatory_plugins();
 
     Application();
 
-    vector<unique_ptr<AbstractPlugin>> plugins;
-    po::options_description program_options;
+    //vector<unique_ptr<AbstractPlugin>> plugins;
+    unique_ptr<ProgramOptions> program_options;
+
+    bool parse_program_options(int argc, char **argv);
   };
 
   Application &app();
-
-  template<typename PluginName>
-  class Plugin : public AbstractPlugin {
-  public:
-  private:
-  };
 }
