@@ -9,6 +9,12 @@ add_executable(
         src/main.cpp
 )
 
+add_subdirectory(lib)
+
+target_link_libraries(gruut
+        appbase
+        )
+
 IF (NOT $ENV{TRAVIS})
     add_custom_command(
             TARGET gruut_utils

@@ -33,6 +33,8 @@
 *.out
 *.app
 gruut
+/gruut
+gruut.cbp
 
 # IDE Settings
 .idea
