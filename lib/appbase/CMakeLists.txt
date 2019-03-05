@@ -19,3 +19,5 @@ add_library(appbase
         )
 
 target_link_libraries(appbase ${Boost_LIBRARIES})
+
+add_subdirectory(examples)
