@@ -10,6 +10,7 @@ add_executable(
 )
 
 add_subdirectory(lib)
+add_subdirectory(src/plugins)
 
 target_link_libraries(gruut
         appbase

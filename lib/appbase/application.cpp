@@ -25,11 +25,7 @@ namespace appbase {
     return app;
   }
 
-  bool Application::initialize_impl(int argc, char **argv) {
-    set_program_options();
-    if (!parse_program_options(argc, argv))
-      return false;
-
+  bool Application::initialize_impl() {
     initialize_plugins();
 
     return true;
@@ -86,10 +82,14 @@ namespace appbase {
   }
 
   void Application::initialize_plugins() {
-    auto plugin_names = program_options->options_map.at("plugin").as<string>();
+    auto plugin_names = program_options->options_map.at("plugin").as<vector<string>>();
 
-    for_each(begin(plugin_names), end(plugin_names), [](auto& plugin_name) {
-      cout << plugin_name << endl;
+    for_each(begin(plugin_names), end(plugin_names), [this](const string& plugin_name) {
+      auto it = app_plugins_map.find(plugin_name);
+      if(it != app_plugins_map.end()) {
+        running_plugins.emplace_back(move(it->second));
+        app_plugins_map.erase(it);
+      }
     });
   }
 
