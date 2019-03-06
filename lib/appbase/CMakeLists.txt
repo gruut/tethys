@@ -8,7 +8,7 @@ list(APPEND BOOST_COMPONENTS
         filesystem
         program_options
         )
-
+set(Boost_USE_MULTITHREADED OFF)
 find_package(Boost REQUIRED COMPONENTS ${BOOST_COMPONENTS})
 
 file(GLOB HEADERS "*.hpp")

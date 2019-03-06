@@ -8,7 +8,7 @@ namespace appbase {
 
   class ProgramOptions {
   public:
-    ProgramOptions(): options_description("Options") {}
+    ProgramOptions() : options_description("Options") {}
 
     po::options_description options_description;
     po::options_description config_options;
@@ -16,7 +16,7 @@ namespace appbase {
     po::variables_map options_map;
   };
 
-  Application::Application(): program_options(make_unique<ProgramOptions>()) {}
+  Application::Application() : program_options(make_unique<ProgramOptions>()) {}
 
   Application::~Application() = default;
 
@@ -26,10 +26,13 @@ namespace appbase {
   }
 
   bool Application::initialize_impl(int argc, char **argv) {
-    //register_mandatory_plugins();
-
     set_program_options();
-    return parse_program_options(argc, argv);
+    if (!parse_program_options(argc, argv))
+      return false;
+
+    initialize_plugins();
+
+    return true;
   }
 
   void Application::set_program_options() {
@@ -80,6 +83,14 @@ namespace appbase {
                                           program_options->config_options), program_options->options_map);
 
     return true;
+  }
+
+  void Application::initialize_plugins() {
+    auto plugin_names = program_options->options_map.at("plugin").as<string>();
+
+    for_each(begin(plugin_names), end(plugin_names), [](auto& plugin_name) {
+      cout << plugin_name << endl;
+    });
   }
 
   Application &app() { return Application::instance(); }

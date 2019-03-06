@@ -4,6 +4,7 @@
 #include <vector>
 #include <memory>
 #include <map>
+#include <unordered_map>
 #include <string_view>
 #include <boost/program_options.hpp>
 
@@ -30,10 +31,12 @@ namespace appbase {
 
     Application();
 
-    //vector<unique_ptr<AbstractPlugin>> plugins;
+    //unordered_map<string, unique_ptr<AbstractPlugin>> plugins_map;
     unique_ptr<ProgramOptions> program_options;
 
     bool parse_program_options(int argc, char **argv);
+
+    void initialize_plugins();
   };
 
   Application &app();
