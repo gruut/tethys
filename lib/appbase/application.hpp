@@ -24,12 +24,17 @@ namespace appbase {
 
     template<class ...Plugins>
     bool initialize(int argc, char **argv) {
-      set_program_options();
-      if (!parse_program_options(argc, argv))
-        return false;
+      try {
+        set_program_options();
+        if (!parse_program_options(argc, argv))
+          return false;
 
-      register_plugins<Plugins...>();
-      return initialize_impl();
+        register_plugins<Plugins...>();
+        return initialize_impl();
+      } catch (...) {
+        // TODO: logger
+        return false;
+      }
     }
 
     static Application &instance();
@@ -39,7 +44,7 @@ namespace appbase {
 
     void set_program_options();
 
-    template <class ...Plugin>
+    template<class ...Plugin>
     constexpr void register_plugins() {
       (register_plugin<Plugin>(), ...);
     }

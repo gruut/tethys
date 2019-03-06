@@ -87,6 +87,7 @@ namespace appbase {
     for_each(begin(plugin_names), end(plugin_names), [this](const string& plugin_name) {
       auto it = app_plugins_map.find(plugin_name);
       if(it != app_plugins_map.end()) {
+        it->second->initialize();
         running_plugins.emplace_back(move(it->second));
         app_plugins_map.erase(it);
       }
