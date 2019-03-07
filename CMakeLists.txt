@@ -24,3 +24,5 @@ IF (NOT $ENV{TRAVIS})
             COMMAND clang-format -i ./src/*.cpp
     )
 ENDIF ()
+
+install()

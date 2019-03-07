@@ -1,7 +1,7 @@
 #include <iostream>
 #include <boost/filesystem.hpp>
 
-#include "application.hpp"
+#include "include/application.hpp"
 
 namespace appbase {
   namespace fs = boost::filesystem;

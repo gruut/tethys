@@ -1,5 +1,5 @@
-#include "../application.hpp"
-#include "../../../src/plugins/net_plugin/net_plugin.hpp"
+#include "../include/application.hpp"
+#include "../../../src/plugins/net_plugin/include/net_plugin.hpp"
 
 int main(int argc, char** argv) {
   if(!appbase::app().initialize<NetPlugin>(argc, argv))

@@ -1,7 +1,7 @@
 #pragma once
 
 #include <iostream>
-#include "../../../lib/appbase/plugin.hpp"
+#include "../../../../lib/appbase/include/plugin.hpp"
 
 class NetPlugin : public appbase::Plugin<NetPlugin> {
 public:

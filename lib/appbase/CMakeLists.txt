@@ -11,7 +11,7 @@ list(APPEND BOOST_COMPONENTS
 set(Boost_USE_MULTITHREADED OFF)
 find_package(Boost REQUIRED COMPONENTS ${BOOST_COMPONENTS})
 
-file(GLOB HEADERS "*.hpp")
+file(GLOB HEADERS "include/*.hpp")
 
 add_library(appbase
         application.cpp
