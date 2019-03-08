@@ -2,6 +2,7 @@
 
 #include <vector>
 #include <memory>
+#include <exception>
 #include <unordered_map>
 #include <string_view>
 #include <typeinfo>
@@ -10,6 +11,7 @@
 #include <boost/core/demangle.hpp>
 
 #include "plugin.hpp"
+#include "../../log/include/log.hpp"
 
 namespace appbase {
   using namespace std;
@@ -31,8 +33,8 @@ namespace appbase {
 
         register_plugins<Plugins...>();
         return initialize_impl();
-      } catch (...) {
-        // TODO: logger
+      } catch (exception &e) {
+        logger::ERROR("Initialize failed");
         return false;
       }
     }

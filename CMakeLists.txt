@@ -23,10 +23,11 @@ add_subdirectory(src/plugins)
 
 target_link_libraries(gruut
         appbase
+        log
         )
 target_include_directories(gruut
         PRIVATE
-        ${CMAKE_INSTALL_PREFIX}/include
+        "${CMAKE_INSTALL_PREFIX}/include"
         )
 
 install(DIRECTORY DESTINATION ${GRUUT_INSTALL_DIR})

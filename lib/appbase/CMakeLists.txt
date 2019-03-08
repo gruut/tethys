@@ -22,7 +22,8 @@ add_library(appbase
         ${HEADERS}
         )
 
-target_link_libraries(appbase ${Boost_LIBRARIES})
+target_link_libraries(appbase ${Boost_LIBRARIES} log)
+target_include_directories(appbase PUBLIC "${GRUUT_INSTALL_DIR}/lib")
 
 set_target_properties(appbase PROPERTIES PUBLIC_HEADER "${HEADERS}")
 
