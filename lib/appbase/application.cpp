@@ -65,14 +65,11 @@ namespace appbase {
         config_path = fs::current_path() / config_path;
 
       if (!fs::exists(config_path)) {
-        // TODO: logger
-        cout << "Configuration file does not exist: " << config_path.string() << endl;
-
+        logger::ERROR("Configuration file does not exist: {}", config_path.string());
         return false;
       }
     } else {
-      // TODO: logger
-      cout << "Read the default configuration file" << endl;
+      logger::ERROR("Read the default configuration file: {}", config_path.string());
       config_path = fs::current_path() / "config.ini";
     }
     po::store(po::parse_config_file<char>(config_path.make_preferred().string().c_str(),
