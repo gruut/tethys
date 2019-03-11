@@ -28,19 +28,19 @@ namespace logger {
 
     template<typename ...Arg>
     static void info(const Arg &... args) {
-      get().info_logger->error(args...);
+      get().info_logger->info(args...);
     }
 
   private:
     Logger() : info_logger{spdlog::stdout_color_mt("INFO")}, error_logger{spdlog::stdout_color_mt("ERROR")} {
-      info_logger->set_pattern("[%H:%M:%S] [%n] [thread %t] [%^---%$] %v");
-      error_logger->set_pattern("[%H:%M:%S] [%n] [thread %t] %v");
+      info_logger->set_pattern("%^[%H:%M:%S] [%l] [thread %t] --- %v%$");
+      error_logger->set_pattern("%^[%H:%M:%S] [%l] [thread %t] --- %v%$");
 
       auto info_sink = dynamic_cast<spdlog::sinks::stdout_color_sink_mt *>(info_logger->sinks().back().get());
       info_sink->set_color(spdlog::level::info, info_sink->white);
 
       auto error_sink = dynamic_cast<spdlog::sinks::stdout_color_sink_mt *>(error_logger->sinks().back().get());
-      error_sink->set_color(spdlog::level::info, error_sink->red);
+      error_sink->set_color(spdlog::level::err, error_sink->on_red);
     }
 
     std::shared_ptr<spdlog::logger> info_logger;
