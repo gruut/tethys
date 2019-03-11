@@ -22,6 +22,7 @@ function check_and_require_sudo()
 {
     if [[ "$(id -u)" -ne 0 ]]; then
         printf "${bldblue}It requires sudo. Please insert the password. \n\n"
+        return 0
     fi
 }
 
@@ -55,10 +56,18 @@ printf ">>>>>>>>\\n${txtrst}"
 if [[ ${ARCH} == "Linux" ]]; then
     OS_NAME=$( cat /etc/os-release | grep ^NAME | cut -d'=' -f2 | sed 's/\"//gI' )
 
-    case "OS_NAME" in
+    case ${OS_NAME} in
         "Ubuntu")
             check_and_require_sudo
-            sudo apt-get install libspdlog-dev
+            if [[ ! -d "/usr/local/include/spdlog" ]]; then
+                git clone https://github.com/gabime/spdlog.git && cd spdlog
+                cmake -DSPDLOG_BUILD_EXAMPLES=OFF \
+                      -DSPDLOG_BUILD_BENCH=OFF \
+                      -DSPDLOG_BUILD_TESTS=OFF \
+                      -DCMAKE_BUILD_TYPE=Release
+                make
+                make install
+            fi
         ;;
     esac
 elif [[ ${ARCH} == "Darwin" ]]; then
@@ -71,11 +80,14 @@ if [[ ! -d "${BUILD_DIR}" ]]; then
 fi
 
 cd ${BUILD_DIR}
-${CMAKE} -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE} -DCMAKE_INSTALL_PREFIX="/usr/local/gruut" ${SOURCE_DIR}
+${CMAKE} -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -DCMAKE_CXX_COMPILER="clang++" -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE} -DCMAKE_INSTALL_PREFIX="${INSTALL_PREFIX}" ${SOURCE_DIR}
 
 # Compile
 ${CMAKE} --build ${BUILD_DIR}
 
 # Install
-check_and_require_sudo
-sudo make install
+if check_and_require_sudo; then
+    sudo make install
+else
+    make install
+fi

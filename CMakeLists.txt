@@ -25,6 +25,7 @@ target_link_libraries(gruut
         appbase
         log
         )
+
 target_include_directories(gruut
         PRIVATE
         "${CMAKE_INSTALL_PREFIX}/include"
