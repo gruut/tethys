@@ -23,7 +23,7 @@ add_library(appbase
         )
 
 target_link_libraries(appbase ${Boost_LIBRARIES} log)
-target_include_directories(appbase PUBLIC "${GRUUT_INSTALL_DIR}/lib")
+target_include_directories(appbase PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/include" "${GRUUT_INSTALL_DIR}/lib" ${Boost_INCLUDE_DIR})
 
 set_target_properties(appbase PROPERTIES PUBLIC_HEADER "${HEADERS}")
 

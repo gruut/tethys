@@ -12,6 +12,7 @@
 #include <boost/asio/io_context.hpp>
 
 #include "plugin.hpp"
+#include "channel.hpp"
 #include "../../log/include/log.hpp"
 
 namespace appbase {
@@ -41,6 +42,22 @@ namespace appbase {
       }
     }
 
+    void start();
+
+    template<typename ChannelType>
+    auto &get_channel() {
+      auto key = type_index(typeid(ChannelType));
+
+      auto[channel_it, _] = channels.try_emplace(key, std::make_shared<ChannelType>(io_context_ptr));
+
+      auto channel_ptr = channel_it->second.get();
+      return *dynamic_cast<ChannelType *>(channel_ptr);
+    }
+
+    auto &get_io_context() {
+      return *io_context_ptr;
+    }
+
     static Application &instance();
 
   private:
@@ -61,8 +78,11 @@ namespace appbase {
 
     Application();
 
-    shared_ptr<boost::asio::io_context> io_context;
+    shared_ptr<boost::asio::io_context> io_context_ptr;
+
     unordered_map<string, unique_ptr<AbstractPlugin>> app_plugins_map;
+    unordered_map<std::type_index, shared_ptr<AbstractChannel>> channels;
+
     vector<unique_ptr<AbstractPlugin>> running_plugins;
     unique_ptr<ProgramOptions> program_options;
 

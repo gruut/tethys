@@ -1,5 +1,7 @@
 #include <iostream>
 #include <boost/filesystem.hpp>
+#include <application.hpp>
+
 
 #include "include/application.hpp"
 
@@ -17,7 +19,7 @@ namespace appbase {
   };
 
   Application::Application() : program_options(make_unique<ProgramOptions>()),
-                               io_context(make_shared<boost::asio::io_context>()) {}
+                               io_context_ptr(make_shared<boost::asio::io_context>()) {}
 
   Application::~Application() = default;
 
@@ -90,6 +92,14 @@ namespace appbase {
         app_plugins_map.erase(it);
       }
     });
+  }
+
+  void Application::start() {
+    for (auto &running_plugin : running_plugins) {
+      running_plugin->start();
+    }
+
+    io_context_ptr->run();
   }
 
   Application &app() { return Application::instance(); }

@@ -9,5 +9,6 @@ int main(int argc, char** argv) {
   if(!appbase::app().initialize<NetPlugin, BlockProducerPlugin>(argc, argv))
     return -1;
 
+  appbase::app().start();
   return 0;
 }

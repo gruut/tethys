@@ -1,21 +1,34 @@
 #pragma once
 
+#include <memory>
 #include <boost/signals2.hpp>
 #include <boost/asio/io_context.hpp>
 
 namespace appbase {
   using namespace boost::signals2;
+  using namespace boost::asio;
+
+  class AbstractChannel {
+  public:
+    virtual ~AbstractChannel() = default;
+  };
 
   template<typename Data>
-  class Channel {
+  class Channel : public AbstractChannel {
   public:
-    Channel(std::shared_ptr<boost::asio::io_context> &p) : ioc_ptr(p) {}
+    Channel(std::shared_ptr<io_context> &p) : ioc_ptr(p) {}
 
     class Handle {
     public:
       ~Handle() {
         unsubscribe();
       }
+
+      Handle() = default;
+
+      Handle(Handle &&) = default;
+
+      Handle &operator=(Handle &&rhs) = default;
 
       Handle(const Handle &) = delete;
 
@@ -44,7 +57,7 @@ namespace appbase {
 
     void publish(Data &data) {
       if (has_subscribers()) {
-        ioc_ptr->get_executor().post([this, data]() {
+        ioc_ptr->post([this, data]() {
           s(data);
         });
       }
@@ -55,7 +68,13 @@ namespace appbase {
       return s.num_slots() > 0;
     }
 
-    std::shared_ptr<boost::asio::io_context> ioc_ptr;
+    std::shared_ptr<io_context> ioc_ptr;
     signal<void(const Data &)> s;
+  };
+
+  template<typename Data>
+  struct ChannelTypeTemplate {
+    using channel_type = Channel<Data>;
+    using data_type = Data;
   };
 }
