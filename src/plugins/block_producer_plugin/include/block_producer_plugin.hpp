@@ -3,10 +3,10 @@
 #include <iostream>
 #include "../../../../lib/appbase/include/plugin.hpp"
 
-class NetPlugin : public appbase::Plugin<NetPlugin> {
+class BlockProducerPlugin : public appbase::Plugin<BlockProducerPlugin> {
 public:
   void initialize() override {
-    std::cout << "NetPlugin Initialize" << std::endl;
+    std::cout << "BlockProducerPlugin Initialize" << std::endl;
   }
 
   void start() override {

@@ -32,6 +32,7 @@ namespace appbase {
           return false;
 
         register_plugins<Plugins...>();
+
         return initialize_impl();
       } catch (exception &e) {
         logger::ERROR("Initialize failed");
@@ -46,9 +47,9 @@ namespace appbase {
 
     void set_program_options();
 
-    template<class ...Plugin>
+    template<class ...Plugins>
     constexpr void register_plugins() {
-      (register_plugin<Plugin>(), ...);
+      (register_plugin<Plugins>(), ...);
     }
 
     template<typename Plugin>

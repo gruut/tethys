@@ -81,9 +81,9 @@ namespace appbase {
   void Application::initialize_plugins() {
     auto plugin_names = program_options->options_map.at("plugin").as<vector<string>>();
 
-    for_each(begin(plugin_names), end(plugin_names), [this](const string& plugin_name) {
+    for_each(begin(plugin_names), end(plugin_names), [this](const string &plugin_name) {
       auto it = app_plugins_map.find(plugin_name);
-      if(it != app_plugins_map.end()) {
+      if (it != app_plugins_map.end()) {
         it->second->initialize();
         running_plugins.emplace_back(move(it->second));
         app_plugins_map.erase(it);
