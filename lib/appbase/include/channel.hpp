@@ -1,6 +1,7 @@
 #pragma once
 
 #include <boost/signals2.hpp>
+#include <boost/asio/io_context.hpp>
 
 namespace appbase {
   using namespace boost::signals2;
@@ -8,6 +9,8 @@ namespace appbase {
   template<typename Data>
   class Channel {
   public:
+    Channel(std::shared_ptr<boost::asio::io_context> &p) : ioc_ptr(p) {}
+
     class Handle {
     public:
       ~Handle() {
@@ -15,6 +18,7 @@ namespace appbase {
       }
 
       Handle(const Handle &) = delete;
+
       Handle &operator=(const Handle &) = delete;
 
       void unsubscribe() {
@@ -38,9 +42,11 @@ namespace appbase {
       return Handle(s.connect(callback));
     }
 
-    void publish(Data& data) {
-      if(has_subscribers()) {
-        s(data);
+    void publish(Data &data) {
+      if (has_subscribers()) {
+        ioc_ptr->get_executor().post([this, data]() {
+          s(data);
+        });
       }
     }
 
@@ -49,6 +55,7 @@ namespace appbase {
       return s.num_slots() > 0;
     }
 
+    std::shared_ptr<boost::asio::io_context> ioc_ptr;
     signal<void(const Data &)> s;
   };
 }

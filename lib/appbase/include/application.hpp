@@ -9,6 +9,7 @@
 
 #include <boost/program_options.hpp>
 #include <boost/core/demangle.hpp>
+#include <boost/asio/io_context.hpp>
 
 #include "plugin.hpp"
 #include "../../log/include/log.hpp"
@@ -60,6 +61,7 @@ namespace appbase {
 
     Application();
 
+    shared_ptr<boost::asio::io_context> io_context;
     unordered_map<string, unique_ptr<AbstractPlugin>> app_plugins_map;
     vector<unique_ptr<AbstractPlugin>> running_plugins;
     unique_ptr<ProgramOptions> program_options;

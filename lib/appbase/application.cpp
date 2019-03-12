@@ -16,7 +16,8 @@ namespace appbase {
     po::variables_map options_map;
   };
 
-  Application::Application() : program_options(make_unique<ProgramOptions>()) {}
+  Application::Application() : program_options(make_unique<ProgramOptions>()),
+                               io_context(make_shared<boost::asio::io_context>()) {}
 
   Application::~Application() = default;
 
