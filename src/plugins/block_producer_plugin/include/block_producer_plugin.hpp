@@ -18,7 +18,6 @@ public:
 
   void plugin_initialize() {
     logger::INFO("BlockProducerPlugin Initialize");
-    state = plugin_state::initialized;
   }
 
   void plugin_start() {

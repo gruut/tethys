@@ -23,6 +23,7 @@ namespace appbase {
       registered,
       initialized
     };
+
     virtual void initialize() = 0;
 
     virtual void start() = 0;
@@ -30,6 +31,8 @@ namespace appbase {
     virtual void shutdown() = 0;
 
     virtual void register_dependencies() = 0;
+
+    virtual plugin_state get_state() const= 0;
 
     virtual ~AbstractPlugin() = default;
   };
@@ -45,11 +48,12 @@ namespace appbase {
 
     void initialize() override {
       static_cast<Impl *>(this)->plugin_requires([&](auto &plugin) {
-        plugin.initialize();
+        if (plugin.get_state() == plugin_state::registered)
+          plugin.initialize();
       });
 
-      if(state == plugin_state::registered)
-        static_cast<Impl *>(this)->plugin_initialize();
+      static_cast<Impl *>(this)->plugin_initialize();
+      static_cast<Impl *>(this)->state = plugin_state::initialized;
     }
 
     void start() override {
@@ -58,6 +62,10 @@ namespace appbase {
 
     void shutdown() override {
 
+    }
+
+    virtual plugin_state get_state() const override {
+      return state;
     }
 
     void register_dependencies() override {

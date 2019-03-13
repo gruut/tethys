@@ -99,10 +99,10 @@ namespace appbase {
 
     shared_ptr<boost::asio::io_context> io_context_ptr;
 
-    unordered_map<string, unique_ptr<AbstractPlugin>> app_plugins_map;
+    unordered_map<string, shared_ptr<AbstractPlugin>> app_plugins_map;
     unordered_map<std::type_index, shared_ptr<AbstractChannel>> channels;
 
-    vector<unique_ptr<AbstractPlugin>> running_plugins;
+    vector<shared_ptr<AbstractPlugin>> initialized_plugins;
     unique_ptr<ProgramOptions> program_options;
 
     bool parse_program_options(int argc, char **argv);

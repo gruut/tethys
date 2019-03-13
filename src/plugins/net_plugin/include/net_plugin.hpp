@@ -16,7 +16,6 @@ public:
 
   void plugin_initialize() {
     logger::INFO("NetPlugin Initialize");
-    state = plugin_state::initialized;
 
     temp_channel_handler = app().get_channel<channels::temp_channel::channel_type>().subscribe([](TempData d) {
       std::cout << "NetPlugin handler" << std::endl;
