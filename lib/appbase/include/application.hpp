@@ -54,6 +54,20 @@ namespace appbase {
       return *dynamic_cast<ChannelType *>(channel_ptr);
     }
 
+    template<typename Plugin>
+    auto &find_or_register_plugin() {
+      auto name = boost::core::demangle(typeid(Plugin).name());
+
+      auto plug_itr = app_plugins_map.find(name);
+      if (plug_itr != app_plugins_map.end()) {
+        return *plug_itr->second.get();
+      } else {
+        register_plugin<Plugin>();
+
+        return *app_plugins_map[name];
+      }
+    }
+
     auto &get_io_context() {
       return *io_context_ptr;
     }
@@ -65,15 +79,20 @@ namespace appbase {
 
     void set_program_options();
 
-    template<class ...Plugins>
-    constexpr void register_plugins() {
-      (register_plugin<Plugins>(), ...);
-    }
-
     template<typename Plugin>
     void register_plugin() {
       auto name = boost::core::demangle(typeid(Plugin).name());
-      app_plugins_map.try_emplace(name, make_unique<Plugin>());
+      auto[plugins_it, existing] = app_plugins_map.try_emplace(name, make_unique<Plugin>());
+
+      if (existing)
+        return;
+
+      plugins_it->second.get()->register_dependencies();
+    }
+
+    template<class ...Plugins>
+    constexpr void register_plugins() {
+      (register_plugin<Plugins>(), ...);
     }
 
     Application();

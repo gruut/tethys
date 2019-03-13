@@ -2,29 +2,34 @@
 
 #include <iostream>
 
-#include "../../../../lib/appbase/include/application.hpp"
-#include "../../../../lib/appbase/include/plugin.hpp"
-#include "../../../../lib/appbase/include/channel_interface.hpp"
+#include "application.hpp"
+#include "plugin.hpp"
+#include "channel_interface.hpp"
+#include "../../net_plugin/include/net_plugin.hpp"
+#include "../../../../lib/log/include/log.hpp"
 
 using namespace appbase;
 
 class BlockProducerPlugin : public Plugin<BlockProducerPlugin> {
 public:
+  PLUGIN_REQUIRES((NetPlugin))
+
   BlockProducerPlugin() : temp_channel(app().get_channel<channels::temp_channel::channel_type>()) {}
 
-  void initialize() override {
-    std::cout << "BlockProducerPlugin Initialize" << std::endl;
+  void plugin_initialize() {
+    logger::INFO("BlockProducerPlugin Initialize");
+    state = plugin_state::initialized;
   }
 
-  void start() override {
-    std::cout << "Startup" << std::endl;
+  void plugin_start() {
+    logger::INFO("BlockProducerPlugin Startup");
 
     TempData d;
     temp_channel.publish(d);
   }
 
-  void shutdown() override {
-    std::cout << "Shutdown" << std::endl;
+  void plugin_shutdown() {
+    logger::INFO("BlockProducerPlugin Shutdown");
   }
 
 private:

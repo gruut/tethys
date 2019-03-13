@@ -4,5 +4,8 @@ add_library(net_plugin
         net_plugin.cpp
         include/net_plugin.hpp)
 
-target_link_libraries(net_plugin appbase)
-target_include_directories(net_plugin PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/../../../lib/appbase")
+target_link_libraries(net_plugin appbase log)
+target_include_directories(net_plugin PUBLIC
+        "${CMAKE_CURRENT_SOURCE_DIR}/../../../lib/appbase"
+        "${CMAKE_CURRENT_SOURCE_DIR}/../../../lib/log"
+        )

@@ -6,24 +6,29 @@
 #include "plugin.hpp"
 #include "channel_interface.hpp"
 
+#include "../../../../lib/log/include/log.hpp"
+
 using namespace appbase;
 
 class NetPlugin : public Plugin<NetPlugin> {
 public:
-  void initialize() override {
-    std::cout << "NetPlugin Initialize" << std::endl;
+  PLUGIN_REQUIRES()
+
+  void plugin_initialize() {
+    logger::INFO("NetPlugin Initialize");
+    state = plugin_state::initialized;
 
     temp_channel_handler = app().get_channel<channels::temp_channel::channel_type>().subscribe([](TempData d) {
       std::cout << "NetPlugin handler" << std::endl;
     });
   }
 
-  void start() override {
-    std::cout << "Startup" << std::endl;
+  void plugin_start() {
+    logger::INFO("NetPlugin Startup");
   }
 
-  void shutdown() override {
-    std::cout << "Shutdown" << std::endl;
+  void plugin_shutdown() {
+    logger::INFO("NetPlugin Shutdown");
   }
 
 private:

@@ -82,10 +82,7 @@ fi
 cd ${BUILD_DIR}
 ${CMAKE} -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -DCMAKE_CXX_COMPILER="clang++" -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE} -DCMAKE_INSTALL_PREFIX="${INSTALL_PREFIX}" ${SOURCE_DIR}
 
-# Compile
-${CMAKE} --build ${BUILD_DIR}
-
-# Install
+# Compile & Install
 if check_and_require_sudo; then
     sudo make install
 else
