@@ -1,0 +1,38 @@
+syntax = "proto3";
+
+package kademlia;
+
+service KademliaService {
+    rpc FindNode (Target) returns (Neighbors) {}
+    rpc PingPong (Ping) returns (Pong) {}
+}
+
+message Target {
+    bytes target_id = 1;
+    bytes sender_id = 2;
+    string sender_address = 3;
+    string sender_port = 4;
+    uint64 time_stamp = 5;
+}
+message Neighbors {
+    message node {
+        bytes node_id = 1;
+        string address = 2;
+        string port = 3;
+    }
+
+    repeated node neighbors = 1;
+    uint64 time_stamp = 2;
+}
+message Ping {
+    bytes node_id = 1;
+    string sender_address = 2;
+    string sender_port = 3;
+    uint32 version = 4;
+    uint64 time_stamp = 5;
+}
+message Pong {
+    bytes node_id = 1;
+    uint32 version = 2;
+    uint64 time_stamp = 3;
+}

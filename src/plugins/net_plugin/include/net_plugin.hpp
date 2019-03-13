@@ -1,6 +1,7 @@
 #pragma once
 
 #include <iostream>
+#include <memory>
 
 #include "application.hpp"
 #include "plugin.hpp"
@@ -10,17 +11,15 @@
 
 using namespace appbase;
 
+class NetPluginImpl;
+
 class NetPlugin : public Plugin<NetPlugin> {
 public:
   PLUGIN_REQUIRES()
 
-  void plugin_initialize() {
-    logger::INFO("NetPlugin Initialize");
+  NetPlugin();
 
-    temp_channel_handler = app().get_channel<channels::temp_channel::channel_type>().subscribe([](TempData d) {
-      std::cout << "NetPlugin handler" << std::endl;
-    });
-  }
+  void plugin_initialize();
 
   void plugin_start() {
     logger::INFO("NetPlugin Startup");
@@ -31,5 +30,6 @@ public:
   }
 
 private:
+  std::unique_ptr<NetPluginImpl> impl;
   channels::temp_channel::channel_type::Handle temp_channel_handler;
 };

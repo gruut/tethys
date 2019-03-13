@@ -1,0 +1,35 @@
+syntax = "proto3";
+
+option java_multiple_files = true;
+option java_package = "com.gruutnetworks.gruutgeneral";
+option java_outer_classname = "GruutNetwork";
+
+package grpc_general;
+
+service GruutGeneralService {
+    rpc OpenChannel(stream Identity) returns (stream ReplyMsg) {}
+    rpc GeneralService (RequestMsg) returns (MsgStatus) {}
+}
+message Identity {
+    bytes sender = 1;
+}
+
+message ReplyMsg {
+    bytes message = 1;
+}
+
+message RequestMsg {
+    bool broadcast = 1;
+    string message_id =2;
+    bytes message = 3;
+}
+
+message MsgStatus {
+    enum Status{
+        SUCCESS = 0;
+        INVALID = 1;
+        INTERNAL = 2;
+    }
+    Status status = 1;
+    string message = 2;
+}
