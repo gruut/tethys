@@ -27,13 +27,13 @@ namespace appbase {
     return app;
   }
 
-  bool Application::initialize_impl() {
-    initialize_plugins();
+  bool Application::initializeImpl() {
+    initializePlugins();
 
     return true;
   }
 
-  void Application::set_program_options() {
+  void Application::setProgramOptions() {
     po::options_description app_cfg_opts("Application Config Options");
     po::options_description app_cli_opts("Application Command Line Options");
 
@@ -51,7 +51,7 @@ namespace appbase {
     program_options->options_description.add(app_cli_opts);
   }
 
-  bool Application::parse_program_options(int argc, char **argv) {
+  bool Application::parseProgramOptions(int argc, char **argv) {
     po::store(po::parse_command_line(argc, argv, program_options->options_description), program_options->options_map);
 
     if (program_options->options_map.count("help")) {
@@ -80,7 +80,7 @@ namespace appbase {
     return true;
   }
 
-  void Application::initialize_plugins() {
+  void Application::initializePlugins() {
     auto plugin_names = program_options->options_map.at("plugin").as<vector<string>>();
 
     for_each(begin(plugin_names), end(plugin_names), [this](const string &plugin_name) {

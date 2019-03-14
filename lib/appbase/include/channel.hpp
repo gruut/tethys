@@ -56,7 +56,7 @@ namespace appbase {
     }
 
     void publish(Data &data) {
-      if (has_subscribers()) {
+      if (hasSubscribers()) {
         ioc_ptr->post([this, data]() {
           s(data);
         });
@@ -64,7 +64,7 @@ namespace appbase {
     }
 
   private:
-    bool has_subscribers() {
+    bool hasSubscribers() {
       return s.num_slots() > 0;
     }
 

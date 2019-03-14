@@ -10,7 +10,7 @@
 #include "config/include/message.hpp"
 #include "config/include/network_type.hpp"
 
-#include "../../../include/json.hpp"
+#include "json.hpp"
 #include <unordered_map>
 
 namespace gruut {
@@ -55,7 +55,7 @@ namespace gruut {
     RpcServer rpc_server;
 
     void pingTask(const Node &node) {
-      auto endpoint = node.get_endpoint();
+      auto endpoint = node.getEndpoint();
       PongData pong = rpc_client.pingReq(endpoint.address, endpoint.port);
       if (!pong.status.ok()) {
         bool evicted = routing_table->peerTimedOut(node);
@@ -138,14 +138,14 @@ namespace gruut {
 
   NetPlugin::NetPlugin() : impl(new NetPluginImpl()) {}
 
-  void NetPlugin::plugin_initialize() {
+  void NetPlugin::pluginInitialize() {
     logger::INFO("NetPlugin Initialize");
 
-    temp_channel_handler = app().get_channel<channels::temp_channel::channel_type>().subscribe(
+    temp_channel_handler = app().getChannel<channels::temp_channel::channel_type>().subscribe(
             [](TempData d) { cout << "NetPlugin handler" << endl; });
   }
 
-  void NetPlugin::plugin_start() {
+  void NetPlugin::pluginStart() {
     logger::INFO("NetPlugin Startup");
 
     impl->setUp();

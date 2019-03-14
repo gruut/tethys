@@ -20,11 +20,11 @@ namespace gruut {
 
     ~NetPlugin() override;
 
-    void plugin_initialize();
+    void pluginInitialize();
 
-    void plugin_start();
+    void pluginStart();
 
-    void plugin_shutdown() {
+    void pluginShutdown() {
       logger::INFO("NetPlugin Shutdown");
     }
 

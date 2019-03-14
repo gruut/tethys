@@ -65,7 +65,7 @@ namespace gruut {
 
       IdType const &getId() const { return m_id; }
 
-      IpEndpoint const &get_endpoint() const { return m_endpoint; }
+      IpEndpoint const &getEndpoint() const { return m_endpoint; }
 
       int failuresCount() const { return m_failed_requests_count; }
 

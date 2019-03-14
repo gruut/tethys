@@ -99,7 +99,7 @@ public:
   //@}
 
 
-  Node &SendConvRequest() { return m_nodes.front(); }
+  Node &sendConvRequest() { return m_nodes.front(); }
 
   Node const &leastRecentlySeenNode() const { return m_nodes.front(); }
 

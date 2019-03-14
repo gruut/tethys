@@ -35,8 +35,8 @@ target_include_directories(gruut
         "${CMAKE_INSTALL_PREFIX}/include"
         )
 
-install(DIRECTORY DESTINATION ${GRUUT_INSTALL_DIR})
-install_directory_permissions(DIRECTORY ${GRUUT_INSTALL_DIR})
+install(DIRECTORY include/ DESTINATION ${GRUUT_INSTALL_DIR}/include)
+install_directory_permissions(DIRECTORY ${GRUUT_INSTALL_DIR}/include)
 
 IF (NOT $ENV{TRAVIS})
     add_custom_command(

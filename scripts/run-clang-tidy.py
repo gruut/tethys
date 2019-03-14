@@ -254,10 +254,9 @@ def main():
     new_files = []
     for file_name in files:
         if (
-                not ("catch.hpp" in file_name)
-                and not ("json.hpp" in file_name)
-                and not ("lib" in file_name)
-                and not (".pb" in file_name)
+                not ("gruut/include" in file_name)
+                and not ("grpc.pb.cc" in file_name)
+                and not ("grpc.pb.h" in file_name)
                 and not (".proto" in file_name)):
             new_files.append(file_name)
     files = new_files

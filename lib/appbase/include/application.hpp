@@ -29,13 +29,13 @@ namespace appbase {
     template<class ...Plugins>
     bool initialize(int argc, char **argv) {
       try {
-        set_program_options();
-        if (!parse_program_options(argc, argv))
+        setProgramOptions();
+        if (!parseProgramOptions(argc, argv))
           return false;
 
-        register_plugins<Plugins...>();
+        registerPlugins<Plugins...>();
 
-        return initialize_impl();
+        return initializeImpl();
       } catch (exception &e) {
         logger::ERROR("Initialize failed");
         return false;
@@ -45,7 +45,7 @@ namespace appbase {
     void start();
 
     template<typename ChannelType>
-    auto &get_channel() {
+    auto &getChannel() {
       auto key = type_index(typeid(ChannelType));
 
       auto[channel_it, _] = channels.try_emplace(key, std::make_shared<ChannelType>(io_context_ptr));
@@ -55,7 +55,7 @@ namespace appbase {
     }
 
     template<typename Plugin>
-    auto &find_or_register_plugin() {
+    auto &findOrRegisterPlugin() {
       auto name = boost::core::demangle(typeid(Plugin).name());
       auto ns_removed_name = name.substr(name.find_last_of(':') + 1);
 
@@ -63,25 +63,25 @@ namespace appbase {
       if (plug_itr != app_plugins_map.end()) {
         return *plug_itr->second.get();
       } else {
-        register_plugin<Plugin>();
+        registerPlugin<Plugin>();
 
         return *app_plugins_map[ns_removed_name];
       }
     }
 
-    auto &get_io_context() {
+    auto &getIoContext() {
       return *io_context_ptr;
     }
 
     static Application &instance();
 
   private:
-    bool initialize_impl();
+    bool initializeImpl();
 
-    void set_program_options();
+    void setProgramOptions();
 
     template<typename Plugin>
-    void register_plugin() {
+    void registerPlugin() {
       auto name = boost::core::demangle(typeid(Plugin).name());
       auto ns_removed_name = name.substr(name.find_last_of(':') + 1);
 
@@ -90,12 +90,12 @@ namespace appbase {
       if (!not_existing)
         return;
 
-      plugins_it->second.get()->register_dependencies();
+      plugins_it->second.get()->registerDependencies();
     }
 
     template<class ...Plugins>
-    constexpr void register_plugins() {
-      (register_plugin<Plugins>(), ...);
+    constexpr void registerPlugins() {
+      (registerPlugin<Plugins>(), ...);
     }
 
     Application();
@@ -108,9 +108,9 @@ namespace appbase {
     vector<shared_ptr<AbstractPlugin>> initialized_plugins;
     unique_ptr<ProgramOptions> program_options;
 
-    bool parse_program_options(int argc, char **argv);
+    bool parseProgramOptions(int argc, char **argv);
 
-    void initialize_plugins();
+    void initializePlugins();
   };
 
   Application &app();

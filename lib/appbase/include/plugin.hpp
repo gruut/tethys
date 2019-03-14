@@ -6,11 +6,11 @@
 #include <string>
 
 #define PLUGIN_REQUIRES_VISIT(r, visitor, elem) \
-  visitor(app().find_or_register_plugin<elem>());
+  visitor(app().findOrRegisterPlugin<elem>());
 
 #define PLUGIN_REQUIRES(PLUGINS) \
   template<typename Lambda> \
-  void plugin_requires(Lambda&& l) { \
+  void pluginRequires(Lambda&& l) { \
     BOOST_PP_SEQ_FOR_EACH(PLUGIN_REQUIRES_VISIT, l, PLUGINS) \
   }
 
@@ -30,9 +30,9 @@ namespace appbase {
 
     virtual void shutdown() = 0;
 
-    virtual void register_dependencies() = 0;
+    virtual void registerDependencies() = 0;
 
-    virtual plugin_state get_state() const= 0;
+    virtual plugin_state getState() const= 0;
 
     virtual ~AbstractPlugin() = default;
   };
@@ -42,34 +42,34 @@ namespace appbase {
   public:
     Plugin() : name(boost::core::demangle(typeid(Impl).name())) {}
 
-    const string &get_name() const {
+    const string &getName() const {
       return name;
     }
 
     void initialize() override {
-      static_cast<Impl *>(this)->plugin_requires([&](auto &plugin) {
-        if (plugin.get_state() == plugin_state::registered)
+      static_cast<Impl *>(this)->pluginRequires([&](auto &plugin) {
+        if (plugin.getState() == plugin_state::registered)
           plugin.initialize();
       });
 
-      static_cast<Impl *>(this)->plugin_initialize();
+      static_cast<Impl *>(this)->pluginInitialize();
       static_cast<Impl *>(this)->state = plugin_state::initialized;
     }
 
     void start() override {
-      static_cast<Impl *>(this)->plugin_start();
+      static_cast<Impl *>(this)->pluginStart();
     }
 
     void shutdown() override {
 
     }
 
-    virtual plugin_state get_state() const override {
+    virtual plugin_state getState() const override {
       return state;
     }
 
-    void register_dependencies() override {
-      static_cast<Impl *>(this)->plugin_requires([&](auto &plugin) {});
+    void registerDependencies() override {
+      static_cast<Impl *>(this)->pluginRequires([&](auto &plugin) {});
     }
 
   protected:

@@ -58,6 +58,7 @@ target_link_libraries(net_plugin
 target_include_directories(net_plugin PUBLIC
         "${CMAKE_CURRENT_SOURCE_DIR}/../../../lib/appbase"
         "${CMAKE_CURRENT_SOURCE_DIR}/../../../lib/log"
+        "${GRUUT_INSTALL_DIR}/include"
         ${Boost_INCLUDE_DIR}
         ${CURL_INCLUDE_DIR}
         )

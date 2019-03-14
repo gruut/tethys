@@ -15,20 +15,20 @@ namespace gruut {
   public:
     PLUGIN_REQUIRES((NetPlugin))
 
-    BlockProducerPlugin() : temp_channel(app().get_channel<channels::temp_channel::channel_type>()) {}
+    BlockProducerPlugin() : temp_channel(app().getChannel<channels::temp_channel::channel_type>()) {}
 
-    void plugin_initialize() {
+    void pluginInitialize() {
       logger::INFO("BlockProducerPlugin Initialize");
     }
 
-    void plugin_start() {
+    void pluginStart() {
       logger::INFO("BlockProducerPlugin Startup");
 
       TempData d;
       temp_channel.publish(d);
     }
 
-    void plugin_shutdown() {
+    void pluginShutdown() {
       logger::INFO("BlockProducerPlugin Shutdown");
     }
 
