@@ -1,11 +1,13 @@
 #pragma once
 
-#include "rpc_services/rpc_services.hpp"
-#include "config/network_type.hpp"
+#include "../rpc_services/include/rpc_services.hpp"
+#include "../kademlia/include/node.hpp"
+#include "signer_conn_manager.hpp"
+#include "../config/include/network_type.hpp"
 #include <vector>
 
 namespace gruut{
-namespace net{
+namespace net_plugin{
 
 class RpcClient{
 public:
@@ -20,7 +22,7 @@ public:
   void setUp(std::shared_ptr<BroadcastMsgTable> broadcast_check_table);
 
 private:
-  std::shared_ptr<BroadcastMsgTable> m_broadcast_check_table;
+  std::shared_ptr<BroadcastMsgTable> broadcast_check_table;
 
   template<typename TStub, typename TService>
   std::unique_ptr<TStub> genStub(const std::string &addr, const std::string &port);

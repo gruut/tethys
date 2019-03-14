@@ -1,10 +1,13 @@
 #pragma once
 
-#include "rpc_services/rpc_services.hpp"
+#include "../rpc_services/include/rpc_services.hpp"
+#include "signer_conn_manager.hpp"
+#include "../kademlia/include/routing.hpp"
+#include "../config/include/network_type.hpp"
 #include <string>
 
 namespace gruut {
-namespace net {
+namespace net_plugin {
 class RpcServer {
 public:
   RpcServer() = default;
@@ -35,5 +38,5 @@ private:
   void initService();
   void start();
 };
-} //namespace net
+} //namespace net_plugin
 } //namespace gruut

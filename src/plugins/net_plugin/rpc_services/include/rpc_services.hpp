@@ -5,8 +5,10 @@
 #include <grpc/support/log.h>
 #include <grpcpp/grpcpp.h>
 
-#include "../kademlia/routing.hpp"
-#include "../signer_conn_manager.hpp"
+#include "../../kademlia/include/node.hpp"
+#include "../../config/include/network_type.hpp"
+#include "../../kademlia/include/routing.hpp"
+#include "../../include/signer_conn_manager.hpp"
 
 #include <iostream>
 #include <memory>
@@ -18,7 +20,7 @@ using namespace grpc_general;
 using namespace kademlia;
 
 namespace gruut {
-namespace net{
+namespace net_plugin{
 
 enum class RpcCallStatus { CREATE, PROCESS, READ, WAIT, FINISH };
 
@@ -148,5 +150,5 @@ private:
   std::shared_ptr<RoutingTable> m_routing_table;
   void proceed() override;
 };
-} //namespace net
+} //namespace net_plugin
 } //namespace gruut

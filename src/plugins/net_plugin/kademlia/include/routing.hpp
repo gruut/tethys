@@ -20,10 +20,10 @@
 #include <boost/iterator/reverse_iterator.hpp>
 
 #include "kbucket.hpp"
-#include "../config/network_config.hpp"
+#include "../../config/include/network_config.hpp"
 
 namespace gruut {
-namespace net {
+namespace net_plugin {
 
 class RoutingTable  {
 public:
@@ -142,5 +142,5 @@ private:
 
 std::ostream &operator<<(std::ostream &out, RoutingTable const &rt);
 
-}  // namespace net
+}  // namespace net_plugin
 }  // namespace gruut

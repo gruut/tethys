@@ -1,11 +1,12 @@
-#include "rpc_client.hpp"
+#include <memory>
+#include "include/rpc_client.hpp"
 
 namespace gruut{
-namespace net{
+namespace net_plugin{
 
 void RpcClient::setUp(std::shared_ptr<BroadcastMsgTable> broadcast_check_table){
 
-  m_broadcast_check_table  = std::move(broadcast_check_table);
+  broadcast_check_table  = std::move(broadcast_check_table);
 }
 
 template<typename TStub, typename TService>

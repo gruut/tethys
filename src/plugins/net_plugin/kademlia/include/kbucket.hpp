@@ -14,11 +14,11 @@
 #include <boost/iterator/iterator_adaptor.hpp>
 #include <boost/iterator/reverse_iterator.hpp>
 
-#include "../config/network_config.hpp"
+#include "../../config/include/network_config.hpp"
 #include "node.hpp"
 
 namespace gruut {
-namespace net {
+namespace net_plugin {
 
 class KBucket {
 public:
@@ -103,7 +103,7 @@ public:
 
   Node const &leastRecentlySeenNode() const { return m_nodes.front(); }
 
-  Node const &selectRandomNode() const;
+  Node &selectRandomNode();
 
   bool addNode(Node &&node);
 
@@ -138,6 +138,6 @@ private:
 
 std::ostream &operator<<(std::ostream &out, KBucket const &kb);
 
-}  // namespace net
+}  // namespace net_plugin
 }  // namespace gruut
 

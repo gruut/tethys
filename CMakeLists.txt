@@ -24,6 +24,8 @@ add_subdirectory(src/plugins)
 target_link_libraries(gruut
         appbase
         log
+        net_plugin
+        block_producer_plugin
         )
 
 target_include_directories(gruut

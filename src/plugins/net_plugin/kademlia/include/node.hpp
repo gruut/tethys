@@ -8,113 +8,119 @@
 
 #include <chrono>
 #include <string>
-
-#include "../config/network_config.hpp"
-#include "../config/network_type.hpp"
+#include "hash.hpp"
+#include "../../config/include/network_config.hpp"
+#include "../../config/include/network_type.hpp"
 
 namespace gruut {
-namespace net {
+  namespace net_plugin {
+    class Node {
+    public:
+      Node() = default;
 
-class Node {
-public:
-  Node() = default;
+      Node(HashedIdType const &id_hash, IdType const &id, std::string const &ip_address,
+           std::string const &port_number)
+              : m_id_hash{id_hash}, m_id{id}, m_endpoint{ip_address, port_number} {}
 
-  Node(HashedIdType const &id_hash, IdType const &id, std::string const &ip_address,
-	   std::string const &port_number)
-	  : m_id_hash{id_hash}, m_id{id}, m_endpoint{ip_address, port_number} {}
+      Node(HashedIdType const &id_hash, IdType const &id, IpEndpoint const &ep) : m_id_hash(id_hash), m_id(id),
+                                                                                  m_endpoint(ep) {}
 
-  Node(HashedIdType const &id_hash, IdType const &id, IpEndpoint const &ep) : m_id_hash(id_hash), m_id(id), m_endpoint(ep) {}
+      Node(const Node &other) : m_id_hash(other.m_id_hash),
+                                m_id(other.m_id),
+                                m_endpoint(other.m_endpoint),
+                                m_failed_requests_count(other.m_failed_requests_count),
+                                m_last_seen_time(other.m_last_seen_time) {}
 
-  Node(const Node &other) : m_id_hash(other.m_id_hash),
-  							m_id(other.m_id),
-							m_endpoint(other.m_endpoint),
-							m_failed_requests_count(other.m_failed_requests_count),
-							m_last_seen_time(other.m_last_seen_time) {}
+      Node &operator=(Node const &rhs) {
+        using std::swap;
+        auto tmp(rhs);
+        swap(*this, tmp);
+        return *this;
+      }
 
-  Node &operator=(Node const &rhs) {
-	using std::swap;
-	auto tmp(rhs);
-	swap(*this, tmp);
-	return *this;
-  }
+      Node(Node &&other) noexcept : m_id_hash(std::move(other.m_id_hash)),
+                                    m_id(std::move(other.m_id)),
+                                    m_endpoint(std::move(other.m_endpoint)),
+                                    m_failed_requests_count(other.m_failed_requests_count),
+                                    m_last_seen_time(other.m_last_seen_time) {
+      }
 
-  Node(Node &&other) noexcept : m_id_hash(std::move(other.m_id_hash)),
-  								m_id(std::move(other.m_id)),
-								m_endpoint(std::move(other.m_endpoint)),
-								m_failed_requests_count(other.m_failed_requests_count),
-								m_last_seen_time(other.m_last_seen_time) {
-  }
+      Node &operator=(Node &&rhs) noexcept {
+        if (this != &rhs) {
+          m_id_hash = std::move(rhs.m_id_hash);
+          m_endpoint = std::move(rhs.m_endpoint);
+          m_failed_requests_count = rhs.m_failed_requests_count;
+          m_last_seen_time = rhs.m_last_seen_time;
+        }
+        return *this;
+      }
 
-  Node &operator=(Node &&rhs) noexcept {
-	if (this != &rhs) {
-	  m_id_hash = std::move(rhs.m_id_hash);
-	  m_endpoint = std::move(rhs.m_endpoint);
-	  m_failed_requests_count = rhs.m_failed_requests_count;
-	  m_last_seen_time = rhs.m_last_seen_time;
-	}
-	return *this;
-  }
+      ~Node() = default;
 
-  ~Node() = default;
+      friend bool operator==(Node &lhs, Node &rhs) {
+        return (lhs.getIdHash() == rhs.getIdHash()) && (lhs.getEndpoint() == rhs.getEndpoint());
+      }
 
-  friend bool operator==(const Node &lhs, const Node &rhs) {
-	return (lhs.getIdHash() == rhs.getIdHash()) && (lhs.getEndpoint() == rhs.getEndpoint());
-  }
+      HashedIdType const &getIdHash() const { return m_id_hash; }
 
-  HashedIdType const &getIdHash() const { return m_id_hash; }
-  IdType const &getId() const { return m_id; }
-  IpEndpoint const &getEndpoint() const { return m_endpoint; }
+      IdType const &getId() const { return m_id; }
 
-  int failuresCount() const { return m_failed_requests_count; }
-  void initFailuresCount() { m_failed_requests_count = 0; }
+      IpEndpoint const &get_endpoint() const { return m_endpoint; }
 
-  bool isStale() const {
-	return m_failed_requests_count == NODE_FAILED_COMMS_BEFORE_STALE;
-  }
+      int failuresCount() const { return m_failed_requests_count; }
 
-  bool isQuestionable() const {
-	return (std::chrono::steady_clock::now() - m_last_seen_time)
-		> NODE_INACTIVE_TIME_BEFORE_QUESTIONABLE;
-  }
+      void initFailuresCount() { m_failed_requests_count = 0; }
 
-  HashedIdType distanceTo(Node const &node) const { return distanceTo(node.getIdHash()); }
-  HashedIdType distanceTo(Hash160 const &hash) const {
-	return m_id_hash ^ hash;
-  }
+      bool isStale() const {
+        return m_failed_requests_count == NODE_FAILED_COMMS_BEFORE_STALE;
+      }
 
-  void incFailuresCount() { ++m_failed_requests_count; }
+      bool isQuestionable() const {
+        return (std::chrono::steady_clock::now() - m_last_seen_time)
+               > NODE_INACTIVE_TIME_BEFORE_QUESTIONABLE;
+      }
 
-  HashedIdType &getIdHash() { return m_id_hash; }
-  IdType &getId()  { return m_id; }
-  IpEndpoint &getEndpoint() { return m_endpoint; }
+      HashedIdType distanceTo(Node const &node) const { return distanceTo(node.getIdHash()); }
 
-private:
-  IdType  m_id;
-  HashedIdType m_id_hash;
-  IpEndpoint m_endpoint;
+      HashedIdType distanceTo(Hash160 const &hash) const {
+        return m_id_hash ^ hash;
+      }
 
-  int m_failed_requests_count{0};
+      void incFailuresCount() { ++m_failed_requests_count; }
 
-  std::chrono::steady_clock::time_point m_last_seen_time;
-};
+      HashedIdType &getIdHash() { return m_id_hash; }
 
-inline HashedIdType distance(Node const &a, Node const &b) {
-  return a.distanceTo(b);
-}
+      IdType &getId() { return m_id; }
 
-inline HashedIdType distance(Node const &node, Hash160 const &hash) {
-  return node.distanceTo(hash);
-}
+      IpEndpoint &getEndpoint() { return m_endpoint; }
 
-inline HashedIdType distance(HashedIdType const &ida, HashedIdType const &idb) {
-  return ida ^ idb;
-}
+    private:
+      IdType m_id;
+      HashedIdType m_id_hash;
+      IpEndpoint m_endpoint;
 
+      int m_failed_requests_count{0};
 
-inline bool operator!=(const Node &lhs, const Node &rhs) {
-  return !(lhs == rhs);
-}
+      std::chrono::steady_clock::time_point m_last_seen_time;
+    };
+
+    inline HashedIdType distance(Node const &a, Node const &b) {
+      return a.distanceTo(b);
+    }
+
+    inline HashedIdType distance(Node const &node, Hash160 const &hash) {
+      return node.distanceTo(hash);
+    }
+
+    inline HashedIdType distance(HashedIdType const &ida, HashedIdType const &idb) {
+      return ida ^ idb;
+    }
 
 
-}  // namespace net
+    inline bool operator!=(Node &lhs, Node &rhs) {
+      return !(lhs == rhs);
+    }
+
+
+  }  // namespace net_plugin
 }  // namespace gruut

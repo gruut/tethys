@@ -6,7 +6,7 @@
 #include <vector>
 
 namespace gruut {
-namespace net {
+namespace net_plugin {
 
 using nlohmann::json;
 using nlohmann::json_schema_draft4::json_validator;

@@ -12,187 +12,186 @@
 #include "include/routing.hpp"
 
 namespace gruut {
-namespace net {
+  namespace net_plugin {
 
-using boost::multiprecision::cpp_int_backend;
-using boost::multiprecision::number;
-using boost::multiprecision::unchecked;
-using boost::multiprecision::unsigned_magnitude;
+    using boost::multiprecision::cpp_int_backend;
+    using boost::multiprecision::number;
+    using boost::multiprecision::unchecked;
+    using boost::multiprecision::unsigned_magnitude;
 
-RoutingTable::RoutingTable(Node node, std::size_t ksize)
-	: m_my_node(std::move(node)), m_ksize(ksize) {
-  addInitialBucket();
-}
+    RoutingTable::RoutingTable(Node node, std::size_t ksize)
+            : m_my_node(std::move(node)), m_ksize(ksize) {
+      addInitialBucket();
+    }
 
-std::size_t RoutingTable::nodesCount() const {
-  std::size_t total = 0;
-  for (auto &kb : m_buckets) total += kb.size().first;
-  return total;
-}
+    std::size_t RoutingTable::nodesCount() const {
+      std::size_t total = 0;
+      for (auto &kb : m_buckets) total += kb.size().first;
+      return total;
+    }
 
-std::size_t RoutingTable::bucketsCount() const { return m_buckets.size(); }
+    std::size_t RoutingTable::bucketsCount() const { return m_buckets.size(); }
 
-bool RoutingTable::empty() const { return m_buckets.front().empty(); }
-
-
-std::size_t RoutingTable::getBucketIndexFor(const HashedIdType &node) const {
-
-  auto num_buckets = m_buckets.size();
-
-  auto bucket = m_buckets.begin();
-  while (bucket != m_buckets.end()) {
-	if (bucket->canHoldNode(node)) {
-	  auto bucket_index =
-		  static_cast<std::size_t>(std::distance(m_buckets.begin(), bucket));
-
-	  return bucket_index;
-	}
-	++bucket;
-  }
-
-  return num_buckets - 1;
-}
-
-bool RoutingTable::addPeer(Node &&peer) {
-
-  if (m_my_node == peer) {
-
-	return true;
-  }
-
-  m_node_table[peer.getId()] = peer.getEndpoint();
-
-  std::lock_guard<std::mutex> lock(m_buckets_mutex);
-
-  auto bucket_index = getBucketIndexFor(peer.getIdHash());
-  auto bucket = m_buckets.begin();
-  std::advance(bucket, bucket_index);
+    bool RoutingTable::empty() const { return m_buckets.front().empty(); }
 
 
-  bool check = bucket->addNode(std::move(peer));
+    std::size_t RoutingTable::getBucketIndexFor(const HashedIdType &node) const {
 
-  m_buckets_mutex.unlock();
+      auto num_buckets = m_buckets.size();
 
-  if (check) {
-	return true;
-  }
+      auto bucket = m_buckets.begin();
+      while (bucket != m_buckets.end()) {
+        if (bucket->canHoldNode(node)) {
+          auto bucket_index =
+                  static_cast<std::size_t>(std::distance(m_buckets.begin(), bucket));
 
-  auto can_split = false;
+          return bucket_index;
+        }
+        ++bucket;
+      }
 
-  auto shared_prefix_test =
-	  (bucket->depth() < DEPTH_B) && ((bucket->depth() % DEPTH_B) != 0);
+      return num_buckets - 1;
+    }
 
-  auto bucket_has_in_range_my_node = (bucket_index == (m_buckets.size() - 1));
-  can_split |= bucket_has_in_range_my_node;
+    bool RoutingTable::addPeer(Node &&peer) {
 
-  can_split |= shared_prefix_test;
+      if (m_my_node == peer) {
 
-  can_split &= (m_buckets.size() < 160);
+        return true;
+      }
 
-  can_split &= !(m_buckets.size() > 1 && bucket_index == 0);
+      m_node_table[peer.getId()] = peer.getEndpoint();
 
-  if (can_split) {
-	std::pair<KBucket, KBucket> pair = bucket->split();
-	bucket = m_buckets.insert(bucket, std::move(pair.second));
-	bucket = m_buckets.insert(bucket, std::move(pair.first));
+      std::lock_guard<std::mutex> lock(m_buckets_mutex);
 
-	std::lock_guard<std::mutex> lock(m_buckets_mutex);
-	m_buckets.erase(bucket + 2);
+      auto bucket_index = getBucketIndexFor(peer.getIdHash());
+      auto bucket = m_buckets.begin();
+      std::advance(bucket, bucket_index);
 
-	m_buckets_mutex.unlock();
 
-	return true;
-  }
+      bool check = bucket->addNode(std::move(peer));
 
-  return false;
-}
+      m_buckets_mutex.unlock();
 
-void RoutingTable::removePeer(const Node &peer) {
+      if (check) {
+        return true;
+      }
 
-  std::lock_guard<std::mutex> lock(m_buckets_mutex);
-  auto bucket_index = getBucketIndexFor(peer.getIdHash());
-  auto bucket = m_buckets.begin();
-  std::advance(bucket, bucket_index);
+      auto can_split = false;
 
-  bucket->removeNode(peer);
-  m_buckets_mutex.unlock();
-}
+      auto shared_prefix_test =
+              (bucket->depth() < DEPTH_B) && ((bucket->depth() % DEPTH_B) != 0);
 
-bool RoutingTable::peerTimedOut(Node const &peer) {
+      auto bucket_has_in_range_my_node = (bucket_index == (m_buckets.size() - 1));
+      can_split |= bucket_has_in_range_my_node;
 
-  for (auto bucket = m_buckets.rbegin(); bucket != m_buckets.rend(); ++bucket) {
-	for (auto bn = bucket->begin(); bn != bucket->end(); ++bn) {
-	  if (bn->getIdHash() == peer.getIdHash()) {
-		bn->incFailuresCount();
+      can_split |= shared_prefix_test;
 
-		if (bn->isStale()) {
-		  std::lock_guard<std::mutex> lock(m_buckets_mutex);
-		  bucket->removeNode(bn);
-		  m_buckets_mutex.unlock();
-		  return true;
-		} else {
-		  bn->initFailuresCount();
-		  return false;
-		}
-	  }
-	}
-  }
-  return false;
-}
+      can_split &= (m_buckets.size() < 160);
 
-std::vector<Node> RoutingTable::findNeighbors(HashedIdType const &id, std::size_t max_number)  {
+      can_split &= !(m_buckets.size() > 1 && bucket_index == 0);
 
-  std::vector<Node> neighbors;
-  auto count = 0U;
+      if (can_split) {
+        std::pair<KBucket, KBucket> pair = bucket->split();
+        bucket = m_buckets.insert(bucket, std::move(pair.second));
+        bucket = m_buckets.insert(bucket, std::move(pair.first));
 
-  bool use_left = true;
-  bool has_more = true;
+        std::lock_guard<std::mutex> lock(m_buckets_mutex);
+        m_buckets.erase(bucket + 2);
 
-  std::lock_guard<std::mutex> lock(m_buckets_mutex);
+        m_buckets_mutex.unlock();
 
-  auto bucket_index = getBucketIndexFor(id);
-  auto bucket = m_buckets.begin();
-  std::advance(bucket, bucket_index);
-  auto left = bucket;
-  auto right = (bucket != m_buckets.end()) ? bucket + 1 : bucket;
+        return true;
+      }
 
-  auto current_bucket = bucket;
+      return false;
+    }
 
-  while (has_more) {
-	has_more = false;
-	for (auto const &neighbor : *current_bucket) {
-	  // Exclude the node
-	  if (neighbor.getIdHash() != id) {
-		++count;
+    void RoutingTable::removePeer(const Node &peer) {
 
-		neighbors.emplace_back(neighbor);
-		if (count == max_number) goto Done;
-	  }
-	}
+      std::lock_guard<std::mutex> lock(m_buckets_mutex);
+      auto bucket_index = getBucketIndexFor(peer.getIdHash());
+      auto bucket = m_buckets.begin();
+      std::advance(bucket, bucket_index);
 
-	if (right == m_buckets.end()) use_left = true;
-	if (left != m_buckets.begin()) {
-	  has_more = true;
-	  if (use_left) {
-		--left;
-		current_bucket = left;
-		use_left = false;
-		continue;
-	  }
-	}
-	if (right != m_buckets.end()) {
-	  has_more = true;
-	  current_bucket = right;
-	  ++right;
-	}
-	use_left = true;
-  }
-  Done:
+      bucket->removeNode(peer);
+      m_buckets_mutex.unlock();
+    }
 
-  m_buckets_mutex.unlock();
+    bool RoutingTable::peerTimedOut(Node const &peer) {
+      for (auto bucket = m_buckets.rbegin(); bucket != m_buckets.rend(); ++bucket) {
+        for (auto bn = bucket->begin(); bn != bucket->end(); ++bn) {
+          if (bn->getIdHash() == peer.getIdHash()) {
+            bn->incFailuresCount();
 
-  return neighbors;
-}
+            if (bn->isStale()) {
+              std::lock_guard<std::mutex> lock(m_buckets_mutex);
+              bucket->removeNode(bn);
+              m_buckets_mutex.unlock();
+              return true;
+            } else {
+              bn->initFailuresCount();
+              return false;
+            }
+          }
+        }
+      }
+      return false;
+    }
 
-}  // namespace net
+    std::vector<Node> RoutingTable::findNeighbors(HashedIdType const &id, std::size_t max_number) {
+
+      std::vector<Node> neighbors;
+      auto count = 0U;
+
+      bool use_left = true;
+      bool has_more = true;
+
+      std::lock_guard<std::mutex> lock(m_buckets_mutex);
+
+      auto bucket_index = getBucketIndexFor(id);
+      auto bucket = m_buckets.begin();
+      std::advance(bucket, bucket_index);
+      auto left = bucket;
+      auto right = (bucket != m_buckets.end()) ? bucket + 1 : bucket;
+
+      auto current_bucket = bucket;
+
+      while (has_more) {
+        has_more = false;
+        for (auto const &neighbor : *current_bucket) {
+          // Exclude the node
+          if (neighbor.getIdHash() != id) {
+            ++count;
+
+            neighbors.emplace_back(neighbor);
+            if (count == max_number) goto Done;
+          }
+        }
+
+        if (right == m_buckets.end()) use_left = true;
+        if (left != m_buckets.begin()) {
+          has_more = true;
+          if (use_left) {
+            --left;
+            current_bucket = left;
+            use_left = false;
+            continue;
+          }
+        }
+        if (right != m_buckets.end()) {
+          has_more = true;
+          current_bucket = right;
+          ++right;
+        }
+        use_left = true;
+      }
+      Done:
+
+      m_buckets_mutex.unlock();
+
+      return neighbors;
+    }
+
+  }  // namespace net_plugin
 }  // namespace gruut

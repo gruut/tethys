@@ -57,14 +57,15 @@ namespace appbase {
     template<typename Plugin>
     auto &find_or_register_plugin() {
       auto name = boost::core::demangle(typeid(Plugin).name());
+      auto ns_removed_name = name.substr(name.find_last_of(':') + 1);
 
-      auto plug_itr = app_plugins_map.find(name);
+      auto plug_itr = app_plugins_map.find(ns_removed_name);
       if (plug_itr != app_plugins_map.end()) {
         return *plug_itr->second.get();
       } else {
         register_plugin<Plugin>();
 
-        return *app_plugins_map[name];
+        return *app_plugins_map[ns_removed_name];
       }
     }
 
@@ -82,9 +83,11 @@ namespace appbase {
     template<typename Plugin>
     void register_plugin() {
       auto name = boost::core::demangle(typeid(Plugin).name());
-      auto[plugins_it, existing] = app_plugins_map.try_emplace(name, make_unique<Plugin>());
+      auto ns_removed_name = name.substr(name.find_last_of(':') + 1);
 
-      if (existing)
+      auto[plugins_it, not_existing] = app_plugins_map.try_emplace(ns_removed_name, make_shared<Plugin>());
+
+      if (!not_existing)
         return;
 
       plugins_it->second.get()->register_dependencies();

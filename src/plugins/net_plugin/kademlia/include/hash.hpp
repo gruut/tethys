@@ -22,7 +22,7 @@
 #include <botan-2/botan/hash.h>
 
  namespace gruut{
- namespace net{
+ namespace net_plugin{
 template <unsigned int BITS>
 class Hash {
   static_assert(BITS % 32 == 0, "Hash size in bits must be a multiple of 32");
@@ -242,5 +242,5 @@ using Hash512 = Hash<512>;  // 64 bytes
 using Hash256 = Hash<256>;  // 32 bytes
 using Hash160 = Hash<160>;  // 20 bytes
 
- } //namespace net
+ } //namespace net_plugin
  } //namespace gruut
