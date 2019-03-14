@@ -44,6 +44,10 @@ namespace appbase {
 
     void start();
 
+    void quit();
+
+    void shutdown();
+
     template<typename ChannelType>
     auto &getChannel() {
       auto key = type_index(typeid(ChannelType));

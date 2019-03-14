@@ -10,7 +10,7 @@
 #include "config/include/message.hpp"
 #include "config/include/network_type.hpp"
 
-#include "json.hpp"
+#include "../../../include/json.hpp"
 #include <unordered_map>
 
 namespace gruut {

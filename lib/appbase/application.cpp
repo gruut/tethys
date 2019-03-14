@@ -1,5 +1,7 @@
 #include <iostream>
 #include <boost/filesystem.hpp>
+#include <boost/asio/signal_set.hpp>
+
 #include <application.hpp>
 
 #include "include/application.hpp"
@@ -97,7 +99,41 @@ namespace appbase {
       running_plugin->start();
     }
 
+    shared_ptr<boost::asio::signal_set> sigint_set(new boost::asio::signal_set(*io_context_ptr, SIGINT));
+    sigint_set->async_wait([sigint_set,this](const boost::system::error_code& err, int num) {
+      logger::INFO("SIGINT Received: {}", err.message());
+      sigint_set->cancel();
+      quit();
+    });
+
+    shared_ptr<boost::asio::signal_set> sigterm_set(new boost::asio::signal_set(*io_context_ptr, SIGTERM));
+    sigterm_set->async_wait([sigterm_set,this](const boost::system::error_code& err, int num) {
+      logger::INFO("SIGTERM Received: {}", err.message());
+      sigterm_set->cancel();
+      quit();
+    });
+
+    shared_ptr<boost::asio::signal_set> sigpipe_set(new boost::asio::signal_set(*io_context_ptr, SIGPIPE));
+    sigpipe_set->async_wait([sigpipe_set,this](const boost::system::error_code& err, int num) {
+      logger::INFO("SIGPIPE Received: {}", err.message());
+      sigpipe_set->cancel();
+      quit();
+    });
+
     io_context_ptr->run();
+
+    shutdown();
+  }
+
+  void Application::quit() {
+    io_context_ptr->stop();
+  }
+
+  void Application::shutdown() {
+    logger::INFO("Application Shutdown");
+
+    initialized_plugins.clear();
+    io_context_ptr->reset();
   }
 
   Application &app() { return Application::instance(); }
