@@ -18,18 +18,18 @@ namespace gruut {
 
     NetPlugin();
 
+    ~NetPlugin() override;
+
     void plugin_initialize();
 
-    void plugin_start() {
-      logger::INFO("NetPlugin Startup");
-    }
+    void plugin_start();
 
     void plugin_shutdown() {
       logger::INFO("NetPlugin Shutdown");
     }
 
   private:
-    //std::unique_ptr<class NetPluginImpl> impl;
+    std::unique_ptr<class NetPluginImpl> impl;
     channels::temp_channel::channel_type::Handle temp_channel_handler;
   };
 }

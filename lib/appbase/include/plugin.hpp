@@ -57,7 +57,7 @@ namespace appbase {
     }
 
     void start() override {
-
+      static_cast<Impl *>(this)->plugin_start();
     }
 
     void shutdown() override {

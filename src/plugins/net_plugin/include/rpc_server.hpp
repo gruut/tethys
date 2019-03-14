@@ -7,36 +7,38 @@
 #include <string>
 
 namespace gruut {
-namespace net_plugin {
-class RpcServer {
-public:
-  RpcServer() = default;
-  ~RpcServer() {
-	m_server->Shutdown();
-	m_completion_queue->Shutdown();
-  }
+  namespace net_plugin {
+    class RpcServer {
+    public:
+      RpcServer() = default;
 
-  void setUp(std::shared_ptr<SignerConnTable> signer_conn_table,
-  			 std::shared_ptr<RoutingTable> routing_table,
-  			 std::shared_ptr<BroadcastMsgTable> broadcast_check_table);
+      ~RpcServer() {
+        m_server->Shutdown();
+        m_completion_queue->Shutdown();
+      }
 
-  void run(const std::string &port_num);
+      void setUp(std::shared_ptr<SignerConnTable> signer_conn_table,
+                 std::shared_ptr<RoutingTable> routing_table,
+                 std::shared_ptr<BroadcastMsgTable> broadcast_check_table);
 
-private:
-  std::shared_ptr<SignerConnTable> m_signer_conn_table;
-  std::shared_ptr<RoutingTable> m_routing_table;
-  std::shared_ptr<BroadcastMsgTable> m_broadcast_check_table;
+      void run(const std::string &port_num);
 
-  std::string m_port_num;
-  std::unique_ptr<Server> m_server;
-  std::unique_ptr<ServerCompletionQueue> m_completion_queue;
+    private:
+      std::shared_ptr<SignerConnTable> m_signer_conn_table;
+      std::shared_ptr<RoutingTable> m_routing_table;
+      std::shared_ptr<BroadcastMsgTable> m_broadcast_check_table;
 
-  GruutGeneralService::AsyncService m_general_service;
+      std::string m_port_num;
+      std::unique_ptr<Server> m_server;
+      std::unique_ptr<ServerCompletionQueue> m_completion_queue;
 
-  KademliaService::AsyncService m_kademlia_service;
+      GruutGeneralService::AsyncService m_general_service;
 
-  void initService();
-  void start();
-};
-} //namespace net_plugin
+      KademliaService::AsyncService m_kademlia_service;
+
+      void initService();
+
+      void start();
+    };
+  } //namespace net_plugin
 } //namespace gruut

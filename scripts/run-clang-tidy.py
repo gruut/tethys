@@ -254,7 +254,8 @@ def main():
     new_files = []
     for file_name in files:
         if (
-                not ("include" in file_name)
+                not ("catch.hpp" in file_name)
+                and not ("json.hpp" in file_name)
                 and not ("lib" in file_name)
                 and not (".pb" in file_name)
                 and not (".proto" in file_name)):

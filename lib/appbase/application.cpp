@@ -2,7 +2,6 @@
 #include <boost/filesystem.hpp>
 #include <application.hpp>
 
-
 #include "include/application.hpp"
 
 namespace appbase {
