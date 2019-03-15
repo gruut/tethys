@@ -10,6 +10,7 @@
 #include "../../../../lib/log/include/log.hpp"
 
 using namespace appbase;
+using namespace boost::program_options;
 
 namespace gruut {
   class NetPlugin : public Plugin<NetPlugin> {
@@ -20,7 +21,7 @@ namespace gruut {
 
     ~NetPlugin() override;
 
-    void pluginInitialize();
+    void pluginInitialize(const variables_map& options);
 
     void pluginStart();
 

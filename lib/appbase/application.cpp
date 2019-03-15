@@ -101,21 +101,21 @@ namespace appbase {
 
     shared_ptr<boost::asio::signal_set> sigint_set(new boost::asio::signal_set(*io_context_ptr, SIGINT));
     sigint_set->async_wait([sigint_set,this](const boost::system::error_code& err, int num) {
-      logger::INFO("SIGINT Received: {}", err.message());
+      logger::ERROR("SIGINT Received: {}", err.message());
       sigint_set->cancel();
       quit();
     });
 
     shared_ptr<boost::asio::signal_set> sigterm_set(new boost::asio::signal_set(*io_context_ptr, SIGTERM));
     sigterm_set->async_wait([sigterm_set,this](const boost::system::error_code& err, int num) {
-      logger::INFO("SIGTERM Received: {}", err.message());
+      logger::ERROR("SIGTERM Received: {}", err.message());
       sigterm_set->cancel();
       quit();
     });
 
     shared_ptr<boost::asio::signal_set> sigpipe_set(new boost::asio::signal_set(*io_context_ptr, SIGPIPE));
     sigpipe_set->async_wait([sigpipe_set,this](const boost::system::error_code& err, int num) {
-      logger::INFO("SIGPIPE Received: {}", err.message());
+      logger::ERROR("SIGPIPE Received: {}", err.message());
       sigpipe_set->cancel();
       quit();
     });

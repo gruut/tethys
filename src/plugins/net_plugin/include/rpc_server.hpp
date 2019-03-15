@@ -6,39 +6,33 @@
 #include "../config/include/network_type.hpp"
 #include <string>
 
+using namespace std;
+
 namespace gruut {
   namespace net_plugin {
     class RpcServer {
     public:
-      RpcServer() = default;
+      RpcServer(const string&, const string&);
 
       ~RpcServer() {
-        m_server->Shutdown();
-        m_completion_queue->Shutdown();
+        server->Shutdown();
+        completion_queue->Shutdown();
       }
 
-      void setUp(std::shared_ptr<SignerConnTable> signer_conn_table,
-                 std::shared_ptr<RoutingTable> routing_table,
-                 std::shared_ptr<BroadcastMsgTable> broadcast_check_table);
-
-      void run(const std::string &port_num);
-
-    private:
-      std::shared_ptr<SignerConnTable> m_signer_conn_table;
-      std::shared_ptr<RoutingTable> m_routing_table;
-      std::shared_ptr<BroadcastMsgTable> m_broadcast_check_table;
-
-      std::string m_port_num;
-      std::unique_ptr<Server> m_server;
-      std::unique_ptr<ServerCompletionQueue> m_completion_queue;
-
-      GruutGeneralService::AsyncService m_general_service;
-
-      KademliaService::AsyncService m_kademlia_service;
-
-      void initService();
-
       void start();
+    private:
+      void initialize();
+      void register_services();
+
+      string address;
+      string port_num;
+
+      unique_ptr<Server> server;
+      unique_ptr<ServerCompletionQueue> completion_queue;
+
+      GruutGeneralService::AsyncService general_service;
+
+      KademliaService::AsyncService kademlia_service;
     };
   } //namespace net_plugin
 } //namespace gruut
