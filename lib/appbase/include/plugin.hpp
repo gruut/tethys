@@ -16,6 +16,7 @@
 
 namespace appbase {
   using namespace std;
+  using namespace boost::program_options;
 
   class AbstractPlugin {
   public:
@@ -24,7 +25,7 @@ namespace appbase {
       initialized
     };
 
-    virtual void initialize() = 0;
+    virtual void initialize(const variables_map&) = 0;
 
     virtual void start() = 0;
 
@@ -46,13 +47,13 @@ namespace appbase {
       return name;
     }
 
-    void initialize() override {
+    void initialize(const variables_map& options) override {
       static_cast<Impl *>(this)->pluginRequires([&](auto &plugin) {
         if (plugin.getState() == plugin_state::registered)
-          plugin.initialize();
+          plugin.initialize(options);
       });
 
-      static_cast<Impl *>(this)->pluginInitialize();
+      static_cast<Impl *>(this)->pluginInitialize(options);
       static_cast<Impl *>(this)->state = plugin_state::initialized;
     }
 

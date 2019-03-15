@@ -37,7 +37,7 @@ namespace appbase {
 
         return initializeImpl();
       } catch (exception &e) {
-        logger::ERROR("Initialize failed");
+        logger::ERROR("Initialize failed: {}", e.what());
         return false;
       }
     }

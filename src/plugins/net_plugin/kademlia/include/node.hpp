@@ -6,8 +6,12 @@
 //   https://github.com/abdes/blocxxi
 #pragma once
 
+#include <memory>
 #include <chrono>
 #include <string>
+#include <grpcpp/channel.h>
+#include <grpc/impl/codegen/connectivity_state.h>
+
 #include "hash.hpp"
 #include "../../config/include/network_config.hpp"
 #include "../../config/include/network_type.hpp"
@@ -16,46 +20,15 @@ namespace gruut {
   namespace net_plugin {
     class Node {
     public:
-      Node() = default;
-
       Node(HashedIdType const &id_hash, IdType const &id, std::string const &ip_address,
            std::string const &port_number)
-              : m_id_hash{id_hash}, m_id{id}, m_endpoint{ip_address, port_number} {}
-
-      Node(HashedIdType const &id_hash, IdType const &id, IpEndpoint const &ep) : m_id_hash(id_hash), m_id(id),
-                                                                                  m_endpoint(ep) {}
-
-      Node(const Node &other) : m_id_hash(other.m_id_hash),
-                                m_id(other.m_id),
-                                m_endpoint(other.m_endpoint),
-                                m_failed_requests_count(other.m_failed_requests_count),
-                                m_last_seen_time(other.m_last_seen_time) {}
-
-      Node &operator=(Node const &rhs) {
-        using std::swap;
-        auto tmp(rhs);
-        swap(*this, tmp);
-        return *this;
+              : m_id_hash{id_hash}, m_id{id}, m_endpoint{ip_address, port_number} {
       }
 
-      Node(Node &&other) noexcept : m_id_hash(std::move(other.m_id_hash)),
-                                    m_id(std::move(other.m_id)),
-                                    m_endpoint(std::move(other.m_endpoint)),
-                                    m_failed_requests_count(other.m_failed_requests_count),
-                                    m_last_seen_time(other.m_last_seen_time) {
+      Node(HashedIdType const &id_hash, IdType const &id, std::string const &ip_address,
+           std::string const &port_number, std::shared_ptr<grpc::Channel> c)
+              : m_id_hash{id_hash}, m_id{id}, m_endpoint{ip_address, port_number}, m_channel_ptr(c) {
       }
-
-      Node &operator=(Node &&rhs) noexcept {
-        if (this != &rhs) {
-          m_id_hash = std::move(rhs.m_id_hash);
-          m_endpoint = std::move(rhs.m_endpoint);
-          m_failed_requests_count = rhs.m_failed_requests_count;
-          m_last_seen_time = rhs.m_last_seen_time;
-        }
-        return *this;
-      }
-
-      ~Node() = default;
 
       friend bool operator==(Node &lhs, Node &rhs) {
         return (lhs.getIdHash() == rhs.getIdHash()) && (lhs.getEndpoint() == rhs.getEndpoint());
@@ -80,6 +53,10 @@ namespace gruut {
                > NODE_INACTIVE_TIME_BEFORE_QUESTIONABLE;
       }
 
+      bool isAlive() const {
+        return (m_channel_ptr != nullptr) && (m_channel_ptr->GetState(false) == grpc_connectivity_state::GRPC_CHANNEL_CONNECTING);
+      }
+
       HashedIdType distanceTo(Node const &node) const { return distanceTo(node.getIdHash()); }
 
       HashedIdType distanceTo(Hash160 const &hash) const {
@@ -98,6 +75,7 @@ namespace gruut {
       IdType m_id;
       HashedIdType m_id_hash;
       IpEndpoint m_endpoint;
+      std::shared_ptr<grpc::Channel> m_channel_ptr;
 
       int m_failed_requests_count{0};
 

@@ -38,4 +38,4 @@ install(TARGETS
         )
 install_directory_permissions(DIRECTORY ${GRUUT_INSTALL_DIR})
 
-add_subdirectory(examples)
+#add_subdirectory(examples)

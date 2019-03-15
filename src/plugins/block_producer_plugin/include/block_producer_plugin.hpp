@@ -17,12 +17,12 @@ namespace gruut {
 
     BlockProducerPlugin() : temp_channel(app().getChannel<channels::temp_channel::channel_type>()) {}
 
-    void pluginInitialize() {
+    void pluginInitialize(const boost::program_options::variables_map& options) {
       logger::INFO("BlockProducerPlugin Initialize");
     }
 
     void pluginStart() {
-      logger::INFO("BlockProducerPlugin Startup");
+      logger::INFO("BlockProducerPlugin Start");
 
       TempData d;
       temp_channel.publish(d);

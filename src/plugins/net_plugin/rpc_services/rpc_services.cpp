@@ -1,5 +1,4 @@
 #include "include/rpc_services.hpp"
-#include "../include/rpc_client.hpp"
 
 #include <exception>
 #include <thread>
@@ -79,15 +78,16 @@ namespace gruut {
 
                 m_broadcast_check_table->insert({msg_id, now});
 
-                std::vector<IpEndpoint> node_addr_list;
-                //selecting random node in each kBuckets
-                for (auto bucket = m_routing_table->begin(); bucket != m_routing_table->end(); bucket++) {
-                  auto &node = bucket->selectRandomNode();
-                  node_addr_list.push_back(node.getEndpoint());
-                }
-
-                RpcClient sender;
-                sender.sendToMerger(node_addr_list, packed_msg, m_request.message_id(), true);
+                // TODO: Not used code.
+                //std::vector<IpEndpoint> node_addr_list;
+                ////selecting random node in each kBuckets
+                //for (auto bucket = m_routing_table->begin(); bucket != m_routing_table->end(); bucket++) {
+                //  auto &node = bucket->selectRandomNode();
+                //  node_addr_list.push_back(node.getEndpoint());
+                //}
+                //
+                //RpcClient sender;
+                //sender.sendToMerger(node_addr_list, packed_msg, m_request.message_id(), true);
               }
             }
 

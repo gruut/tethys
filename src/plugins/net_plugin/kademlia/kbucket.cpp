@@ -8,6 +8,7 @@
 #include <random>
 
 #include <boost/multiprecision/cpp_int.hpp>
+#include <vector>
 #include "include/kbucket.hpp"
 
 namespace gruut {
@@ -129,17 +130,13 @@ namespace gruut {
       }
     };
 
-    Node &KBucket::selectRandomNode() {
-      auto node_iter = m_nodes.begin();
-      std::random_device rd;
-      std::mt19937 rng(
-              rd());
-      std::uniform_int_distribution<std::size_t> uni(
-              0, m_nodes.size() - 1);
+    std::vector<Node> KBucket::selectAliveNodes() {
+      std::vector<Node> alive_nodes = {};
+      std::copy_if(m_nodes.begin(), m_nodes.end(), std::back_inserter(alive_nodes), [](auto &n) {
+        return n.isAlive();
+      });
 
-      auto random_index = uni(rng);
-      std::advance(node_iter, random_index);
-      return *node_iter;
+      return alive_nodes;
     }
 
     bool KBucket::empty() const { return m_nodes.empty(); }

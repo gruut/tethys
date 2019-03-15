@@ -42,6 +42,8 @@ namespace appbase {
     app_cfg_opts.add_options()
             ("plugin", po::value<vector<string>>()->composing(),
              "You can specify multiple times.");
+    app_cfg_opts.add_options()
+            ("p2p-address", po::value<string>()->composing());
 
     app_cli_opts.add_options()
             ("config-path,c", po::value<string>()->default_value("config.ini"),
@@ -88,7 +90,7 @@ namespace appbase {
     for_each(begin(plugin_names), end(plugin_names), [this](const string &plugin_name) {
       auto it = app_plugins_map.find(plugin_name);
       if (it != app_plugins_map.end()) {
-        it->second->initialize();
+        it->second->initialize(program_options->options_map);
         initialized_plugins.push_back(it->second);
       }
     });
@@ -101,21 +103,21 @@ namespace appbase {
 
     shared_ptr<boost::asio::signal_set> sigint_set(new boost::asio::signal_set(*io_context_ptr, SIGINT));
     sigint_set->async_wait([sigint_set,this](const boost::system::error_code& err, int num) {
-      logger::INFO("SIGINT Received: {}", err.message());
+      logger::ERROR("SIGINT Received: {}", err.message());
       sigint_set->cancel();
       quit();
     });
 
     shared_ptr<boost::asio::signal_set> sigterm_set(new boost::asio::signal_set(*io_context_ptr, SIGTERM));
     sigterm_set->async_wait([sigterm_set,this](const boost::system::error_code& err, int num) {
-      logger::INFO("SIGTERM Received: {}", err.message());
+      logger::ERROR("SIGTERM Received: {}", err.message());
       sigterm_set->cancel();
       quit();
     });
 
     shared_ptr<boost::asio::signal_set> sigpipe_set(new boost::asio::signal_set(*io_context_ptr, SIGPIPE));
     sigpipe_set->async_wait([sigpipe_set,this](const boost::system::error_code& err, int num) {
-      logger::INFO("SIGPIPE Received: {}", err.message());
+      logger::ERROR("SIGPIPE Received: {}", err.message());
       sigpipe_set->cancel();
       quit();
     });

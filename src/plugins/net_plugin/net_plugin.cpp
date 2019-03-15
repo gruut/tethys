@@ -1,154 +1,171 @@
 #include "include/net_plugin.hpp"
-#include "include/rpc_client.hpp"
-#include "include/rpc_server.hpp"
-#include "include/signer_conn_manager.hpp"
-#include "kademlia/include/hash.hpp"
-#include "kademlia/include/node.hpp"
-#include "kademlia/include/routing.hpp"
-#include "rpc_services/include/rpc_services.hpp"
 #include "config/include/network_config.hpp"
-#include "config/include/message.hpp"
-#include "config/include/network_type.hpp"
-
+#include "rpc_services/include/rpc_services.hpp"
 #include "../../../include/json.hpp"
 #include <unordered_map>
+#include <future>
+#include <boost/asio/steady_timer.hpp>
 
 namespace gruut {
   using namespace std;
   using namespace nlohmann;
   using namespace net_plugin;
 
+  const auto CONNECTION_CHECK_PERIOD = std::chrono::seconds(30);
+
   class NetPluginImpl {
   public:
-    NetPluginImpl() : signer_conn_table(make_shared<SignerConnTable>()),
-                      broadcast_check_table(make_shared<BroadcastMsgTable>()) {
-      // TODO : 자신의 ID를 인증서버로 부터 받아 올 수 있을 떄 수정 될 것.
-      Node my_node(Hash<160>::sha1(MY_ID), MY_ID, IP_ADDRESS, DEFAULT_PORT_NUM);
-      routing_table = make_shared<RoutingTable>(my_node, KBUCKET_SIZE);
-    }
+    GruutGeneralService::AsyncService general_service;
+    KademliaService::AsyncService kademlia_service;
 
-    NetPluginImpl(NetPluginImpl const &) = delete;
+    string p2p_address;
 
-    NetPluginImpl &operator=(NetPluginImpl &) = delete;
+    unique_ptr<Server> server;
+    unique_ptr<ServerCompletionQueue> completion_queue;
 
-    NetPluginImpl(NetPluginImpl &&) = default;
-
-    NetPluginImpl &operator=(NetPluginImpl &&) = default;
-
-    ~NetPluginImpl() = default;
-
-    void setUp() {
-      rpc_server.setUp(signer_conn_table, routing_table, broadcast_check_table);
-      rpc_client.setUp(broadcast_check_table);
-    }
-
-    void run() {
-      rpc_server.run(DEFAULT_PORT_NUM);
-    }
-
-  private:
     shared_ptr<SignerConnTable> signer_conn_table;
     shared_ptr<RoutingTable> routing_table;
     shared_ptr<BroadcastMsgTable> broadcast_check_table;
 
-    RpcClient rpc_client;
-    RpcServer rpc_server;
+    unique_ptr<boost::asio::steady_timer> connection_check_timer;
 
-    void pingTask(const Node &node) {
-      auto endpoint = node.getEndpoint();
-      PongData pong = rpc_client.pingReq(endpoint.address, endpoint.port);
-      if (!pong.status.ok()) {
-        bool evicted = routing_table->peerTimedOut(node);
-        if (!evicted)
-          pingTask(node);
-      }
+    ~NetPluginImpl() {
+      server->Shutdown();
+      completion_queue->Shutdown();
     }
 
-    void findNeighborsTask(const IdType &id, const HashedIdType &hashed_id) {
-      auto target_list = routing_table->findNeighbors(hashed_id, PARALLELISM_ALPHA);
+    void initialize() {
+      initializeReceiver();
+      registerServicesInReceiver();
 
-      for (auto &target : target_list) {
-        auto endpoint = target.getEndpoint();
+      connection_check_timer = make_unique<boost::asio::steady_timer>(app().getIoContext());
+    }
 
-        NeighborsData recv_data = rpc_client.findNodeReq(endpoint.address, endpoint.port, id);
-        if (!recv_data.status.ok()) {
-          bool evicted = routing_table->peerTimedOut(target);
-          if (!evicted)
-            findNeighborsTask(id, hashed_id);
-          else
-            return;
+    void initializeReceiver() {
+      ServerBuilder builder;
+
+      builder.AddListeningPort(p2p_address, grpc::InsecureServerCredentials());
+      builder.RegisterService(&general_service);
+      builder.RegisterService(&kademlia_service);
+
+      completion_queue = builder.AddCompletionQueue();
+      server = builder.BuildAndStart();
+      logger::INFO("Rpc Server listening on {}", p2p_address);
+    }
+
+    void registerServicesInReceiver() {
+      auto address = p2p_address.substr(0, p2p_address.find_first_of(':'));
+      auto port = p2p_address.substr(p2p_address.find_last_of(':') + 1);
+
+      Node my_node(Hash<160>::sha1(MY_ID), MY_ID, address, port);
+      routing_table = make_shared<RoutingTable>(my_node, KBUCKET_SIZE);
+
+      signer_conn_table = make_shared<SignerConnTable>();
+      broadcast_check_table = make_shared<BroadcastMsgTable>();
+
+      new OpenChannel(&general_service, completion_queue.get(), signer_conn_table);
+      new GeneralService(&general_service, completion_queue.get(), routing_table, broadcast_check_table);
+
+      new FindNode(&kademlia_service, completion_queue.get(), routing_table);
+      new PingPong(&kademlia_service, completion_queue.get(), routing_table);
+    }
+
+    void start() {
+      startConnectionMonitors();
+    }
+
+    void startConnectionMonitors() {
+      connection_check_timer->expires_from_now(CONNECTION_CHECK_PERIOD);
+      connection_check_timer->async_wait([this](boost::system::error_code ec) {
+        if (!ec) {
+          refreshBuckets();
         } else {
-          for (auto node : recv_data.neighbors) {
-            routing_table->addPeer(move(node));
-          }
+          logger::ERROR("Error from connection_check_timer: {}", ec.message());
+          startConnectionMonitors();
         }
-      }
+      });
     }
 
     void refreshBuckets() {
-      for (auto bucket = routing_table->begin(); bucket != routing_table->end(); bucket++) {
-        auto since_last_update = bucket->timeSinceLastUpdated();
+      logger::INFO("Start to refresh buckets");
 
-        if (since_last_update > BUCKET_INACTIVE_TIME_BEFORE_REFRESH) {
-          if (!bucket->empty()) {
-            const auto &node = bucket->selectRandomNode();
-            const auto &id = node.getId();
-            const auto &hashed_id = node.getIdHash();
+      for (auto &bucket : *routing_table) {
+        if (!bucket.empty()) {
+          auto nodes = bucket.selectAliveNodes();
 
-            findNeighborsTask(id, hashed_id);
+          async(launch::async, &NetPluginImpl::findNeighbors, this, nodes);
+        }
+      }
+
+      startConnectionMonitors();
+    }
+
+    void findNeighbors(vector<Node> nodes) {
+      for (auto &node : nodes) {
+        auto endpoint = node.getEndpoint();
+
+        NeighborsData recv_data = queryNeighborNodes(endpoint.address, endpoint.port, node.getId());
+        if (!recv_data.status.ok()) {
+          bool evicted = routing_table->peerTimedOut(node);
+          // TODO: Should fix peerTimedOut bug.
+          return;
+        } else {
+          for (auto &neighbor : recv_data.neighbors) {
+            routing_table->addPeer(move(neighbor));
           }
         }
       }
     }
 
-    void scheduleRefreshBuckets() {
-      static auto bucket_index = 0U;
-      auto bucket = routing_table->cbegin();
-
-      if (bucket_index < routing_table->bucketsCount()) {
-        advance(bucket, bucket_index);
-        if (!bucket->empty()) {
-          const auto &least_recent_node = bucket->leastRecentlySeenNode();
-          pingTask(least_recent_node);
-        }
-        ++bucket_index;
-      } else {
-        bucket_index = 0;
-      }
-
-      refreshBuckets();
+    template<typename TStub, typename TService>
+    unique_ptr<TStub> genStub(shared_ptr<grpc::Channel> channel) {
+      return TService::NewStub(channel);
     }
 
-    void refreshBroadcastTable() {
-      //TODO: gruut util의  Time객체 이용할 것.
-      uint64_t now = static_cast<uint64_t>(
-              std::chrono::duration_cast<std::chrono::seconds>(
-                      std::chrono::system_clock::now().time_since_epoch())
-                      .count());
+    NeighborsData
+    queryNeighborNodes(const string &receiver_addr, const string &receiver_port, const IdType &target_id) {
+      auto channel = CreateChannel(receiver_addr + ":" + receiver_port, InsecureChannelCredentials());
+      auto stub = genStub<KademliaService::Stub, KademliaService>(channel);
 
-      for (auto it = broadcast_check_table->cbegin(); it != broadcast_check_table->cend();) {
-        if (abs((int) (now - it->second)) > KEEP_BROADCAST_MSG_TIME) {
-          it = broadcast_check_table->erase(it);
-        } else {
-          ++it;
-        }
+      Target target;
+      target.set_target_id(target_id);
+      target.set_sender_id(MY_ID);
+      target.set_sender_address(receiver_addr);
+      target.set_sender_port(receiver_port);
+      target.set_time_stamp(0);
+
+      ClientContext context;
+      Neighbors neighbors;
+      grpc::Status status = stub->FindNode(&context, target, &neighbors);
+
+      vector<Node> neighbor_list;
+      for (int i = 0; i < neighbors.neighbors_size(); i++) {
+        const auto &node = neighbors.neighbors(i);
+        neighbor_list.emplace_back(Node(Hash<160>::sha1(node.node_id()), node.node_id(), node.address(), node.port(), channel));
       }
+
+      return NeighborsData{neighbor_list, neighbors.time_stamp(), status};
     }
   };
 
   NetPlugin::NetPlugin() : impl(new NetPluginImpl()) {}
 
-  void NetPlugin::pluginInitialize() {
+  void NetPlugin::pluginInitialize(const variables_map &options) {
     logger::INFO("NetPlugin Initialize");
 
-    temp_channel_handler = app().getChannel<channels::temp_channel::channel_type>().subscribe(
-            [](TempData d) { cout << "NetPlugin handler" << endl; });
+    if (options.count("p2p-address") > 0) {
+      auto address = options["p2p-address"].as<string>();
+
+      impl->p2p_address = address;
+    }
+
+    impl->initialize();
   }
 
   void NetPlugin::pluginStart() {
-    logger::INFO("NetPlugin Startup");
+    logger::INFO("NetPlugin Start");
 
-    impl->setUp();
+    impl->start();
   }
 
   NetPlugin::~NetPlugin() {

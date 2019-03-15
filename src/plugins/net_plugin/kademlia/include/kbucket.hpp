@@ -103,7 +103,7 @@ public:
 
   Node const &leastRecentlySeenNode() const { return m_nodes.front(); }
 
-  Node &selectRandomNode();
+	std::vector<Node> selectAliveNodes();
 
   bool addNode(Node &&node);
 
@@ -134,6 +134,7 @@ private:
   mutable std::chrono::steady_clock::time_point m_last_updated;
 
   void touchLastUpdated() const;
+
 };
 
 std::ostream &operator<<(std::ostream &out, KBucket const &kb);
