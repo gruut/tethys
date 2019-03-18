@@ -64,9 +64,9 @@ if [[ ${ARCH} == "Linux" ]]; then
                 cmake -DSPDLOG_BUILD_EXAMPLES=OFF \
                       -DSPDLOG_BUILD_BENCH=OFF \
                       -DSPDLOG_BUILD_TESTS=OFF \
-                      -DCMAKE_BUILD_TYPE=Release
+                      -DCMAKE_BUILD_TYPE=Release .
                 make
-                make install
+                sudo make install
             fi
         ;;
     esac
