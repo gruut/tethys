@@ -54,7 +54,10 @@ namespace gruut {
       }
 
       bool isAlive() const {
-        return (m_channel_ptr != nullptr) && (m_channel_ptr->GetState(false) == grpc_connectivity_state::GRPC_CHANNEL_CONNECTING);
+        auto channel_stat = m_channel_ptr->GetState(false);
+        return (m_channel_ptr != nullptr) &&
+        (channel_stat != grpc_connectivity_state::GRPC_CHANNEL_TRANSIENT_FAILURE) &&
+            (channel_stat != grpc_connectivity_state::GRPC_CHANNEL_SHUTDOWN);
       }
 
       HashedIdType distanceTo(Node const &node) const { return distanceTo(node.getIdHash()); }
