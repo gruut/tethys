@@ -68,7 +68,6 @@ namespace gruut {
       auto bucket = m_buckets.begin();
       std::advance(bucket, bucket_index);
 
-
       bool check = bucket->addNode(std::move(peer));
 
       m_buckets_mutex.unlock();
@@ -130,7 +129,6 @@ namespace gruut {
               m_buckets_mutex.unlock();
               return true;
             } else {
-              bn->initFailuresCount();
               return false;
             }
           }
