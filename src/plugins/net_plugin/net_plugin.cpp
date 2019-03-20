@@ -22,6 +22,8 @@ namespace gruut {
     string p2p_address;
     string tracker_address;
 
+    vector<string> peer_addr_list;
+
     unique_ptr<Server> server;
     unique_ptr<ServerCompletionQueue> completion_queue;
 
@@ -86,7 +88,14 @@ namespace gruut {
         HttpClient http_client(addr, port);
 
         auto res = http_client.get("/announce", "port=" + my_port);
-        logger::INFO("Get a response from a tracker : {}", res);
+        if(!res.empty()) {
+          logger::INFO("Get a response from a tracker : {}", res);
+          auto peers = json::parse(res);
+
+          for(auto peer : peers) {
+            peer_addr_list.push_back(peer);
+          }
+        }
       }
     }
 
