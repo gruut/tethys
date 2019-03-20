@@ -70,6 +70,7 @@ namespace gruut {
           return;
         auto credential = grpc::InsecureChannelCredentials();
         m_channel_ptr = grpc::CreateChannel(m_endpoint.address + ":" + m_endpoint.port, credential);
+        m_channel_ptr->GetState(true);
       }
 
       void incFailuresCount() { ++m_failed_requests_count; }
