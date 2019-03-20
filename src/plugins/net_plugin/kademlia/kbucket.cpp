@@ -142,6 +142,11 @@ namespace gruut {
       return alive_nodes;
     }
 
+    void KBucket::removeDeadNodes() {
+      m_nodes.erase(std::remove_if(m_nodes.begin(), m_nodes.end(),[](auto &n){ return !n.isAlive(); }),
+          m_nodes.end());
+    }
+
     bool KBucket::empty() const { return m_nodes.empty(); }
 
     bool KBucket::full() const { return m_nodes.size() == m_ksize; }

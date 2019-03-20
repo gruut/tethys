@@ -91,6 +91,7 @@ namespace gruut {
 
       for (auto &bucket : *routing_table) {
         if (!bucket.empty()) {
+          bucket.removeDeadNodes();
           auto nodes = bucket.selectAliveNodes();
 
           async(launch::async, &NetPluginImpl::findNeighbors, this, nodes);

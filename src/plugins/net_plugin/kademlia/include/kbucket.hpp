@@ -96,14 +96,14 @@ public:
   std::string sharedPrefix() const {
 	return m_prefix.to_string().substr(0, m_prefix_size);
   }
-  //@}
-
 
   Node &sendConvRequest() { return m_nodes.front(); }
 
   Node const &leastRecentlySeenNode() const { return m_nodes.front(); }
 
-	std::vector<Node> selectAliveNodes();
+  std::vector<Node> selectAliveNodes();
+
+  void removeDeadNodes();
 
   bool addNode(Node &&node);
 
