@@ -56,10 +56,10 @@ namespace gruut {
     bool RoutingTable::addPeer(Node &&peer) {
 
       if (m_my_node == peer) {
-
         return true;
       }
 
+      peer.initFailuresCount();
       m_node_table[peer.getId()] = peer.getEndpoint();
 
       std::lock_guard<std::mutex> lock(m_buckets_mutex);
