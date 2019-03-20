@@ -28,9 +28,11 @@ namespace gruut {
               [&node](Node &bucket_node) { return (bucket_node == node); });
       if (found != m_nodes.end()) {
         m_nodes.erase(found);
+
+        node.openChannel();
         m_nodes.emplace_back(std::move(node));
       } else if (!full()) {
-
+        node.openChannel();
         m_nodes.emplace_back(std::move(node));
       } else {
 
@@ -70,6 +72,7 @@ namespace gruut {
 
       if (!m_replacement_nodes.empty()) {
 
+        m_replacement_nodes.back().openChannel();
         m_nodes.emplace_back(std::move(m_replacement_nodes.back()));
         m_replacement_nodes.pop_back();
       }

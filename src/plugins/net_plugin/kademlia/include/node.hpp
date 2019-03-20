@@ -9,6 +9,7 @@
 #include <memory>
 #include <chrono>
 #include <string>
+#include <grpcpp/grpcpp.h>
 #include <grpcpp/channel.h>
 #include <grpc/impl/codegen/connectivity_state.h>
 
@@ -54,7 +55,8 @@ namespace gruut {
       }
 
       bool isAlive() const {
-        return (m_channel_ptr != nullptr) && (m_channel_ptr->GetState(false) == grpc_connectivity_state::GRPC_CHANNEL_CONNECTING);
+        auto channel_stat = m_channel_ptr->GetState(false);
+        return (m_channel_ptr != nullptr) && (channel_stat == grpc_connectivity_state::GRPC_CHANNEL_READY);
       }
 
       HashedIdType distanceTo(Node const &node) const { return distanceTo(node.getIdHash()); }
@@ -63,7 +65,16 @@ namespace gruut {
         return m_id_hash ^ hash;
       }
 
+      void openChannel() {
+        if(m_channel_ptr != nullptr)
+          return;
+        auto credential = grpc::InsecureChannelCredentials();
+        m_channel_ptr = grpc::CreateChannel(m_endpoint.address + ":" + m_endpoint.port, credential);
+      }
+
       void incFailuresCount() { ++m_failed_requests_count; }
+
+      std::shared_ptr<grpc::Channel> getChannelPtr() { return m_channel_ptr; }
 
       HashedIdType &getIdHash() { return m_id_hash; }
 

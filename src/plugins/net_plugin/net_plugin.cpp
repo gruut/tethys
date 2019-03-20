@@ -104,13 +104,15 @@ namespace gruut {
       for (auto &node : nodes) {
         auto endpoint = node.getEndpoint();
 
-        NeighborsData recv_data = queryNeighborNodes(endpoint.address, endpoint.port, node.getId());
+        NeighborsData recv_data = queryNeighborNodes(endpoint.address, endpoint.port, node.getId(), node.getChannelPtr());
         if (!recv_data.status.ok()) {
           bool evicted = routing_table->peerTimedOut(node);
-          // TODO: Should fix peerTimedOut bug.
-          return;
+          if(!evicted) {
+            queryNeighborNodes(endpoint.address, endpoint.port, node.getId(), node.getChannelPtr());
+          }
         } else {
           for (auto &neighbor : recv_data.neighbors) {
+            neighbor.initFailuresCount();
             routing_table->addPeer(move(neighbor));
           }
         }
@@ -123,8 +125,7 @@ namespace gruut {
     }
 
     NeighborsData
-    queryNeighborNodes(const string &receiver_addr, const string &receiver_port, const IdType &target_id) {
-      auto channel = CreateChannel(receiver_addr + ":" + receiver_port, InsecureChannelCredentials());
+    queryNeighborNodes(const string &receiver_addr, const string &receiver_port, const IdType &target_id, std::shared_ptr<grpc::Channel> channel) {
       auto stub = genStub<KademliaService::Stub, KademliaService>(channel);
 
       Target target;
@@ -141,7 +142,7 @@ namespace gruut {
       vector<Node> neighbor_list;
       for (int i = 0; i < neighbors.neighbors_size(); i++) {
         const auto &node = neighbors.neighbors(i);
-        neighbor_list.emplace_back(Node(Hash<160>::sha1(node.node_id()), node.node_id(), node.address(), node.port(), channel));
+        neighbor_list.emplace_back(Node(Hash<160>::sha1(node.node_id()), node.node_id(), node.address(), node.port()));
       }
 
       return NeighborsData{neighbor_list, neighbors.time_stamp(), status};
