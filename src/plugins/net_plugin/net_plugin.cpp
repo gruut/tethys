@@ -112,7 +112,6 @@ namespace gruut {
           }
         } else {
           for (auto &neighbor : recv_data.neighbors) {
-            neighbor.initFailuresCount();
             routing_table->addPeer(move(neighbor));
           }
         }
