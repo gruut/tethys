@@ -1,4 +1,5 @@
 #include "include/net_plugin.hpp"
+#include "include/http_client.hpp"
 #include "config/include/network_config.hpp"
 #include "rpc_services/include/rpc_services.hpp"
 #include "../../../include/json.hpp"
@@ -19,6 +20,7 @@ namespace gruut {
     KademliaService::AsyncService kademlia_service;
 
     string p2p_address;
+    string tracker_address;
 
     unique_ptr<Server> server;
     unique_ptr<ServerCompletionQueue> completion_queue;
@@ -54,10 +56,9 @@ namespace gruut {
     }
 
     void registerServicesInReceiver() {
-      auto address = p2p_address.substr(0, p2p_address.find_first_of(':'));
-      auto port = p2p_address.substr(p2p_address.find_last_of(':') + 1);
+      auto [host, port] = getHostAndPort(p2p_address);
 
-      Node my_node(Hash<160>::sha1(MY_ID), MY_ID, address, port);
+      Node my_node(Hash<160>::sha1(MY_ID), MY_ID, host, port);
       routing_table = make_shared<RoutingTable>(my_node, KBUCKET_SIZE);
 
       signer_conn_table = make_shared<SignerConnTable>();
@@ -71,7 +72,22 @@ namespace gruut {
     }
 
     void start() {
+      getPeersFromTracker();
       startConnectionMonitors();
+    }
+
+    void getPeersFromTracker() {
+      if(!tracker_address.empty()) {
+        logger::INFO("Start to get peers list from tracker");
+
+        auto [addr, port] = getHostAndPort(tracker_address);
+        auto [_, my_port] = getHostAndPort(p2p_address);
+
+        HttpClient http_client(addr, port);
+
+        auto res = http_client.get("/announce", "port=" + my_port);
+        logger::INFO("Get a response from a tracker : {}", res);
+      }
     }
 
     void startConnectionMonitors() {
@@ -146,6 +162,13 @@ namespace gruut {
 
       return NeighborsData{neighbor_list, neighbors.time_stamp(), status};
     }
+
+    pair<string, string> getHostAndPort(const string addr) {
+      auto host = addr.substr(0, addr.find_first_of(':'));
+      auto port = addr.substr(addr.find_last_of(':') + 1);
+
+      return pair<string, string>(host, port);
+    }
   };
 
   NetPlugin::NetPlugin() : impl(new NetPluginImpl()) {}
@@ -157,6 +180,12 @@ namespace gruut {
       auto address = options["p2p-address"].as<string>();
 
       impl->p2p_address = address;
+    }
+
+    if(options.count("tracker-address")) {
+      auto tracker_address = options["tracker-address"].as<string>();
+
+      impl->tracker_address = tracker_address;
     }
 
     impl->initialize();

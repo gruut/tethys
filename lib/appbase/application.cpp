@@ -44,6 +44,8 @@ namespace appbase {
              "You can specify multiple times.");
     app_cfg_opts.add_options()
             ("p2p-address", po::value<string>()->composing());
+    app_cfg_opts.add_options()
+            ("tracker-address", po::value<string>()->composing());
 
     app_cli_opts.add_options()
             ("config-path,c", po::value<string>()->default_value("config.ini"),
