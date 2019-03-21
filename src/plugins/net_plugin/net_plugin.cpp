@@ -2,14 +2,13 @@
 #include "include/http_client.hpp"
 #include "config/include/network_config.hpp"
 #include "rpc_services/include/rpc_services.hpp"
-#include "../../../include/json.hpp"
+#include "../../../lib/json/include/json.hpp"
 #include <unordered_map>
 #include <future>
 #include <boost/asio/steady_timer.hpp>
 
 namespace gruut {
   using namespace std;
-  using namespace nlohmann;
   using namespace net_plugin;
 
   const auto CONNECTION_CHECK_PERIOD = std::chrono::seconds(30);
@@ -92,8 +91,10 @@ namespace gruut {
           logger::INFO("Get a response from a tracker : {}", res);
           auto peers = json::parse(res);
 
-          for(auto peer : peers) {
-            peer_addr_list.push_back(peer);
+          if(!json::is_empty(peers)) {
+            for(auto peer : peers) {
+              peer_addr_list.push_back(peer);
+            }
           }
         }
       }
