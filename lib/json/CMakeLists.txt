@@ -6,10 +6,11 @@ list(APPEND CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/CMakeModules")
 include(InstallDirectoryPermissions)
 
 file(GLOB HEADERS "include/*.hpp")
+file(GLOB SOURCES "*.cpp")
 
 add_library(json
         ${HEADERS}
-        json.cpp
+        ${SOURCES}
         )
 
 set_target_properties(json PROPERTIES PUBLIC_HEADER "${HEADERS}" LINKER_LANGUAGE CXX)
