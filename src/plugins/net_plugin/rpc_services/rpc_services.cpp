@@ -1,5 +1,9 @@
 #include "include/rpc_services.hpp"
 
+#include "application.hpp"
+#include "channel_interface.hpp"
+#include "../include/msg_handler.hpp"
+
 #include <exception>
 #include <thread>
 #include <future>
@@ -7,6 +11,8 @@
 
 namespace gruut {
   namespace net_plugin {
+
+  using namespace appbase;
 
     void OpenChannel::proceed() {
 
@@ -78,22 +84,15 @@ namespace gruut {
 
                 m_broadcast_check_table->insert({msg_id, now});
 
-                // TODO: Not used code.
-                //std::vector<IpEndpoint> node_addr_list;
-                ////selecting random node in each kBuckets
-                //for (auto bucket = m_routing_table->begin(); bucket != m_routing_table->end(); bucket++) {
-                //  auto &node = bucket->selectRandomNode();
-                //  node_addr_list.push_back(node.getEndpoint());
-                //}
-                //
-                //RpcClient sender;
-                //sender.sendToMerger(node_addr_list, packed_msg, m_request.message_id(), true);
+                // TODO: select random nodes from routing table and then forward msg
               }
             }
+            grpc::Status rpc_status;
+            MessageHandler msg_handler;
+            auto input_data = msg_handler.unpackMsg(packed_msg, rpc_status);
 
-            //TODO: MessageHandler handle message
-            //MessageHandler의 처리 상황에 따라 Status값 바뀔 것.
-            rpc_status = Status::OK;
+            auto &in_msg_channel = app().getChannel<channels::in_msg_channel::channel_type>();
+            in_msg_channel.publish(input_data);
 
             if (rpc_status.ok()) {
               m_reply.set_status(grpc_general::MsgStatus_Status_SUCCESS); // SUCCESS

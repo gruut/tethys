@@ -31,6 +31,7 @@ namespace gruut {
 
   private:
     std::unique_ptr<class NetPluginImpl> impl;
-    channels::temp_channel::channel_type::Handle temp_channel_handler;
+    //TODO : 다른 모듈로부터 받은 메시지 처리 필요.
+    channels::out_msg_channel::channel_type::Handle out_msg_channel_handler;
   };
 }
