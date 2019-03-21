@@ -1,0 +1,3 @@
+[submodule "src/gruut-utils"]
+	path = src/gruut-utils
+	url = https://github.com/gruut/gruut-utils.git

@@ -38,13 +38,22 @@ namespace gruut {
     }
 
     void initialize() {
-      initializeReceiver();
-      registerServicesInReceiver();
+      initializeServer();
+      initializeRoutingTable();
+      registerServices();
 
       connection_check_timer = make_unique<boost::asio::steady_timer>(app().getIoContext());
     }
 
-    void initializeReceiver() {
+    void initializeRoutingTable() {
+      auto [host, port] = getHostAndPort(p2p_address);
+
+      auto id = p2p_address;
+      Node my_node(Hash<160>::sha1(id), id, host, port);
+      routing_table = make_shared<RoutingTable>(my_node, KBUCKET_SIZE);
+    }
+
+    void initializeServer() {
       ServerBuilder builder;
 
       builder.AddListeningPort(p2p_address, grpc::InsecureServerCredentials());
@@ -53,15 +62,11 @@ namespace gruut {
 
       completion_queue = builder.AddCompletionQueue();
       server = builder.BuildAndStart();
+
       logger::INFO("Rpc Server listening on {}", p2p_address);
     }
 
-    void registerServicesInReceiver() {
-      auto [host, port] = getHostAndPort(p2p_address);
-
-      Node my_node(Hash<160>::sha1(MY_ID), MY_ID, host, port);
-      routing_table = make_shared<RoutingTable>(my_node, KBUCKET_SIZE);
-
+    void registerServices() {
       signer_conn_table = make_shared<SignerConnTable>();
       broadcast_check_table = make_shared<BroadcastMsgTable>();
 
@@ -156,7 +161,7 @@ namespace gruut {
 
       Target target;
       target.set_target_id(target_id);
-      target.set_sender_id(MY_ID);
+      target.set_sender_id(p2p_address);
       target.set_sender_address(receiver_addr);
       target.set_sender_port(receiver_port);
       target.set_time_stamp(0);

@@ -198,7 +198,7 @@ namespace gruut {
                           .count());
           m_reply.set_time_stamp(now);
           m_reply.set_version(1);
-          m_reply.set_node_id(MY_ID);
+          //m_reply.set_node_id(MY_ID);
           Status rpc_status = Status::OK;
 
           m_receive_status = RpcCallStatus::FINISH;
