@@ -1,5 +1,6 @@
 #pragma once
 #include <array>
+#include <grpcpp/impl/codegen/status.h>
 
 namespace gruut {
 namespace net_plugin {
@@ -75,7 +76,7 @@ constexpr int HEADER_LENGTH =
 	+ COMP_TYPE_LENGTH + DUMMY_LENGTH + MSG_LENGTH_SIZE + CHAIN_ID_TYPE_SIZE
 	+ SENDER_ID_TYPE_SIZE + RESERVED_LENGTH;
 
-constexpr uint8_t G = 'G';
+constexpr uint8_t IDENTIFIER = 'G';
 
 constexpr uint8_t VERSION = '1';
 constexpr uint8_t NOT_USED = 0x00;
@@ -93,7 +94,6 @@ struct MessageHeader {
   id_type sender_id;
   std::array<uint8_t, RESERVED_LENGTH> reserved_space;
 };
-
 
 } //namespace net
 } //namespace gruut

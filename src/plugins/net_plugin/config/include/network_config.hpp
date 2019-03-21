@@ -28,7 +28,7 @@ const std::string TRACKER_URL = "127.0.0.1:8080/nodeinfo";
 
 //TODO : MERGER의 ID를 GA로 받아 올 수 있을때 사용치 않을것. (ID : TEST-MERGER-ID-1TEST-MERGER-ID-1 )
 const std::string ID_BASE64 = "VEVTVC1NRVJHRVItSUQtMVRFU1QtTUVSR0VSLUlELTE=";
-const std::string MY_ID =  "TEST-MERGER-ID-1TEST-MERGER-ID-1";
-
+const std::string MY_ID =  "TEST-MERGER-ID-1TEST-MERGER-ID-1"; //32bytes
+const std::string LOCAL_CHAIN_ID = "T-LCHAINT-LCHAINT-LCHAINT-LCHAIN"; //32bytes
 }  // namespace net
 }  // namespace gruut
