@@ -133,10 +133,10 @@ namespace gruut {
       }
     };
 
-    std::vector<Node> KBucket::selectAliveNodes() {
+    std::vector<Node> KBucket::selectAliveNodes(bool force_to_select_all) {
       std::vector<Node> alive_nodes = {};
-      std::copy_if(m_nodes.begin(), m_nodes.end(), std::back_inserter(alive_nodes), [](auto &n) {
-        return n.isAlive();
+      std::copy_if(m_nodes.begin(), m_nodes.end(), std::back_inserter(alive_nodes), [force_to_select_all](auto &n) {
+        return force_to_select_all || n.isAlive();
       });
 
       return alive_nodes;

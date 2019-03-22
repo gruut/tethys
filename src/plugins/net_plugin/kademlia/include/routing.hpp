@@ -56,7 +56,6 @@ public:
 
   RoutingTable(Node node, std::size_t ksize);
 
-
   RoutingTable(const RoutingTable &) = delete;
 
   RoutingTable &operator=(const RoutingTable &) = delete;
@@ -127,15 +126,11 @@ public:
 
 private:
 
-  void addInitialBucket() { m_buckets.push_front(KBucket(m_my_node, 0, m_ksize)); }
-
   Node m_my_node;
 
   std::size_t m_ksize;
 
   std::deque<KBucket> m_buckets;
-
-  std::unordered_map<IdType, IpEndpoint> m_node_table;
 
   std::mutex m_buckets_mutex;
 };

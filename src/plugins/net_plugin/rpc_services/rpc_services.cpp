@@ -77,17 +77,6 @@ namespace gruut {
                                 .count());
 
                 m_broadcast_check_table->insert({msg_id, now});
-
-                // TODO: Not used code.
-                //std::vector<IpEndpoint> node_addr_list;
-                ////selecting random node in each kBuckets
-                //for (auto bucket = m_routing_table->begin(); bucket != m_routing_table->end(); bucket++) {
-                //  auto &node = bucket->selectRandomNode();
-                //  node_addr_list.push_back(node.getEndpoint());
-                //}
-                //
-                //RpcClient sender;
-                //sender.sendToMerger(node_addr_list, packed_msg, m_request.message_id(), true);
               }
             }
 
@@ -121,7 +110,6 @@ namespace gruut {
     }
 
     void FindNode::proceed() {
-
       switch (m_receive_status) {
         case RpcCallStatus::CREATE: {
           m_receive_status = RpcCallStatus::PROCESS;
@@ -156,7 +144,6 @@ namespace gruut {
           Status rpc_status = Status::OK;
           m_receive_status = RpcCallStatus::FINISH;
           m_responder.Finish(m_reply, Status::OK, this);
-
         }
           break;
 
