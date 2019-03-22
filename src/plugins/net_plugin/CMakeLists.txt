@@ -1,7 +1,6 @@
 cmake_minimum_required(VERSION 3.10)
 
 find_package(Boost REQUIRED COMPONENTS system thread random)
-find_package(CURL REQUIRED)
 
 file(GLOB HEADERS
         "include/*.hpp"
@@ -21,6 +20,7 @@ file(GLOB SOURCES
 set(LIB_PREFIX "/usr/local/lib")
 set(BOTAN_LIB "${LIB_PREFIX}/libbotan-2.a")
 set(PROTOBUF_LIB "${LIB_PREFIX}/libprotobuf.a")
+set(LZ4_LIB "${LIB_PREFIX}/liblz4.a")
 
 if (APPLE)
     set(GRPC_LIBS
@@ -49,16 +49,16 @@ add_library(net_plugin
 target_link_libraries(net_plugin
         appbase
         log
-        ${CURL_LIBRARIES}
         ${Boost_LIBRARIES}
         ${BOTAN_LIB}
         ${PROTOBUF_LIB}
         ${GRPC_LIBS}
+        ${LZ4_LIB}
         )
+
 target_include_directories(net_plugin PUBLIC
         "${CMAKE_CURRENT_SOURCE_DIR}/../../../lib/appbase"
         "${CMAKE_CURRENT_SOURCE_DIR}/../../../lib/log"
         "${GRUUT_INSTALL_DIR}/include"
         ${Boost_INCLUDE_DIR}
-        ${CURL_INCLUDE_DIR}
         )
