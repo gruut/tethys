@@ -15,17 +15,12 @@ namespace gruut {
   public:
     PLUGIN_REQUIRES((NetPlugin))
 
-    BlockProducerPlugin() : temp_channel(app().getChannel<channels::temp_channel::channel_type>()) {}
-
     void pluginInitialize(const boost::program_options::variables_map& options) {
       logger::INFO("BlockProducerPlugin Initialize");
     }
 
     void pluginStart() {
       logger::INFO("BlockProducerPlugin Start");
-
-      TempData d;
-      temp_channel.publish(d);
     }
 
     void pluginShutdown() {
@@ -33,6 +28,5 @@ namespace gruut {
     }
 
   private:
-    channels::temp_channel::channel_type &temp_channel;
   };
 }

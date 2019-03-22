@@ -91,7 +91,7 @@ namespace gruut {
             MessageHandler msg_handler;
             auto input_data = msg_handler.unpackMsg(packed_msg, rpc_status);
 
-            auto &in_msg_channel = app().getChannel<channels::in_msg_channel::channel_type>();
+            auto &in_msg_channel = app().getChannel<incoming::channels::network::channel_type>();
             in_msg_channel.publish(input_data);
 
             if (rpc_status.ok()) {
