@@ -108,7 +108,7 @@ public:
   FindNode(KademliaService::AsyncService *service,
   			ServerCompletionQueue *cq,
   			std::shared_ptr<RoutingTable> routing_table)
-  			: m_responder(&m_context), m_routing_table(std::move(routing_table)) {
+  			: m_responder(&m_context), m_routing_table(routing_table) {
 
     m_service = service;
     m_completion_queue = cq;

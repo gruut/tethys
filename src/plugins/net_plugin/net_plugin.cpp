@@ -12,12 +12,15 @@
 #include <unordered_map>
 #include <future>
 #include <boost/asio/steady_timer.hpp>
+#include <exception>
+#include <stdexcept>
 
 namespace gruut {
   using namespace std;
   using namespace net_plugin;
 
   const auto CONNECTION_CHECK_PERIOD = std::chrono::seconds(30);
+  const auto NET_MESSAGE_CHECK_PERIOD = std::chrono::milliseconds(1);
 
   class NetPluginImpl {
   public:
@@ -25,9 +28,8 @@ namespace gruut {
     KademliaService::AsyncService kademlia_service;
 
     string p2p_address;
-    string tracker_address;
 
-    vector<string> peer_addr_list;
+    string tracker_address;
 
     unique_ptr<Server> server;
     unique_ptr<ServerCompletionQueue> completion_queue;
@@ -37,6 +39,7 @@ namespace gruut {
     shared_ptr<BroadcastMsgTable> broadcast_check_table;
 
     unique_ptr<boost::asio::steady_timer> connection_check_timer;
+    unique_ptr<boost::asio::steady_timer> net_message_check_timer;
 
     ~NetPluginImpl() {
       server->Shutdown();
@@ -49,6 +52,7 @@ namespace gruut {
       registerServices();
 
       connection_check_timer = make_unique<boost::asio::steady_timer>(app().getIoContext());
+      net_message_check_timer = make_unique<boost::asio::steady_timer>(app().getIoContext());
     }
 
     void initializeRoutingTable() {
@@ -84,8 +88,33 @@ namespace gruut {
     }
 
     void start() {
+      monitorCompletionQueue();
       getPeersFromTracker();
       startConnectionMonitors();
+    }
+
+    void monitorCompletionQueue() {
+      net_message_check_timer->expires_from_now(NET_MESSAGE_CHECK_PERIOD);
+      net_message_check_timer->async_wait([this](boost::system::error_code ec) {
+        if(!ec) {
+          void *tag;
+          bool ok;
+
+          gpr_timespec deadline;
+          deadline.clock_type = GPR_TIMESPAN;
+          deadline.tv_sec = 0;
+          deadline.tv_nsec = 5;
+
+          auto queue_state = completion_queue->AsyncNext(&tag, &ok, deadline);
+          if(ok && queue_state == CompletionQueue::NextStatus::GOT_EVENT) {
+            static_cast<CallData *>(tag)->proceed();
+          }
+        } else {
+          logger::ERROR("Error from net_message_check_timer: {}", ec.message());
+        }
+
+        monitorCompletionQueue();
+      });
     }
 
     void getPeersFromTracker() {
@@ -93,7 +122,7 @@ namespace gruut {
         logger::INFO("Start to get peers list from tracker");
 
         auto [addr, port] = getHostAndPort(tracker_address);
-        auto [_, my_port] = getHostAndPort(p2p_address);
+        auto [my_host, my_port] = getHostAndPort(p2p_address);
 
         HttpClient http_client(addr, port);
 
@@ -103,8 +132,14 @@ namespace gruut {
           auto peers = json::parse(res);
 
           if(!json::is_empty(peers)) {
-            for(auto peer : peers) {
-              peer_addr_list.push_back(peer);
+            for(auto& peer : peers) {
+              auto [peer_host, peer_port] = getHostAndPort(peer);
+              auto id = peer_host + ":" + peer_port;
+
+              if(id != getMyId()) {
+                Node node = Node(Hash<160>::sha1(id), id, peer_host, peer_port);
+                routing_table->addPeer(move(node));
+              }
             }
           }
         }
@@ -128,9 +163,9 @@ namespace gruut {
 
       for (auto &bucket : *routing_table) {
         if (!bucket.empty()) {
-          bucket.removeDeadNodes();
-          auto nodes = bucket.selectAliveNodes();
-
+          // TODO(FIX IT): 'removeDeadNodes' flushes all nodes in the table. Because The connection is not established immediately after opening the channel(the channel state would be 'GRPC_CHANNEL_CONNECTING or GRPC_CHANNEL_IDLE.)
+          //bucket.removeDeadNodes();
+          auto nodes = bucket.selectAliveNodes(true);
           async(launch::async, &NetPluginImpl::findNeighbors, this, nodes);
         }
       }
@@ -167,11 +202,13 @@ namespace gruut {
 
       Target target;
       target.set_target_id(target_id);
-      target.set_sender_id(p2p_address);
-      target.set_sender_address(receiver_addr);
-      target.set_sender_port(receiver_port);
-      target.set_time_stamp(0);
+      target.set_sender_id(getMyId());
 
+      auto [host, port] = getHostAndPort(p2p_address);
+      target.set_sender_address(host);
+      target.set_sender_port(port);
+      target.set_time_stamp(0);
+      
       ClientContext context;
       Neighbors neighbors;
       grpc::Status status = stub->FindNode(&context, target, &neighbors);
@@ -179,10 +216,17 @@ namespace gruut {
       vector<Node> neighbor_list;
       for (int i = 0; i < neighbors.neighbors_size(); i++) {
         const auto &node = neighbors.neighbors(i);
-        neighbor_list.emplace_back(Node(Hash<160>::sha1(node.node_id()), node.node_id(), node.address(), node.port()));
+
+        if(getMyId() != node.node_id()) {
+          neighbor_list.emplace_back(Node(Hash<160>::sha1(node.node_id()), node.node_id(), node.address(), node.port()));
+        }
       }
 
       return NeighborsData{neighbor_list, neighbors.time_stamp(), status};
+    }
+
+    string getMyId() {
+      return p2p_address;
     }
 
     pair<string, string> getHostAndPort(const string addr) {

@@ -101,7 +101,7 @@ public:
 
   Node const &leastRecentlySeenNode() const { return m_nodes.front(); }
 
-  std::vector<Node> selectAliveNodes();
+  std::vector<Node> selectAliveNodes(bool force = false);
 
   std::vector<Node> selectRandomAliveNodes(int num_of_node = PARALLELISM_ALPHA);
 

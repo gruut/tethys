@@ -83,8 +83,6 @@ namespace gruut {
                                 .count());
 
                 m_broadcast_check_table->insert({msg_id, now});
-
-                // TODO: select random nodes from routing table and then forward msg
               }
             }
             grpc::Status rpc_status;
@@ -120,7 +118,6 @@ namespace gruut {
     }
 
     void FindNode::proceed() {
-
       switch (m_receive_status) {
         case RpcCallStatus::CREATE: {
           m_receive_status = RpcCallStatus::PROCESS;
@@ -155,7 +152,6 @@ namespace gruut {
           Status rpc_status = Status::OK;
           m_receive_status = RpcCallStatus::FINISH;
           m_responder.Finish(m_reply, Status::OK, this);
-
         }
           break;
 

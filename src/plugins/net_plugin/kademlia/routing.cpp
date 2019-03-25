@@ -21,7 +21,7 @@ namespace gruut {
 
     RoutingTable::RoutingTable(Node node, std::size_t ksize)
             : m_my_node(std::move(node)), m_ksize(ksize) {
-      addInitialBucket();
+      m_buckets.emplace_front(KBucket(m_my_node, 0, m_ksize));
     }
 
     std::size_t RoutingTable::nodesCount() const {
@@ -54,13 +54,11 @@ namespace gruut {
     }
 
     bool RoutingTable::addPeer(Node &&peer) {
-
       if (m_my_node == peer) {
         return true;
       }
 
       peer.initFailuresCount();
-      m_node_table[peer.getId()] = peer.getEndpoint();
 
       std::lock_guard<std::mutex> lock(m_buckets_mutex);
 
