@@ -1,7 +1,7 @@
 #include "include/rpc_services.hpp"
 
 #include "application.hpp"
-#include "channel_interface.hpp"
+#include "../../channel_interface/include/channel_interface.hpp"
 #include "../include/msg_handler.hpp"
 
 #include <exception>
