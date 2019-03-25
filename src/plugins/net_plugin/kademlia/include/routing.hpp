@@ -56,7 +56,6 @@ public:
 
   RoutingTable(Node node, std::size_t ksize);
 
-
   RoutingTable(const RoutingTable &) = delete;
 
   RoutingTable &operator=(const RoutingTable &) = delete;
@@ -97,11 +96,8 @@ public:
   const_reverse_iterator crend() const noexcept {
 	return const_reverse_iterator(cbegin());
   }
-  //@}
-
 
   const Node &thisNode() const { return m_my_node; }
-
 
   std::size_t nodesCount() const;
 
@@ -110,7 +106,6 @@ public:
   bool empty() const;
 
   bool addPeer(Node &&peer);
-
 
   void removePeer(const Node &peer);
 
@@ -122,6 +117,10 @@ public:
 
   std::vector<Node> findNeighbors(HashedIdType const &id,
 								  std::size_t max_number);
+
+  std::pair<Node,bool> findNode(const HashedIdType &hashed_id);
+
+  std::pair<Node,bool> findNode(IdType &&id);
 
   size_t getBucketIndexFor(const HashedIdType &node) const;
 

@@ -5,11 +5,12 @@
 
 //   https://github.com/abdes/blocxxi
 
+#include <algorithm>
 #include <random>
-
 #include <boost/multiprecision/cpp_int.hpp>
 #include <vector>
 #include "include/kbucket.hpp"
+
 
 namespace gruut {
   namespace net_plugin {
@@ -138,8 +139,21 @@ namespace gruut {
       std::copy_if(m_nodes.begin(), m_nodes.end(), std::back_inserter(alive_nodes), [](auto &n) {
         return n.isAlive();
       });
-
       return alive_nodes;
+    }
+
+    std::vector<Node> KBucket::selectRandomAliveNodes(int num_of_node){
+      auto alive_nodes = selectAliveNodes();
+
+      std::random_device rd;
+      std::mt19937 prng(rd());
+
+      std::shuffle(alive_nodes.begin(), alive_nodes.end(), prng);
+      num_of_node = std::min(num_of_node, (int)alive_nodes.size());
+
+      std::vector<Node> random_alive_nodes(alive_nodes.begin(), alive_nodes.begin() + num_of_node);
+
+      return random_alive_nodes;
     }
 
     void KBucket::removeDeadNodes() {
