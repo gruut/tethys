@@ -15,8 +15,20 @@ struct InNetMsg {
   id_type sender_id;
 };
 
+struct OutNetMsg {
+  MessageType type;
+  nlohmann::json body;
+  vector<id_type> receivers;
+};
+
 namespace appbase::incoming {
   namespace channels {
     using network = ChannelTypeTemplate<InNetMsg>;
+  };
+}
+
+namespace appbase::outgoing {
+  namespace channels {
+    using network = ChannelTypeTemplate<OutNetMsg>;
   };
 }

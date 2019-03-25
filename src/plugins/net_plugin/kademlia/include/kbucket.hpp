@@ -103,6 +103,8 @@ public:
 
   std::vector<Node> selectAliveNodes();
 
+  std::vector<Node> selectRandomAliveNodes(int num_of_node = PARALLELISM_ALPHA);
+
   void removeDeadNodes();
 
   bool addNode(Node &&node);

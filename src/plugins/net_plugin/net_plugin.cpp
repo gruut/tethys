@@ -3,6 +3,12 @@
 #include "config/include/network_config.hpp"
 #include "rpc_services/include/rpc_services.hpp"
 #include "../../../lib/json/include/json.hpp"
+#include "include/msg_handler.hpp"
+
+#include "../../gruut-utils/src/sha256.hpp"
+#include "../../gruut-utils/src/random_number_generator.hpp"
+#include "../../gruut-utils/src/time_util.hpp"
+
 #include <unordered_map>
 #include <future>
 #include <boost/asio/steady_timer.hpp>
@@ -156,7 +162,7 @@ namespace gruut {
     }
 
     NeighborsData
-    queryNeighborNodes(const string &receiver_addr, const string &receiver_port, const IdType &target_id, std::shared_ptr<grpc::Channel> channel) {
+    queryNeighborNodes(const string &receiver_addr, const string &receiver_port, const IdType &target_id, shared_ptr<grpc::Channel> channel) {
       auto stub = genStub<KademliaService::Stub, KademliaService>(channel);
 
       Target target;
@@ -185,6 +191,90 @@ namespace gruut {
 
       return pair<string, string>(host, port);
     }
+
+    void sendMessage(OutNetMsg &out_msg) {
+      MessageHandler msg_handler;
+
+      if (checkMergerMsgType(out_msg.type)) {
+        bool is_broadcast(out_msg.receivers.empty());
+        auto packed_msg = msg_handler.packMsg(out_msg);
+
+        RequestMsg request;
+        request.set_message(packed_msg);
+        request.set_broadcast(is_broadcast);
+
+        ClientContext context;
+        MsgStatus msg_status;
+
+        if (is_broadcast) {
+          //TODO : broadcast 확인을 위한 msg id를 정하는 방법이 없어 현재 임시.
+          int random_num = RandomNumGenerator::getRange(0, 1000);
+          auto vec_msg_id = Sha256::hash(TimeUtil::now() + to_string(random_num));
+          string str_hash_msg_id(vec_msg_id.begin(), vec_msg_id.end());
+          request.set_message_id(str_hash_msg_id);
+
+          for (auto &bucket : *routing_table) {
+            if (!bucket.empty()) {
+              auto nodes = bucket.selectRandomAliveNodes(PARALLELISM_ALPHA);
+              for (auto &n : nodes) {
+
+                auto stub = genStub<GruutGeneralService::Stub, GruutGeneralService>(n.getChannelPtr());
+                auto status = stub->GeneralService(&context, request, &msg_status);
+              }
+            }
+          }
+        } else {
+          for(auto &receiver : out_msg.receivers){
+            auto hashed_id = Hash<160>::sha1(receiver);
+            auto node = routing_table->findNode(hashed_id);
+            if(node.has_value()){
+              auto stub = genStub<GruutGeneralService::Stub, GruutGeneralService>(node.value().getChannelPtr());
+              auto Status = stub->GeneralService(&context, request, &msg_status);
+            }
+          }
+        }
+      }
+      else if (checkSignerMsgType(out_msg.type)) {
+        auto packed_msg = msg_handler.packMsg(out_msg);
+
+        for (auto &receiver_id : out_msg.receivers) {
+
+          SignerRpcInfo signer_rpc_info = signer_conn_table->getRpcInfo(receiver_id);
+          if (signer_rpc_info.send_msg == nullptr)
+            continue;
+
+          if (out_msg.type == MessageType::MSG_ACCEPT ||
+              out_msg.type == MessageType::MSG_REQ_SSIG) {
+
+            //TODO : generate HMAC using packed msg and then attach to packed msg
+          }
+
+          auto tag = static_cast<Identity *>(signer_rpc_info.tag_identity);
+          ReplyMsg reply;
+          reply.set_message(packed_msg);
+          signer_rpc_info.send_msg->Write(reply, tag);
+        }
+      }
+    }
+
+    bool checkMergerMsgType(MessageType msg_type){
+      return (
+          msg_type == MessageType::MSG_TX ||
+              msg_type == MessageType::MSG_REQ_BLOCK ||
+              msg_type == MessageType::MSG_REQ_STATUS ||
+              msg_type == MessageType::MSG_RES_STATUS ||
+              msg_type == MessageType::MSG_BLOCK
+      );
+    }
+
+    bool checkSignerMsgType(MessageType msg_type){
+      return (
+          msg_type == MessageType::MSG_CHALLENGE ||
+              msg_type == MessageType::MSG_RESPONSE_2 ||
+              msg_type == MessageType::MSG_ACCEPT ||
+              msg_type == MessageType::MSG_REQ_SSIG
+      );
+    }
   };
 
   NetPlugin::NetPlugin() : impl(new NetPluginImpl()) {}
@@ -203,6 +293,9 @@ namespace gruut {
 
       impl->tracker_address = tracker_address;
     }
+
+    auto &out_channel = app().getChannel<outgoing::channels::network::channel_type>();
+    out_channel_handler = out_channel.subscribe( [this](auto data){ impl->sendMessage(data); });
 
     impl->initialize();
   }

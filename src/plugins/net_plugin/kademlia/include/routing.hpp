@@ -15,6 +15,7 @@
 #include <utility>
 #include <unordered_map>
 #include <mutex>
+#include <optional>
 
 #include <boost/iterator/iterator_adaptor.hpp>
 #include <boost/iterator/reverse_iterator.hpp>
@@ -56,7 +57,6 @@ public:
 
   RoutingTable(Node node, std::size_t ksize);
 
-
   RoutingTable(const RoutingTable &) = delete;
 
   RoutingTable &operator=(const RoutingTable &) = delete;
@@ -97,11 +97,8 @@ public:
   const_reverse_iterator crend() const noexcept {
 	return const_reverse_iterator(cbegin());
   }
-  //@}
-
 
   const Node &thisNode() const { return m_my_node; }
-
 
   std::size_t nodesCount() const;
 
@@ -110,7 +107,6 @@ public:
   bool empty() const;
 
   bool addPeer(Node &&peer);
-
 
   void removePeer(const Node &peer);
 
@@ -122,6 +118,10 @@ public:
 
   std::vector<Node> findNeighbors(HashedIdType const &id,
 								  std::size_t max_number);
+
+  std::optional<Node> findNode(const HashedIdType &hashed_id);
+
+  std::optional<Node> findNode(IdType &&id);
 
   size_t getBucketIndexFor(const HashedIdType &node) const;
 

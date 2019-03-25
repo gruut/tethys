@@ -46,10 +46,51 @@ namespace gruut {
         return msg_entry;
       }
 
+      string packMsg(OutNetMsg &out_msg){
+
+        string json_dump = out_msg.body.dump();
+        string compressed_body = LZ4Compressor::compressData(json_dump);
+        string header = makeHeader(json_dump.size(), out_msg.type, CompressionAlgorithmType::LZ4);
+
+        return (header + compressed_body);
+      }
+
     private:
       MessageHeader *parseHeader(string &raw_header) {
         auto msg_header = reinterpret_cast<MessageHeader *>(&raw_header);
         return msg_header;
+      }
+
+      string makeHeader(int compressed_json_size, MessageType msg_type,
+                             CompressionAlgorithmType compression_algo_type) {
+
+        MessageHeader msg_header;
+        msg_header.identifier = IDENTIFIER;
+        msg_header.version = VERSION;
+        msg_header.message_type = msg_type;
+        if(msg_type == MessageType::MSG_ACCEPT || msg_type == MessageType::MSG_REQ_SSIG)
+          msg_header.mac_algo_type = MACAlgorithmType::HMAC;
+        else
+          msg_header.mac_algo_type = MACAlgorithmType::NONE;
+
+        msg_header.compression_algo_type = compression_algo_type;
+        msg_header.dummy = NOT_USED;
+
+        int total_length = HEADER_LENGTH + compressed_json_size;
+
+        for(int i = MSG_LENGTH_SIZE; i > 0; i--){
+          msg_header.total_length[i] |= total_length;
+          total_length >>= 8;
+        }
+        msg_header.total_length[0] |= total_length;
+
+        std::copy(std::begin(LOCAL_CHAIN_ID), std::end(LOCAL_CHAIN_ID), std::begin(msg_header.local_chain_id));
+        std::copy(std::begin(MY_ID), std::end(MY_ID), std::begin(msg_header.sender_id));
+
+        auto header_ptr = reinterpret_cast<uint8_t *>(&msg_header);
+        auto serialized_header = std::string(header_ptr, header_ptr + sizeof(msg_header));
+
+        return serialized_header;
       }
 
       bool validateMsgFormat(MessageHeader *header) {

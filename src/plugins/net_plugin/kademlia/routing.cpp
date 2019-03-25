@@ -137,6 +137,24 @@ namespace gruut {
       return false;
     }
 
+	std::optional<Node> RoutingTable::findNode(IdType &&id){
+	  return findNode(Hash<160>::sha1(id));
+	}
+
+	std::optional<Node> RoutingTable::findNode(const HashedIdType &hashed_id){
+
+	  auto bucket_index = getBucketIndexFor(hashed_id);
+	  auto bucket = m_buckets.begin();
+	  std::advance(bucket, bucket_index);
+
+	  for(auto &node : *bucket){
+		if(hashed_id == node.getIdHash()){
+		  return node;
+		}
+	  }
+	  return {};
+	}
+
     std::vector<Node> RoutingTable::findNeighbors(HashedIdType const &id, std::size_t max_number) {
 
       std::vector<Node> neighbors;
