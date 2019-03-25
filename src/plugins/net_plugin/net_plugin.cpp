@@ -226,9 +226,9 @@ namespace gruut {
         } else {
           for(auto &receiver : out_msg.receivers){
             auto hashed_id = Hash<160>::sha1(receiver);
-            auto[node, exist] = routing_table->findNode(hashed_id);
-            if(exist){
-              auto stub = genStub<GruutGeneralService::Stub, GruutGeneralService>(node.getChannelPtr());
+            auto node = routing_table->findNode(hashed_id);
+            if(node.has_value()){
+              auto stub = genStub<GruutGeneralService::Stub, GruutGeneralService>(node.value().getChannelPtr());
               auto Status = stub->GeneralService(&context, request, &msg_status);
             }
           }

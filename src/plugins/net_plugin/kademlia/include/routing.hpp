@@ -15,6 +15,7 @@
 #include <utility>
 #include <unordered_map>
 #include <mutex>
+#include <optional>
 
 #include <boost/iterator/iterator_adaptor.hpp>
 #include <boost/iterator/reverse_iterator.hpp>
@@ -118,9 +119,9 @@ public:
   std::vector<Node> findNeighbors(HashedIdType const &id,
 								  std::size_t max_number);
 
-  std::pair<Node,bool> findNode(const HashedIdType &hashed_id);
+  std::optional<Node> findNode(const HashedIdType &hashed_id);
 
-  std::pair<Node,bool> findNode(IdType &&id);
+  std::optional<Node> findNode(IdType &&id);
 
   size_t getBucketIndexFor(const HashedIdType &node) const;
 

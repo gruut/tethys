@@ -21,8 +21,6 @@ namespace gruut {
   namespace net_plugin {
     class Node {
     public:
-      Node() = default;
-
       Node(HashedIdType const &id_hash, IdType const &id, std::string const &ip_address,
            std::string const &port_number)
               : m_id_hash{id_hash}, m_id{id}, m_endpoint{ip_address, port_number} {
