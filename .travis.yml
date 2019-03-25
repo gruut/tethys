@@ -16,7 +16,10 @@ install:
 script:
   - docker exec build-env sh -c "
     mkdir -p workspace && cd workspace;
-    git clone --depth=50 --branch=$TRAVIS_BRANCH https://github.com/gruut/gruut.git && cd gruut && mkdir -p build;
+    git clone --depth=50 --branch=$TRAVIS_BRANCH https://github.com/gruut/gruut.git;
+    cd gruut;
+    git submodule update --init;
+    mkdir -p build;
     "
   - docker exec build-env sh -c "
     cd workspace/gruut;

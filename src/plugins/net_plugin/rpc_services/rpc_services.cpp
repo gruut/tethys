@@ -1,5 +1,9 @@
 #include "include/rpc_services.hpp"
 
+#include "application.hpp"
+#include "channel_interface.hpp"
+#include "../include/msg_handler.hpp"
+
 #include <exception>
 #include <thread>
 #include <future>
@@ -7,6 +11,8 @@
 
 namespace gruut {
   namespace net_plugin {
+
+  using namespace appbase;
 
     void OpenChannel::proceed() {
 
@@ -79,10 +85,12 @@ namespace gruut {
                 m_broadcast_check_table->insert({msg_id, now});
               }
             }
+            grpc::Status rpc_status;
+            MessageHandler msg_handler;
+            auto input_data = msg_handler.unpackMsg(packed_msg, rpc_status);
 
-            //TODO: MessageHandler handle message
-            //MessageHandler의 처리 상황에 따라 Status값 바뀔 것.
-            rpc_status = Status::OK;
+            auto &in_msg_channel = app().getChannel<incoming::channels::network::channel_type>();
+            in_msg_channel.publish(input_data);
 
             if (rpc_status.ok()) {
               m_reply.set_status(grpc_general::MsgStatus_Status_SUCCESS); // SUCCESS

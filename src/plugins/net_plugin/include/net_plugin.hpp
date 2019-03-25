@@ -31,6 +31,5 @@ namespace gruut {
 
   private:
     std::unique_ptr<class NetPluginImpl> impl;
-    channels::temp_channel::channel_type::Handle temp_channel_handler;
   };
 }
