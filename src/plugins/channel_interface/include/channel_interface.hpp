@@ -1,8 +1,8 @@
 #pragma once
 
 #include "../../../include/json.hpp"
-#include "../../../src/plugins/net_plugin/config/include/message.hpp"
-#include "channel.hpp"
+#include "../../net_plugin/config/include/message.hpp"
+#include "../../../../lib/appbase/include/channel.hpp"
 #include <vector>
 
 using namespace gruut::net_plugin;

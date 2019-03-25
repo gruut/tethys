@@ -4,7 +4,7 @@
 #include "../config/include/message.hpp"
 #include "../config/include/network_config.hpp"
 #include "../../../gruut-utils/src/lz4_compressor.hpp"
-#include "channel_interface.hpp"
+#include "../../channel_interface/include/channel_interface.hpp"
 
 using namespace grpc;
 using namespace std;

@@ -4,7 +4,7 @@
 #include <memory>
 
 #include "application.hpp"
-#include "channel_interface.hpp"
+#include "../../channel_interface/include/channel_interface.hpp"
 #include "plugin.hpp"
 
 #include "../../../../lib/log/include/log.hpp"
