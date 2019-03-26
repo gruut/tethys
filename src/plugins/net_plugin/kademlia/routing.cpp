@@ -60,7 +60,7 @@ bool RoutingTable::addPeer(Node &&peer) {
     return true;
   }
 
-  peer.initFailuresCount();
+  peer.initReqFailuresCount();
 
   std::lock_guard<std::mutex> lock(m_buckets_mutex);
 
@@ -120,19 +120,19 @@ bool RoutingTable::peerTimedOut(Node const &peer) {
   for (auto bucket = m_buckets.rbegin(); bucket != m_buckets.rend(); ++bucket) {
     for (auto bn = bucket->begin(); bn != bucket->end(); ++bn) {
       if (bn->getIdHash() == peer.getIdHash()) {
-        bn->incFailuresCount();
-
         if (bn->isStale()) {
           std::lock_guard<std::mutex> lock(m_buckets_mutex);
           bucket->removeNode(bn);
           m_buckets_mutex.unlock();
           return true;
         } else {
+          bn->incReqFailuresCount();
           return false;
         }
       }
     }
   }
+
   return false;
 }
 
@@ -141,7 +141,6 @@ std::optional<Node> RoutingTable::findNode(IdType &&id) {
 }
 
 std::optional<Node> RoutingTable::findNode(const HashedIdType &hashed_id) {
-
   auto bucket_index = getBucketIndexFor(hashed_id);
   auto bucket = m_buckets.begin();
   std::advance(bucket, bucket_index);
@@ -155,7 +154,6 @@ std::optional<Node> RoutingTable::findNode(const HashedIdType &hashed_id) {
 }
 
 std::vector<Node> RoutingTable::findNeighbors(HashedIdType const &id, std::size_t max_number) {
-
   std::vector<Node> neighbors;
   auto count = 0U;
 
