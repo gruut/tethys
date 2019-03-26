@@ -16,12 +16,7 @@ enum class MACAlgorithmType : uint8_t {
   NONE = 0xFF
 };
 
-enum class CompressionAlgorithmType : uint8_t {
-  LZ4 = 0x04,
-  MessagePack = 0x05,
-  CBOR = 0x06,
-  NONE = 0xFF
-};
+enum class CompressionAlgorithmType : uint8_t { LZ4 = 0x04, MessagePack = 0x05, CBOR = 0x06, NONE = 0xFF };
 
 enum class MessageType : uint8_t {
   MSG_NULL = 0x00,
@@ -71,10 +66,8 @@ constexpr int MSG_LENGTH_SIZE = 4;
 constexpr int SENDER_ID_TYPE_SIZE = 32;
 constexpr int RESERVED_LENGTH = 6;
 
-constexpr int HEADER_LENGTH =
-	IDENTIFIER_LENGTH + VERSION_LENGTH + MSG_TYPE_LENGTH + MAC_TYPE_LENGTH
-	+ COMP_TYPE_LENGTH + DUMMY_LENGTH + MSG_LENGTH_SIZE + CHAIN_ID_TYPE_SIZE
-	+ SENDER_ID_TYPE_SIZE + RESERVED_LENGTH;
+constexpr int HEADER_LENGTH = IDENTIFIER_LENGTH + VERSION_LENGTH + MSG_TYPE_LENGTH + MAC_TYPE_LENGTH + COMP_TYPE_LENGTH + DUMMY_LENGTH +
+                              MSG_LENGTH_SIZE + CHAIN_ID_TYPE_SIZE + SENDER_ID_TYPE_SIZE + RESERVED_LENGTH;
 
 constexpr uint8_t IDENTIFIER = 'G';
 
@@ -95,5 +88,5 @@ struct MessageHeader {
   std::array<uint8_t, RESERVED_LENGTH> reserved_space;
 };
 
-} //namespace net
-} //namespace gruut
+} // namespace net_plugin
+} // namespace gruut

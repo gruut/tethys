@@ -1,9 +1,7 @@
 #include "include/json-schema.hpp"
 
-namespace nlohmann
-{
-namespace json_schema_draft4
-{
+namespace nlohmann {
+namespace json_schema_draft4 {
 
 json draft4_schema_builtin = R"( {
     "id": "http://json-schema.org/draft-04/schema#",
@@ -157,4 +155,4 @@ json draft4_schema_builtin = R"( {
 } )"_json;
 
 }
-}
+} // namespace nlohmann

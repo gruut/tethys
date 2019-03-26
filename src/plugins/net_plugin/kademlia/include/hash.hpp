@@ -7,22 +7,22 @@
 
 #pragma once
 
+#include <algorithm>
 #include <array>
 #include <bitset>
 #include <cstdint>
 #include <cstring>
 #include <iosfwd>
 #include <iterator>
+#include <memory>
 #include <string>
 #include <vector>
-#include <algorithm>
-#include <memory>
 
 #include <botan-2/botan/base64.h>
 #include <botan-2/botan/hash.h>
 
- namespace gruut{
- namespace net_plugin{
+namespace gruut {
+namespace net_plugin {
 template <unsigned int BITS>
 class Hash {
   static_assert(BITS % 32 == 0, "Hash size in bits must be a multiple of 32");
@@ -54,154 +54,182 @@ public:
   virtual ~Hash() = default;
 
   static Hash max() noexcept {
-	Hash h;
-	h.m_storage.fill(0xffffffffU);
-	return h;
+    Hash h;
+    h.m_storage.fill(0xffffffffU);
+    return h;
   }
 
   static Hash min() noexcept {
-	return Hash();
-	// all bits are already 0
+    return Hash();
+    // all bits are already 0
   }
 
-
   static Hash<160> sha1(const std::string &src) {
-	Hash<160> hash;
+    Hash<160> hash;
 
-	std::unique_ptr<Botan::HashFunction> hash_function(
-		Botan::HashFunction::create("SHA-1"));
+    std::unique_ptr<Botan::HashFunction> hash_function(Botan::HashFunction::create("SHA-1"));
 
-	hash_function->update(src);
-	auto stdvec = hash_function->final_stdvec();
+    hash_function->update(src);
+    auto stdvec = hash_function->final_stdvec();
 
-	std::copy_n(stdvec.begin(), SIZE_BYTE, hash.m_storage.begin());
+    std::copy_n(stdvec.begin(), SIZE_BYTE, hash.m_storage.begin());
 
-	return hash;
+    return hash;
   }
 
   reference at(size_type pos) {
-	if (size() <= pos) {
-	  throw std::out_of_range("Hash<BITS> index out of range");
-	}
-	return reinterpret_cast<pointer>(m_storage.data())[pos];
+    if (size() <= pos) {
+      throw std::out_of_range("Hash<BITS> index out of range");
+    }
+    return reinterpret_cast<pointer>(m_storage.data())[pos];
   }
   const_reference at(size_type pos) const {
-	if (size() <= pos) {
-	  throw std::out_of_range("Hash<BITS> index out of range");
-	}
-	return reinterpret_cast<const_pointer>(m_storage.data())[pos];
+    if (size() <= pos) {
+      throw std::out_of_range("Hash<BITS> index out of range");
+    }
+    return reinterpret_cast<const_pointer>(m_storage.data())[pos];
   };
 
   reference operator[](size_type pos) noexcept {
-	//ASAP_ASSERT_PRECOND(pos < size());
-	return reinterpret_cast<pointer>(m_storage.data())[pos];
+    // ASAP_ASSERT_PRECOND(pos < size());
+    return reinterpret_cast<pointer>(m_storage.data())[pos];
   }
   const_reference operator[](size_type pos) const noexcept {
-	//ASAP_ASSERT_PRECOND(pos < size());
-	return reinterpret_cast<pointer>(m_storage.data())[pos];
+    // ASAP_ASSERT_PRECOND(pos < size());
+    return reinterpret_cast<pointer>(m_storage.data())[pos];
   }
 
-  reference front() { return reinterpret_cast<pointer>(m_storage.data())[0]; }
+  reference front() {
+    return reinterpret_cast<pointer>(m_storage.data())[0];
+  }
   const_reference front() const {
-	return reinterpret_cast<const_pointer>(m_storage.data())[0];
+    return reinterpret_cast<const_pointer>(m_storage.data())[0];
   }
 
   reference back() {
-	return reinterpret_cast<pointer>(m_storage.data())[size() - 1];
+    return reinterpret_cast<pointer>(m_storage.data())[size() - 1];
   }
   const_reference back() const {
-	return reinterpret_cast<const_pointer>(m_storage.data())[size() - 1];
+    return reinterpret_cast<const_pointer>(m_storage.data())[size() - 1];
   }
 
-  pointer data() noexcept { return reinterpret_cast<pointer>(m_storage.data()); }
+  pointer data() noexcept {
+    return reinterpret_cast<pointer>(m_storage.data());
+  }
   const_pointer data() const noexcept {
-	return reinterpret_cast<const_pointer>(m_storage.data());
+    return reinterpret_cast<const_pointer>(m_storage.data());
   }
 
   iterator begin() noexcept {
-	return reinterpret_cast<pointer>(m_storage.data());
+    return reinterpret_cast<pointer>(m_storage.data());
   }
   const_iterator begin() const noexcept {
-	return reinterpret_cast<const_pointer>(m_storage.data());
+    return reinterpret_cast<const_pointer>(m_storage.data());
   }
-  const_iterator cbegin() const noexcept { return begin(); }
+  const_iterator cbegin() const noexcept {
+    return begin();
+  }
 
   iterator end() noexcept {
-	return reinterpret_cast<pointer>(m_storage.data()) + size();
+    return reinterpret_cast<pointer>(m_storage.data()) + size();
   }
   const_iterator end() const noexcept {
-	return reinterpret_cast<const_pointer>(m_storage.data()) + size();
+    return reinterpret_cast<const_pointer>(m_storage.data()) + size();
   }
-  const_iterator cend() const noexcept { return end(); }
+  const_iterator cend() const noexcept {
+    return end();
+  }
 
-  reverse_iterator rbegin() noexcept { return reverse_iterator(end()); }
+  reverse_iterator rbegin() noexcept {
+    return reverse_iterator(end());
+  }
   const_reverse_iterator rbegin() const noexcept {
-	return const_reverse_iterator(end());
+    return const_reverse_iterator(end());
   }
-  const_reverse_iterator crbegin() const noexcept { return rbegin(); }
+  const_reverse_iterator crbegin() const noexcept {
+    return rbegin();
+  }
 
-  reverse_iterator rend() noexcept { return reverse_iterator(begin()); }
+  reverse_iterator rend() noexcept {
+    return reverse_iterator(begin());
+  }
   const_reverse_iterator rend() const noexcept {
-	return const_reverse_iterator(begin());
+    return const_reverse_iterator(begin());
   }
-  const_reverse_iterator crend() const noexcept { return rend(); }
+  const_reverse_iterator crend() const noexcept {
+    return rend();
+  }
 
-  constexpr static std::size_t size() { return BITS / 8; };
+  constexpr static std::size_t size() {
+    return BITS / 8;
+  };
 
-  constexpr static std::size_t bitSize() { return BITS; };
+  constexpr static std::size_t bitSize() {
+    return BITS;
+  };
 
-  void clear() { m_storage.fill(0); }
+  void clear() {
+    m_storage.fill(0);
+  }
 
   bool isAllZero() const {
-	for (auto v : m_storage)
-	  if (v != 0) return false;
-	return true;
+    for (auto v : m_storage)
+      if (v != 0)
+        return false;
+    return true;
   }
 
-  void swap(Hash &other) noexcept { m_storage.swap(other.m_storage); }
+  void swap(Hash &other) noexcept {
+    m_storage.swap(other.m_storage);
+  }
 
   friend bool operator==(const Hash<BITS> &lhs, const Hash<BITS> &rhs) {
-	return std::equal(lhs.begin(), lhs.end(), rhs.begin());
+    return std::equal(lhs.begin(), lhs.end(), rhs.begin());
   }
 
   friend bool operator<(const Hash<BITS> &lhs, const Hash<BITS> &rhs) {
-    for(std::size_t i = 0; i < SIZE_BYTE; ++i){
-      if(lhs.m_storage[i] < rhs.m_storage[i]) return true;
-      if(lhs.m_storage[i] > lhs.m_storage[i]) return false;
+    for (std::size_t i = 0; i < SIZE_BYTE; ++i) {
+      if (lhs.m_storage[i] < rhs.m_storage[i])
+        return true;
+      if (lhs.m_storage[i] > lhs.m_storage[i])
+        return false;
     }
     return false;
   }
 
   Hash &operator^=(Hash const &other) noexcept {
-	for (std::size_t i = 0; i < SIZE_BYTE; ++i)
-	  m_storage[i] ^= other.m_storage[i];
-	return *this;
+    for (std::size_t i = 0; i < SIZE_BYTE; ++i)
+      m_storage[i] ^= other.m_storage[i];
+    return *this;
   }
 
   std::bitset<BITS> toBitSet() const {
-	std::bitset<BITS> bs;  // [0,0,...,0]
-	int shift_left = BITS;
-	for (uint8_t num_part : m_storage) {
-	  shift_left -= 8;
-	  std::bitset<BITS> bs_part(num_part);
-	  bs |= bs_part << shift_left;
-	}
-	return bs;
+    std::bitset<BITS> bs; // [0,0,...,0]
+    int shift_left = BITS;
+    for (uint8_t num_part : m_storage) {
+      shift_left -= 8;
+      std::bitset<BITS> bs_part(num_part);
+      bs |= bs_part << shift_left;
+    }
+    return bs;
   }
 
   std::string toBitStringShort(std::size_t length = 32U) const {
-	auto truncate = false;
-	if (length < BITS) { truncate = true; length -= 3; }
-	auto str = toBitSet().to_string().substr(0, length);
-	if (truncate) str.append("...");
-	return str;
+    auto truncate = false;
+    if (length < BITS) {
+      truncate = true;
+      length -= 3;
+    }
+    auto str = toBitSet().to_string().substr(0, length);
+    if (truncate)
+      str.append("...");
+    return str;
   }
 
 private:
-
   static constexpr std::size_t SIZE_BYTE = BITS / 8;
 
-  std::array<std::uint8_t , SIZE_BYTE> m_storage;
+  std::array<std::uint8_t, SIZE_BYTE> m_storage;
 };
 
 template <unsigned int BITS>
@@ -238,9 +266,9 @@ inline std::ostream &operator<<(std::ostream &out, Hash<BITS> const &hash) {
   return out;
 }
 
-using Hash512 = Hash<512>;  // 64 bytes
-using Hash256 = Hash<256>;  // 32 bytes
-using Hash160 = Hash<160>;  // 20 bytes
+using Hash512 = Hash<512>; // 64 bytes
+using Hash256 = Hash<256>; // 32 bytes
+using Hash160 = Hash<160>; // 20 bytes
 
- } //namespace net_plugin
- } //namespace gruut
+} // namespace net_plugin
+} // namespace gruut
