@@ -1,7 +1,7 @@
-#include <iostream>
 #include "../include/application.hpp"
-#include "plugins/net_plugin/include/net_plugin.hpp"
 #include "plugins/block_producer_plugin/include/block_producer_plugin.hpp"
+#include "plugins/net_plugin/include/net_plugin.hpp"
+#include <iostream>
 
 using namespace std;
 using namespace gruut;

@@ -1,8 +1,8 @@
 #pragma once
 
+#include <boost/asio/io_context.hpp>
 #include <memory>
 #include <string>
-#include <boost/asio/io_context.hpp>
 
 using namespace std;
 
@@ -11,6 +11,7 @@ class HttpClient {
 public:
   HttpClient(const string, const string);
   string get(const string, const string);
+
 private:
   string host;
   string port;

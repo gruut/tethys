@@ -370,70 +370,69 @@ public:
     try {
       schema_map[msg_type].validate(json_obj);
       return true;
-    }
-    catch(const std::exception &e){
+    } catch (const std::exception &e) {
       return false;
     }
   }
   static SchemaCheckMap schema_map;
+
 private:
-
   static SchemaCheckMap initMap() {
-	SchemaCheckMap init_map;
+    SchemaCheckMap init_map;
 
-	json_validator validator_req_block;
-	validator_req_block.set_root_schema(SCHEMA_REQ_BLOCK);
-	init_map[MessageType::MSG_REQ_BLOCK] = validator_req_block;
+    json_validator validator_req_block;
+    validator_req_block.set_root_schema(SCHEMA_REQ_BLOCK);
+    init_map[MessageType::MSG_REQ_BLOCK] = validator_req_block;
 
-	json_validator validator_block;
-	validator_block.set_root_schema(SCHEMA_BLOCK);
-	init_map[MessageType::MSG_BLOCK] = validator_block;
+    json_validator validator_block;
+    validator_block.set_root_schema(SCHEMA_BLOCK);
+    init_map[MessageType::MSG_BLOCK] = validator_block;
 
-	json_validator validator_join;
-	validator_join.set_root_schema(SCHEMA_JOIN);
-	init_map[MessageType::MSG_JOIN] = validator_join;
+    json_validator validator_join;
+    validator_join.set_root_schema(SCHEMA_JOIN);
+    init_map[MessageType::MSG_JOIN] = validator_join;
 
-	json_validator validator_response_first;
-	validator_response_first.set_root_schema(SCHEMA_RESPONSE_FIRST);
-	init_map[MessageType::MSG_RESPONSE_1] = validator_response_first;
+    json_validator validator_response_first;
+    validator_response_first.set_root_schema(SCHEMA_RESPONSE_FIRST);
+    init_map[MessageType::MSG_RESPONSE_1] = validator_response_first;
 
-	json_validator validator_success;
-	validator_success.set_root_schema(SCHEMA_SUCCESS);
-	init_map[MessageType::MSG_SUCCESS] = validator_success;
+    json_validator validator_success;
+    validator_success.set_root_schema(SCHEMA_SUCCESS);
+    init_map[MessageType::MSG_SUCCESS] = validator_success;
 
-	json_validator validator_ssig;
-	validator_ssig.set_root_schema(SCHEMA_SSIG);
-	init_map[MessageType::MSG_SSIG] = validator_ssig;
+    json_validator validator_ssig;
+    validator_ssig.set_root_schema(SCHEMA_SSIG);
+    init_map[MessageType::MSG_SSIG] = validator_ssig;
 
-	json_validator validator_error;
-	validator_error.set_root_schema(SCHEMA_ERROR);
-	init_map[MessageType::MSG_ERROR] = validator_error;
+    json_validator validator_error;
+    validator_error.set_root_schema(SCHEMA_ERROR);
+    init_map[MessageType::MSG_ERROR] = validator_error;
 
-	json_validator validator_tx;
-	validator_tx.set_root_schema(SCHEMA_TX);
-	init_map[MessageType::MSG_TX] = validator_tx;
+    json_validator validator_tx;
+    validator_tx.set_root_schema(SCHEMA_TX);
+    init_map[MessageType::MSG_TX] = validator_tx;
 
-	json_validator validator_req_check;
-	validator_req_check.set_root_schema(SCHEMA_REQ_CHECK);
-	init_map[MessageType::MSG_REQ_CHECK] = validator_req_check;
+    json_validator validator_req_check;
+    validator_req_check.set_root_schema(SCHEMA_REQ_CHECK);
+    init_map[MessageType::MSG_REQ_CHECK] = validator_req_check;
 
-	json_validator validator_req_header;
-	validator_req_header.set_root_schema(SCHEMA_REQ_HEADER_CHECK);
-	init_map[MessageType::MSG_REQ_HEADER] = validator_req_header;
+    json_validator validator_req_header;
+    validator_req_header.set_root_schema(SCHEMA_REQ_HEADER_CHECK);
+    init_map[MessageType::MSG_REQ_HEADER] = validator_req_header;
 
-	json_validator validator_req_status;
-	validator_req_status.set_root_schema(SCHEMA_REQ_STATUS);
-	init_map[MessageType::MSG_REQ_STATUS] = validator_req_status;
+    json_validator validator_req_status;
+    validator_req_status.set_root_schema(SCHEMA_REQ_STATUS);
+    init_map[MessageType::MSG_REQ_STATUS] = validator_req_status;
 
-	json_validator validator_res_status;
-	validator_res_status.set_root_schema(SCHEMA_RES_STATUS);
-	init_map[MessageType::MSG_RES_STATUS] = validator_res_status;
+    json_validator validator_res_status;
+    validator_res_status.set_root_schema(SCHEMA_RES_STATUS);
+    init_map[MessageType::MSG_RES_STATUS] = validator_res_status;
 
-	return init_map;
+    return init_map;
   }
 };
 
 SchemaCheckMap JsonValidator::schema_map = initMap();
 
-}
-}
+} // namespace net_plugin
+} // namespace gruut

@@ -1,18 +1,18 @@
 #pragma once
 
-#include "../protos/include/kademlia_service.grpc.pb.h"
 #include "../protos/include/general_service.grpc.pb.h"
+#include "../protos/include/kademlia_service.grpc.pb.h"
 #include <grpc/support/log.h>
 #include <grpcpp/grpcpp.h>
 
-#include "../../kademlia/include/node.hpp"
 #include "../../config/include/network_type.hpp"
-#include "../../kademlia/include/routing.hpp"
 #include "../../include/signer_conn_manager.hpp"
+#include "../../kademlia/include/node.hpp"
+#include "../../kademlia/include/routing.hpp"
 
+#include <functional>
 #include <iostream>
 #include <memory>
-#include <functional>
 #include <string>
 
 using namespace grpc;
@@ -20,7 +20,7 @@ using namespace grpc_general;
 using namespace kademlia;
 
 namespace gruut {
-namespace net_plugin{
+namespace net_plugin {
 
 enum class RpcCallStatus { CREATE, PROCESS, READ, WAIT, FINISH };
 
@@ -54,16 +54,14 @@ protected:
 
 class OpenChannel final : public CallData {
 public:
-  OpenChannel(GruutGeneralService::AsyncService *service,
-			  ServerCompletionQueue *cq,
-			  std::shared_ptr<SignerConnTable> signer_table)
-	  : m_stream(&m_context), m_signer_table(std::move(signer_table)){
+  OpenChannel(GruutGeneralService::AsyncService *service, ServerCompletionQueue *cq, std::shared_ptr<SignerConnTable> signer_table)
+      : m_stream(&m_context), m_signer_table(std::move(signer_table)) {
 
-	m_service = service;
-	m_completion_queue = cq;
-	m_receive_status = RpcCallStatus::CREATE;
+    m_service = service;
+    m_completion_queue = cq;
+    m_receive_status = RpcCallStatus::CREATE;
 
-	proceed();
+    proceed();
   }
 
 private:
@@ -76,20 +74,17 @@ private:
   void proceed() override;
 };
 
-class GeneralService final :public CallData {
+class GeneralService final : public CallData {
 public:
-  GeneralService(GruutGeneralService::AsyncService *service,
-				 ServerCompletionQueue *cq,
-				 std::shared_ptr<RoutingTable> routing_table,
-				 std::shared_ptr<BroadcastMsgTable> broadcast_check_table)
-	  : m_responder(&m_context), m_routing_table(std::move(routing_table)),
-	    m_broadcast_check_table(std::move(broadcast_check_table)){
+  GeneralService(GruutGeneralService::AsyncService *service, ServerCompletionQueue *cq, std::shared_ptr<RoutingTable> routing_table,
+                 std::shared_ptr<BroadcastMsgTable> broadcast_check_table)
+      : m_responder(&m_context), m_routing_table(std::move(routing_table)), m_broadcast_check_table(std::move(broadcast_check_table)) {
 
     m_service = service;
-	m_completion_queue = cq;
-	m_receive_status = RpcCallStatus ::CREATE;
+    m_completion_queue = cq;
+    m_receive_status = RpcCallStatus ::CREATE;
 
-	proceed();
+    proceed();
   }
 
 private:
@@ -103,12 +98,10 @@ private:
   void proceed() override;
 };
 
-class FindNode final :public CallData {
+class FindNode final : public CallData {
 public:
-  FindNode(KademliaService::AsyncService *service,
-  			ServerCompletionQueue *cq,
-  			std::shared_ptr<RoutingTable> routing_table)
-  			: m_responder(&m_context), m_routing_table(routing_table) {
+  FindNode(KademliaService::AsyncService *service, ServerCompletionQueue *cq, std::shared_ptr<RoutingTable> routing_table)
+      : m_responder(&m_context), m_routing_table(routing_table) {
 
     m_service = service;
     m_completion_queue = cq;
@@ -127,18 +120,16 @@ private:
   void proceed() override;
 };
 
-class PingPong final :public CallData {
+class PingPong final : public CallData {
 public:
-  PingPong(KademliaService::AsyncService *service,
-  			ServerCompletionQueue *cq,
-  			std::shared_ptr<RoutingTable> routing_table)
-  			: m_responder(&m_context), m_routing_table(std::move(routing_table)) {
+  PingPong(KademliaService::AsyncService *service, ServerCompletionQueue *cq, std::shared_ptr<RoutingTable> routing_table)
+      : m_responder(&m_context), m_routing_table(std::move(routing_table)) {
 
     m_service = service;
-	m_completion_queue = cq;
-	m_receive_status = RpcCallStatus ::CREATE;
+    m_completion_queue = cq;
+    m_receive_status = RpcCallStatus ::CREATE;
 
-	proceed();
+    proceed();
   }
 
 private:
@@ -150,5 +141,5 @@ private:
   std::shared_ptr<RoutingTable> m_routing_table;
   void proceed() override;
 };
-} //namespace net_plugin
-} //namespace gruut
+} // namespace net_plugin
+} // namespace gruut
