@@ -19,6 +19,8 @@ using boost::multiprecision::number;
 using boost::multiprecision::unchecked;
 using boost::multiprecision::unsigned_magnitude;
 
+constexpr unsigned int DEPTH_B = 5;
+
 RoutingTable::RoutingTable(Node node, std::size_t ksize) : m_my_node(std::move(node)), m_ksize(ksize) {
   m_buckets.emplace_front(KBucket(m_my_node, 0, m_ksize));
 }

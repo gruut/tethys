@@ -21,6 +21,8 @@ namespace gruut {
 namespace net_plugin {
 
 constexpr int MAX_TRY_CONN_COUNT = 3;
+constexpr auto NODE_INACTIVE_TIME_BEFORE_QUESTIONABLE = std::chrono::minutes(15);
+constexpr unsigned int NODE_FAILED_COMMS_BEFORE_STALE = 2;
 
 class Node {
 public:
