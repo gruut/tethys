@@ -21,7 +21,10 @@ using namespace net_plugin;
 
 const auto CONNECTION_CHECK_PERIOD = std::chrono::seconds(30);
 const auto NET_MESSAGE_CHECK_PERIOD = std::chrono::milliseconds(1);
+const auto BROADCAST_MSG_CHECK_PERIOD = std::chrono::minutes(3);
+
 constexpr unsigned int KBUCKET_SIZE = 20;
+constexpr int KEEP_BROADCAST_MSG_TIME = 180; // seconds
 
 class NetPluginImpl {
 public:
@@ -85,7 +88,6 @@ public:
     new GeneralService(&general_service, completion_queue.get(), routing_table, broadcast_check_table);
 
     new FindNode(&kademlia_service, completion_queue.get(), routing_table);
-    new PingPong(&kademlia_service, completion_queue.get(), routing_table);
   }
 
   void start() {
@@ -173,6 +175,32 @@ public:
     startConnectionMonitors();
   }
 
+  void monitorBroadcastMsgTable() {
+    connection_check_timer->expires_from_now(BROADCAST_MSG_CHECK_PERIOD);
+    connection_check_timer->async_wait([this](boost::system::error_code ec) {
+      if (!ec) {
+        refreshBroadcastCheckTable();
+      } else {
+        logger::ERROR("ERROR from boradcast_msg_check_timer: {}", ec.message());
+        monitorBroadcastMsgTable();
+      }
+    });
+  }
+
+  void refreshBroadcastCheckTable() {
+    logger::INFO("Start to refresh broadcast check table");
+    if (!broadcast_check_table->empty()) {
+      auto now = TimeUtil::nowBigInt();
+      for (auto it = broadcast_check_table->begin(); it != broadcast_check_table->end();) {
+        if (abs((int)(now - it->second)) > KEEP_BROADCAST_MSG_TIME)
+          it = broadcast_check_table->erase(it);
+        else
+          ++it;
+      }
+    }
+    monitorBroadcastMsgTable();
+  }
+
   void findNeighbors(vector<Node> nodes) {
     for (auto &node : nodes) {
       auto endpoint = node.getEndpoint();
@@ -255,6 +283,8 @@ public:
         int random_num = RandomNumGenerator::getRange(0, 1000);
         auto vec_msg_id = Sha256::hash(TimeUtil::now() + to_string(random_num));
         string str_hash_msg_id(vec_msg_id.begin(), vec_msg_id.end());
+
+        broadcast_check_table->insert({str_hash_msg_id, TimeUtil::nowBigInt()});
         request.set_message_id(str_hash_msg_id);
 
         for (auto &bucket : *routing_table) {
@@ -273,7 +303,7 @@ public:
           auto node = routing_table->findNode(hashed_id);
           if (node.has_value()) {
             auto stub = genStub<GruutGeneralService::Stub, GruutGeneralService>(node.value().getChannelPtr());
-            auto Status = stub->GeneralService(&context, request, &msg_status);
+            auto status = stub->GeneralService(&context, request, &msg_status);
           }
         }
       }

@@ -1,5 +1,6 @@
 #include "include/rpc_services.hpp"
 
+#include "../../../../lib/gruut-utils/src/time_util.hpp"
 #include "../../channel_interface/include/channel_interface.hpp"
 #include "../include/msg_handler.hpp"
 #include "application.hpp"
@@ -59,24 +60,42 @@ void GeneralService::proceed() {
 
   case RpcCallStatus::PROCESS: {
     new GeneralService(m_service, m_completion_queue, m_routing_table, m_broadcast_check_table);
-
     Status rpc_status;
+
     try {
       std::string packed_msg = m_request.message();
-
       // Forwarding message to other nodes
       if (m_request.broadcast()) {
         std::string msg_id = m_request.message_id();
-        if (m_broadcast_check_table->count(msg_id) == 0) {
 
-          // TODO: gruut util의  Time객체 이용할 것.
-          uint64_t now = static_cast<uint64_t>(
-              std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch()).count());
+        if (m_broadcast_check_table->count(msg_id) > 0){
+          m_reply.set_status(grpc_general::MsgStatus_Status_DUPLICATED);
+          m_reply.set_message("duplicate message");
+          m_receive_status = RpcCallStatus::FINISH;
+          m_responder.Finish(m_reply, rpc_status, this);
+          break;
+        }
+        uint64_t now = TimeUtil::nowBigInt();
+        m_broadcast_check_table->insert({msg_id, now});
 
-          m_broadcast_check_table->insert({msg_id, now});
+        RequestMsg request;
+        request.set_message(packed_msg);
+        request.set_broadcast(true);
+
+        ClientContext context;
+        MsgStatus msg_status;
+
+        for (auto &bucket : *m_routing_table) {
+          if (!bucket.empty()) {
+            auto nodes = bucket.selectRandomAliveNodes(PARALLELISM_ALPHA);
+            for (auto &n : nodes) {
+              auto stub = GruutGeneralService::NewStub(n.getChannelPtr());
+              stub->GeneralService(&context, request, &msg_status);
+            }
+          }
         }
       }
-      grpc::Status rpc_status;
+
       MessageHandler msg_handler;
       auto input_data = msg_handler.unpackMsg(packed_msg, rpc_status);
 
@@ -134,45 +153,6 @@ void FindNode::proceed() {
     Status rpc_status = Status::OK;
     m_receive_status = RpcCallStatus::FINISH;
     m_responder.Finish(m_reply, Status::OK, this);
-  } break;
-
-  default: { delete this; } break;
-  }
-}
-
-void PingPong::proceed() {
-
-  switch (m_receive_status) {
-  case RpcCallStatus::CREATE: {
-    m_receive_status = RpcCallStatus::PROCESS;
-    m_service->RequestPingPong(&m_context, &m_request, &m_responder, m_completion_queue, m_completion_queue, this);
-  } break;
-
-  case RpcCallStatus::PROCESS: {
-    new PingPong(m_service, m_completion_queue, m_routing_table);
-
-    std::string sender_id = m_request.node_id();
-    std::string sender_address = m_request.sender_address();
-    std::string sender_port = m_request.sender_port();
-    uint32_t version = m_request.version();
-    uint64_t time_stamp = m_request.time_stamp();
-
-    // TODO: version 및 time_stamp 값을 이용하여 검증 하거나 처리 할 부분 필요.
-
-    Node peer(Hash<160>::sha1(sender_id), sender_id, sender_address, sender_port);
-    m_routing_table->addPeer(std::move(peer));
-
-    // TODO: gruut util의  Time객체 이용할 것.
-    uint64_t now = static_cast<uint64_t>(
-        std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch()).count());
-    m_reply.set_time_stamp(now);
-    m_reply.set_version(1);
-    // m_reply.set_node_id(MY_ID);
-    Status rpc_status = Status::OK;
-
-    m_receive_status = RpcCallStatus::FINISH;
-    m_responder.Finish(m_reply, rpc_status, this);
-
   } break;
 
   default: { delete this; } break;

@@ -119,27 +119,5 @@ private:
   std::shared_ptr<RoutingTable> m_routing_table;
   void proceed() override;
 };
-
-class PingPong final : public CallData {
-public:
-  PingPong(KademliaService::AsyncService *service, ServerCompletionQueue *cq, std::shared_ptr<RoutingTable> routing_table)
-      : m_responder(&m_context), m_routing_table(std::move(routing_table)) {
-
-    m_service = service;
-    m_completion_queue = cq;
-    m_receive_status = RpcCallStatus ::CREATE;
-
-    proceed();
-  }
-
-private:
-  KademliaService::AsyncService *m_service;
-  Ping m_request;
-  Pong m_reply;
-  ServerAsyncResponseWriter<Pong> m_responder;
-
-  std::shared_ptr<RoutingTable> m_routing_table;
-  void proceed() override;
-};
 } // namespace net_plugin
 } // namespace gruut
