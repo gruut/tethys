@@ -176,18 +176,19 @@ void AddDescriptorsImpl() {
       "\010Identity\022\016\n\006sender\030\001 \001(\014\"\033\n\010ReplyMsg\022\017\n"
       "\007message\030\001 \001(\014\"D\n\nRequestMsg\022\021\n\tbroadcas"
       "t\030\001 \001(\010\022\022\n\nmessage_id\030\002 \001(\t\022\017\n\007message\030\003"
-      " \001(\014\"~\n\tMsgStatus\022.\n\006status\030\001 \001(\0162\036.grpc"
-      "_general.MsgStatus.Status\022\017\n\007message\030\002 \001"
-      "(\t\"0\n\006Status\022\013\n\007SUCCESS\020\000\022\013\n\007INVALID\020\001\022\014"
-      "\n\010INTERNAL\020\0022\241\001\n\023GruutGeneralService\022C\n\013"
-      "OpenChannel\022\026.grpc_general.Identity\032\026.gr"
-      "pc_general.ReplyMsg\"\000(\0010\001\022E\n\016GeneralServ"
-      "ice\022\030.grpc_general.RequestMsg\032\027.grpc_gen"
-      "eral.MsgStatus\"\000B0\n\036com.gruutnetworks.gr"
-      "uutgeneralB\014GruutNetworkP\001b\006proto3"
+      " \001(\014\"\216\001\n\tMsgStatus\022.\n\006status\030\001 \001(\0162\036.grp"
+      "c_general.MsgStatus.Status\022\017\n\007message\030\002 "
+      "\001(\t\"@\n\006Status\022\013\n\007SUCCESS\020\000\022\013\n\007INVALID\020\001\022"
+      "\014\n\010INTERNAL\020\002\022\016\n\nDUPLICATED\020\0032\241\001\n\023GruutG"
+      "eneralService\022C\n\013OpenChannel\022\026.grpc_gene"
+      "ral.Identity\032\026.grpc_general.ReplyMsg\"\000(\001"
+      "0\001\022E\n\016GeneralService\022\030.grpc_general.Requ"
+      "estMsg\032\027.grpc_general.MsgStatus\"\000B0\n\036com"
+      ".gruutnetworks.gruutgeneralB\014GruutNetwor"
+      "kP\001b\006proto3"
   };
   ::google::protobuf::DescriptorPool::InternalAddGeneratedFile(
-      descriptor, 514);
+      descriptor, 531);
   ::google::protobuf::MessageFactory::InternalRegisterGeneratedFile(
     "general_service.proto", &protobuf_RegisterTypes);
 }
@@ -213,6 +214,7 @@ bool MsgStatus_Status_IsValid(int value) {
     case 0:
     case 1:
     case 2:
+    case 3:
       return true;
     default:
       return false;
@@ -223,6 +225,7 @@ bool MsgStatus_Status_IsValid(int value) {
 const MsgStatus_Status MsgStatus::SUCCESS;
 const MsgStatus_Status MsgStatus::INVALID;
 const MsgStatus_Status MsgStatus::INTERNAL;
+const MsgStatus_Status MsgStatus::DUPLICATED;
 const MsgStatus_Status MsgStatus::Status_MIN;
 const MsgStatus_Status MsgStatus::Status_MAX;
 const int MsgStatus::Status_ARRAYSIZE;
