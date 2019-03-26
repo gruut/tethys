@@ -163,10 +163,8 @@ public:
 
     for (auto &bucket : *routing_table) {
       if (!bucket.empty()) {
-        // TODO(FIX IT): 'removeDeadNodes' flushes all nodes in the table. Because The connection is not established immediately after
-        // opening the channel(the channel state would be 'GRPC_CHANNEL_CONNECTING or GRPC_CHANNEL_IDLE.)
-        // bucket.removeDeadNodes();
-        auto nodes = bucket.selectAliveNodes(true);
+        bucket.removeDeadNodes();
+        auto nodes = bucket.selectAliveNodes(false);
         async(launch::async, &NetPluginImpl::findNeighbors, this, nodes);
       }
     }
