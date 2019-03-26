@@ -20,6 +20,8 @@
 namespace gruut {
 namespace net_plugin {
 
+constexpr unsigned int KEYSIZE_BITS = 160;
+
 class KBucket {
 public:
   template <typename TValue, typename TIterator>

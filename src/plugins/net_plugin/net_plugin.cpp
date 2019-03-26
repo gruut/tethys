@@ -21,6 +21,7 @@ using namespace net_plugin;
 
 const auto CONNECTION_CHECK_PERIOD = std::chrono::seconds(30);
 const auto NET_MESSAGE_CHECK_PERIOD = std::chrono::milliseconds(1);
+constexpr unsigned int KBUCKET_SIZE = 20;
 
 class NetPluginImpl {
 public:
