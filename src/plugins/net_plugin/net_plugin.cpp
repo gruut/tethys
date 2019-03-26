@@ -5,9 +5,9 @@
 #include "../../../lib/json/include/json.hpp"
 #include "include/msg_handler.hpp"
 
-#include "../../gruut-utils/src/sha256.hpp"
-#include "../../gruut-utils/src/random_number_generator.hpp"
-#include "../../gruut-utils/src/time_util.hpp"
+#include "../../../lib/gruut-utils/src/sha256.hpp"
+#include "../../../lib/gruut-utils/src/random_number_generator.hpp"
+#include "../../../lib/gruut-utils/src/time_util.hpp"
 
 #include <unordered_map>
 #include <future>

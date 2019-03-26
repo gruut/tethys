@@ -1,3 +1,3 @@
-[submodule "src/gruut-utils"]
-	path = src/gruut-utils
+[submodule "lib/gruut-utils"]
+	path = lib/gruut-utils
 	url = https://github.com/gruut/gruut-utils.git
