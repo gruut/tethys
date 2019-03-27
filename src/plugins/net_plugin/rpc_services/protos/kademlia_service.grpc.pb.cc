@@ -2,8 +2,8 @@
 // If you make any local change, they will be lost.
 // source: kademlia_service.proto
 
-#include "include/kademlia_service.pb.h"
 #include "include/kademlia_service.grpc.pb.h"
+#include "include/kademlia_service.pb.h"
 
 #include <grpcpp/impl/codegen/async_stream.h>
 #include <grpcpp/impl/codegen/async_unary_call.h>
@@ -17,7 +17,6 @@ namespace kademlia {
 
 static const char* KademliaService_method_names[] = {
   "/kademlia.KademliaService/FindNode",
-  "/kademlia.KademliaService/PingPong",
 };
 
 std::unique_ptr< KademliaService::Stub> KademliaService::NewStub(const std::shared_ptr< ::grpc::ChannelInterface>& channel, const ::grpc::StubOptions& options) {
@@ -28,7 +27,6 @@ std::unique_ptr< KademliaService::Stub> KademliaService::NewStub(const std::shar
 
 KademliaService::Stub::Stub(const std::shared_ptr< ::grpc::ChannelInterface>& channel)
   : channel_(channel), rpcmethod_FindNode_(KademliaService_method_names[0], ::grpc::internal::RpcMethod::NORMAL_RPC, channel)
-  , rpcmethod_PingPong_(KademliaService_method_names[1], ::grpc::internal::RpcMethod::NORMAL_RPC, channel)
   {}
 
 ::grpc::Status KademliaService::Stub::FindNode(::grpc::ClientContext* context, const ::kademlia::Target& request, ::kademlia::Neighbors* response) {
@@ -43,42 +41,18 @@ KademliaService::Stub::Stub(const std::shared_ptr< ::grpc::ChannelInterface>& ch
   return ::grpc::internal::ClientAsyncResponseReaderFactory< ::kademlia::Neighbors>::Create(channel_.get(), cq, rpcmethod_FindNode_, context, request, false);
 }
 
-::grpc::Status KademliaService::Stub::PingPong(::grpc::ClientContext* context, const ::kademlia::Ping& request, ::kademlia::Pong* response) {
-  return ::grpc::internal::BlockingUnaryCall(channel_.get(), rpcmethod_PingPong_, context, request, response);
-}
-
-::grpc::ClientAsyncResponseReader< ::kademlia::Pong>* KademliaService::Stub::AsyncPingPongRaw(::grpc::ClientContext* context, const ::kademlia::Ping& request, ::grpc::CompletionQueue* cq) {
-  return ::grpc::internal::ClientAsyncResponseReaderFactory< ::kademlia::Pong>::Create(channel_.get(), cq, rpcmethod_PingPong_, context, request, true);
-}
-
-::grpc::ClientAsyncResponseReader< ::kademlia::Pong>* KademliaService::Stub::PrepareAsyncPingPongRaw(::grpc::ClientContext* context, const ::kademlia::Ping& request, ::grpc::CompletionQueue* cq) {
-  return ::grpc::internal::ClientAsyncResponseReaderFactory< ::kademlia::Pong>::Create(channel_.get(), cq, rpcmethod_PingPong_, context, request, false);
-}
-
 KademliaService::Service::Service() {
   AddMethod(new ::grpc::internal::RpcServiceMethod(
       KademliaService_method_names[0],
       ::grpc::internal::RpcMethod::NORMAL_RPC,
       new ::grpc::internal::RpcMethodHandler< KademliaService::Service, ::kademlia::Target, ::kademlia::Neighbors>(
           std::mem_fn(&KademliaService::Service::FindNode), this)));
-  AddMethod(new ::grpc::internal::RpcServiceMethod(
-      KademliaService_method_names[1],
-      ::grpc::internal::RpcMethod::NORMAL_RPC,
-      new ::grpc::internal::RpcMethodHandler< KademliaService::Service, ::kademlia::Ping, ::kademlia::Pong>(
-          std::mem_fn(&KademliaService::Service::PingPong), this)));
 }
 
 KademliaService::Service::~Service() {
 }
 
 ::grpc::Status KademliaService::Service::FindNode(::grpc::ServerContext* context, const ::kademlia::Target* request, ::kademlia::Neighbors* response) {
-  (void) context;
-  (void) request;
-  (void) response;
-  return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
-}
-
-::grpc::Status KademliaService::Service::PingPong(::grpc::ServerContext* context, const ::kademlia::Ping* request, ::kademlia::Pong* response) {
   (void) context;
   (void) request;
   (void) response;

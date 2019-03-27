@@ -60,3 +60,6 @@ _deps
 # Config
 config.ini
 config*.ini
+
+# History
+.history

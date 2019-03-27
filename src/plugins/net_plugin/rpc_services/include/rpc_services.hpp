@@ -24,13 +24,6 @@ namespace net_plugin {
 
 enum class RpcCallStatus { CREATE, PROCESS, READ, WAIT, FINISH };
 
-struct PongData {
-  std::string node_id;
-  uint32_t version;
-  uint64_t time_stamp;
-  grpc::Status status;
-};
-
 struct NeighborsData {
   std::vector<Node> neighbors;
   uint64_t time_stamp;
@@ -115,28 +108,6 @@ private:
   Target m_request;
   Neighbors m_reply;
   ServerAsyncResponseWriter<Neighbors> m_responder;
-
-  std::shared_ptr<RoutingTable> m_routing_table;
-  void proceed() override;
-};
-
-class PingPong final : public CallData {
-public:
-  PingPong(KademliaService::AsyncService *service, ServerCompletionQueue *cq, std::shared_ptr<RoutingTable> routing_table)
-      : m_responder(&m_context), m_routing_table(std::move(routing_table)) {
-
-    m_service = service;
-    m_completion_queue = cq;
-    m_receive_status = RpcCallStatus ::CREATE;
-
-    proceed();
-  }
-
-private:
-  KademliaService::AsyncService *m_service;
-  Ping m_request;
-  Pong m_reply;
-  ServerAsyncResponseWriter<Pong> m_responder;
 
   std::shared_ptr<RoutingTable> m_routing_table;
   void proceed() override;

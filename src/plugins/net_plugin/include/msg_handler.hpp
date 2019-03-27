@@ -7,7 +7,7 @@
 #include "../config/include/message.hpp"
 #include "../config/include/network_config.hpp"
 
-#include<optional>
+#include <optional>
 using namespace grpc;
 using namespace std;
 

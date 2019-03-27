@@ -41,18 +41,9 @@ class KademliaService final {
     std::unique_ptr< ::grpc::ClientAsyncResponseReaderInterface< ::kademlia::Neighbors>> PrepareAsyncFindNode(::grpc::ClientContext* context, const ::kademlia::Target& request, ::grpc::CompletionQueue* cq) {
       return std::unique_ptr< ::grpc::ClientAsyncResponseReaderInterface< ::kademlia::Neighbors>>(PrepareAsyncFindNodeRaw(context, request, cq));
     }
-    virtual ::grpc::Status PingPong(::grpc::ClientContext* context, const ::kademlia::Ping& request, ::kademlia::Pong* response) = 0;
-    std::unique_ptr< ::grpc::ClientAsyncResponseReaderInterface< ::kademlia::Pong>> AsyncPingPong(::grpc::ClientContext* context, const ::kademlia::Ping& request, ::grpc::CompletionQueue* cq) {
-      return std::unique_ptr< ::grpc::ClientAsyncResponseReaderInterface< ::kademlia::Pong>>(AsyncPingPongRaw(context, request, cq));
-    }
-    std::unique_ptr< ::grpc::ClientAsyncResponseReaderInterface< ::kademlia::Pong>> PrepareAsyncPingPong(::grpc::ClientContext* context, const ::kademlia::Ping& request, ::grpc::CompletionQueue* cq) {
-      return std::unique_ptr< ::grpc::ClientAsyncResponseReaderInterface< ::kademlia::Pong>>(PrepareAsyncPingPongRaw(context, request, cq));
-    }
   private:
     virtual ::grpc::ClientAsyncResponseReaderInterface< ::kademlia::Neighbors>* AsyncFindNodeRaw(::grpc::ClientContext* context, const ::kademlia::Target& request, ::grpc::CompletionQueue* cq) = 0;
     virtual ::grpc::ClientAsyncResponseReaderInterface< ::kademlia::Neighbors>* PrepareAsyncFindNodeRaw(::grpc::ClientContext* context, const ::kademlia::Target& request, ::grpc::CompletionQueue* cq) = 0;
-    virtual ::grpc::ClientAsyncResponseReaderInterface< ::kademlia::Pong>* AsyncPingPongRaw(::grpc::ClientContext* context, const ::kademlia::Ping& request, ::grpc::CompletionQueue* cq) = 0;
-    virtual ::grpc::ClientAsyncResponseReaderInterface< ::kademlia::Pong>* PrepareAsyncPingPongRaw(::grpc::ClientContext* context, const ::kademlia::Ping& request, ::grpc::CompletionQueue* cq) = 0;
   };
   class Stub final : public StubInterface {
    public:
@@ -64,22 +55,12 @@ class KademliaService final {
     std::unique_ptr< ::grpc::ClientAsyncResponseReader< ::kademlia::Neighbors>> PrepareAsyncFindNode(::grpc::ClientContext* context, const ::kademlia::Target& request, ::grpc::CompletionQueue* cq) {
       return std::unique_ptr< ::grpc::ClientAsyncResponseReader< ::kademlia::Neighbors>>(PrepareAsyncFindNodeRaw(context, request, cq));
     }
-    ::grpc::Status PingPong(::grpc::ClientContext* context, const ::kademlia::Ping& request, ::kademlia::Pong* response) override;
-    std::unique_ptr< ::grpc::ClientAsyncResponseReader< ::kademlia::Pong>> AsyncPingPong(::grpc::ClientContext* context, const ::kademlia::Ping& request, ::grpc::CompletionQueue* cq) {
-      return std::unique_ptr< ::grpc::ClientAsyncResponseReader< ::kademlia::Pong>>(AsyncPingPongRaw(context, request, cq));
-    }
-    std::unique_ptr< ::grpc::ClientAsyncResponseReader< ::kademlia::Pong>> PrepareAsyncPingPong(::grpc::ClientContext* context, const ::kademlia::Ping& request, ::grpc::CompletionQueue* cq) {
-      return std::unique_ptr< ::grpc::ClientAsyncResponseReader< ::kademlia::Pong>>(PrepareAsyncPingPongRaw(context, request, cq));
-    }
 
    private:
     std::shared_ptr< ::grpc::ChannelInterface> channel_;
     ::grpc::ClientAsyncResponseReader< ::kademlia::Neighbors>* AsyncFindNodeRaw(::grpc::ClientContext* context, const ::kademlia::Target& request, ::grpc::CompletionQueue* cq) override;
     ::grpc::ClientAsyncResponseReader< ::kademlia::Neighbors>* PrepareAsyncFindNodeRaw(::grpc::ClientContext* context, const ::kademlia::Target& request, ::grpc::CompletionQueue* cq) override;
-    ::grpc::ClientAsyncResponseReader< ::kademlia::Pong>* AsyncPingPongRaw(::grpc::ClientContext* context, const ::kademlia::Ping& request, ::grpc::CompletionQueue* cq) override;
-    ::grpc::ClientAsyncResponseReader< ::kademlia::Pong>* PrepareAsyncPingPongRaw(::grpc::ClientContext* context, const ::kademlia::Ping& request, ::grpc::CompletionQueue* cq) override;
     const ::grpc::internal::RpcMethod rpcmethod_FindNode_;
-    const ::grpc::internal::RpcMethod rpcmethod_PingPong_;
   };
   static std::unique_ptr<Stub> NewStub(const std::shared_ptr< ::grpc::ChannelInterface>& channel, const ::grpc::StubOptions& options = ::grpc::StubOptions());
 
@@ -88,7 +69,6 @@ class KademliaService final {
     Service();
     virtual ~Service();
     virtual ::grpc::Status FindNode(::grpc::ServerContext* context, const ::kademlia::Target* request, ::kademlia::Neighbors* response);
-    virtual ::grpc::Status PingPong(::grpc::ServerContext* context, const ::kademlia::Ping* request, ::kademlia::Pong* response);
   };
   template <class BaseClass>
   class WithAsyncMethod_FindNode : public BaseClass {
@@ -110,27 +90,7 @@ class KademliaService final {
       ::grpc::Service::RequestAsyncUnary(0, context, request, response, new_call_cq, notification_cq, tag);
     }
   };
-  template <class BaseClass>
-  class WithAsyncMethod_PingPong : public BaseClass {
-   private:
-    void BaseClassMustBeDerivedFromService(const Service *service) {}
-   public:
-    WithAsyncMethod_PingPong() {
-      ::grpc::Service::MarkMethodAsync(1);
-    }
-    ~WithAsyncMethod_PingPong() override {
-      BaseClassMustBeDerivedFromService(this);
-    }
-    // disable synchronous version of this method
-    ::grpc::Status PingPong(::grpc::ServerContext* context, const ::kademlia::Ping* request, ::kademlia::Pong* response) override {
-      abort();
-      return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
-    }
-    void RequestPingPong(::grpc::ServerContext* context, ::kademlia::Ping* request, ::grpc::ServerAsyncResponseWriter< ::kademlia::Pong>* response, ::grpc::CompletionQueue* new_call_cq, ::grpc::ServerCompletionQueue* notification_cq, void *tag) {
-      ::grpc::Service::RequestAsyncUnary(1, context, request, response, new_call_cq, notification_cq, tag);
-    }
-  };
-  typedef WithAsyncMethod_FindNode<WithAsyncMethod_PingPong<Service > > AsyncService;
+  typedef WithAsyncMethod_FindNode<Service > AsyncService;
   template <class BaseClass>
   class WithGenericMethod_FindNode : public BaseClass {
    private:
@@ -144,23 +104,6 @@ class KademliaService final {
     }
     // disable synchronous version of this method
     ::grpc::Status FindNode(::grpc::ServerContext* context, const ::kademlia::Target* request, ::kademlia::Neighbors* response) override {
-      abort();
-      return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
-    }
-  };
-  template <class BaseClass>
-  class WithGenericMethod_PingPong : public BaseClass {
-   private:
-    void BaseClassMustBeDerivedFromService(const Service *service) {}
-   public:
-    WithGenericMethod_PingPong() {
-      ::grpc::Service::MarkMethodGeneric(1);
-    }
-    ~WithGenericMethod_PingPong() override {
-      BaseClassMustBeDerivedFromService(this);
-    }
-    // disable synchronous version of this method
-    ::grpc::Status PingPong(::grpc::ServerContext* context, const ::kademlia::Ping* request, ::kademlia::Pong* response) override {
       abort();
       return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
     }
@@ -186,26 +129,6 @@ class KademliaService final {
     }
   };
   template <class BaseClass>
-  class WithRawMethod_PingPong : public BaseClass {
-   private:
-    void BaseClassMustBeDerivedFromService(const Service *service) {}
-   public:
-    WithRawMethod_PingPong() {
-      ::grpc::Service::MarkMethodRaw(1);
-    }
-    ~WithRawMethod_PingPong() override {
-      BaseClassMustBeDerivedFromService(this);
-    }
-    // disable synchronous version of this method
-    ::grpc::Status PingPong(::grpc::ServerContext* context, const ::kademlia::Ping* request, ::kademlia::Pong* response) override {
-      abort();
-      return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
-    }
-    void RequestPingPong(::grpc::ServerContext* context, ::grpc::ByteBuffer* request, ::grpc::ServerAsyncResponseWriter< ::grpc::ByteBuffer>* response, ::grpc::CompletionQueue* new_call_cq, ::grpc::ServerCompletionQueue* notification_cq, void *tag) {
-      ::grpc::Service::RequestAsyncUnary(1, context, request, response, new_call_cq, notification_cq, tag);
-    }
-  };
-  template <class BaseClass>
   class WithStreamedUnaryMethod_FindNode : public BaseClass {
    private:
     void BaseClassMustBeDerivedFromService(const Service *service) {}
@@ -225,29 +148,9 @@ class KademliaService final {
     // replace default version of method with streamed unary
     virtual ::grpc::Status StreamedFindNode(::grpc::ServerContext* context, ::grpc::ServerUnaryStreamer< ::kademlia::Target,::kademlia::Neighbors>* server_unary_streamer) = 0;
   };
-  template <class BaseClass>
-  class WithStreamedUnaryMethod_PingPong : public BaseClass {
-   private:
-    void BaseClassMustBeDerivedFromService(const Service *service) {}
-   public:
-    WithStreamedUnaryMethod_PingPong() {
-      ::grpc::Service::MarkMethodStreamed(1,
-        new ::grpc::internal::StreamedUnaryHandler< ::kademlia::Ping, ::kademlia::Pong>(std::bind(&WithStreamedUnaryMethod_PingPong<BaseClass>::StreamedPingPong, this, std::placeholders::_1, std::placeholders::_2)));
-    }
-    ~WithStreamedUnaryMethod_PingPong() override {
-      BaseClassMustBeDerivedFromService(this);
-    }
-    // disable regular version of this method
-    ::grpc::Status PingPong(::grpc::ServerContext* context, const ::kademlia::Ping* request, ::kademlia::Pong* response) override {
-      abort();
-      return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
-    }
-    // replace default version of method with streamed unary
-    virtual ::grpc::Status StreamedPingPong(::grpc::ServerContext* context, ::grpc::ServerUnaryStreamer< ::kademlia::Ping,::kademlia::Pong>* server_unary_streamer) = 0;
-  };
-  typedef WithStreamedUnaryMethod_FindNode<WithStreamedUnaryMethod_PingPong<Service > > StreamedUnaryService;
+  typedef WithStreamedUnaryMethod_FindNode<Service > StreamedUnaryService;
   typedef Service SplitStreamedService;
-  typedef WithStreamedUnaryMethod_FindNode<WithStreamedUnaryMethod_PingPong<Service > > StreamedService;
+  typedef WithStreamedUnaryMethod_FindNode<Service > StreamedService;
 };
 
 }  // namespace kademlia

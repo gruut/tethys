@@ -74,12 +74,13 @@ enum MsgStatus_Status {
   MsgStatus_Status_SUCCESS = 0,
   MsgStatus_Status_INVALID = 1,
   MsgStatus_Status_INTERNAL = 2,
+  MsgStatus_Status_DUPLICATED = 3,
   MsgStatus_Status_MsgStatus_Status_INT_MIN_SENTINEL_DO_NOT_USE_ = ::google::protobuf::kint32min,
   MsgStatus_Status_MsgStatus_Status_INT_MAX_SENTINEL_DO_NOT_USE_ = ::google::protobuf::kint32max
 };
 bool MsgStatus_Status_IsValid(int value);
 const MsgStatus_Status MsgStatus_Status_Status_MIN = MsgStatus_Status_SUCCESS;
-const MsgStatus_Status MsgStatus_Status_Status_MAX = MsgStatus_Status_INTERNAL;
+const MsgStatus_Status MsgStatus_Status_Status_MAX = MsgStatus_Status_DUPLICATED;
 const int MsgStatus_Status_Status_ARRAYSIZE = MsgStatus_Status_Status_MAX + 1;
 
 const ::google::protobuf::EnumDescriptor* MsgStatus_Status_descriptor();
@@ -541,6 +542,8 @@ class MsgStatus : public ::google::protobuf::Message /* @@protoc_insertion_point
     MsgStatus_Status_INVALID;
   static const Status INTERNAL =
     MsgStatus_Status_INTERNAL;
+  static const Status DUPLICATED =
+    MsgStatus_Status_DUPLICATED;
   static inline bool Status_IsValid(int value) {
     return MsgStatus_Status_IsValid(value);
   }
