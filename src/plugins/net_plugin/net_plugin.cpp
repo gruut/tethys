@@ -25,6 +25,7 @@ const auto BROADCAST_MSG_CHECK_PERIOD = std::chrono::minutes(3);
 
 constexpr unsigned int KBUCKET_SIZE = 20;
 constexpr int KEEP_BROADCAST_MSG_TIME = 180; // seconds
+constexpr auto FIND_NODE_TIMEOUT = std::chrono::milliseconds(100);
 
 class NetPluginImpl {
 public:
@@ -239,6 +240,10 @@ public:
 
     ClientContext context;
     Neighbors neighbors;
+
+    std::chrono::time_point deadline = std::chrono::system_clock::now() + FIND_NODE_TIMEOUT;
+    context.set_deadline(deadline);
+
     grpc::Status status = stub->FindNode(&context, target, &neighbors);
 
     vector<Node> neighbor_list;
