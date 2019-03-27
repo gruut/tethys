@@ -102,12 +102,11 @@ void GeneralService::proceed() {
       MessageHandler msg_handler;
       auto input_data = msg_handler.unpackMsg(packed_msg, rpc_status);
 
-      auto &in_msg_channel = app().getChannel<incoming::channels::network::channel_type>();
-      in_msg_channel.publish(input_data);
-
       if (rpc_status.ok()) {
         m_reply.set_status(grpc_general::MsgStatus_Status_SUCCESS); // SUCCESS
         m_reply.set_message("OK");
+        auto &in_msg_channel = app().getChannel<incoming::channels::network::channel_type>();
+        in_msg_channel.publish(input_data.value());
       } else {
         m_reply.set_status(grpc_general::MsgStatus_Status_INVALID); // INVALID
         m_reply.set_message(rpc_status.error_message());

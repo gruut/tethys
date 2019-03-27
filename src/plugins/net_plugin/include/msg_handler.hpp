@@ -5,6 +5,9 @@
 #include "../../channel_interface/include/channel_interface.hpp"
 #include "../config/include/message.hpp"
 #include "../config/include/network_config.hpp"
+#include "msg_schema.hpp"
+
+#include <optional>
 
 using namespace grpc;
 using namespace std;
@@ -15,14 +18,13 @@ namespace net_plugin {
 class MessageHandler {
 
 public:
-  InNetMsg unpackMsg(string &packed_msg, Status &return_rpc_status) {
-    InNetMsg msg_entry;
+  optional<InNetMsg> unpackMsg(string &packed_msg, Status &return_rpc_status) {
 
     string raw_header(packed_msg.begin(), packed_msg.begin() + HEADER_LENGTH);
     auto msg_header = parseHeader(raw_header);
     if (!validateMsgFormat(msg_header)) {
       return_rpc_status = Status(StatusCode::INVALID_ARGUMENT, "Bad request (Invalid parameter)");
-      return msg_entry;
+      return {};
     }
 
     auto body_size = convertU8ToU32BE(msg_header->total_length);
@@ -36,14 +38,13 @@ public:
 
     auto json_body = getJson(msg_header->compression_algo_type, msg_raw_body);
 
-    // TODO : validate json schema
+    if (!JsonValidator::validateSchema(json_body, msg_header->message_type)) {
+      return_rpc_status = Status(StatusCode::INVALID_ARGUMENT, "Bad request (Json schema error)");
+      return {};
+    }
 
     return_rpc_status = Status::OK;
-    msg_entry.body = json_body;
-    msg_entry.type = msg_header->message_type;
-    msg_entry.sender_id = msg_header->sender_id;
-
-    return msg_entry;
+    return InNetMsg{msg_header->message_type, json_body, msg_header->sender_id};
   }
 
   string packMsg(OutNetMsg &out_msg) {

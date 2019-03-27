@@ -8,11 +8,10 @@
 namespace gruut {
 namespace net_plugin {
 
-using nlohmann::json;
 using nlohmann::json_schema_draft4::json_validator;
 using SchemaCheckMap = std::map<MessageType, json_validator>;
 
-const json SCHEMA_REQ_BLOCK = R"({
+const auto SCHEMA_REQ_BLOCK = R"({
   "title": "block request",
   "type": "object",
   "properties": {
@@ -46,7 +45,7 @@ const json SCHEMA_REQ_BLOCK = R"({
     "mSig"
   ]
 })"_json;
-const json SCHEMA_BLOCK = R"({
+const auto SCHEMA_BLOCK = R"({
   "title": "Block",
   "type": "object",
   "properties": {
@@ -99,7 +98,7 @@ const json SCHEMA_BLOCK = R"({
     "tx"
   ]
 })"_json;
-const json SCHEMA_JOIN = R"({
+const auto SCHEMA_JOIN = R"({
   "title": "Join",
   "type": "object",
   "properties": {
@@ -123,7 +122,7 @@ const json SCHEMA_JOIN = R"({
     "cID"
   ]
 })"_json;
-const json SCHEMA_RESPONSE_FIRST = R"({
+const auto SCHEMA_RESPONSE_FIRST = R"({
   "title": "Response 1 to Challenge",
   "type": "object",
   "properties": {
@@ -159,7 +158,7 @@ const json SCHEMA_RESPONSE_FIRST = R"({
     "sig"
   ]
 })"_json;
-const json SCHEMA_SUCCESS = R"({
+const auto SCHEMA_SUCCESS = R"({
   "title": "Success in Key Exchange",
   "type": "object",
   "properties": {
@@ -179,7 +178,7 @@ const json SCHEMA_SUCCESS = R"({
     "val"
   ]
 })"_json;
-const json SCHEMA_SSIG = R"({
+const auto SCHEMA_SSIG = R"({
   "title": "Signer's Signature",
   "type": "object",
   "properties": {
@@ -199,7 +198,7 @@ const json SCHEMA_SSIG = R"({
     "sig"
   ]
 })"_json;
-const json SCHEMA_ERROR = R"({
+const auto SCHEMA_ERROR = R"({
   "title": "Error",
   "type": "object",
   "properties": {
@@ -222,7 +221,7 @@ const json SCHEMA_ERROR = R"({
     "type"
 ]
 })"_json;
-const json SCHEMA_TX = R"({
+const auto SCHEMA_TX = R"({
   "title": "Transaction",
   "type": "object",
   "properties": {
@@ -257,7 +256,7 @@ const json SCHEMA_TX = R"({
     "rSig"
   ]
 })"_json;
-const json SCHEMA_REQ_CHECK = R"({
+const auto SCHEMA_REQ_CHECK = R"({
   "title": "Request Check",
   "type": "object",
   "properties": {
@@ -281,8 +280,7 @@ const json SCHEMA_REQ_CHECK = R"({
     "txid"
   ]
 })"_json;
-
-const json SCHEMA_REQ_HEADER_CHECK = R"({
+const auto SCHEMA_REQ_HEADER_CHECK = R"({
   "title": "Request Block Header",
   "type": "object",
   "properties": {
@@ -315,7 +313,7 @@ const json SCHEMA_REQ_HEADER_CHECK = R"({
     "rSig"
   ]
 })"_json;
-const json SCHEMA_REQ_STATUS = R"({
+const auto SCHEMA_REQ_STATUS = R"({
   "title": "Request Status",
   "type": "object",
   "properties": {
@@ -331,7 +329,7 @@ const json SCHEMA_REQ_STATUS = R"({
     "time"
   ]
 })"_json;
-const json SCHEMA_RES_STATUS = R"({
+const auto SCHEMA_RES_STATUS = R"({
   "title": "Response Status",
   "type": "object",
   "properties": {
@@ -366,7 +364,7 @@ const json SCHEMA_RES_STATUS = R"({
 
 class JsonValidator {
 public:
-  static bool validateSchema(json &json_obj, MessageType msg_type) {
+  static bool validateSchema(nlohmann::json &json_obj, MessageType msg_type) {
     try {
       schema_map[msg_type].validate(json_obj);
       return true;
@@ -374,7 +372,6 @@ public:
       return false;
     }
   }
-  static SchemaCheckMap schema_map;
 
 private:
   static SchemaCheckMap initMap() {
@@ -430,9 +427,8 @@ private:
 
     return init_map;
   }
+  inline static SchemaCheckMap schema_map = initMap();
 };
-
-SchemaCheckMap JsonValidator::schema_map = initMap();
 
 } // namespace net_plugin
 } // namespace gruut
