@@ -29,6 +29,7 @@ message MsgStatus {
         SUCCESS = 0;
         INVALID = 1;
         INTERNAL = 2;
+        DUPLICATED = 3;
     }
     Status status = 1;
     string message = 2;
