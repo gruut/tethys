@@ -22,6 +22,7 @@ using namespace net_plugin;
 const auto CONNECTION_CHECK_PERIOD = std::chrono::seconds(30);
 const auto NET_MESSAGE_CHECK_PERIOD = std::chrono::milliseconds(1);
 constexpr unsigned int KBUCKET_SIZE = 20;
+constexpr auto FIND_NODE_TIMEOUT = std::chrono::milliseconds(100);
 
 class NetPluginImpl {
 public:
@@ -211,6 +212,10 @@ public:
 
     ClientContext context;
     Neighbors neighbors;
+
+    std::chrono::time_point deadline = std::chrono::system_clock::now() + FIND_NODE_TIMEOUT;
+    context.set_deadline(deadline);
+
     grpc::Status status = stub->FindNode(&context, target, &neighbors);
 
     vector<Node> neighbor_list;
