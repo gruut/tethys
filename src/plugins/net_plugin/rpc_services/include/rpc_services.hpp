@@ -24,13 +24,6 @@ namespace net_plugin {
 
 enum class RpcCallStatus { CREATE, PROCESS, READ, WAIT, FINISH };
 
-struct PongData {
-  std::string node_id;
-  uint32_t version;
-  uint64_t time_stamp;
-  grpc::Status status;
-};
-
 struct NeighborsData {
   std::vector<Node> neighbors;
   uint64_t time_stamp;

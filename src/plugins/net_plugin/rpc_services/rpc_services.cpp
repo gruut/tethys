@@ -83,6 +83,9 @@ void GeneralService::proceed() {
         request.set_broadcast(true);
 
         ClientContext context;
+        std::chrono::time_point deadline = std::chrono::system_clock::now() + GENERAL_SERVICE_TIMEOUT;
+        context.set_deadline(deadline);
+
         MsgStatus msg_status;
 
         for (auto &bucket : *m_routing_table) {
