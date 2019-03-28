@@ -1,6 +1,7 @@
 #pragma once
 
 #include "../../../../lib/gruut-utils/src/lz4_compressor.hpp"
+#include "../../../../lib/gruut-utils/src/time_util.hpp"
 #include "../../../../lib/json/include/json.hpp"
 #include "../../channel_interface/include/channel_interface.hpp"
 #include "../config/include/message.hpp"
@@ -9,6 +10,7 @@
 
 #include <optional>
 
+#include <optional>
 using namespace grpc;
 using namespace std;
 
@@ -54,6 +56,22 @@ public:
     string header = makeHeader(json_dump.size(), out_msg.type, CompressionAlgorithmType::LZ4);
 
     return (header + compressed_body);
+  }
+
+  optional<InNetMsg> genInternalMsg(MessageType msg_type, std::string &id) {
+    nlohmann::json msg_body;
+
+    switch (msg_type) {
+    case MessageType::MSG_LEAVE: {
+      msg_body["sID"] = id;
+      msg_body["time"] = TimeUtil::now();
+      msg_body["msg"] = "disconnected with signer";
+      return InNetMsg{msg_body, msg_type, id};
+    }
+
+    default:
+      return {};
+    }
   }
 
 private:

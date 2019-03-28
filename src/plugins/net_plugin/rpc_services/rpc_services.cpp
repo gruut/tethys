@@ -39,9 +39,13 @@ void OpenChannel::proceed() {
 
   case RpcCallStatus::WAIT: {
     if (m_context.IsCancelled()) {
-
-      // TODO : Make internal message and then send it to core
-      m_signer_table->eraseRpcInfo(m_signer_id_b64);
+      MessageHandler msg_handler;
+      auto internal_msg = msg_handler.genInternalMsg(MessageType::MSG_LEAVE, m_signer_id_b64);
+      if (internal_msg.has_value()) {
+        m_signer_table->eraseRpcInfo(m_signer_id_b64);
+        auto &in_msg_channel = app().getChannel<incoming::channels::network::channel_type>();
+        in_msg_channel.publish(internal_msg.value());
+      }
       delete this;
     }
   } break;
