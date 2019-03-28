@@ -2,6 +2,7 @@
 
 #include "../../../../lib/gruut-utils/src/time_util.hpp"
 #include "../../channel_interface/include/channel_interface.hpp"
+#include "../../../../lib/gruut-utils/src/lz4_compressor.hpp"
 #include "../include/msg_handler.hpp"
 #include "application.hpp"
 
@@ -14,6 +15,7 @@ namespace gruut {
 namespace net_plugin {
 
 using namespace appbase;
+using namespace std;
 
 void OpenChannel::proceed() {
 
@@ -72,7 +74,7 @@ void GeneralService::proceed() {
       if (m_request.broadcast()) {
         std::string msg_id = m_request.message_id();
 
-        if (m_broadcast_check_table->count(msg_id) > 0){
+        if (m_broadcast_check_table->count(msg_id) > 0) {
           m_reply.set_status(grpc_general::MsgStatus_Status_DUPLICATED);
           m_reply.set_message("duplicate message");
           m_receive_status = RpcCallStatus::FINISH;
@@ -103,8 +105,7 @@ void GeneralService::proceed() {
         }
       }
 
-      MessageHandler msg_handler;
-      auto input_data = msg_handler.unpackMsg(packed_msg, rpc_status);
+      auto input_data = parseMessage(packed_msg, rpc_status);
 
       if (rpc_status.ok()) {
         m_reply.set_status(grpc_general::MsgStatus_Status_SUCCESS); // SUCCESS
@@ -126,6 +127,69 @@ void GeneralService::proceed() {
 
   default: { delete this; } break;
   }
+}
+
+optional<InNetMsg> GeneralService::parseMessage(string &packed_msg, Status &return_rpc_status) {
+  string raw_header(packed_msg.begin(), packed_msg.begin() + HEADER_LENGTH);
+  auto msg_header = parseHeader(raw_header);
+  if (!validateMsgFormat(msg_header)) {
+    return_rpc_status = Status(StatusCode::INVALID_ARGUMENT, "Bad request (Invalid parameter)");
+    return {};
+  }
+
+  auto body_size = convertU8ToU32BE(msg_header->total_length);
+  string msg_raw_body(packed_msg.begin() + HEADER_LENGTH, packed_msg.begin() + HEADER_LENGTH + body_size);
+
+  if (msg_header->mac_algo_type == MACAlgorithmType::HMAC) {
+    vector<uint8_t> hmac(packed_msg.begin() + HEADER_LENGTH + body_size, packed_msg.end());
+
+    // TODO : verify HMAC
+  }
+
+  auto json_body = getJson(msg_header->compression_algo_type, msg_raw_body);
+
+  if (!JsonValidator::validateSchema(json_body, msg_header->message_type)) {
+    return_rpc_status = Status(StatusCode::INVALID_ARGUMENT, "Bad request (Json schema error)");
+    return {};
+  }
+
+  return_rpc_status = Status::OK;
+  return InNetMsg{msg_header->message_type, json_body, msg_header->sender_id};
+}
+
+MessageHeader* GeneralService::parseHeader(string &raw_header) {
+  auto msg_header = reinterpret_cast<MessageHeader *>(&raw_header);
+  return msg_header;
+}
+
+bool GeneralService::validateMsgFormat(MessageHeader *header) {
+  bool check = header->identifier == IDENTIFIER;
+  if (header->mac_algo_type == MACAlgorithmType::HMAC) {
+    check &= (header->message_type == MessageType::MSG_SUCCESS || header->message_type == MessageType::MSG_SSIG);
+  }
+
+  return check;
+}
+
+int GeneralService::convertU8ToU32BE(array<uint8_t, MSG_LENGTH_SIZE> &len_bytes) {
+  return static_cast<int>(len_bytes[0] << 24 | len_bytes[1] << 16 | len_bytes[2] << 8 | len_bytes[3]);
+}
+
+nlohmann::json GeneralService::getJson(CompressionAlgorithmType comperssion_type, string &raw_body) {
+  nlohmann::json unpacked_body;
+  if (!raw_body.empty()) {
+    switch (comperssion_type) {
+      case CompressionAlgorithmType::LZ4: {
+        string origin_data = LZ4Compressor::decompressData(raw_body);
+      }
+      case CompressionAlgorithmType::NONE: {
+        unpacked_body = json::parse(raw_body);
+      }
+      default:
+        break;
+    }
+  }
+  return unpacked_body;
 }
 
 void FindNode::proceed() {

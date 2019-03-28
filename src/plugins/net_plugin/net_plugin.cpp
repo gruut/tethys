@@ -8,6 +8,7 @@
 #include "../../../lib/gruut-utils/src/random_number_generator.hpp"
 #include "../../../lib/gruut-utils/src/sha256.hpp"
 #include "../../../lib/gruut-utils/src/time_util.hpp"
+#include "../../../lib/gruut-utils/src/lz4_compressor.hpp"
 
 #include <boost/asio/steady_timer.hpp>
 #include <exception>
@@ -270,11 +271,9 @@ public:
   }
 
   void sendMessage(OutNetMsg &out_msg) {
-    MessageHandler msg_handler;
-
     if (checkMergerMsgType(out_msg.type)) {
       bool is_broadcast(out_msg.receivers.empty());
-      auto packed_msg = msg_handler.packMsg(out_msg);
+      auto packed_msg = packMsg(out_msg);
 
       RequestMsg request;
       request.set_message(packed_msg);
@@ -316,7 +315,7 @@ public:
         }
       }
     } else if (checkSignerMsgType(out_msg.type)) {
-      auto packed_msg = msg_handler.packMsg(out_msg);
+      auto packed_msg = packMsg(out_msg);
 
       for (auto &receiver_id : out_msg.receivers) {
 
@@ -335,6 +334,44 @@ public:
         signer_rpc_info.send_msg->Write(reply, tag);
       }
     }
+  }
+
+  string packMsg(OutNetMsg &out_msg) {
+    string json_dump = out_msg.body.dump();
+    string compressed_body = LZ4Compressor::compressData(json_dump);
+    string header = makeHeader(json_dump.size(), out_msg.type, CompressionAlgorithmType::LZ4);
+
+    return (header + compressed_body);
+  }
+
+  string makeHeader(int compressed_json_size, MessageType msg_type, CompressionAlgorithmType compression_algo_type) {
+    MessageHeader msg_header;
+    msg_header.identifier = IDENTIFIER;
+    msg_header.version = VERSION;
+    msg_header.message_type = msg_type;
+    if (msg_type == MessageType::MSG_ACCEPT || msg_type == MessageType::MSG_REQ_SSIG)
+      msg_header.mac_algo_type = MACAlgorithmType::HMAC;
+    else
+      msg_header.mac_algo_type = MACAlgorithmType::NONE;
+
+    msg_header.compression_algo_type = compression_algo_type;
+    msg_header.dummy = NOT_USED;
+
+    int total_length = HEADER_LENGTH + compressed_json_size;
+
+    for (int i = MSG_LENGTH_SIZE; i > 0; i--) {
+      msg_header.total_length[i] |= total_length;
+      total_length >>= 8;
+    }
+    msg_header.total_length[0] |= total_length;
+
+    std::copy(std::begin(LOCAL_CHAIN_ID), std::end(LOCAL_CHAIN_ID), std::begin(msg_header.local_chain_id));
+    std::copy(std::begin(MY_ID), std::end(MY_ID), std::begin(msg_header.sender_id));
+
+    auto header_ptr = reinterpret_cast<uint8_t *>(&msg_header);
+    auto serialized_header = std::string(header_ptr, header_ptr + sizeof(msg_header));
+
+    return serialized_header;
   }
 
   bool checkMergerMsgType(MessageType msg_type) {

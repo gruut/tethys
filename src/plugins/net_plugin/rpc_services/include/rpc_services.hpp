@@ -9,11 +9,13 @@
 #include "../../include/signer_conn_manager.hpp"
 #include "../../kademlia/include/node.hpp"
 #include "../../kademlia/include/routing.hpp"
+#include "../../../channel_interface/include/channel_interface.hpp"
 
 #include <functional>
 #include <iostream>
 #include <memory>
 #include <string>
+#include <optional>
 
 using namespace grpc;
 using namespace grpc_general;
@@ -88,7 +90,13 @@ private:
 
   std::shared_ptr<BroadcastMsgTable> m_broadcast_check_table;
   std::shared_ptr<RoutingTable> m_routing_table;
+  
   void proceed() override;
+  std::optional<InNetMsg> parseMessage(string &packed_msg, Status &return_rpc_status);
+  MessageHeader* parseHeader(string &raw_header);
+  nlohmann::json getJson(CompressionAlgorithmType comperssion_type, string &raw_body);
+  bool validateMsgFormat(MessageHeader *header);
+  int convertU8ToU32BE(array<uint8_t, MSG_LENGTH_SIZE> &len_bytes);
 };
 
 class FindNode final : public CallData {
