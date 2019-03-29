@@ -14,6 +14,11 @@ add_library(log
 
 set_target_properties(log PROPERTIES PUBLIC_HEADER "${HEADERS}")
 
+target_include_directories(log
+        PUBLIC
+        "/usr/local/include"
+        )
+
 install(TARGETS
         log
 
