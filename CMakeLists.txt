@@ -28,6 +28,7 @@ target_link_libraries(gruut
         log
         net_plugin
         block_producer_plugin
+        chain_plugin
         )
 
 target_include_directories(gruut
