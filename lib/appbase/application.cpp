@@ -39,8 +39,11 @@ void Application::setProgramOptions() {
   po::options_description app_cli_opts("Application Command Line Options");
 
   app_cfg_opts.add_options()("plugin", po::value<vector<string>>()->composing(), "You can specify multiple times.");
+
   app_cfg_opts.add_options()("p2p-address", po::value<string>()->composing());
   app_cfg_opts.add_options()("tracker-address", po::value<string>()->composing());
+
+  app_cfg_opts.add_options()("genesis-block", po::value<string>()->composing());
 
   app_cli_opts.add_options()("config-path,c", po::value<string>()->default_value("config.ini"),
                              "Configuration file path (relative/absolute file path)")("help,h", "Print help message");
