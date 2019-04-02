@@ -29,11 +29,16 @@ public:
   template <class... Plugins>
   bool initialize(int argc, char **argv) {
     try {
-      setProgramOptions();
+      registerPlugins<Plugins...>();
+
+      po::options_description plugin_cfg_opts("Plugin Config Options");
+      for (auto &[_, plugin] : app_plugins_map) {
+        plugin->setProgramOptions(plugin_cfg_opts);
+      }
+
+      setProgramOptions(plugin_cfg_opts);
       if (!parseProgramOptions(argc, argv))
         return false;
-
-      registerPlugins<Plugins...>();
 
       return initializeImpl();
     } catch (exception &e) {
@@ -82,7 +87,7 @@ public:
 private:
   bool initializeImpl();
 
-  void setProgramOptions();
+  void setProgramOptions(po::options_description &);
 
   template <typename Plugin>
   void registerPlugin() {

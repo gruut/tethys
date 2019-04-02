@@ -29,6 +29,8 @@ public:
 
   virtual void registerDependencies() = 0;
 
+  virtual void setProgramOptions(options_description&) = 0;
+
   virtual plugin_state getState() const = 0;
 
   virtual ~AbstractPlugin() = default;
@@ -58,6 +60,10 @@ public:
   }
 
   void shutdown() override {}
+
+  void setProgramOptions(options_description& cfg) override {
+    static_cast<Impl *>(this)->setProgramOptions(cfg);
+  }
 
   virtual plugin_state getState() const override {
     return state;

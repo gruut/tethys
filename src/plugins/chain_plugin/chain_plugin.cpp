@@ -39,6 +39,10 @@ void ChainPlugin::pluginInitialize(const boost::program_options::variables_map &
   }
 }
 
+void ChainPlugin::setProgramOptions(options_description &cfg) {
+  cfg.add_options()("genesis-block", boost::program_options::value<string>()->composing());
+}
+
 ChainPlugin::~ChainPlugin() {
   impl.reset();
 }
