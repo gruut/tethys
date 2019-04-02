@@ -11,7 +11,3 @@ target_sources(json_test
         PUBLIC
         ${HEADER_FILES}
         )
-
-target_link_libraries(json_test
-        PRIVATE
-        )

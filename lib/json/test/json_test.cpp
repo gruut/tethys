@@ -21,34 +21,36 @@ TEST_CASE("json::is_empty") {
   }
 }
 
-TEST_CASE("json::getValue") {
+TEST_CASE("json::get") {
   auto sample_json = R"(
         {
             "content":"gruut",
             "check" : true,
-            "int_num" : "-123456",
-            "time_stamp" : "1543323592"
+            "int_num" : -123456,
+            "time_stamp" : 1543323592
         }
         )"_json;
 
   SECTION("it should get string from json obj safely") {
-    REQUIRE(json::getString(sample_json, "content").has_value() == true);
-    REQUIRE(json::getString(sample_json, "content").value() == "gruut");
-    REQUIRE(json::getString(sample_json, "no-content").has_value() == false);
+    REQUIRE(json::get<std::string>(sample_json, "content").has_value());
+    REQUIRE(json::get<std::string>(sample_json, "content").value() == "gruut");
+    REQUIRE(!json::get<std::string>(sample_json, "no-content").has_value());
   }
   SECTION("it should get boolean from json obj safely") {
-    REQUIRE(json::getBoolean(sample_json, "check").has_value() == true);
-    REQUIRE(json::getBoolean(sample_json, "check").value() == true);
-    REQUIRE(json::getBoolean(sample_json, "no-check").has_value() == false);
+    REQUIRE(json::get<bool>(sample_json, "check").has_value());
+    REQUIRE(json::get<bool>(sample_json, "check").value() == true);
+    REQUIRE(!json::get<bool>(sample_json, "no-check").has_value());
   }
   SECTION("it should get int from json obj safely") {
-    REQUIRE(json::getInt(sample_json, "int_num").has_value() == true);
-    REQUIRE(json::getInt(sample_json, "int_num").value() == -123456);
-    REQUIRE(json::getInt(sample_json, "no-int_num").has_value() == false);
+    REQUIRE(json::get<int>(sample_json, "int_num").has_value());
+    REQUIRE(json::get<int>(sample_json, "int_num").value() == -123456);
+    REQUIRE(!json::get<int>(sample_json, "no-int_num").has_value());
   }
   SECTION("it should get uint64_t from json obj safely") {
-    REQUIRE(json::getUint64(sample_json, "time_stamp").has_value() == true);
-    REQUIRE(json::getUint64(sample_json, "time_stamp").value() == 1543323592);
-    REQUIRE(json::getUint64(sample_json, "no-time_stamp").has_value() == false);
+    REQUIRE(json::get<uint64_t>(sample_json, "time_stamp").has_value());
+    REQUIRE(json::get<uint64_t>(sample_json, "time_stamp").value() == 1543323592);
+    REQUIRE(!json::get<uint64_t>(sample_json, "no-time_stamp").has_value());
+
+    REQUIRE(sizeof(json::get<uint64_t>(sample_json, "time_stamp").value()) == 8);
   }
 }
