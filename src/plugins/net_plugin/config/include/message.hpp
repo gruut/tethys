@@ -4,7 +4,7 @@
 #include <grpcpp/impl/codegen/status.h>
 #include <string>
 #include <tuple>
-#include <map>
+#include <unordered_map>
 #include <vector>
 
 namespace gruut {
@@ -102,7 +102,7 @@ enum class MsgEntryLength : int {
 
 using EntryAttribute = std::tuple<std::string, MsgEntryType, MsgEntryLength>;
 
-const std::map<MessageType, std::vector<EntryAttribute>> MSG_VALID_FILTER = {
+const std::unordered_map<MessageType, std::vector<EntryAttribute>> MSG_VALID_FILTER = {
     {MessageType::MSG_JOIN, std::vector<EntryAttribute>{{"sID", MsgEntryType::BASE64, MsgEntryLength::ID},
                                                         {"time", MsgEntryType::TIMESTAMP_NOW, MsgEntryLength::NOT_LIMITED},
                                                         {"cID", MsgEntryType::BASE64, MsgEntryLength::ID}}},

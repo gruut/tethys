@@ -184,9 +184,9 @@ bool GeneralService::validateMsgHdrFormat(MessageHeader *header) {
 bool GeneralService::validateMsgBody(MessageType msg_type, nlohmann::json &json_body) {
 
   if (MSG_VALID_FILTER.count(msg_type) > 0) {
-    for (auto &filt_entry : MSG_VALID_FILTER.at(msg_type)) {
-      if (!isValidMsgEntryType(json_body, get<0>(filt_entry), get<1>(filt_entry)) ||
-          !hasValidMsgEntryLength(json_body, get<0>(filt_entry), get<2>(filt_entry)))
+    for (auto &[key, type, len] : MSG_VALID_FILTER.at(msg_type)) {
+      if (!isValidMsgEntryType(json_body, key, type) ||
+          !hasValidMsgEntryLength(json_body, key, len))
         return false;
     }
     return true;
@@ -248,14 +248,14 @@ bool GeneralService::isValidMsgEntryType(nlohmann::json &msg_body, const string 
     return false;
   }
   case MsgEntryType::STRING: {
-    if (msg_body.find(key) != msg_body.end() && msg_body[key].is_string())
+    if (msg_body.contains(key) && msg_body[key].is_string())
       return true;
 
     logger::ERROR("Failed to validate message : STRING");
     return false;
   }
   case MsgEntryType::BOOL: {
-    if (msg_body.find(key) != msg_body.end() && msg_body[key].is_boolean())
+    if (msg_body.contains(key) && msg_body[key].is_boolean())
       return true;
 
     logger::ERROR("Failed to validate message : BOOL");
@@ -263,7 +263,7 @@ bool GeneralService::isValidMsgEntryType(nlohmann::json &msg_body, const string 
   }
   case MsgEntryType::ARRAYOFOBJECT:
   case MsgEntryType::ARRAYOFSTRING: {
-    if (msg_body.find(key) != msg_body.end() && !msg_body[key].empty() && msg_body[key].is_array())
+    if (msg_body.contains(key) && !msg_body[key].empty() && msg_body[key].is_array())
       return true;
 
     if (type == MsgEntryType::ARRAYOFSTRING)
