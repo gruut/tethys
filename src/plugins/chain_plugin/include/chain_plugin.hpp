@@ -2,6 +2,7 @@
 
 #include <boost/filesystem.hpp>
 #include <boost/program_options/variables_map.hpp>
+#include <boost/program_options/options_description.hpp>
 
 #include "../../../../lib/log/include/log.hpp"
 #include "../../channel_interface/include/channel_interface.hpp"
@@ -27,6 +28,8 @@ public:
   void pluginShutdown() {
     logger::INFO("ChainPlugin Shutdown");
   }
+
+  void setProgramOptions(options_description &cfg) override;
 
 private:
   std::unique_ptr<class ChainPluginImpl> impl;

@@ -27,6 +27,10 @@ public:
     logger::INFO("BlockProducerPlugin Shutdown");
   }
 
+  void setProgramOptions(po::options_description &) {
+    // do nothing
+  }
+
 private:
 };
 } // namespace gruut

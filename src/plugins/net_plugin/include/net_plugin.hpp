@@ -2,6 +2,7 @@
 
 #include <iostream>
 #include <memory>
+#include <boost/program_options/options_description.hpp>
 
 #include "../../channel_interface/include/channel_interface.hpp"
 #include "application.hpp"
@@ -28,6 +29,8 @@ public:
   void pluginShutdown() {
     logger::INFO("NetPlugin Shutdown");
   }
+
+  void setProgramOptions(options_description &cfg) override;
 
 private:
   std::unique_ptr<class NetPluginImpl> impl;
