@@ -214,11 +214,7 @@ void FindNode::proceed() {
       node->set_port(n.getEndpoint().port);
       node->set_node_id(n.getId());
     }
-
-    // TODO: gruut util의  Time객체 이용할 것.
-    uint64_t now = static_cast<uint64_t>(
-        std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch()).count());
-    m_reply.set_time_stamp(now);
+    m_reply.set_time_stamp(TimeUtil::nowBigInt());
 
     Status rpc_status = Status::OK;
     m_receive_status = RpcCallStatus::FINISH;
