@@ -6,16 +6,20 @@
 #include "../include/msg_handler.hpp"
 #include "application.hpp"
 
+#include <algorithm>
 #include <cstring>
 #include <exception>
 #include <future>
 #include <thread>
+#include <regex>
 
 namespace gruut {
 namespace net_plugin {
 
 using namespace appbase;
 using namespace std;
+
+constexpr int TIME_MAX_DIFF_SEC = 3;
 
 void OpenChannel::proceed() {
 
@@ -108,10 +112,16 @@ void GeneralService::proceed() {
       auto input_data = parseMessage(packed_msg, rpc_status);
 
       if (rpc_status.ok()) {
-        m_reply.set_status(grpc_general::MsgStatus_Status_SUCCESS); // SUCCESS
-        m_reply.set_message("OK");
-        auto &in_msg_channel = app().getChannel<incoming::channels::network::channel_type>();
-        in_msg_channel.publish(input_data.value());
+        if(validateMsgBody(input_data.value().type, input_data.value().body)) {
+          m_reply.set_status(grpc_general::MsgStatus_Status_SUCCESS); // SUCCESS
+          m_reply.set_message("OK");
+          auto &in_msg_channel = app().getChannel<incoming::channels::network::channel_type>();
+          in_msg_channel.publish(input_data.value());
+        } else {
+          rpc_status = Status(StatusCode::INVALID_ARGUMENT, "Bad request (Failed to validate message)");
+          m_reply.set_status(grpc_general::MsgStatus_Status_INVALID); //INVALID
+          m_reply.set_message(rpc_status.error_message());
+        }
       } else {
         m_reply.set_status(grpc_general::MsgStatus_Status_INVALID); // INVALID
         m_reply.set_message(rpc_status.error_message());
@@ -132,7 +142,7 @@ void GeneralService::proceed() {
 optional<InNetMsg> GeneralService::parseMessage(string &packed_msg, Status &return_rpc_status) {
   string raw_header(packed_msg.begin(), packed_msg.begin() + HEADER_LENGTH);
   auto msg_header = parseHeader(raw_header);
-  if (!validateMsgFormat(msg_header)) {
+  if (!validateMsgHdrFormat(msg_header)) {
     return_rpc_status = Status(StatusCode::INVALID_ARGUMENT, "Bad request (Invalid parameter)");
     return {};
   }
@@ -162,13 +172,120 @@ MessageHeader* GeneralService::parseHeader(string &raw_header) {
   return msg_header;
 }
 
-bool GeneralService::validateMsgFormat(MessageHeader *header) {
+bool GeneralService::validateMsgHdrFormat(MessageHeader *header) {
   bool check = header->identifier == IDENTIFIER;
   if (header->mac_algo_type == MACAlgorithmType::HMAC) {
     check &= (header->message_type == MessageType::MSG_SUCCESS || header->message_type == MessageType::MSG_SSIG);
   }
 
   return check;
+}
+
+bool GeneralService::validateMsgBody(MessageType msg_type, nlohmann::json &json_body) {
+
+  if (MSG_VALID_FILTER.count(msg_type) > 0) {
+    for (auto &[key, type, len] : MSG_VALID_FILTER.at(msg_type)) {
+      if (!isValidMsgEntryType(json_body, key, type) ||
+          !hasValidMsgEntryLength(json_body, key, len))
+        return false;
+    }
+    return true;
+  }
+  return false;
+}
+
+bool GeneralService::isValidMsgEntryType(nlohmann::json &msg_body, const string &key, MsgEntryType type) {
+  switch (type) {
+  case MsgEntryType::BASE64: {
+    auto entry = json::get<string>(msg_body, key);
+    if (entry.has_value()) {
+      regex rgx("^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{3}=|[A-Za-z0-9+/]{2}==)?$");
+      auto val = entry.value();
+      if (!val.empty() && regex_match(val, rgx))
+        return true;
+    }
+    logger::ERROR("Failed to validate message : BASE64");
+    return false;
+  }
+  case MsgEntryType::UINT:
+  case MsgEntryType::TIMESTAMP: {
+    auto entry = json::get<string>(msg_body, key);
+    if (entry.has_value()) {
+      auto val = entry.value();
+      if (!val.empty() && all_of(val.begin(), val.end(), ::isdigit) && stoi(val) >= 0)
+        return true;
+    }
+    if (type == MsgEntryType::TIMESTAMP)
+      logger::ERROR("Failed to validate message : TIMESTAMP");
+    else
+      logger::ERROR("Failed to validate message : DECIMAL");
+    return false;
+  }
+  case MsgEntryType::TIMESTAMP_NOW: {
+    auto entry = json::get<string>(msg_body, key);
+    if (entry.has_value()) {
+      auto val = entry.value();
+      if (!val.empty() && all_of(val.begin(), val.end(), ::isdigit)) {
+        uint64_t tt_time = stoll(val);
+        uint64_t current_time = TimeUtil::nowBigInt();
+
+        if (abs((int)(current_time - tt_time)) < TIME_MAX_DIFF_SEC)
+          return true;
+      }
+    }
+
+    logger::ERROR("Failed to validate message : TIMESTAMP_NOW");
+    return false;
+  }
+  case MsgEntryType::HEX: {
+    auto entry = json::get<string>(msg_body, key);
+    if (entry.has_value()) {
+      auto val = entry.value();
+      if (!val.empty() && all_of(val.begin(), val.end(), ::isxdigit))
+        return true;
+    }
+    logger::ERROR("Failed to validate message : HEX");
+    return false;
+  }
+  case MsgEntryType::STRING: {
+    if (msg_body.contains(key) && msg_body[key].is_string())
+      return true;
+
+    logger::ERROR("Failed to validate message : STRING");
+    return false;
+  }
+  case MsgEntryType::BOOL: {
+    if (msg_body.contains(key) && msg_body[key].is_boolean())
+      return true;
+
+    logger::ERROR("Failed to validate message : BOOL");
+    return false;
+  }
+  case MsgEntryType::ARRAYOFOBJECT:
+  case MsgEntryType::ARRAYOFSTRING: {
+    if (msg_body.contains(key) && !msg_body[key].empty() && msg_body[key].is_array())
+      return true;
+
+    if (type == MsgEntryType::ARRAYOFSTRING)
+      logger::ERROR("Failed to validate message : ARRAY OF STRING");
+    else
+      logger::ERROR("Failed to validate message : ARRAY OF OBJECT");
+    return false;
+  }
+  default:
+    return true;
+  }
+}
+
+bool GeneralService::hasValidMsgEntryLength(nlohmann::json &msg_body, const string &key, MsgEntryLength len) {
+  if (len == MsgEntryLength::NOT_LIMITED)
+    return true;
+
+  auto entry = json::get<string>(msg_body, key);
+  if (!entry.has_value())
+    return false;
+
+  return entry.value().length() == static_cast<int>(len);
 }
 
 int GeneralService::convertU8ToU32BE(array<uint8_t, MSG_LENGTH_SIZE> &len_bytes) {

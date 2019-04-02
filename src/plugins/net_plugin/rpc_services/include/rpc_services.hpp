@@ -95,7 +95,10 @@ private:
   std::optional<InNetMsg> parseMessage(string &packed_msg, Status &return_rpc_status);
   MessageHeader* parseHeader(string &raw_header);
   nlohmann::json getJson(CompressionAlgorithmType comperssion_type, string &raw_body);
-  bool validateMsgFormat(MessageHeader *header);
+  bool validateMsgHdrFormat(MessageHeader *header);
+  bool validateMsgBody(MessageType msg_type, nlohmann::json &json_body);
+  bool hasValidMsgEntryLength(nlohmann::json &msg_body, const std::string &key, MsgEntryLength len);
+  bool isValidMsgEntryType(nlohmann::json &msg_body, const std::string &key, MsgEntryType type);
   int convertU8ToU32BE(array<uint8_t, MSG_LENGTH_SIZE> &len_bytes);
 };
 
