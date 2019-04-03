@@ -5,10 +5,10 @@
 #include "include/msg_handler.hpp"
 #include "rpc_services/include/rpc_services.hpp"
 
+#include "../../../lib/gruut-utils/src/lz4_compressor.hpp"
 #include "../../../lib/gruut-utils/src/random_number_generator.hpp"
 #include "../../../lib/gruut-utils/src/sha256.hpp"
 #include "../../../lib/gruut-utils/src/time_util.hpp"
-#include "../../../lib/gruut-utils/src/lz4_compressor.hpp"
 
 #include <boost/asio/steady_timer.hpp>
 #include <exception>
@@ -388,8 +388,7 @@ public:
 NetPlugin::NetPlugin() : impl(new NetPluginImpl()) {}
 
 void NetPlugin::setProgramOptions(options_description &cfg) {
-  cfg.add_options()("p2p-address", po::value<string>()->composing());
-  cfg.add_options()("tracker-address", po::value<string>()->composing());
+  cfg.add_options()("p2p-address", po::value<string>()->composing()), ("tracker-address", po::value<string>()->composing());
 }
 
 void NetPlugin::pluginInitialize(const variables_map &options) {
