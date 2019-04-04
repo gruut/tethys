@@ -337,14 +337,15 @@ public:
   }
 
   string packMsg(OutNetMsg &out_msg) {
+    // TODO : serialized-body must be determined by serialization algo type
     string json_dump = out_msg.body.dump();
-    string compressed_body = LZ4Compressor::compressData(json_dump);
-    string header = makeHeader(json_dump.size(), out_msg.type, SerializationAlgorithmType::LZ4);
+    string serialized_body = LZ4Compressor::compressData(json_dump);
+    string header = makeHeader(serialized_body.size(), out_msg.type, SerializationAlgorithmType::LZ4);
 
-    return (header + compressed_body);
+    return (header + serialized_body);
   }
 
-  string makeHeader(int compressed_json_size, MessageType msg_type, SerializationAlgorithmType compression_algo_type) {
+  string makeHeader(int serialized_json_size, MessageType msg_type, SerializationAlgorithmType serialization_algo_type) {
     MessageHeader msg_header;
     msg_header.identifier = IDENTIFIER;
     msg_header.version = VERSION;
@@ -354,10 +355,10 @@ public:
     else
       msg_header.mac_algo_type = MACAlgorithmType::NONE;
 
-    msg_header.compression_algo_type = compression_algo_type;
+    msg_header.serialization_algo_type = serialization_algo_type;
     msg_header.dummy = NOT_USED;
 
-    int total_length = HEADER_LENGTH + compressed_json_size;
+    int total_length = HEADER_LENGTH + serialized_json_size;
 
     for (int i = MSG_LENGTH_SIZE; i > 0; i--) {
       msg_header.total_length[i] |= total_length;
@@ -365,6 +366,7 @@ public:
     }
     msg_header.total_length[0] |= total_length;
 
+    std::copy(std::begin(WORLD_ID), std::end(WORLD_ID), std::begin(msg_header.world_id));
     std::copy(std::begin(LOCAL_CHAIN_ID), std::end(LOCAL_CHAIN_ID), std::begin(msg_header.local_chain_id));
     std::copy(std::begin(MY_ID), std::end(MY_ID), std::begin(msg_header.sender_id));
 

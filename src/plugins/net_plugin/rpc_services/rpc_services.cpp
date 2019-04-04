@@ -156,7 +156,7 @@ optional<InNetMsg> GeneralService::parseMessage(string &packed_msg, Status &retu
     // TODO : verify HMAC
   }
 
-  auto json_body = getJson(msg_header->compression_algo_type, msg_raw_body);
+  auto json_body = getJson(msg_header->serialization_algo_type, msg_raw_body);
 
   if (!JsonValidator::validateSchema(json_body, msg_header->message_type)) {
     return_rpc_status = Status(StatusCode::INVALID_ARGUMENT, "Bad request (Json schema error)");
