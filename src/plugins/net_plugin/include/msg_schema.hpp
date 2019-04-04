@@ -256,111 +256,6 @@ const auto SCHEMA_TX = R"({
     "rSig"
   ]
 })"_json;
-const auto SCHEMA_REQ_CHECK = R"({
-  "title": "Request Check",
-  "type": "object",
-  "properties": {
-    "sender": {
-      "type": "string"
-    },
-    "time": {
-      "type": "string"
-    },
-    "dID": {
-      "type": "string"
-    },
-    "txid": {
-      "type": "string"
-    }
-  },
-  "required": [
-    "sender",
-    "time",
-    "dID",
-    "txid"
-  ]
-})"_json;
-const auto SCHEMA_REQ_HEADER_CHECK = R"({
-  "title": "Request Block Header",
-  "type": "object",
-  "properties": {
-    "rID": {
-      "description": "requestor's ID",
-      "type": "string"
-    },
-    "time": {
-      "description": "요청 시간",
-      "type": "string"
-    },
-    "rCert": {
-      "description": "requestor's certificate",
-      "type": "string"
-    },
-    "hgt": {
-      "description": "block height",
-      "type": "string"
-    },
-    "rSig": {
-      "description": "requestor's signature",
-      "type": "string"
-    }
-  },
-  "required": [
-    "rID",
-    "time",
-    "rCert",
-    "hgt",
-    "rSig"
-  ]
-})"_json;
-const auto SCHEMA_REQ_STATUS = R"({
-  "title": "Request Status",
-  "type": "object",
-  "properties": {
-    "mID": {
-      "type": "string"
-    },
-    "time": {
-      "type": "string"
-    }
-  },
-  "required": [
-    "mID",
-    "time"
-  ]
-})"_json;
-const auto SCHEMA_RES_STATUS = R"({
-  "title": "Response Status",
-  "type": "object",
-  "properties": {
-    "mID": {
-      "type": "string"
-    },
-    "time": {
-      "type": "string"
-    },
-    "mCert": {
-      "type": "string"
-    },
-    "hgt": {
-      "type": "string"
-    },
-    "hash": {
-      "type": "string"
-    },
-    "mSig": {
-      "type": "string"
-    }
-  },
-  "required": [
-    "mID",
-    "time",
-    "mCert",
-    "hgt",
-    "hash",
-    "mSig"
-  ]
-})"_json;
 
 class JsonValidator {
 public:
@@ -408,22 +303,6 @@ private:
     json_validator validator_tx;
     validator_tx.set_root_schema(SCHEMA_TX);
     init_map[MessageType::MSG_TX] = validator_tx;
-
-    json_validator validator_req_check;
-    validator_req_check.set_root_schema(SCHEMA_REQ_CHECK);
-    init_map[MessageType::MSG_REQ_CHECK] = validator_req_check;
-
-    json_validator validator_req_header;
-    validator_req_header.set_root_schema(SCHEMA_REQ_HEADER_CHECK);
-    init_map[MessageType::MSG_REQ_HEADER] = validator_req_header;
-
-    json_validator validator_req_status;
-    validator_req_status.set_root_schema(SCHEMA_REQ_STATUS);
-    init_map[MessageType::MSG_REQ_STATUS] = validator_req_status;
-
-    json_validator validator_res_status;
-    validator_res_status.set_root_schema(SCHEMA_RES_STATUS);
-    init_map[MessageType::MSG_RES_STATUS] = validator_res_status;
 
     return init_map;
   }

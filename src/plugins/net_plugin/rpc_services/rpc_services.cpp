@@ -292,14 +292,14 @@ int GeneralService::convertU8ToU32BE(array<uint8_t, MSG_LENGTH_SIZE> &len_bytes)
   return static_cast<int>(len_bytes[0] << 24 | len_bytes[1] << 16 | len_bytes[2] << 8 | len_bytes[3]);
 }
 
-nlohmann::json GeneralService::getJson(CompressionAlgorithmType comperssion_type, string &raw_body) {
+nlohmann::json GeneralService::getJson(SerializationAlgorithmType comperssion_type, string &raw_body) {
   nlohmann::json unpacked_body;
   if (!raw_body.empty()) {
     switch (comperssion_type) {
-      case CompressionAlgorithmType::LZ4: {
+      case SerializationAlgorithmType::LZ4: {
         string origin_data = LZ4Compressor::decompressData(raw_body);
       }
-      case CompressionAlgorithmType::NONE: {
+      case SerializationAlgorithmType::NONE: {
         unpacked_body = json::parse(raw_body);
       }
       default:

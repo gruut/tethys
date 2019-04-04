@@ -94,7 +94,7 @@ private:
   void proceed() override;
   std::optional<InNetMsg> parseMessage(string &packed_msg, Status &return_rpc_status);
   MessageHeader* parseHeader(string &raw_header);
-  nlohmann::json getJson(CompressionAlgorithmType comperssion_type, string &raw_body);
+  nlohmann::json getJson(SerializationAlgorithmType comperssion_type, string &raw_body);
   bool validateMsgHdrFormat(MessageHeader *header);
   bool validateMsgBody(MessageType msg_type, nlohmann::json &json_body);
   bool hasValidMsgEntryLength(nlohmann::json &msg_body, const std::string &key, MsgEntryLength len);

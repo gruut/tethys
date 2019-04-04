@@ -339,12 +339,12 @@ public:
   string packMsg(OutNetMsg &out_msg) {
     string json_dump = out_msg.body.dump();
     string compressed_body = LZ4Compressor::compressData(json_dump);
-    string header = makeHeader(json_dump.size(), out_msg.type, CompressionAlgorithmType::LZ4);
+    string header = makeHeader(json_dump.size(), out_msg.type, SerializationAlgorithmType::LZ4);
 
     return (header + compressed_body);
   }
 
-  string makeHeader(int compressed_json_size, MessageType msg_type, CompressionAlgorithmType compression_algo_type) {
+  string makeHeader(int compressed_json_size, MessageType msg_type, SerializationAlgorithmType compression_algo_type) {
     MessageHeader msg_header;
     msg_header.identifier = IDENTIFIER;
     msg_header.version = VERSION;
@@ -375,8 +375,7 @@ public:
   }
 
   bool checkMergerMsgType(MessageType msg_type) {
-    return (msg_type == MessageType::MSG_TX || msg_type == MessageType::MSG_REQ_BLOCK || msg_type == MessageType::MSG_REQ_STATUS ||
-            msg_type == MessageType::MSG_RES_STATUS || msg_type == MessageType::MSG_BLOCK);
+    return (msg_type == MessageType::MSG_TX || msg_type == MessageType::MSG_REQ_BLOCK || msg_type == MessageType::MSG_BLOCK);
   }
 
   bool checkSignerMsgType(MessageType msg_type) {
