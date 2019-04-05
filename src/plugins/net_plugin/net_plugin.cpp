@@ -389,7 +389,8 @@ public:
 NetPlugin::NetPlugin() : impl(new NetPluginImpl()) {}
 
 void NetPlugin::setProgramOptions(options_description &cfg) {
-  cfg.add_options()("p2p-address", po::value<string>()->composing()), ("tracker-address", po::value<string>()->composing());
+  cfg.add_options()("p2p-address", po::value<string>()->composing());
+  cfg.add_options()("tracker-address", po::value<string>()->composing());
 }
 
 void NetPlugin::pluginInitialize(const variables_map &options) {
