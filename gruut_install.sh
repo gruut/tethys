@@ -74,6 +74,16 @@ elif [[ ${ARCH} == "Darwin" ]]; then
     brew install spdlog
 fi
 
+if [[ ! -d "/usr/local/include/soci" ]]; then
+    check_and_require_sudo
+
+    git clone git://github.com/SOCI/soci.git && cd soci
+    mkdir -p build && cd build
+    cmake -DSOCI_TESTS=OFF ..
+    make
+    make install
+fi
+
 # CMake build
 if [[ ! -d "${BUILD_DIR}" ]]; then
     mkdir -p ${BUILD_DIR}
