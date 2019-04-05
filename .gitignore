@@ -60,6 +60,7 @@ _deps
 # Config
 config.ini
 config*.ini
+config.yml
 
 # History
 .history
