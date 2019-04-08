@@ -86,7 +86,7 @@ const auto SCHEMA_REQ_BLOCK = R"({
     "time": {
       "type": "string"
     },
-    "world" {
+    "world": {
       "type": "string"
     },
     "chain": {
@@ -398,7 +398,6 @@ const auto SCHEMA_SSIG = R"({
   ]
 })"_json;
 const auto SCHEMA_TX = R"({
-{
   "title": "Transaction",
   "type": "object",
   "properties": {
@@ -490,7 +489,6 @@ const auto SCHEMA_TX = R"({
     "user",
     "endorser"
   ]
-}
 })"_json;
 
 class JsonValidator {
