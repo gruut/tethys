@@ -36,9 +36,11 @@ using message_version_type = uint8_t;
 
 constexpr int CHAIN_ID_TYPE_SIZE = 8;
 constexpr int WORLD_ID_TYPE_SIZE = 8;
+constexpr int SENDER_ID_TYPE_SIZE = 32;
+
 using world_id_type = std::array<uint8_t, WORLD_ID_TYPE_SIZE>;
 using localchain_id_type = std::array<uint8_t, CHAIN_ID_TYPE_SIZE>;
-using id_type = std::string;
+using sender_id_type = std::array<uint8_t, SENDER_ID_TYPE_SIZE>;
 
 constexpr int IDENTIFIER_LENGTH = 1;
 constexpr int VERSION_LENGTH = 1;
@@ -47,7 +49,6 @@ constexpr int MAC_TYPE_LENGTH = 1;
 constexpr int SERIALIZATION_TYPE_LENGTH = 1;
 constexpr int DUMMY_LENGTH = 1;
 constexpr int MSG_LENGTH_SIZE = 4;
-constexpr int SENDER_ID_TYPE_SIZE = 32;
 
 constexpr int HEADER_LENGTH = IDENTIFIER_LENGTH + VERSION_LENGTH + MSG_TYPE_LENGTH + MAC_TYPE_LENGTH + SERIALIZATION_TYPE_LENGTH +
                               DUMMY_LENGTH + MSG_LENGTH_SIZE + WORLD_ID_TYPE_SIZE + CHAIN_ID_TYPE_SIZE + SENDER_ID_TYPE_SIZE;
@@ -66,7 +67,7 @@ struct MessageHeader {
   std::array<uint8_t, MSG_LENGTH_SIZE> total_length;
   world_id_type world_id;
   localchain_id_type local_chain_id;
-  id_type sender_id;
+  sender_id_type sender_id;
 };
 
 enum class MsgEntryType { BASE64, TIMESTAMP, TIMESTAMP_NOW, HEX, STRING, UINT, BOOL, ARRAYOFOBJECT, ARRAYOFSTRING };

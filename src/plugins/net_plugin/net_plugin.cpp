@@ -9,6 +9,7 @@
 #include "../../../lib/gruut-utils/src/random_number_generator.hpp"
 #include "../../../lib/gruut-utils/src/sha256.hpp"
 #include "../../../lib/gruut-utils/src/time_util.hpp"
+#include "../../../lib/gruut-utils/src/type_converter.hpp"
 
 #include <boost/asio/steady_timer.hpp>
 #include <exception>
@@ -305,8 +306,9 @@ public:
           }
         }
       } else {
-        for (auto &receiver : out_msg.receivers) {
-          auto hashed_id = Hash<160>::sha1(receiver);
+        for (auto &receiver_id_arr : out_msg.receivers) {
+          auto receiver_id = TypeConverter::arrayToString<SENDER_ID_TYPE_SIZE>(receiver_id_arr);
+          auto hashed_id = Hash<160>::sha1(receiver_id);
           auto node = routing_table->findNode(hashed_id);
           if (node.has_value()) {
             auto stub = genStub<GruutGeneralService::Stub, GruutGeneralService>(node.value().getChannelPtr());
@@ -317,8 +319,8 @@ public:
     } else if (checkSignerMsgType(out_msg.type)) {
       auto packed_msg = packMsg(out_msg);
 
-      for (auto &receiver_id : out_msg.receivers) {
-
+      for (auto &receiver_id_arr : out_msg.receivers) {
+        auto receiver_id = TypeConverter::arrayToString<SENDER_ID_TYPE_SIZE>(receiver_id_arr);
         SignerRpcInfo signer_rpc_info = signer_conn_table->getRpcInfo(receiver_id);
         if (signer_rpc_info.send_msg == nullptr)
           continue;
