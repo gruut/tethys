@@ -2,6 +2,7 @@ cmake_minimum_required(VERSION 3.10)
 
 add_library(chain_plugin
         chain_plugin.cpp
+        chain.cpp
         include/chain_plugin.hpp)
 
 list(APPEND CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/CMakeModules")

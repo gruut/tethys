@@ -1,9 +1,7 @@
 #include "include/chain_plugin.hpp"
+#include "include/chain.hpp"
 #include "../../../include/json.hpp"
 #include "../../../lib/log/include/log.hpp"
-
-#include "mysql/soci-mysql.h"
-#include "soci.h"
 
 namespace gruut {
 
@@ -13,6 +11,8 @@ using namespace std;
 
 class ChainPluginImpl {
 public:
+  unique_ptr<Chain> chain;
+
   string dbms;
   string table_name;
   string db_user_id;
@@ -21,12 +21,8 @@ public:
   nlohmann::json genesis_state;
 
   void initialize() {
-    const string conn_opt = "service=" + table_name + " user=" + db_user_id + " password=" + db_password;
-
-    soci::session sql(dbms, conn_opt);
+    chain = make_unique<Chain>(dbms, table_name, db_user_id, db_password);
   }
-
-
 };
 
 ChainPlugin::ChainPlugin() : impl(new ChainPluginImpl()) {}
