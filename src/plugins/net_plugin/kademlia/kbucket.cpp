@@ -10,6 +10,7 @@
 #include <boost/multiprecision/cpp_int.hpp>
 #include <random>
 #include <vector>
+#include <optional>
 
 namespace gruut {
 namespace net_plugin {
@@ -148,8 +149,22 @@ std::vector<Node> KBucket::selectRandomAliveNodes(int num_of_node) {
   return random_alive_nodes;
 }
 
-void KBucket::removeDeadNodes() {
-  m_nodes.erase(std::remove_if(m_nodes.begin(), m_nodes.end(), [](auto &n) { return !n.isAlive(); }), m_nodes.end());
+std::optional<std::vector<Hash160>> KBucket::removeDeadNodes() {
+  std::vector<Hash160> dead_node_hashed_net_ids;
+  m_nodes.erase(std::remove_if(m_nodes.begin(), m_nodes.end(),
+                               [&dead_node_hashed_net_ids](auto &n) {
+                                 if (!n.isAlive()) {
+                                   dead_node_hashed_net_ids.emplace_back(n.getIdHash());
+                                   return true;
+                                 }
+                                 return false;
+                               }),
+                m_nodes.end());
+
+  if (!dead_node_hashed_net_ids.empty())
+    return dead_node_hashed_net_ids;
+
+  return {};
 }
 
 bool KBucket::empty() const {

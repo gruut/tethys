@@ -138,10 +138,6 @@ bool RoutingTable::peerTimedOut(Node const &peer) {
   return false;
 }
 
-std::optional<Node> RoutingTable::findNode(net_id_type &&id) {
-  return findNode(Hash<160>::sha1(id));
-}
-
 std::optional<Node> RoutingTable::findNode(const hashed_net_id_type &hashed_id) {
   auto bucket_index = getBucketIndexFor(hashed_id);
   auto bucket = m_buckets.begin();
@@ -151,6 +147,13 @@ std::optional<Node> RoutingTable::findNode(const hashed_net_id_type &hashed_id) 
     if (hashed_id == node.getIdHash()) {
       return node;
     }
+  }
+  return {};
+}
+
+std::optional<Node> RoutingTable::findNode(const user_id_type &id) {
+  if(m_id_mapping_table.count(id) > 0){
+    return findNode(m_id_mapping_table[id]);
   }
   return {};
 }
@@ -208,6 +211,27 @@ Done:
   m_buckets_mutex.unlock();
 
   return neighbors;
+}
+
+void RoutingTable::mapId(const user_id_type &real_id, const net_id_type &net_id) {
+  std::lock_guard<std::mutex> guard(m_id_map_mutex);
+  m_id_mapping_table.try_emplace(real_id, Hash<160>::sha1(net_id));
+  m_id_map_mutex.unlock();
+}
+void RoutingTable::unmapId(const user_id_type &real_id) {
+  if (m_id_mapping_table.count(real_id) > 0) {
+    std::lock_guard<std::mutex> guard(m_id_map_mutex);
+    m_id_mapping_table.erase(real_id);
+    m_id_map_mutex.unlock();
+  }
+}
+void RoutingTable::unmapId(const hashed_net_id_type &dead_hashed_id) {
+  for (auto &[real_id, net_hased_id] : m_id_mapping_table) {
+    if (net_hased_id == dead_hashed_id) {
+      unmapId(real_id);
+      return;
+    }
+  }
 }
 
 } // namespace net_plugin

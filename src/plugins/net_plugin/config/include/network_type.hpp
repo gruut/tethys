@@ -15,7 +15,8 @@ struct IpEndpoint {
   }
 };
 
-using net_id_type = std::string;   // Network virtual id type
+using user_id_type = std::string;
+using net_id_type = std::string;    // Network virtual id type
 using hashed_net_id_type = Hash160; // Network hashed virtual id type
 
 using BroadcastMsgTable = std::unordered_map<std::string, uint64_t>;

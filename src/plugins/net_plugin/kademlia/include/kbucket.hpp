@@ -115,7 +115,7 @@ public:
 
   std::vector<Node> selectRandomAliveNodes(int num_of_node = PARALLELISM_ALPHA);
 
-  void removeDeadNodes();
+  std::optional<std::vector<Hash160>> removeDeadNodes();
 
   bool addNode(Node &&node);
 

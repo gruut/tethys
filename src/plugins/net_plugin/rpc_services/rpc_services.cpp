@@ -1,17 +1,20 @@
 #include "include/rpc_services.hpp"
 
-#include "../../../../lib/gruut-utils/src/time_util.hpp"
-#include "../../channel_interface/include/channel_interface.hpp"
 #include "../../../../lib/gruut-utils/src/lz4_compressor.hpp"
+#include "../../../../lib/gruut-utils/src/time_util.hpp"
+#include "../../../../lib/gruut-utils/src/type_converter.hpp"
+#include "../../channel_interface/include/channel_interface.hpp"
 #include "../include/msg_handler.hpp"
 #include "application.hpp"
+
+#include <boost/algorithm/string.hpp>
 
 #include <algorithm>
 #include <cstring>
 #include <exception>
 #include <future>
-#include <thread>
 #include <regex>
+#include <thread>
 
 namespace gruut {
 namespace net_plugin {
@@ -108,13 +111,24 @@ void GeneralService::proceed() {
           }
         }
       }
-
       auto input_data = parseMessage(packed_msg, rpc_status);
 
       if (rpc_status.ok()) {
         if(validateMsgBody(input_data.value().type, input_data.value().body)) {
           m_reply.set_status(grpc_general::MsgStatus_Status_SUCCESS); // SUCCESS
           m_reply.set_message("OK");
+
+          auto input_msg_type = input_data.value().type;
+          if (input_msg_type == MessageType::MSG_BLOCK || input_msg_type == MessageType::MSG_TX ||
+              input_msg_type == MessageType::MSG_REQ_BLOCK) {
+
+            auto real_id = TypeConverter::arrayToString<SENDER_ID_TYPE_SIZE>(input_data.value().sender_id);
+            vector<string> splitted;
+            string address = m_context.peer(); // protocol(ipv4/ipv6) : ip : port
+            boost::split(splitted, address, boost::is_any_of(":"), boost::token_compress_on);
+            m_routing_table->mapId(real_id, splitted[1]);
+          }
+
           auto &in_msg_channel = app().getChannel<incoming::channels::network::channel_type>();
           in_msg_channel.publish(input_data.value());
         } else {
