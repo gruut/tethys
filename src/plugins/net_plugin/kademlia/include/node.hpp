@@ -26,10 +26,10 @@ constexpr unsigned int NODE_FAILED_COMMS_BEFORE_STALE = 2;
 
 class Node {
 public:
-  Node(HashedIdType const &id_hash, IdType const &id, std::string const &ip_address, std::string const &port_number)
+  Node(hashed_net_id_type const &id_hash, net_id_type const &id, std::string const &ip_address, std::string const &port_number)
       : m_id_hash{id_hash}, m_id{id}, m_endpoint{ip_address, port_number} {}
 
-  Node(HashedIdType const &id_hash, IdType const &id, std::string const &ip_address, std::string const &port_number,
+  Node(hashed_net_id_type const &id_hash, net_id_type const &id, std::string const &ip_address, std::string const &port_number,
        std::shared_ptr<grpc::Channel> c)
       : m_id_hash{id_hash}, m_id{id}, m_endpoint{ip_address, port_number}, m_channel_ptr(c) {}
 
@@ -37,11 +37,11 @@ public:
     return (lhs.getIdHash() == rhs.getIdHash()) && (lhs.getEndpoint() == rhs.getEndpoint());
   }
 
-  HashedIdType const &getIdHash() const {
+  hashed_net_id_type const &getIdHash() const {
     return m_id_hash;
   }
 
-  IdType const &getId() const {
+  net_id_type const &getId() const {
     return m_id;
   }
 
@@ -71,11 +71,11 @@ public:
     return false;
   }
 
-  HashedIdType distanceTo(Node const &node) const {
+  hashed_net_id_type distanceTo(Node const &node) const {
     return distanceTo(node.getIdHash());
   }
 
-  HashedIdType distanceTo(Hash160 const &hash) const {
+  hashed_net_id_type distanceTo(Hash160 const &hash) const {
     return m_id_hash ^ hash;
   }
 
@@ -115,11 +115,11 @@ public:
     return m_channel_ptr;
   }
 
-  HashedIdType &getIdHash() {
+  hashed_net_id_type &getIdHash() {
     return m_id_hash;
   }
 
-  IdType &getId() {
+  net_id_type &getId() {
     return m_id;
   }
 
@@ -128,8 +128,8 @@ public:
   }
 
 private:
-  IdType m_id;
-  HashedIdType m_id_hash;
+  net_id_type m_id;
+  hashed_net_id_type m_id_hash;
   IpEndpoint m_endpoint;
   std::shared_ptr<grpc::Channel> m_channel_ptr;
 
@@ -139,15 +139,15 @@ private:
   std::chrono::steady_clock::time_point m_last_seen_time;
 };
 
-inline HashedIdType distance(Node const &a, Node const &b) {
+inline hashed_net_id_type distance(Node const &a, Node const &b) {
   return a.distanceTo(b);
 }
 
-inline HashedIdType distance(Node const &node, Hash160 const &hash) {
+inline hashed_net_id_type distance(Node const &node, Hash160 const &hash) {
   return node.distanceTo(hash);
 }
 
-inline HashedIdType distance(HashedIdType const &ida, HashedIdType const &idb) {
+inline hashed_net_id_type distance(hashed_net_id_type const &ida, hashed_net_id_type const &idb) {
   return ida ^ idb;
 }
 

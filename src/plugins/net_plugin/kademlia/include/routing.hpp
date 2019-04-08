@@ -114,17 +114,17 @@ public:
 
   bool peerTimedOut(Node const &peer);
 
-  std::vector<Node> findNeighbors(HashedIdType const &id) {
+  std::vector<Node> findNeighbors(hashed_net_id_type const &id) {
     return findNeighbors(id, m_ksize);
   };
 
-  std::vector<Node> findNeighbors(HashedIdType const &id, std::size_t max_number);
+  std::vector<Node> findNeighbors(hashed_net_id_type const &id, std::size_t max_number);
 
-  std::optional<Node> findNode(const HashedIdType &hashed_id);
+  std::optional<Node> findNode(const hashed_net_id_type &hashed_id);
 
-  std::optional<Node> findNode(IdType &&id);
+  std::optional<Node> findNode(net_id_type &&id);
 
-  size_t getBucketIndexFor(const HashedIdType &node) const;
+  size_t getBucketIndexFor(const hashed_net_id_type &node) const;
 
 private:
   Node m_my_node;

@@ -40,7 +40,7 @@ bool RoutingTable::empty() const {
   return m_buckets.front().empty();
 }
 
-std::size_t RoutingTable::getBucketIndexFor(const HashedIdType &node) const {
+std::size_t RoutingTable::getBucketIndexFor(const hashed_net_id_type &node) const {
 
   auto num_buckets = m_buckets.size();
 
@@ -138,11 +138,11 @@ bool RoutingTable::peerTimedOut(Node const &peer) {
   return false;
 }
 
-std::optional<Node> RoutingTable::findNode(IdType &&id) {
+std::optional<Node> RoutingTable::findNode(net_id_type &&id) {
   return findNode(Hash<160>::sha1(id));
 }
 
-std::optional<Node> RoutingTable::findNode(const HashedIdType &hashed_id) {
+std::optional<Node> RoutingTable::findNode(const hashed_net_id_type &hashed_id) {
   auto bucket_index = getBucketIndexFor(hashed_id);
   auto bucket = m_buckets.begin();
   std::advance(bucket, bucket_index);
@@ -155,7 +155,7 @@ std::optional<Node> RoutingTable::findNode(const HashedIdType &hashed_id) {
   return {};
 }
 
-std::vector<Node> RoutingTable::findNeighbors(HashedIdType const &id, std::size_t max_number) {
+std::vector<Node> RoutingTable::findNeighbors(hashed_net_id_type const &id, std::size_t max_number) {
   std::vector<Node> neighbors;
   auto count = 0U;
 

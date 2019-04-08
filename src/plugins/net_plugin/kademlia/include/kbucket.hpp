@@ -97,7 +97,7 @@ public:
 
   std::chrono::seconds timeSinceLastUpdated() const;
 
-  bool canHoldNode(const HashedIdType &node) const;
+  bool canHoldNode(const hashed_net_id_type &node) const;
 
   std::string sharedPrefix() const {
     return m_prefix.to_string().substr(0, m_prefix_size);
