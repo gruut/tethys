@@ -12,13 +12,13 @@ using namespace std;
 struct InNetMsg {
   MessageType type;
   nlohmann::json body;
-  id_type sender_id;
+  sender_id_type sender_id;
 };
 
 struct OutNetMsg {
   MessageType type;
   nlohmann::json body;
-  vector<id_type> receivers;
+  vector<sender_id_type> receivers;
 };
 
 namespace appbase::incoming {
