@@ -60,7 +60,7 @@ public:
   }
 
 private:
-  std::string m_signer_id_b64;
+  std::string m_signer_id_b58;
   GruutGeneralService::AsyncService *m_service;
   Identity m_request;
   ServerAsyncReaderWriter<ReplyMsg, Identity> m_stream;

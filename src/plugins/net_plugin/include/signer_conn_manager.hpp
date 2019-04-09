@@ -20,7 +20,7 @@ struct SignerRpcInfo {
 
 class SignerConnTable {
 public:
-  SignerConnTable() : m_signer_cnt{0} {}
+  SignerConnTable() = default;
 
   SignerConnTable(const SignerConnTable &) = delete;
 
@@ -32,24 +32,22 @@ public:
 
   ~SignerConnTable() = default;
 
-  void setReplyMsg(std::string &recv_id_b64, ServerAsyncReaderWriter<ReplyMsg, Identity> *reply_rpc, void *tag) {
+  void setRpcInfo(const std::string &recv_id_b58, ServerAsyncReaderWriter<ReplyMsg, Identity> *reply_rpc, void *tag) {
     std::lock_guard<std::mutex> lock(m_mutex);
-    m_signer_list[recv_id_b64].send_msg = reply_rpc;
-    m_signer_list[recv_id_b64].tag_identity = tag;
+    m_signer_list[recv_id_b58].send_msg = reply_rpc;
+    m_signer_list[recv_id_b58].tag_identity = tag;
     m_mutex.unlock();
   }
 
-  void eraseRpcInfo(std::string &recv_id_b64) {
+  void eraseRpcInfo(const std::string &recv_id_b58) {
     std::lock_guard<std::mutex> lock(m_mutex);
-    m_signer_list.erase(recv_id_b64);
-    m_signer_cnt--;
+    m_signer_list.erase(recv_id_b58);
     m_mutex.unlock();
   }
 
-  SignerRpcInfo getRpcInfo(std::string &recv_id_b64) {
+  SignerRpcInfo getRpcInfo(const std::string &recv_id_b58) {
     std::lock_guard<std::mutex> lock(m_mutex);
-    SignerRpcInfo rpc_info = m_signer_list[recv_id_b64];
-    m_signer_cnt++;
+    SignerRpcInfo rpc_info = m_signer_list[recv_id_b58];
     m_mutex.unlock();
     return rpc_info;
   }
@@ -57,6 +55,5 @@ public:
 private:
   std::unordered_map<string, SignerRpcInfo> m_signer_list;
   std::mutex m_mutex;
-  int m_signer_cnt;
 };
 } // namespace gruut

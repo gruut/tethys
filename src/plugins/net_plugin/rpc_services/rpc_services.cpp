@@ -40,18 +40,18 @@ void OpenChannel::proceed() {
   } break;
 
   case RpcCallStatus::PROCESS: {
-    m_signer_id_b64 = m_request.sender();
+    m_signer_id_b58 = m_request.sender();
     m_receive_status = RpcCallStatus::WAIT;
-    m_signer_table->setReplyMsg(m_signer_id_b64, &m_stream, this);
+    m_signer_table->setRpcInfo(m_signer_id_b58, &m_stream, this);
 
   } break;
 
   case RpcCallStatus::WAIT: {
     if (m_context.IsCancelled()) {
       MessageHandler msg_handler;
-      auto internal_msg = msg_handler.genInternalMsg(MessageType::MSG_LEAVE, m_signer_id_b64);
+      auto internal_msg = msg_handler.genInternalMsg(MessageType::MSG_LEAVE, m_signer_id_b58);
       if (internal_msg.has_value()) {
-        m_signer_table->eraseRpcInfo(m_signer_id_b64);
+        m_signer_table->eraseRpcInfo(m_signer_id_b58);
         auto &in_msg_channel = app().getChannel<incoming::channels::network::channel_type>();
         in_msg_channel.publish(internal_msg.value());
       }
