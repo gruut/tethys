@@ -57,6 +57,18 @@ constexpr uint8_t IDENTIFIER = 'P';
 constexpr uint8_t VERSION = 0x01;
 constexpr uint8_t NOT_USED = 0x00;
 
+struct InNetMsg {
+  MessageType type;
+  nlohmann::json body;
+  sender_id_type sender_id;
+};
+
+struct OutNetMsg {
+  MessageType type;
+  nlohmann::json body;
+  std::vector<sender_id_type> receivers;
+};
+
 struct MessageHeader {
   uint8_t identifier;
   message_version_type version;

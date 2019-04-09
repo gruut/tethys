@@ -2,7 +2,7 @@
 #include "../../../lib/json/include/json.hpp"
 #include "config/include/network_config.hpp"
 #include "include/http_client.hpp"
-#include "include/msg_handler.hpp"
+#include "include/message_builder.hpp"
 #include "rpc_services/include/rpc_services.hpp"
 
 #include "../../../lib/gruut-utils/src/lz4_compressor.hpp"
@@ -393,6 +393,10 @@ public:
   bool checkSignerMsgType(MessageType msg_type) {
     return (msg_type == MessageType::MSG_CHALLENGE || msg_type == MessageType::MSG_RESPONSE_2 || msg_type == MessageType::MSG_ACCEPT ||
             msg_type == MessageType::MSG_REQ_SSIG);
+  }
+
+  void handle_message() {
+
   }
 };
 

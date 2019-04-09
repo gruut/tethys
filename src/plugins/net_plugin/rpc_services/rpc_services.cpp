@@ -4,7 +4,7 @@
 #include "../../../../lib/gruut-utils/src/time_util.hpp"
 #include "../../../../lib/gruut-utils/src/type_converter.hpp"
 #include "../../channel_interface/include/channel_interface.hpp"
-#include "../include/msg_handler.hpp"
+#include "../include/message_builder.hpp"
 #include "application.hpp"
 
 #include <boost/algorithm/string.hpp>
@@ -48,13 +48,10 @@ void OpenChannel::proceed() {
 
   case RpcCallStatus::WAIT: {
     if (m_context.IsCancelled()) {
-      MessageHandler msg_handler;
-      auto internal_msg = msg_handler.genInternalMsg(MessageType::MSG_LEAVE, m_signer_id_b64);
-      if (internal_msg.has_value()) {
-        m_signer_table->eraseRpcInfo(m_signer_id_b64);
-        auto &in_msg_channel = app().getChannel<incoming::channels::network::channel_type>();
-        in_msg_channel.publish(internal_msg.value());
-      }
+      auto internal_msg = MessageBuilder::build<MessageType::MSG_LEAVE>(m_signer_id_b64);
+      m_signer_table->eraseRpcInfo(m_signer_id_b64);
+      auto &in_msg_channel = app().getChannel<incoming::channels::network::channel_type>();
+      in_msg_channel.publish(internal_msg);
       delete this;
     }
   } break;
@@ -176,7 +173,13 @@ optional<InNetMsg> GeneralService::parseMessage(string &packed_msg, Status &retu
   }
 
   return_rpc_status = Status::OK;
-  return InNetMsg{msg_header->message_type, json_body, msg_header->sender_id};
+
+  InNetMsg in_msg;
+  in_msg.type = msg_header->message_type;
+  in_msg.body = json_body;
+  in_msg.sender_id = msg_header->sender_id;
+
+  return in_msg;
 }
 
 MessageHeader* GeneralService::parseHeader(string &raw_header) {
