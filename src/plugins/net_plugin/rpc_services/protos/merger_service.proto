@@ -1,0 +1,24 @@
+syntax = "proto3";
+
+package grpc_merger;
+
+service GruutMergerService {
+    rpc MergerService (RequestMsg) returns (MsgStatus) {}
+}
+
+message RequestMsg {
+    bool broadcast = 1;
+    string message_id =2;
+    bytes message = 3;
+}
+
+message MsgStatus {
+    enum Status{
+        SUCCESS = 0;
+        INVALID = 1;
+        INTERNAL = 2;
+        DUPLICATED = 3;
+    }
+    Status status = 1;
+    string message = 2;
+}

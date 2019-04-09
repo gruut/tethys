@@ -4,11 +4,11 @@ option java_multiple_files = true;
 option java_package = "com.gruutnetworks.gruutgeneral";
 option java_outer_classname = "GruutNetwork";
 
-package grpc_general;
+package grpc_signer;
 
-service GruutGeneralService {
+service GruutSignerService {
     rpc OpenChannel(stream Identity) returns (stream ReplyMsg) {}
-    rpc GeneralService (RequestMsg) returns (MsgStatus) {}
+    rpc SignerService (RequestMsg) returns (MsgStatus) {}
 }
 message Identity {
     bytes sender = 1;
