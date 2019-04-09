@@ -122,11 +122,9 @@ void GeneralService::proceed() {
           if (input_msg_type == MessageType::MSG_BLOCK || input_msg_type == MessageType::MSG_TX ||
               input_msg_type == MessageType::MSG_REQ_BLOCK) {
 
-            auto real_id = TypeConverter::arrayToString<SENDER_ID_TYPE_SIZE>(input_data.value().sender_id);
-            vector<string> splitted;
-            string address = m_context.peer(); // protocol(ipv4/ipv6) : ip : port
-            boost::split(splitted, address, boost::is_any_of(":"), boost::token_compress_on);
-            m_routing_table->mapId(real_id, splitted[1]);
+            auto user_id = TypeConverter::arrayToString<SENDER_ID_TYPE_SIZE>(input_data.value().sender_id);
+            auto net_id = m_context.client_metadata().find("net_id")->second;
+            m_routing_table->mapId(user_id, string(net_id.data()));
           }
 
           auto &in_msg_channel = app().getChannel<incoming::channels::network::channel_type>();

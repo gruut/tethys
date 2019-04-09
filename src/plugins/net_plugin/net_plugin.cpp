@@ -38,8 +38,6 @@ public:
 
   string tracker_address;
 
-  string network_id;
-
   unique_ptr<Server> server;
   unique_ptr<ServerCompletionQueue> completion_queue;
 
@@ -67,8 +65,7 @@ public:
   void initializeRoutingTable() {
     auto [host, port] = getHostAndPort(p2p_address);
 
-    network_id = host;
-    Node my_node(Hash<160>::sha1(network_id), network_id, host, port);
+    Node my_node(Hash<160>::sha1(p2p_address), p2p_address, host, port);
     routing_table = make_shared<RoutingTable>(my_node, KBUCKET_SIZE);
   }
 
@@ -268,7 +265,7 @@ public:
   }
 
   string getMyNetId() {
-    return network_id;
+    return p2p_address;
   }
 
   pair<string, string> getHostAndPort(const string addr) {
@@ -290,6 +287,7 @@ public:
       ClientContext context;
       std::chrono::time_point deadline = std::chrono::system_clock::now() + GENERAL_SERVICE_TIMEOUT;
       context.set_deadline(deadline);
+      context.AddMetadata("net_id", getMyNetId());
 
       MsgStatus msg_status;
 
