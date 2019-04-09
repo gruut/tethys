@@ -8,17 +8,18 @@
 using namespace gruut::net_plugin;
 using namespace std;
 
+using b58_id_type = string;
 // TODO: need to separate data structure and channel.
 struct InNetMsg {
   MessageType type;
   nlohmann::json body;
-  sender_id_type sender_id;
+  b58_id_type sender_id;
 };
 
 struct OutNetMsg {
   MessageType type;
   nlohmann::json body;
-  vector<sender_id_type> receivers;
+  vector<b58_id_type> receivers;
 };
 
 namespace appbase::incoming {

@@ -122,9 +122,9 @@ void GeneralService::proceed() {
           if (input_msg_type == MessageType::MSG_BLOCK || input_msg_type == MessageType::MSG_TX ||
               input_msg_type == MessageType::MSG_REQ_BLOCK) {
 
-            auto user_id = TypeConverter::arrayToString<SENDER_ID_TYPE_SIZE>(input_data.value().sender_id);
+            auto b58_user_id = TypeConverter::encodeBase<58>(input_data.value().sender_id);
             auto net_id = m_context.client_metadata().find("net_id")->second;
-            m_routing_table->mapId(user_id, string(net_id.data()));
+            m_routing_table->mapId(b58_user_id, string(net_id.data()));
           }
 
           auto &in_msg_channel = app().getChannel<incoming::channels::network::channel_type>();
@@ -176,7 +176,8 @@ optional<InNetMsg> GeneralService::parseMessage(string &packed_msg, Status &retu
   }
 
   return_rpc_status = Status::OK;
-  return InNetMsg{msg_header->message_type, json_body, msg_header->sender_id};
+  auto b58_sender_id = TypeConverter::encodeBase<58>(msg_header->sender_id);
+  return InNetMsg{msg_header->message_type, json_body, b58_sender_id};
 }
 
 MessageHeader* GeneralService::parseHeader(string &raw_header) {
