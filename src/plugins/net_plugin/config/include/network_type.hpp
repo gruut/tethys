@@ -15,8 +15,9 @@ struct IpEndpoint {
   }
 };
 
-using IdType = std::string;   // 32bytes ID
-using HashedIdType = Hash160; // 32bytes ID를 hash160
+using user_id_type = std::string;
+using net_id_type = std::string;    // Network virtual id type
+using hashed_net_id_type = Hash160; // Network hashed virtual id type
 
 using BroadcastMsgTable = std::unordered_map<std::string, uint64_t>;
 } // namespace net_plugin

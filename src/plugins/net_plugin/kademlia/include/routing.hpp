@@ -114,25 +114,30 @@ public:
 
   bool peerTimedOut(Node const &peer);
 
-  std::vector<Node> findNeighbors(HashedIdType const &id) {
+  std::vector<Node> findNeighbors(hashed_net_id_type const &id) {
     return findNeighbors(id, m_ksize);
   };
 
-  std::vector<Node> findNeighbors(HashedIdType const &id, std::size_t max_number);
+  std::vector<Node> findNeighbors(hashed_net_id_type const &id, std::size_t max_number);
 
-  std::optional<Node> findNode(const HashedIdType &hashed_id);
+  std::optional<Node> findNode(const hashed_net_id_type &hashed_id);
 
-  std::optional<Node> findNode(IdType &&id);
+  std::optional<Node> findNode(const user_id_type &id);
 
-  size_t getBucketIndexFor(const HashedIdType &node) const;
+  size_t getBucketIndexFor(const hashed_net_id_type &node) const;
 
+  void mapId(const user_id_type &user_id, const net_id_type &net_id);
+  void unmapId(const user_id_type &user_id);
+  void unmapId(const hashed_net_id_type &hashed_net_id);
 private:
   Node m_my_node;
 
   std::size_t m_ksize;
 
   std::deque<KBucket> m_buckets;
+  std::unordered_map<user_id_type, hashed_net_id_type> m_id_mapping_table;
 
+  std::mutex m_id_map_mutex;
   std::mutex m_buckets_mutex;
 };
 

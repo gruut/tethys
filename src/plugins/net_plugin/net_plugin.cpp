@@ -65,8 +65,7 @@ public:
   void initializeRoutingTable() {
     auto [host, port] = getHostAndPort(p2p_address);
 
-    auto id = p2p_address;
-    Node my_node(Hash<160>::sha1(id), id, host, port);
+    Node my_node(Hash<160>::sha1(p2p_address), p2p_address, host, port);
     routing_table = make_shared<RoutingTable>(my_node, KBUCKET_SIZE);
   }
 
@@ -140,9 +139,9 @@ public:
         if (!json::is_empty(peers)) {
           for (auto &peer : peers) {
             auto [peer_host, peer_port] = getHostAndPort(peer);
-            auto id = peer_host + ":" + peer_port;
+            auto id = peer_host;
 
-            if (id != getMyId()) {
+            if (id != getMyNetId()) {
               Node node = Node(Hash<160>::sha1(id), id, peer_host, peer_port);
               routing_table->addPeer(move(node));
             }
@@ -169,7 +168,12 @@ public:
 
     for (auto &bucket : *routing_table) {
       if (!bucket.empty()) {
-        bucket.removeDeadNodes();
+        auto dead_node_ids = bucket.removeDeadNodes();
+        if (dead_node_ids.has_value()) {
+          for (auto &dead_hashed_id : dead_node_ids.value()) {
+            routing_table->unmapId(dead_hashed_id);
+          }
+        }
         auto nodes = bucket.selectAliveNodes(false);
         async(launch::async, &NetPluginImpl::findNeighbors, this, nodes);
       }
@@ -227,13 +231,13 @@ public:
     return TService::NewStub(channel);
   }
 
-  NeighborsData queryNeighborNodes(const string &receiver_addr, const string &receiver_port, const IdType &target_id,
+  NeighborsData queryNeighborNodes(const string &receiver_addr, const string &receiver_port, const net_id_type &target_id,
                                    shared_ptr<grpc::Channel> channel) {
     auto stub = genStub<KademliaService::Stub, KademliaService>(channel);
 
     Target target;
     target.set_target_id(target_id);
-    target.set_sender_id(getMyId());
+    target.set_sender_id(getMyNetId());
 
     auto [host, port] = getHostAndPort(p2p_address);
     target.set_sender_address(host);
@@ -252,7 +256,7 @@ public:
     for (int i = 0; i < neighbors.neighbors_size(); i++) {
       const auto &node = neighbors.neighbors(i);
 
-      if (getMyId() != node.node_id()) {
+      if (getMyNetId() != node.node_id()) {
         neighbor_list.emplace_back(Node(Hash<160>::sha1(node.node_id()), node.node_id(), node.address(), node.port()));
       }
     }
@@ -260,7 +264,7 @@ public:
     return NeighborsData{neighbor_list, neighbors.time_stamp(), status};
   }
 
-  string getMyId() {
+  string getMyNetId() {
     return p2p_address;
   }
 
@@ -283,6 +287,7 @@ public:
       ClientContext context;
       std::chrono::time_point deadline = std::chrono::system_clock::now() + GENERAL_SERVICE_TIMEOUT;
       context.set_deadline(deadline);
+      context.AddMetadata("net_id", getMyNetId());
 
       MsgStatus msg_status;
 
@@ -299,7 +304,6 @@ public:
           if (!bucket.empty()) {
             auto nodes = bucket.selectRandomAliveNodes(PARALLELISM_ALPHA);
             for (auto &n : nodes) {
-
               auto stub = genStub<GruutGeneralService::Stub, GruutGeneralService>(n.getChannelPtr());
               auto status = stub->GeneralService(&context, request, &msg_status);
             }
@@ -308,11 +312,12 @@ public:
       } else {
         for (auto &receiver_id_arr : out_msg.receivers) {
           auto receiver_id = TypeConverter::arrayToString<SENDER_ID_TYPE_SIZE>(receiver_id_arr);
-          auto hashed_id = Hash<160>::sha1(receiver_id);
-          auto node = routing_table->findNode(hashed_id);
+          auto node = routing_table->findNode(receiver_id);
           if (node.has_value()) {
             auto stub = genStub<GruutGeneralService::Stub, GruutGeneralService>(node.value().getChannelPtr());
             auto status = stub->GeneralService(&context, request, &msg_status);
+          } else {
+            routing_table->unmapId(receiver_id);
           }
         }
       }

@@ -40,7 +40,7 @@ bool RoutingTable::empty() const {
   return m_buckets.front().empty();
 }
 
-std::size_t RoutingTable::getBucketIndexFor(const HashedIdType &node) const {
+std::size_t RoutingTable::getBucketIndexFor(const hashed_net_id_type &node) const {
 
   auto num_buckets = m_buckets.size();
 
@@ -138,11 +138,7 @@ bool RoutingTable::peerTimedOut(Node const &peer) {
   return false;
 }
 
-std::optional<Node> RoutingTable::findNode(IdType &&id) {
-  return findNode(Hash<160>::sha1(id));
-}
-
-std::optional<Node> RoutingTable::findNode(const HashedIdType &hashed_id) {
+std::optional<Node> RoutingTable::findNode(const hashed_net_id_type &hashed_id) {
   auto bucket_index = getBucketIndexFor(hashed_id);
   auto bucket = m_buckets.begin();
   std::advance(bucket, bucket_index);
@@ -155,7 +151,14 @@ std::optional<Node> RoutingTable::findNode(const HashedIdType &hashed_id) {
   return {};
 }
 
-std::vector<Node> RoutingTable::findNeighbors(HashedIdType const &id, std::size_t max_number) {
+std::optional<Node> RoutingTable::findNode(const user_id_type &id) {
+  if(m_id_mapping_table.count(id) > 0){
+    return findNode(m_id_mapping_table[id]);
+  }
+  return {};
+}
+
+std::vector<Node> RoutingTable::findNeighbors(hashed_net_id_type const &id, std::size_t max_number) {
   std::vector<Node> neighbors;
   auto count = 0U;
 
@@ -208,6 +211,27 @@ Done:
   m_buckets_mutex.unlock();
 
   return neighbors;
+}
+
+void RoutingTable::mapId(const user_id_type &user_id, const net_id_type &net_id) {
+  std::lock_guard<std::mutex> guard(m_id_map_mutex);
+  m_id_mapping_table.try_emplace(user_id, Hash<160>::sha1(net_id));
+  m_id_map_mutex.unlock();
+}
+void RoutingTable::unmapId(const user_id_type &user_id) {
+  if (m_id_mapping_table.count(user_id) > 0) {
+    std::lock_guard<std::mutex> guard(m_id_map_mutex);
+    m_id_mapping_table.erase(user_id);
+    m_id_map_mutex.unlock();
+  }
+}
+void RoutingTable::unmapId(const hashed_net_id_type &dead_hashed_id) {
+  for (auto &[user_id, net_hased_id] : m_id_mapping_table) {
+    if (net_hased_id == dead_hashed_id) {
+      unmapId(user_id);
+      return;
+    }
+  }
 }
 
 } // namespace net_plugin
