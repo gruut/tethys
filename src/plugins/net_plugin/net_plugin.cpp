@@ -2,7 +2,7 @@
 #include "../../../lib/json/include/json.hpp"
 #include "config/include/network_config.hpp"
 #include "include/http_client.hpp"
-#include "include/msg_handler.hpp"
+#include "include/message_builder.hpp"
 #include "rpc_services/include/rpc_services.hpp"
 
 #include "../../../lib/gruut-utils/src/lz4_compressor.hpp"
