@@ -49,8 +49,11 @@ public:
   unique_ptr<boost::asio::steady_timer> net_message_check_timer;
 
   ~NetPluginImpl() {
-    server->Shutdown();
-    completion_queue->Shutdown();
+    if(server != nullptr)
+      server->Shutdown();
+
+    if(completion_queue != nullptr)
+      completion_queue->Shutdown();
   }
 
   void initialize() {
