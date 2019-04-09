@@ -394,6 +394,10 @@ public:
     return (msg_type == MessageType::MSG_CHALLENGE || msg_type == MessageType::MSG_RESPONSE_2 || msg_type == MessageType::MSG_ACCEPT ||
             msg_type == MessageType::MSG_REQ_SSIG);
   }
+
+  void handle_message() {
+
+  }
 };
 
 NetPlugin::NetPlugin() : impl(new NetPluginImpl()) {}
