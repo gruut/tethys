@@ -29,6 +29,7 @@ target_link_libraries(gruut
         net_plugin
         block_producer_plugin
         chain_plugin
+        signer_manager_plugin
         )
 
 target_include_directories(gruut
