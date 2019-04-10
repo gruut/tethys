@@ -24,8 +24,8 @@ using namespace std;
 
 class MessageParser {
 public:
-  optional<InNetMsg> parseMessage(string &packed_msg, Status &return_rpc_status) {
-    string raw_header(packed_msg.begin(), packed_msg.begin() + HEADER_LENGTH);
+  optional<InNetMsg> parseMessage(string_view packed_msg, Status &return_rpc_status) {
+    const string raw_header(packed_msg.begin(), packed_msg.begin() + HEADER_LENGTH);
     auto msg_header = parseHeader(raw_header);
     if (!validateMsgHdrFormat(msg_header)) {
       return_rpc_status = Status(StatusCode::INVALID_ARGUMENT, "Bad request (Invalid parameter)");
@@ -58,7 +58,7 @@ public:
     return in_msg;
   }
 private:
-  MessageHeader* parseHeader(string &raw_header) {
+  MessageHeader* parseHeader(string_view raw_header) {
     auto msg_header = reinterpret_cast<MessageHeader *>(&raw_header);
     return msg_header;
   }
@@ -91,6 +91,33 @@ private:
     }
     return unpacked_body;
   }
+};
+
+class MessageHandler {
+public:
+  explicit MessageHandler(ServerContext* server_context, shared_ptr<RoutingTable> table): context(server_context), routing_table(table) {}
+
+  void operator() (InNetMsg &msg) {
+    handle_message(msg);
+  }
+
+private:
+  void handle_message(InNetMsg& msg) {
+    auto msg_type = msg.type;
+
+    if (msg_type == MessageType::MSG_BLOCK || msg_type == MessageType::MSG_TX || msg_type == MessageType::MSG_REQ_BLOCK) {
+      mapping_user_id_to_net_id(msg);
+    }
+  }
+
+  void mapping_user_id_to_net_id(InNetMsg& msg) {
+    auto b58_user_id = TypeConverter::encodeBase<58>(msg.sender_id);
+    auto net_id = context->client_metadata().find("net_id")->second;
+    routing_table->mapId(b58_user_id, string(net_id.data()));
+  }
+
+  ServerContext *context;
+  shared_ptr<RoutingTable> routing_table;
 };
 
 void OpenChannelWithSigner::proceed() {
@@ -221,14 +248,8 @@ void MergerService::proceed() {
         m_reply.set_status(grpc_merger::MsgStatus_Status_SUCCESS); // SUCCESS
         m_reply.set_message("OK");
 
-        auto input_msg_type = input_data.value().type;
-        if (input_msg_type == MessageType::MSG_BLOCK || input_msg_type == MessageType::MSG_TX ||
-            input_msg_type == MessageType::MSG_REQ_BLOCK) {
-
-          auto b58_user_id = TypeConverter::encodeBase<58>(input_data.value().sender_id);
-          auto net_id = m_context.client_metadata().find("net_id")->second;
-          m_routing_table->mapId(b58_user_id, string(net_id.data()));
-        }
+        MessageHandler msg_handler(&m_context, m_routing_table);
+        msg_handler(input_data.value());
 
         auto &in_msg_channel = app().getChannel<incoming::channels::network::channel_type>();
         in_msg_channel.publish(input_data.value());
@@ -260,7 +281,6 @@ void FindNode::proceed() {
     new FindNode(m_service, m_completion_queue, m_routing_table);
 
     string target = m_request.target_id();
-    uint64_t time_stamp = m_request.time_stamp();
 
     auto neighbor_list = m_routing_table->findNeighbors(Hash<160>::sha1(target), PARALLELISM_ALPHA);
 
