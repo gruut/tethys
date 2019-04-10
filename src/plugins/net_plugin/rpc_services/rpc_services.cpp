@@ -24,6 +24,77 @@ using namespace std;
 
 constexpr int TIME_MAX_DIFF_SEC = 3;
 
+class MessageParser {
+public:
+  optional<InNetMsg> parseMessage(string &packed_msg, Status &return_rpc_status) {
+    string raw_header(packed_msg.begin(), packed_msg.begin() + HEADER_LENGTH);
+    auto msg_header = parseHeader(raw_header);
+    if (!validateMsgHdrFormat(msg_header)) {
+      return_rpc_status = Status(StatusCode::INVALID_ARGUMENT, "Bad request (Invalid parameter)");
+      return {};
+    }
+
+    auto body_size = convertU8ToU32BE(msg_header->total_length);
+    string msg_raw_body(packed_msg.begin() + HEADER_LENGTH, packed_msg.begin() + HEADER_LENGTH + body_size);
+
+    if (msg_header->mac_algo_type == MACAlgorithmType::HMAC) {
+      vector<uint8_t> hmac(packed_msg.begin() + HEADER_LENGTH + body_size, packed_msg.end());
+
+      // TODO : verify HMAC
+    }
+
+    auto json_body = getJson(msg_header->serialization_algo_type, msg_raw_body);
+
+    if (!JsonValidator::validateSchema(json_body, msg_header->message_type)) {
+      return_rpc_status = Status(StatusCode::INVALID_ARGUMENT, "Bad request (Json schema error)");
+      return {};
+    }
+
+    return_rpc_status = Status::OK;
+
+    InNetMsg in_msg;
+    in_msg.type = msg_header->message_type;
+    in_msg.body = json_body;
+    in_msg.sender_id = msg_header->sender_id;
+
+    return in_msg;
+  }
+private:
+  MessageHeader* parseHeader(string &raw_header) {
+    auto msg_header = reinterpret_cast<MessageHeader *>(&raw_header);
+    return msg_header;
+  }
+
+  bool validateMsgHdrFormat(MessageHeader *header) {
+    bool check = header->identifier == IDENTIFIER;
+    if (header->mac_algo_type == MACAlgorithmType::HMAC) {
+      check &= (header->message_type == MessageType::MSG_SUCCESS || header->message_type == MessageType::MSG_SSIG);
+    }
+    return check;
+  }
+
+  int convertU8ToU32BE(array<uint8_t, MSG_LENGTH_SIZE> &len_bytes) {
+    return static_cast<int>(len_bytes[0] << 24 | len_bytes[1] << 16 | len_bytes[2] << 8 | len_bytes[3]);
+  }
+
+  nlohmann::json getJson(SerializationAlgorithmType comperssion_type, string &raw_body) {
+    nlohmann::json unpacked_body;
+    if (!raw_body.empty()) {
+      switch (comperssion_type) {
+      case SerializationAlgorithmType::LZ4: {
+        string origin_data = LZ4Compressor::decompressData(raw_body);
+      }
+      case SerializationAlgorithmType::NONE: {
+        unpacked_body = json::parse(raw_body);
+      }
+      default:
+        break;
+      }
+    }
+    return unpacked_body;
+  }
+};
+
 void OpenChannel::proceed() {
 
   switch (m_receive_status) {
@@ -146,182 +217,6 @@ void GeneralService::proceed() {
 
   default: { delete this; } break;
   }
-}
-
-optional<InNetMsg> GeneralService::parseMessage(string &packed_msg, Status &return_rpc_status) {
-  string raw_header(packed_msg.begin(), packed_msg.begin() + HEADER_LENGTH);
-  auto msg_header = parseHeader(raw_header);
-  if (!validateMsgHdrFormat(msg_header)) {
-    return_rpc_status = Status(StatusCode::INVALID_ARGUMENT, "Bad request (Invalid parameter)");
-    return {};
-  }
-
-  auto body_size = convertU8ToU32BE(msg_header->total_length);
-  string msg_raw_body(packed_msg.begin() + HEADER_LENGTH, packed_msg.begin() + HEADER_LENGTH + body_size);
-
-  if (msg_header->mac_algo_type == MACAlgorithmType::HMAC) {
-    vector<uint8_t> hmac(packed_msg.begin() + HEADER_LENGTH + body_size, packed_msg.end());
-
-    // TODO : verify HMAC
-  }
-
-  auto json_body = getJson(msg_header->serialization_algo_type, msg_raw_body);
-
-  if (!JsonValidator::validateSchema(json_body, msg_header->message_type)) {
-    return_rpc_status = Status(StatusCode::INVALID_ARGUMENT, "Bad request (Json schema error)");
-    return {};
-  }
-
-  return_rpc_status = Status::OK;
-
-  InNetMsg in_msg;
-  in_msg.type = msg_header->message_type;
-  in_msg.body = json_body;
-  in_msg.sender_id = msg_header->sender_id;
-
-  return in_msg;
-}
-
-MessageHeader* GeneralService::parseHeader(string &raw_header) {
-  auto msg_header = reinterpret_cast<MessageHeader *>(&raw_header);
-  return msg_header;
-}
-
-bool GeneralService::validateMsgHdrFormat(MessageHeader *header) {
-  bool check = header->identifier == IDENTIFIER;
-  if (header->mac_algo_type == MACAlgorithmType::HMAC) {
-    check &= (header->message_type == MessageType::MSG_SUCCESS || header->message_type == MessageType::MSG_SSIG);
-  }
-
-  return check;
-}
-
-bool GeneralService::validateMsgBody(MessageType msg_type, nlohmann::json &json_body) {
-
-  if (MSG_VALID_FILTER.count(msg_type) > 0) {
-    for (auto &[key, type, len] : MSG_VALID_FILTER.at(msg_type)) {
-      if (!isValidMsgEntryType(json_body, key, type) ||
-          !hasValidMsgEntryLength(json_body, key, len))
-        return false;
-    }
-    return true;
-  }
-  return false;
-}
-
-bool GeneralService::isValidMsgEntryType(nlohmann::json &msg_body, const string &key, MsgEntryType type) {
-  switch (type) {
-  case MsgEntryType::BASE64: {
-    auto entry = json::get<string>(msg_body, key);
-    if (entry.has_value()) {
-      regex rgx("^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{3}=|[A-Za-z0-9+/]{2}==)?$");
-      auto val = entry.value();
-      if (!val.empty() && regex_match(val, rgx))
-        return true;
-    }
-    logger::ERROR("Failed to validate message : BASE64");
-    return false;
-  }
-  case MsgEntryType::UINT:
-  case MsgEntryType::TIMESTAMP: {
-    auto entry = json::get<string>(msg_body, key);
-    if (entry.has_value()) {
-      auto val = entry.value();
-      if (!val.empty() && all_of(val.begin(), val.end(), ::isdigit) && stoi(val) >= 0)
-        return true;
-    }
-    if (type == MsgEntryType::TIMESTAMP)
-      logger::ERROR("Failed to validate message : TIMESTAMP");
-    else
-      logger::ERROR("Failed to validate message : DECIMAL");
-    return false;
-  }
-  case MsgEntryType::TIMESTAMP_NOW: {
-    auto entry = json::get<string>(msg_body, key);
-    if (entry.has_value()) {
-      auto val = entry.value();
-      if (!val.empty() && all_of(val.begin(), val.end(), ::isdigit)) {
-        uint64_t tt_time = stoll(val);
-        uint64_t current_time = TimeUtil::nowBigInt();
-
-        if (abs((int)(current_time - tt_time)) < TIME_MAX_DIFF_SEC)
-          return true;
-      }
-    }
-
-    logger::ERROR("Failed to validate message : TIMESTAMP_NOW");
-    return false;
-  }
-  case MsgEntryType::HEX: {
-    auto entry = json::get<string>(msg_body, key);
-    if (entry.has_value()) {
-      auto val = entry.value();
-      if (!val.empty() && all_of(val.begin(), val.end(), ::isxdigit))
-        return true;
-    }
-    logger::ERROR("Failed to validate message : HEX");
-    return false;
-  }
-  case MsgEntryType::STRING: {
-    if (msg_body.contains(key) && msg_body[key].is_string())
-      return true;
-
-    logger::ERROR("Failed to validate message : STRING");
-    return false;
-  }
-  case MsgEntryType::BOOL: {
-    if (msg_body.contains(key) && msg_body[key].is_boolean())
-      return true;
-
-    logger::ERROR("Failed to validate message : BOOL");
-    return false;
-  }
-  case MsgEntryType::ARRAYOFOBJECT:
-  case MsgEntryType::ARRAYOFSTRING: {
-    if (msg_body.contains(key) && !msg_body[key].empty() && msg_body[key].is_array())
-      return true;
-
-    if (type == MsgEntryType::ARRAYOFSTRING)
-      logger::ERROR("Failed to validate message : ARRAY OF STRING");
-    else
-      logger::ERROR("Failed to validate message : ARRAY OF OBJECT");
-    return false;
-  }
-  default:
-    return true;
-  }
-}
-
-bool GeneralService::hasValidMsgEntryLength(nlohmann::json &msg_body, const string &key, MsgEntryLength len) {
-  if (len == MsgEntryLength::NOT_LIMITED)
-    return true;
-
-  auto entry = json::get<string>(msg_body, key);
-  if (!entry.has_value())
-    return false;
-
-  return entry.value().length() == static_cast<int>(len);
-}
-
-int GeneralService::convertU8ToU32BE(array<uint8_t, MSG_LENGTH_SIZE> &len_bytes) {
-  return static_cast<int>(len_bytes[0] << 24 | len_bytes[1] << 16 | len_bytes[2] << 8 | len_bytes[3]);
-}
-
-nlohmann::json GeneralService::getJson(SerializationAlgorithmType comperssion_type, string &raw_body) {
-  nlohmann::json unpacked_body;
-  if (!raw_body.empty()) {
-    switch (comperssion_type) {
-      case SerializationAlgorithmType::LZ4: {
-        string origin_data = LZ4Compressor::decompressData(raw_body);
-      }
-      case SerializationAlgorithmType::NONE: {
-        unpacked_body = json::parse(raw_body);
-      }
-      default:
-        break;
-    }
-  }
-  return unpacked_body;
 }
 
 void FindNode::proceed() {
