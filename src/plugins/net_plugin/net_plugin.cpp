@@ -31,7 +31,8 @@ constexpr auto FIND_NODE_TIMEOUT = std::chrono::milliseconds(100);
 
 class NetPluginImpl {
 public:
-  GruutGeneralService::AsyncService general_service;
+  GruutMergerService::AsyncService merger_service;
+  GruutSignerService::AsyncService signer_service;
   KademliaService::AsyncService kademlia_service;
 
   string p2p_address;
@@ -76,7 +77,8 @@ public:
     ServerBuilder builder;
 
     builder.AddListeningPort(p2p_address, grpc::InsecureServerCredentials());
-    builder.RegisterService(&general_service);
+    builder.RegisterService(&signer_service);
+    builder.RegisterService(&merger_service);
     builder.RegisterService(&kademlia_service);
 
     completion_queue = builder.AddCompletionQueue();
@@ -89,9 +91,9 @@ public:
     signer_conn_table = make_shared<SignerConnTable>();
     broadcast_check_table = make_shared<BroadcastMsgTable>();
 
-    new OpenChannel(&general_service, completion_queue.get(), signer_conn_table);
-    new GeneralService(&general_service, completion_queue.get(), routing_table, broadcast_check_table);
-
+    new OpenChannelWithSigner(&signer_service, completion_queue.get(), signer_conn_table);
+    new SignerService(&signer_service, completion_queue.get());
+    new MergerService(&merger_service, completion_queue.get(), routing_table, broadcast_check_table);
     new FindNode(&kademlia_service, completion_queue.get(), routing_table);
   }
 
@@ -283,7 +285,7 @@ public:
       bool is_broadcast(out_msg.receivers.empty());
       auto packed_msg = packMsg(out_msg);
 
-      RequestMsg request;
+      grpc_merger::RequestMsg request;
       request.set_message(packed_msg);
       request.set_broadcast(is_broadcast);
 
@@ -292,7 +294,7 @@ public:
       context.set_deadline(deadline);
       context.AddMetadata("net_id", getMyNetId());
 
-      MsgStatus msg_status;
+      grpc_merger::MsgStatus msg_status;
 
       if (is_broadcast) {
         // TODO : broadcast 확인을 위한 msg id를 정하는 방법이 없어 현재 임시.
@@ -307,8 +309,8 @@ public:
           if (!bucket.empty()) {
             auto nodes = bucket.selectRandomAliveNodes(PARALLELISM_ALPHA);
             for (auto &n : nodes) {
-              auto stub = genStub<GruutGeneralService::Stub, GruutGeneralService>(n.getChannelPtr());
-              auto status = stub->GeneralService(&context, request, &msg_status);
+              auto stub = genStub<GruutMergerService::Stub, GruutMergerService>(n.getChannelPtr());
+              auto status = stub->MergerService(&context, request, &msg_status);
             }
           }
         }
@@ -317,8 +319,8 @@ public:
           auto receiver_id = TypeConverter::arrayToString<SENDER_ID_TYPE_SIZE>(receiver_id_arr);
           auto node = routing_table->findNode(receiver_id);
           if (node.has_value()) {
-            auto stub = genStub<GruutGeneralService::Stub, GruutGeneralService>(node.value().getChannelPtr());
-            auto status = stub->GeneralService(&context, request, &msg_status);
+            auto stub = genStub<GruutMergerService::Stub, GruutMergerService>(node.value().getChannelPtr());
+            auto status = stub->MergerService(&context, request, &msg_status);
           } else {
             routing_table->unmapId(receiver_id);
           }

@@ -1,39 +1,36 @@
 #pragma once
 
-#include "../protos/include/general_service.grpc.pb.h"
 #include "../protos/include/kademlia_service.grpc.pb.h"
+#include "../protos/include/merger_service.grpc.pb.h"
+#include "../protos/include/signer_service.grpc.pb.h"
 #include <grpc/support/log.h>
 #include <grpcpp/grpcpp.h>
 
+#include "../../../channel_interface/include/channel_interface.hpp"
 #include "../../config/include/network_type.hpp"
 #include "../../include/signer_conn_manager.hpp"
 #include "../../kademlia/include/node.hpp"
 #include "../../kademlia/include/routing.hpp"
-#include "../../../channel_interface/include/channel_interface.hpp"
 
 #include <functional>
 #include <iostream>
 #include <memory>
-#include <string>
 #include <optional>
-
-using namespace grpc;
-using namespace grpc_general;
-using namespace kademlia;
+#include <string>
 
 namespace gruut {
 namespace net_plugin {
 
+using namespace grpc;
+using namespace grpc_merger;
+using namespace grpc_signer;
+using namespace kademlia;
+
 enum class RpcCallStatus { CREATE, PROCESS, READ, WAIT, FINISH };
 
 struct NeighborsData {
-  std::vector<Node> neighbors;
+  vector<Node> neighbors;
   uint64_t time_stamp;
-  grpc::Status status;
-};
-
-struct GeneralData {
-  MsgStatus msg_status;
   grpc::Status status;
 };
 
@@ -47,10 +44,10 @@ protected:
   RpcCallStatus m_receive_status;
 };
 
-class OpenChannel final : public CallData {
+class OpenChannelWithSigner final : public CallData {
 public:
-  OpenChannel(GruutGeneralService::AsyncService *service, ServerCompletionQueue *cq, std::shared_ptr<SignerConnTable> signer_table)
-      : m_stream(&m_context), m_signer_table(std::move(signer_table)) {
+  OpenChannelWithSigner(GruutSignerService::AsyncService *service, ServerCompletionQueue *cq, shared_ptr<SignerConnTable> signer_table)
+      : m_stream(&m_context), m_signer_table(move(signer_table)) {
 
     m_service = service;
     m_completion_queue = cq;
@@ -60,20 +57,37 @@ public:
   }
 
 private:
-  std::string m_signer_id_b64;
-  GruutGeneralService::AsyncService *m_service;
+  string m_signer_id_b64;
+  GruutSignerService::AsyncService *m_service;
   Identity m_request;
   ServerAsyncReaderWriter<ReplyMsg, Identity> m_stream;
 
-  std::shared_ptr<SignerConnTable> m_signer_table;
+  shared_ptr<SignerConnTable> m_signer_table;
   void proceed() override;
 };
 
-class GeneralService final : public CallData {
+class SignerService final : public CallData {
 public:
-  GeneralService(GruutGeneralService::AsyncService *service, ServerCompletionQueue *cq, std::shared_ptr<RoutingTable> routing_table,
-                 std::shared_ptr<BroadcastMsgTable> broadcast_check_table)
-      : m_responder(&m_context), m_routing_table(std::move(routing_table)), m_broadcast_check_table(std::move(broadcast_check_table)) {
+  SignerService(GruutSignerService::AsyncService *service, ServerCompletionQueue *cq) : m_responder(&m_context) {
+    m_service = service;
+    m_completion_queue = cq;
+    m_receive_status = RpcCallStatus::CREATE;
+  }
+
+private:
+  GruutSignerService::AsyncService *m_service;
+  grpc_signer::RequestMsg m_request;
+  grpc_signer::MsgStatus m_reply;
+  ServerAsyncResponseWriter<grpc_signer::MsgStatus> m_responder;
+
+  void proceed() override;
+};
+
+class MergerService final : public CallData {
+public:
+  MergerService(GruutMergerService::AsyncService *service, ServerCompletionQueue *cq, shared_ptr<RoutingTable> routing_table,
+                shared_ptr<BroadcastMsgTable> broadcast_check_table)
+      : m_responder(&m_context), m_routing_table(move(routing_table)), m_broadcast_check_table(move(broadcast_check_table)) {
 
     m_service = service;
     m_completion_queue = cq;
@@ -83,20 +97,20 @@ public:
   }
 
 private:
-  GruutGeneralService::AsyncService *m_service;
-  grpc_general::RequestMsg m_request;
-  grpc_general::MsgStatus m_reply;
-  ServerAsyncResponseWriter<grpc_general::MsgStatus> m_responder;
+  GruutMergerService::AsyncService *m_service;
+  grpc_merger::RequestMsg m_request;
+  grpc_merger::MsgStatus m_reply;
+  ServerAsyncResponseWriter<grpc_merger::MsgStatus> m_responder;
 
-  std::shared_ptr<BroadcastMsgTable> m_broadcast_check_table;
-  std::shared_ptr<RoutingTable> m_routing_table;
-  
+  shared_ptr<BroadcastMsgTable> m_broadcast_check_table;
+  shared_ptr<RoutingTable> m_routing_table;
+
   void proceed() override;
 };
 
 class FindNode final : public CallData {
 public:
-  FindNode(KademliaService::AsyncService *service, ServerCompletionQueue *cq, std::shared_ptr<RoutingTable> routing_table)
+  FindNode(KademliaService::AsyncService *service, ServerCompletionQueue *cq, shared_ptr<RoutingTable> routing_table)
       : m_responder(&m_context), m_routing_table(routing_table) {
 
     m_service = service;
@@ -112,7 +126,7 @@ private:
   Neighbors m_reply;
   ServerAsyncResponseWriter<Neighbors> m_responder;
 
-  std::shared_ptr<RoutingTable> m_routing_table;
+  shared_ptr<RoutingTable> m_routing_table;
   void proceed() override;
 };
 } // namespace net_plugin

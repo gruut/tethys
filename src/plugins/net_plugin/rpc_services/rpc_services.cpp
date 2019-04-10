@@ -22,8 +22,6 @@ namespace net_plugin {
 using namespace appbase;
 using namespace std;
 
-constexpr int TIME_MAX_DIFF_SEC = 3;
-
 class MessageParser {
 public:
   optional<InNetMsg> parseMessage(string &packed_msg, Status &return_rpc_status) {
@@ -95,7 +93,7 @@ private:
   }
 };
 
-void OpenChannel::proceed() {
+void OpenChannelWithSigner::proceed() {
 
   switch (m_receive_status) {
   case RpcCallStatus::CREATE: {
@@ -105,7 +103,7 @@ void OpenChannel::proceed() {
   } break;
 
   case RpcCallStatus::READ: {
-    new OpenChannel(m_service, m_completion_queue, m_signer_table);
+    new OpenChannelWithSigner(m_service, m_completion_queue, m_signer_table);
     m_receive_status = RpcCallStatus::PROCESS;
     m_stream.Read(&m_request, this);
   } break;
@@ -132,25 +130,62 @@ void OpenChannel::proceed() {
   }
 }
 
-void GeneralService::proceed() {
+void SignerService::proceed() {
   switch (m_receive_status) {
   case RpcCallStatus::CREATE: {
     m_receive_status = RpcCallStatus::PROCESS;
-    m_service->RequestGeneralService(&m_context, &m_request, &m_responder, m_completion_queue, m_completion_queue, this);
+    m_service->RequestSignerService(&m_context, &m_request, &m_responder, m_completion_queue, m_completion_queue, this);
   } break;
 
   case RpcCallStatus::PROCESS: {
-    new GeneralService(m_service, m_completion_queue, m_routing_table, m_broadcast_check_table);
+    new SignerService(m_service, m_completion_queue);
     Status rpc_status;
 
     try {
-      std::string packed_msg = m_request.message();
+      string packed_msg = m_request.message();
+      MessageParser msg_parser;
+      auto input_data = msg_parser.parseMessage(packed_msg, rpc_status);
+
+      if (rpc_status.ok()) {
+        m_reply.set_status(grpc_signer::MsgStatus_Status_SUCCESS); // SUCCESS
+        m_reply.set_message("OK");
+        auto &in_msg_channel = app().getChannel<incoming::channels::network::channel_type>();
+        in_msg_channel.publish(input_data.value());
+      } else {
+        m_reply.set_status(grpc_signer::MsgStatus_Status_INVALID); // INVALID
+        m_reply.set_message(rpc_status.error_message());
+      }
+    } catch (exception &e) { // INTERNAL
+      m_reply.set_status(grpc_signer::MsgStatus_Status_INTERNAL);
+      m_reply.set_message("Merger internal error");
+    }
+    m_receive_status = RpcCallStatus::FINISH;
+    m_responder.Finish(m_reply, rpc_status, this);
+  } break;
+
+  default: { delete this; } break;
+  }
+}
+
+void MergerService::proceed() {
+  switch (m_receive_status) {
+  case RpcCallStatus::CREATE: {
+    m_receive_status = RpcCallStatus::PROCESS;
+    m_service->RequestMergerService(&m_context, &m_request, &m_responder, m_completion_queue, m_completion_queue, this);
+  } break;
+
+  case RpcCallStatus::PROCESS: {
+    new MergerService(m_service, m_completion_queue, m_routing_table, m_broadcast_check_table);
+    Status rpc_status;
+
+    try {
+      string packed_msg = m_request.message();
       // Forwarding message to other nodes
       if (m_request.broadcast()) {
-        std::string msg_id = m_request.message_id();
+        string msg_id = m_request.message_id();
 
         if (m_broadcast_check_table->count(msg_id) > 0) {
-          m_reply.set_status(grpc_general::MsgStatus_Status_DUPLICATED);
+          m_reply.set_status(grpc_merger::MsgStatus_Status_DUPLICATED);
           m_reply.set_message("duplicate message");
           m_receive_status = RpcCallStatus::FINISH;
           m_responder.Finish(m_reply, rpc_status, this);
@@ -159,7 +194,7 @@ void GeneralService::proceed() {
         uint64_t now = TimeUtil::nowBigInt();
         m_broadcast_check_table->insert({msg_id, now});
 
-        RequestMsg request;
+        grpc_merger::RequestMsg request;
         request.set_message(packed_msg);
         request.set_broadcast(true);
 
@@ -167,47 +202,42 @@ void GeneralService::proceed() {
         std::chrono::time_point deadline = std::chrono::system_clock::now() + GENERAL_SERVICE_TIMEOUT;
         context.set_deadline(deadline);
 
-        MsgStatus msg_status;
+        grpc_merger::MsgStatus msg_status;
 
         for (auto &bucket : *m_routing_table) {
           if (!bucket.empty()) {
             auto nodes = bucket.selectRandomAliveNodes(PARALLELISM_ALPHA);
             for (auto &n : nodes) {
-              auto stub = GruutGeneralService::NewStub(n.getChannelPtr());
-              stub->GeneralService(&context, request, &msg_status);
+              auto stub = GruutMergerService::NewStub(n.getChannelPtr());
+              stub->MergerService(&context, request, &msg_status);
             }
           }
         }
       }
-      auto input_data = parseMessage(packed_msg, rpc_status);
+      MessageParser msg_parser;
+      auto input_data = msg_parser.parseMessage(packed_msg, rpc_status);
 
       if (rpc_status.ok()) {
-        if(validateMsgBody(input_data.value().type, input_data.value().body)) {
-          m_reply.set_status(grpc_general::MsgStatus_Status_SUCCESS); // SUCCESS
-          m_reply.set_message("OK");
+        m_reply.set_status(grpc_merger::MsgStatus_Status_SUCCESS); // SUCCESS
+        m_reply.set_message("OK");
 
-          auto input_msg_type = input_data.value().type;
-          if (input_msg_type == MessageType::MSG_BLOCK || input_msg_type == MessageType::MSG_TX ||
-              input_msg_type == MessageType::MSG_REQ_BLOCK) {
+        auto input_msg_type = input_data.value().type;
+        if (input_msg_type == MessageType::MSG_BLOCK || input_msg_type == MessageType::MSG_TX ||
+            input_msg_type == MessageType::MSG_REQ_BLOCK) {
 
-            auto user_id = TypeConverter::arrayToString<SENDER_ID_TYPE_SIZE>(input_data.value().sender_id);
-            auto net_id = m_context.client_metadata().find("net_id")->second;
-            m_routing_table->mapId(user_id, string(net_id.data()));
-          }
-
-          auto &in_msg_channel = app().getChannel<incoming::channels::network::channel_type>();
-          in_msg_channel.publish(input_data.value());
-        } else {
-          rpc_status = Status(StatusCode::INVALID_ARGUMENT, "Bad request (Failed to validate message)");
-          m_reply.set_status(grpc_general::MsgStatus_Status_INVALID); //INVALID
-          m_reply.set_message(rpc_status.error_message());
+          auto user_id = TypeConverter::arrayToString<SENDER_ID_TYPE_SIZE>(input_data.value().sender_id);
+          auto net_id = m_context.client_metadata().find("net_id")->second;
+          m_routing_table->mapId(user_id, string(net_id.data()));
         }
+
+        auto &in_msg_channel = app().getChannel<incoming::channels::network::channel_type>();
+        in_msg_channel.publish(input_data.value());
       } else {
-        m_reply.set_status(grpc_general::MsgStatus_Status_INVALID); // INVALID
+        m_reply.set_status(grpc_merger::MsgStatus_Status_INVALID); // INVALID
         m_reply.set_message(rpc_status.error_message());
       }
-    } catch (std::exception &e) { // INTERNAL
-      m_reply.set_status(grpc_general::MsgStatus_Status_INTERNAL);
+    } catch (exception &e) { // INTERNAL
+      m_reply.set_status(grpc_merger::MsgStatus_Status_INTERNAL);
       m_reply.set_message("Merger internal error");
     }
     m_receive_status = RpcCallStatus::FINISH;
@@ -229,7 +259,7 @@ void FindNode::proceed() {
   case RpcCallStatus::PROCESS: {
     new FindNode(m_service, m_completion_queue, m_routing_table);
 
-    std::string target = m_request.target_id();
+    string target = m_request.target_id();
     uint64_t time_stamp = m_request.time_stamp();
 
     auto neighbor_list = m_routing_table->findNeighbors(Hash<160>::sha1(target), PARALLELISM_ALPHA);

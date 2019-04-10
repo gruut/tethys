@@ -1,7 +1,7 @@
 #pragma once
 
-#include "../rpc_services/protos/include/general_service.grpc.pb.h"
-#include "../rpc_services/protos/include/general_service.pb.h"
+#include "../rpc_services/protos/include/signer_service.grpc.pb.h"
+#include "../rpc_services/protos/include/signer_service.pb.h"
 
 #include <memory>
 #include <mutex>
@@ -11,7 +11,7 @@
 
 namespace gruut {
 using namespace grpc;
-using namespace grpc_general;
+using namespace grpc_signer;
 
 struct SignerRpcInfo {
   void *tag_identity;
