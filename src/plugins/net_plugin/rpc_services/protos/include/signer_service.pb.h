@@ -404,23 +404,9 @@ class RequestMsg : public ::google::protobuf::Message /* @@protoc_insertion_poin
 
   // accessors -------------------------------------------------------
 
-  // string message_id = 2;
-  void clear_message_id();
-  static const int kMessageIdFieldNumber = 2;
-  const ::std::string& message_id() const;
-  void set_message_id(const ::std::string& value);
-  #if LANG_CXX11
-  void set_message_id(::std::string&& value);
-  #endif
-  void set_message_id(const char* value);
-  void set_message_id(const char* value, size_t size);
-  ::std::string* mutable_message_id();
-  ::std::string* release_message_id();
-  void set_allocated_message_id(::std::string* message_id);
-
-  // bytes message = 3;
+  // bytes message = 1;
   void clear_message();
-  static const int kMessageFieldNumber = 3;
+  static const int kMessageFieldNumber = 1;
   const ::std::string& message() const;
   void set_message(const ::std::string& value);
   #if LANG_CXX11
@@ -432,19 +418,11 @@ class RequestMsg : public ::google::protobuf::Message /* @@protoc_insertion_poin
   ::std::string* release_message();
   void set_allocated_message(::std::string* message);
 
-  // bool broadcast = 1;
-  void clear_broadcast();
-  static const int kBroadcastFieldNumber = 1;
-  bool broadcast() const;
-  void set_broadcast(bool value);
-
   // @@protoc_insertion_point(class_scope:grpc_signer.RequestMsg)
  private:
 
   ::google::protobuf::internal::InternalMetadataWithArena _internal_metadata_;
-  ::google::protobuf::internal::ArenaStringPtr message_id_;
   ::google::protobuf::internal::ArenaStringPtr message_;
-  bool broadcast_;
   mutable ::google::protobuf::internal::CachedSize _cached_size_;
   friend struct ::protobuf_signer_5fservice_2eproto::TableStruct;
 };
@@ -721,74 +699,7 @@ inline void ReplyMsg::set_allocated_message(::std::string* message) {
 
 // RequestMsg
 
-// bool broadcast = 1;
-inline void RequestMsg::clear_broadcast() {
-  broadcast_ = false;
-}
-inline bool RequestMsg::broadcast() const {
-  // @@protoc_insertion_point(field_get:grpc_signer.RequestMsg.broadcast)
-  return broadcast_;
-}
-inline void RequestMsg::set_broadcast(bool value) {
-  
-  broadcast_ = value;
-  // @@protoc_insertion_point(field_set:grpc_signer.RequestMsg.broadcast)
-}
-
-// string message_id = 2;
-inline void RequestMsg::clear_message_id() {
-  message_id_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
-}
-inline const ::std::string& RequestMsg::message_id() const {
-  // @@protoc_insertion_point(field_get:grpc_signer.RequestMsg.message_id)
-  return message_id_.GetNoArena();
-}
-inline void RequestMsg::set_message_id(const ::std::string& value) {
-  
-  message_id_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), value);
-  // @@protoc_insertion_point(field_set:grpc_signer.RequestMsg.message_id)
-}
-#if LANG_CXX11
-inline void RequestMsg::set_message_id(::std::string&& value) {
-  
-  message_id_.SetNoArena(
-    &::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::move(value));
-  // @@protoc_insertion_point(field_set_rvalue:grpc_signer.RequestMsg.message_id)
-}
-#endif
-inline void RequestMsg::set_message_id(const char* value) {
-  GOOGLE_DCHECK(value != NULL);
-  
-  message_id_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::string(value));
-  // @@protoc_insertion_point(field_set_char:grpc_signer.RequestMsg.message_id)
-}
-inline void RequestMsg::set_message_id(const char* value, size_t size) {
-  
-  message_id_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(),
-      ::std::string(reinterpret_cast<const char*>(value), size));
-  // @@protoc_insertion_point(field_set_pointer:grpc_signer.RequestMsg.message_id)
-}
-inline ::std::string* RequestMsg::mutable_message_id() {
-  
-  // @@protoc_insertion_point(field_mutable:grpc_signer.RequestMsg.message_id)
-  return message_id_.MutableNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
-}
-inline ::std::string* RequestMsg::release_message_id() {
-  // @@protoc_insertion_point(field_release:grpc_signer.RequestMsg.message_id)
-  
-  return message_id_.ReleaseNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
-}
-inline void RequestMsg::set_allocated_message_id(::std::string* message_id) {
-  if (message_id != NULL) {
-    
-  } else {
-    
-  }
-  message_id_.SetAllocatedNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), message_id);
-  // @@protoc_insertion_point(field_set_allocated:grpc_signer.RequestMsg.message_id)
-}
-
-// bytes message = 3;
+// bytes message = 1;
 inline void RequestMsg::clear_message() {
   message_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }

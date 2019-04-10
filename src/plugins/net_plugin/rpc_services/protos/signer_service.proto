@@ -19,9 +19,7 @@ message ReplyMsg {
 }
 
 message RequestMsg {
-    bool broadcast = 1;
-    string message_id =2;
-    bytes message = 3;
+    bytes message = 1;
 }
 
 message MsgStatus {
