@@ -34,6 +34,5 @@ public:
 
 private:
   std::unique_ptr<class NetPluginImpl> impl;
-  outgoing::channels::network::channel_type::Handle out_channel_handler;
 };
 } // namespace gruut

@@ -49,6 +49,8 @@ public:
   unique_ptr<boost::asio::steady_timer> connection_check_timer;
   unique_ptr<boost::asio::steady_timer> net_message_check_timer;
 
+  outgoing::channels::network::channel_type::Handle out_channel_subscription;
+
   ~NetPluginImpl() {
     if (server != nullptr)
       server->Shutdown();
@@ -419,7 +421,7 @@ void NetPlugin::pluginInitialize(const variables_map &options) {
   }
 
   auto &out_channel = app().getChannel<outgoing::channels::network::channel_type>();
-  out_channel_handler = out_channel.subscribe([this](auto data) { impl->sendMessage(data); });
+  impl->out_channel_subscription = out_channel.subscribe([this](auto data) { impl->sendMessage(data); });
 
   impl->initialize();
 }
