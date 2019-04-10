@@ -57,8 +57,9 @@ public:
 
     return in_msg;
   }
+
 private:
-  MessageHeader* parseHeader(string_view raw_header) {
+  MessageHeader *parseHeader(string_view raw_header) {
     auto msg_header = reinterpret_cast<MessageHeader *>(&raw_header);
     return msg_header;
   }
@@ -95,14 +96,14 @@ private:
 
 class MessageHandler {
 public:
-  explicit MessageHandler(ServerContext* server_context, shared_ptr<RoutingTable> table): context(server_context), routing_table(table) {}
+  explicit MessageHandler(ServerContext *server_context, shared_ptr<RoutingTable> table) : context(server_context), routing_table(table) {}
 
-  void operator() (InNetMsg &msg) {
+  void operator()(InNetMsg &msg) {
     handle_message(msg);
   }
 
 private:
-  void handle_message(InNetMsg& msg) {
+  void handle_message(InNetMsg &msg) {
     auto msg_type = msg.type;
 
     if (msg_type == MessageType::MSG_BLOCK || msg_type == MessageType::MSG_TX || msg_type == MessageType::MSG_REQ_BLOCK) {
@@ -110,7 +111,7 @@ private:
     }
   }
 
-  void mapping_user_id_to_net_id(InNetMsg& msg) {
+  void mapping_user_id_to_net_id(InNetMsg &msg) {
     auto b58_user_id = TypeConverter::encodeBase<58>(msg.sender_id);
     auto net_id = context->client_metadata().find("net_id")->second;
     routing_table->mapId(b58_user_id, string(net_id.data()));

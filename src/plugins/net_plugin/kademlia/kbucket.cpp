@@ -8,9 +8,9 @@
 #include "include/kbucket.hpp"
 #include <algorithm>
 #include <boost/multiprecision/cpp_int.hpp>
+#include <optional>
 #include <random>
 #include <vector>
-#include <optional>
 
 namespace gruut {
 namespace net_plugin {

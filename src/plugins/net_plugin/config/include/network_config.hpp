@@ -1,8 +1,8 @@
 #pragma once
 
+#include <chrono>
 #include <cstddef>
 #include <string>
-#include <chrono>
 
 namespace gruut {
 namespace net_plugin {
@@ -15,6 +15,6 @@ const std::string ID_BASE64 = "VEVTVC1NRVJHRVItSUQtMVRFU1QtTUVSR0VSLUlELTE=";
 const std::string MY_ID = "TEST-MERGER-ID-1TEST-MERGER-ID-1"; // 32bytes
 // TODO : LOCAL CHAIN ID / WORLD ID 에 대해서 정해진 바가 없어 임시 사용 수정될 것.
 const std::string LOCAL_CHAIN_ID = "LCHAINID"; // 8bytes
-const std::string WORLD_ID = "WORLD-ID"; // 8bytes
+const std::string WORLD_ID = "WORLD-ID";       // 8bytes
 } // namespace net_plugin
 } // namespace gruut
