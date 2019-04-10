@@ -70,9 +70,9 @@ private:
   signal<void(const Data &)> s;
 };
 
-template <typename Data>
+template <typename Tag, typename Data>
 struct ChannelTypeTemplate {
   using channel_type = Channel<Data>;
-  using data_type = Data;
+  using tag_type = Tag;
 };
 } // namespace appbase
