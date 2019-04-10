@@ -315,23 +315,21 @@ public:
           }
         }
       } else {
-        for (auto &receiver_id_arr : out_msg.receivers) {
-          auto receiver_id = TypeConverter::arrayToString<SENDER_ID_TYPE_SIZE>(receiver_id_arr);
-          auto node = routing_table->findNode(receiver_id);
+        for (auto &b58_receiver_id : out_msg.receivers) {
+          auto node = routing_table->findNode(b58_receiver_id);
           if (node.has_value()) {
             auto stub = genStub<GruutMergerService::Stub, GruutMergerService>(node.value().getChannelPtr());
             auto status = stub->MergerService(&context, request, &msg_status);
           } else {
-            routing_table->unmapId(receiver_id);
+            routing_table->unmapId(b58_receiver_id);
           }
         }
       }
     } else if (checkSignerMsgType(out_msg.type)) {
       auto packed_msg = packMsg(out_msg);
 
-      for (auto &receiver_id_arr : out_msg.receivers) {
-        auto receiver_id = TypeConverter::arrayToString<SENDER_ID_TYPE_SIZE>(receiver_id_arr);
-        SignerRpcInfo signer_rpc_info = signer_conn_table->getRpcInfo(receiver_id);
+      for (auto &b58_receiver_id : out_msg.receivers) {
+        SignerRpcInfo signer_rpc_info = signer_conn_table->getRpcInfo(b58_receiver_id);
         if (signer_rpc_info.send_msg == nullptr)
           continue;
 

@@ -1,5 +1,7 @@
 #pragma once
 
+#include "network_type.hpp"
+
 #include <array>
 #include <grpcpp/impl/codegen/status.h>
 #include <string>
@@ -60,13 +62,13 @@ constexpr uint8_t NOT_USED = 0x00;
 struct InNetMsg {
   MessageType type;
   nlohmann::json body;
-  sender_id_type sender_id;
+  b58_user_id_type sender_id;
 };
 
 struct OutNetMsg {
   MessageType type;
   nlohmann::json body;
-  std::vector<sender_id_type> receivers;
+  std::vector<b58_user_id_type> receivers;
 };
 
 struct MessageHeader {

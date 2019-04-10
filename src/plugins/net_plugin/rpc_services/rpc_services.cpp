@@ -53,7 +53,7 @@ public:
     InNetMsg in_msg;
     in_msg.type = msg_header->message_type;
     in_msg.body = json_body;
-    in_msg.sender_id = msg_header->sender_id;
+    in_msg.sender_id = TypeConverter::encodeBase<58>(msg_header->sender_id);
 
     return in_msg;
   }
@@ -111,9 +111,9 @@ private:
   }
 
   void mapping_user_id_to_net_id(InNetMsg& msg) {
-    auto user_id = TypeConverter::arrayToString<SENDER_ID_TYPE_SIZE>(msg.sender_id);
+    auto b58_user_id = TypeConverter::encodeBase<58>(msg.sender_id);
     auto net_id = context->client_metadata().find("net_id")->second;
-    routing_table->mapId(user_id, string(net_id.data()));
+    routing_table->mapId(b58_user_id, string(net_id.data()));
   }
 
   ServerContext *context;
@@ -136,16 +136,16 @@ void OpenChannelWithSigner::proceed() {
   } break;
 
   case RpcCallStatus::PROCESS: {
-    m_signer_id_b64 = m_request.sender();
+    m_signer_id_b58 = m_request.sender();
     m_receive_status = RpcCallStatus::WAIT;
-    m_signer_table->setReplyMsg(m_signer_id_b64, &m_stream, this);
+    m_signer_table->setRpcInfo(m_signer_id_b58, &m_stream, this);
 
   } break;
 
   case RpcCallStatus::WAIT: {
     if (m_context.IsCancelled()) {
-      auto internal_msg = MessageBuilder::build<MessageType::MSG_LEAVE>(m_signer_id_b64);
-      m_signer_table->eraseRpcInfo(m_signer_id_b64);
+      auto internal_msg = MessageBuilder::build<MessageType::MSG_LEAVE>(m_signer_id_b58);
+      m_signer_table->eraseRpcInfo(m_signer_id_b58);
       auto &in_msg_channel = app().getChannel<incoming::channels::network::channel_type>();
       in_msg_channel.publish(internal_msg);
       delete this;

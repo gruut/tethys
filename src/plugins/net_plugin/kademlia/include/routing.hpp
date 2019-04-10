@@ -122,12 +122,12 @@ public:
 
   std::optional<Node> findNode(const hashed_net_id_type &hashed_id);
 
-  std::optional<Node> findNode(const user_id_type &id);
+  std::optional<Node> findNode(const b58_user_id_type &id);
 
   size_t getBucketIndexFor(const hashed_net_id_type &node) const;
 
-  void mapId(const user_id_type &user_id, const net_id_type &net_id);
-  void unmapId(const user_id_type &user_id);
+  void mapId(const b58_user_id_type &b58_user_id, const net_id_type &net_id);
+  void unmapId(const b58_user_id_type &b58_user_id);
   void unmapId(const hashed_net_id_type &hashed_net_id);
 private:
   Node m_my_node;
@@ -135,7 +135,7 @@ private:
   std::size_t m_ksize;
 
   std::deque<KBucket> m_buckets;
-  std::unordered_map<user_id_type, hashed_net_id_type> m_id_mapping_table;
+  std::unordered_map<b58_user_id_type, hashed_net_id_type> m_id_mapping_table;
 
   std::mutex m_id_map_mutex;
   std::mutex m_buckets_mutex;
