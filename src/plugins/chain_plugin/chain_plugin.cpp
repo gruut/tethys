@@ -1,3 +1,4 @@
+#include "../../../lib/appbase/include/application.hpp"
 #include "include/chain_plugin.hpp"
 #include "../../../include/json.hpp"
 #include "../../../lib/log/include/log.hpp"
@@ -20,12 +21,18 @@ public:
 
   nlohmann::json genesis_state;
 
+  incoming::channels::transaction::channel_type::Handle incoming_transaction_subscription;
+
   void initialize() {
     chain = make_unique<Chain>(dbms, table_name, db_user_id, db_password);
   }
+
+  void push_transaction(nlohmann::json transaction) {
+    logger::INFO("Do something");
+  }
 };
 
-ChainPlugin::ChainPlugin() : impl(new ChainPluginImpl()) {}
+ChainPlugin::ChainPlugin() : impl(make_unique<ChainPluginImpl>()) {}
 
 void ChainPlugin::pluginInitialize(const boost::program_options::variables_map &options) {
   logger::INFO("ChainPlugin Initialize");
@@ -71,6 +78,11 @@ void ChainPlugin::pluginInitialize(const boost::program_options::variables_map &
   } else {
     throw std::invalid_argument("the input of database's password is empty"s);
   }
+
+  auto &transaction_channel = app().getChannel<incoming::channels::transaction::channel_type>();
+  impl->incoming_transaction_subscription = transaction_channel.subscribe([this](nlohmann::json transaction){
+    impl->push_transaction(transaction);
+  });
 
   impl->initialize();
 }

@@ -109,6 +109,14 @@ private:
     if (msg_type == MessageType::MSG_BLOCK || msg_type == MessageType::MSG_TX || msg_type == MessageType::MSG_REQ_BLOCK) {
       mapping_user_id_to_net_id(msg);
     }
+
+    switch (msg.type) {
+    case MessageType::MSG_TX:
+      app().getChannel<incoming::channels::transaction::channel_type>().publish(msg.body);
+      break;
+    default:
+      break;
+    }
   }
 
   void mapping_user_id_to_net_id(InNetMsg &msg) {
@@ -191,7 +199,9 @@ void SignerService::proceed() {
     m_responder.Finish(m_reply, rpc_status, this);
   } break;
 
-  default: { delete this; } break;
+  default: {
+    delete this;
+  } break;
   }
 }
 
@@ -251,9 +261,6 @@ void MergerService::proceed() {
 
         MessageHandler msg_handler(&m_context, m_routing_table);
         msg_handler(input_data.value());
-
-        auto &in_msg_channel = app().getChannel<incoming::channels::network::channel_type>();
-        in_msg_channel.publish(input_data.value());
       } else {
         m_reply.set_status(grpc_merger::MsgStatus_Status_INVALID); // INVALID
         m_reply.set_message(rpc_status.error_message());
@@ -267,7 +274,9 @@ void MergerService::proceed() {
 
   } break;
 
-  default: { delete this; } break;
+  default: {
+    delete this;
+  } break;
   }
 }
 
@@ -299,7 +308,9 @@ void FindNode::proceed() {
     m_responder.Finish(m_reply, Status::OK, this);
   } break;
 
-  default: { delete this; } break;
+  default: {
+    delete this;
+  } break;
   }
 }
 
