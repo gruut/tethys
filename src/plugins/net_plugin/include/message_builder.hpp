@@ -27,11 +27,9 @@ public:
     msg_body["sID"] = from;
     msg_body["time"] = TimeUtil::now();
     msg_body["msg"] = "disconnected with signer";
-    sender_id_type to;
-    copy(from.begin(), from.end(), to.begin());
 
     incoming_msg.body = msg_body;
-    incoming_msg.sender_id = to;
+    incoming_msg.sender_id = from;
 
     return incoming_msg;
   }
