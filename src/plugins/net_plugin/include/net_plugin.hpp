@@ -1,8 +1,8 @@
 #pragma once
 
+#include <boost/program_options/options_description.hpp>
 #include <iostream>
 #include <memory>
-#include <boost/program_options/options_description.hpp>
 
 #include "../../channel_interface/include/channel_interface.hpp"
 #include "application.hpp"

@@ -152,7 +152,7 @@ std::optional<Node> RoutingTable::findNode(const hashed_net_id_type &hashed_id) 
 }
 
 std::optional<Node> RoutingTable::findNode(const b58_user_id_type &id) {
-  if(m_id_mapping_table.count(id) > 0){
+  if (m_id_mapping_table.count(id) > 0) {
     return findNode(m_id_mapping_table[id]);
   }
   return {};

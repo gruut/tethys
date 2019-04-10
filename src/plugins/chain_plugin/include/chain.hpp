@@ -14,6 +14,7 @@ public:
   Chain(const Chain &) = delete;
   Chain(const Chain &&) = delete;
   Chain &operator=(const Chain &) = delete;
+
 private:
   soci::session db_session;
 };

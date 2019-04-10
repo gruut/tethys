@@ -129,6 +129,7 @@ public:
   void mapId(const b58_user_id_type &b58_user_id, const net_id_type &net_id);
   void unmapId(const b58_user_id_type &b58_user_id);
   void unmapId(const hashed_net_id_type &hashed_net_id);
+
 private:
   Node m_my_node;
 

@@ -50,10 +50,10 @@ public:
   unique_ptr<boost::asio::steady_timer> net_message_check_timer;
 
   ~NetPluginImpl() {
-    if(server != nullptr)
+    if (server != nullptr)
       server->Shutdown();
 
-    if(completion_queue != nullptr)
+    if (completion_queue != nullptr)
       completion_queue->Shutdown();
   }
 
@@ -393,10 +393,6 @@ public:
   bool checkSignerMsgType(MessageType msg_type) {
     return (msg_type == MessageType::MSG_CHALLENGE || msg_type == MessageType::MSG_RESPONSE_2 || msg_type == MessageType::MSG_ACCEPT ||
             msg_type == MessageType::MSG_REQ_SSIG);
-  }
-
-  void handle_message() {
-
   }
 };
 

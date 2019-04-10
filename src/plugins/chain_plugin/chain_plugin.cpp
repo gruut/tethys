@@ -1,7 +1,7 @@
 #include "include/chain_plugin.hpp"
-#include "include/chain.hpp"
 #include "../../../include/json.hpp"
 #include "../../../lib/log/include/log.hpp"
+#include "include/chain.hpp"
 
 namespace gruut {
 
@@ -74,14 +74,15 @@ void ChainPlugin::pluginInitialize(const boost::program_options::variables_map &
 
   impl->initialize();
 }
+
+// clang-format off
 void ChainPlugin::setProgramOptions(options_description &cfg) {
   cfg.add_options()("genesis-block", boost::program_options::value<string>()->composing(), "the location of a genesis_block.json file")
-  ("dbms", boost::program_options::value<string>()->composing(), "DBMS (MYSQL)")
-  ("table-name", boost::program_options::value<string>()->composing(), "table name")
+  ("dbms", boost::program_options::value<string>()->composing(), "DBMS (MYSQL)")("table-name", boost::program_options::value<string>()->composing(), "table name")
   ("database-user", boost::program_options::value<string>()->composing(), "database user id")
-  ("database-password", boost::program_options::value<string>()->composing(), "database password")
-  ;
+  ("database-password", boost::program_options::value<string>()->composing(), "database password");
 }
+// clang-format on
 
 ChainPlugin::~ChainPlugin() {
   impl.reset();

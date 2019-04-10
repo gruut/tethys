@@ -1,8 +1,8 @@
 #pragma once
 
 #include <boost/filesystem.hpp>
-#include <boost/program_options/variables_map.hpp>
 #include <boost/program_options/options_description.hpp>
+#include <boost/program_options/variables_map.hpp>
 
 #include "../../../../lib/log/include/log.hpp"
 #include "../../channel_interface/include/channel_interface.hpp"
