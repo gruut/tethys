@@ -41,7 +41,6 @@ bool RoutingTable::empty() const {
 }
 
 std::size_t RoutingTable::getBucketIndexFor(const hashed_net_id_type &node) const {
-
   auto num_buckets = m_buckets.size();
 
   auto bucket = m_buckets.begin();
@@ -160,7 +159,6 @@ std::optional<Node> RoutingTable::findNode(const b58_user_id_type &id) {
 
 std::vector<Node> RoutingTable::findNeighbors(hashed_net_id_type const &hashed_id, std::size_t max_number) {
   std::vector<Node> neighbors;
-  auto count = 0U;
 
   bool use_left = true;
   bool has_more = true;
@@ -177,19 +175,20 @@ std::vector<Node> RoutingTable::findNeighbors(hashed_net_id_type const &hashed_i
 
   while (has_more) {
     has_more = false;
+
     for (auto const &neighbor : *current_bucket) {
       // Exclude the node
       if (neighbor.getIdHash() != hashed_id) {
-        ++count;
-
         neighbors.emplace_back(neighbor);
-        if (count == max_number)
-          goto Done;
+
+        if (neighbors.size() == max_number)
+          return neighbors;
       }
     }
 
     if (right == m_buckets.end())
       use_left = true;
+
     if (left != m_buckets.begin()) {
       has_more = true;
       if (use_left) {
@@ -199,6 +198,7 @@ std::vector<Node> RoutingTable::findNeighbors(hashed_net_id_type const &hashed_i
         continue;
       }
     }
+
     if (right != m_buckets.end()) {
       has_more = true;
       current_bucket = right;
@@ -206,9 +206,6 @@ std::vector<Node> RoutingTable::findNeighbors(hashed_net_id_type const &hashed_i
     }
     use_left = true;
   }
-Done:
-
-  m_buckets_mutex.unlock();
 
   return neighbors;
 }
