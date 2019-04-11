@@ -158,7 +158,7 @@ std::optional<Node> RoutingTable::findNode(const b58_user_id_type &id) {
   return {};
 }
 
-std::vector<Node> RoutingTable::findNeighbors(hashed_net_id_type const &id, std::size_t max_number) {
+std::vector<Node> RoutingTable::findNeighbors(hashed_net_id_type const &hashed_id, std::size_t max_number) {
   std::vector<Node> neighbors;
   auto count = 0U;
 
@@ -167,7 +167,7 @@ std::vector<Node> RoutingTable::findNeighbors(hashed_net_id_type const &id, std:
 
   std::lock_guard<std::mutex> lock(m_buckets_mutex);
 
-  auto bucket_index = getBucketIndexFor(id);
+  auto bucket_index = getBucketIndexFor(hashed_id);
   auto bucket = m_buckets.begin();
   std::advance(bucket, bucket_index);
   auto left = bucket;
@@ -179,7 +179,7 @@ std::vector<Node> RoutingTable::findNeighbors(hashed_net_id_type const &id, std:
     has_more = false;
     for (auto const &neighbor : *current_bucket) {
       // Exclude the node
-      if (neighbor.getIdHash() != id) {
+      if (neighbor.getIdHash() != hashed_id) {
         ++count;
 
         neighbors.emplace_back(neighbor);

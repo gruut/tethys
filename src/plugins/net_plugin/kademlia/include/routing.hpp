@@ -118,7 +118,7 @@ public:
     return findNeighbors(id, m_ksize);
   };
 
-  std::vector<Node> findNeighbors(hashed_net_id_type const &id, std::size_t max_number);
+  std::vector<Node> findNeighbors(hashed_net_id_type const &hashed_id, std::size_t max_number);
 
   std::optional<Node> findNode(const hashed_net_id_type &hashed_id);
 
