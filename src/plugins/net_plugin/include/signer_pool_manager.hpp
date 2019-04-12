@@ -117,7 +117,6 @@ public:
       auto msg_challenge = MessageBuilder::build<MessageType::MSG_CHALLENGE>(recv_id_b58, merger_nonce);
       return msg_challenge;
     }
-
     case MessageType::MSG_RESPONSE_1: {
       if (temp_signer_pool.find(msg.sender_id) == temp_signer_pool.end()) {
         logger::ERROR("[ECDH] Illegal Trial");
@@ -151,7 +150,6 @@ public:
 
       return msg_response2;
     }
-
     case MessageType::MSG_SUCCESS: {
       if (isTimeout(msg.sender_id)) {
         logger::ERROR("[ECDH] Join timeout");

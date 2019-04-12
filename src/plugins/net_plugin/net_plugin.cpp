@@ -285,10 +285,8 @@ public:
   }
 
   void sendMessage(OutNetMsg &out_msg) {
-
-    auto packed_msg = MessagePacker::packMessage(out_msg);
-
     if (checkMergerMsgType(out_msg.type)) {
+      auto packed_msg = MessagePacker::packMessage<MACAlgorithmType::NONE>(out_msg);
       bool is_broadcast(out_msg.receivers.empty());
 
       grpc_merger::RequestMsg request;
@@ -337,13 +335,15 @@ public:
         if (signer_rpc_info.send_msg == nullptr)
           continue;
 
+        string packed_msg;
         if (out_msg.type == MessageType::MSG_REQ_SSIG) {
           auto hmac_key = signer_pool_manager->getHmacKey(b58_receiver_id);
           if (!hmac_key.has_value())
             continue;
-          auto hmac = Hmac::generateHMAC(packed_msg, hmac_key.value());
-          packed_msg += string(hmac.begin(), hmac.end());
-        }
+          packed_msg = MessagePacker::packMessage<MACAlgorithmType::HMAC>(out_msg, hmac_key.value());
+        } else
+          packed_msg = MessagePacker::packMessage<MACAlgorithmType::NONE>(out_msg);
+
         auto tag = static_cast<Identity *>(signer_rpc_info.tag_identity);
         Request req;
         req.set_message(packed_msg);

@@ -1,5 +1,6 @@
 #pragma once
 
+#include "../../../lib/gruut-utils/src/hmac.hpp"
 #include "../../../lib/gruut-utils/src/lz4_compressor.hpp"
 #include "../config/include/message.hpp"
 
@@ -10,7 +11,20 @@ using namespace std;
 
 class MessagePacker {
 public:
+  template <MACAlgorithmType T, typename = enable_if_t<T == MACAlgorithmType::NONE>>
   static string packMessage(OutNetMsg &out_msg) {
+    return pack(out_msg);
+  }
+
+  template <MACAlgorithmType T, typename = enable_if_t<T == MACAlgorithmType::HMAC>>
+  static string packMessage(OutNetMsg &out_msg, vector<uint8_t> &hmac_key) {
+    auto packed_msg = pack(out_msg);
+    auto hmac = Hmac::generateHMAC(packed_msg, hmac_key);
+    return packed_msg + string(hmac.begin(), hmac.end());
+  }
+
+private:
+  static string pack(OutNetMsg &out_msg) {
     // TODO : serialized-body must be determined by serialization algo type
     string json_dump = out_msg.body.dump();
     string serialized_body = LZ4Compressor::compressData(json_dump);
@@ -19,7 +33,6 @@ public:
     return (header + serialized_body);
   }
 
-private:
   static string makeHeader(int serialized_json_size, MessageType msg_type, SerializationAlgorithmType serialization_algo_type) {
     MessageHeader msg_header;
     msg_header.identifier = IDENTIFIER;

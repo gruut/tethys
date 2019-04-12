@@ -85,6 +85,7 @@ private:
   ServerAsyncResponseWriter<Reply> m_responder;
 
   shared_ptr<SignerPoolManager> m_signer_pool_manager;
+  grpc::Status verifyHMAC(string_view packed_msg, vector<uint8_t> &hmac_key);
   void proceed() override;
 };
 

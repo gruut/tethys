@@ -24,38 +24,17 @@ namespace net_plugin {
 using namespace appbase;
 using namespace std;
 
-enum class RequesterType : int { MERGER = 0, SIGNER = 1 };
-
-template <RequesterType T>
 class MessageParser {
 public:
-  optional<InNetMsg> parseMessage(string_view packed_msg, Status &return_rpc_status,
-                                  shared_ptr<SignerPoolManager> signer_pool_manager = {}) {
+  optional<InNetMsg> parseMessage(string_view packed_msg, Status &return_rpc_status) {
     const string raw_header(packed_msg.begin(), packed_msg.begin() + HEADER_LENGTH);
     auto msg_header = parseHeader(raw_header);
     if (!validateMsgHdrFormat(msg_header)) {
       return_rpc_status = Status(StatusCode::INVALID_ARGUMENT, "Bad request (Invalid parameter)");
       return {};
     }
-
     auto body_size = convertU8ToU32BE(msg_header->total_length);
     string msg_raw_body(packed_msg.begin() + HEADER_LENGTH, packed_msg.begin() + HEADER_LENGTH + body_size);
-
-    if constexpr (T == RequesterType::SIGNER) {
-      if (msg_header->mac_algo_type == MACAlgorithmType::HMAC) {
-        vector<uint8_t> hmac(packed_msg.begin() + HEADER_LENGTH + body_size, packed_msg.end());
-        auto sender_id_b58 = TypeConverter::encodeBase<58>(msg_header->sender_id);
-        auto hmac_key = signer_pool_manager->getHmacKey(sender_id_b58);
-        if(!hmac_key.has_value()){
-          return_rpc_status = Status(StatusCode::UNAUTHENTICATED, "Bad request (cannot find hmac key)");
-          return {};
-        }
-        if (!Hmac::verifyHMAC(msg_raw_body, hmac, hmac_key.value())) {
-          return_rpc_status = Status(StatusCode::UNAUTHENTICATED, "Bad request (Wrong HMAC)");
-          return {};
-        }
-      }
-    }
     auto json_body = getJson(msg_header->serialization_algo_type, msg_raw_body);
 
     if (!JsonValidator::validateSchema(json_body, msg_header->message_type)) {
@@ -81,10 +60,8 @@ private:
 
   bool validateMsgHdrFormat(MessageHeader *header) {
     bool check = header->identifier == IDENTIFIER;
-    if constexpr (T == RequesterType::SIGNER) {
-      if (header->mac_algo_type == MACAlgorithmType::HMAC) {
-        check &= (header->message_type == MessageType::MSG_SUCCESS || header->message_type == MessageType::MSG_SSIG);
-      }
+    if (header->mac_algo_type == MACAlgorithmType::HMAC) {
+      check &= (header->message_type == MessageType::MSG_SUCCESS || header->message_type == MessageType::MSG_SSIG);
     }
     return check;
   }
@@ -155,7 +132,6 @@ private:
 };
 
 void OpenChannelWithSigner::proceed() {
-
   switch (m_receive_status) {
   case RpcCallStatus::CREATE: {
     m_receive_status = RpcCallStatus::READ;
@@ -193,6 +169,16 @@ void OpenChannelWithSigner::proceed() {
   }
 }
 
+Status SignerService::verifyHMAC(string_view packed_msg, vector<uint8_t> &hmac_key) {
+  auto hmac_str = packed_msg.substr(packed_msg.length() - 32);
+  vector<uint8_t> hmac(hmac_str.begin(), hmac_str.end());
+  auto raw_msg = string(packed_msg.substr(0, packed_msg.length() - 32));
+  if (!Hmac::verifyHMAC(raw_msg, hmac, hmac_key)) {
+    return Status(StatusCode::UNAUTHENTICATED, "Bad request (Wrong HMAC)");
+  }
+  return Status::OK;
+}
+
 void SignerService::proceed() {
   switch (m_receive_status) {
   case RpcCallStatus::CREATE: {
@@ -203,25 +189,47 @@ void SignerService::proceed() {
   case RpcCallStatus::PROCESS: {
     new SignerService(m_service, m_completion_queue, m_signer_pool_manager);
     Status rpc_status;
-
     try {
       string packed_msg = m_request.message();
-      MessageParser<RequesterType::SIGNER> msg_parser;
-      auto input_data = msg_parser.parseMessage(packed_msg, rpc_status, m_signer_pool_manager);
-
-      if (rpc_status.ok()) {
-        m_reply.set_status(Reply_Status_SUCCESS); // SUCCESS
-        MessageHandler msg_handler(m_signer_pool_manager);
-        auto reply_msg = msg_handler(input_data.value());
-        if (reply_msg.has_value()) {
-          auto reply_packed_msg = MessagePacker::packMessage(reply_msg.value());
-          if (reply_msg.value().type == MessageType::MSG_ACCEPT) {
-            auto receiver_id_b58 = input_data.value().sender_id;
-            auto hmac_key = m_signer_pool_manager->getHmacKey(receiver_id_b58);
-            auto hmac = Hmac::generateHMAC(packed_msg, hmac_key.value());
-            reply_packed_msg += string(hmac.begin(), hmac.end());
+      MessageParser msg_parser;
+      auto input_data = msg_parser.parseMessage(packed_msg, rpc_status);
+      if (input_data.has_value()) {
+        auto msg_type = input_data.value().type;
+        if (msg_type == MessageType::MSG_SSIG || msg_type == MessageType::MSG_SUCCESS) {
+          auto signer_id_b58 = input_data.value().sender_id;
+          auto hmac_key = m_signer_pool_manager->getHmacKey(signer_id_b58);
+          if (hmac_key.has_value())
+            rpc_status = verifyHMAC(packed_msg, hmac_key.value());
+          else
+            rpc_status = Status(StatusCode::UNAUTHENTICATED, "Bad request (cannot find hmac key)");
+        }
+        if (rpc_status.ok()) {
+          MessageHandler msg_handler(m_signer_pool_manager);
+          auto reply_msg = msg_handler(input_data.value());
+          if (reply_msg.has_value()) {
+            auto reply_msg_type = reply_msg.value().type;
+            string reply_packed_msg;
+            if (reply_msg_type == MessageType::MSG_ACCEPT) {
+              auto receiver_id_b58 = reply_msg.value().receivers[0];
+              auto hmac_key = m_signer_pool_manager->getHmacKey(receiver_id_b58);
+              if (hmac_key.has_value())
+                reply_packed_msg = MessagePacker::packMessage<MACAlgorithmType::HMAC>(reply_msg.value(), hmac_key.value());
+              else
+                rpc_status = Status(StatusCode::UNAUTHENTICATED, "Bad request (cannot find hmac key");
+            } else {
+              reply_packed_msg = MessagePacker::packMessage<MACAlgorithmType::NONE>(reply_msg.value());
+            }
+            if (!reply_packed_msg.empty()) {
+              m_reply.set_message(reply_packed_msg);
+              m_reply.set_status(Reply_Status_SUCCESS); // SUCCESS
+            } else {
+              // TODO : need other reply_status code ( INVALID HMAC )
+              m_reply.set_status(Reply_Status_HEADER_INVALID);
+            }
           }
-          m_reply.set_message(reply_packed_msg);
+        } else {
+          // TODO : need other reply_status code ( INVALID HMAC )
+          m_reply.set_status(Reply_Status_HEADER_INVALID);
         }
       } else {
         m_reply.set_status(Reply_Status_HEADER_INVALID); // INVALID
@@ -289,7 +297,7 @@ void MergerService::proceed() {
           }
         }
       }
-      MessageParser<RequesterType::MERGER> msg_parser;
+      MessageParser msg_parser;
       auto input_data = msg_parser.parseMessage(packed_msg, rpc_status);
 
       if (rpc_status.ok()) {
