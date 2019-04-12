@@ -22,7 +22,6 @@ KBucket::KBucket(Node node, unsigned int depth, std::size_t ksize) : m_my_node(s
 }
 
 bool KBucket::addNode(Node &&node) {
-
   auto found = std::find_if(m_nodes.begin(), m_nodes.end(), [&node](Node &bucket_node) { return (bucket_node == node); });
   if (found != m_nodes.end()) {
     m_nodes.erase(found);
