@@ -63,58 +63,48 @@ bool RoutingTable::addPeer(Node &&peer) {
 
   peer.initReqFailuresCount();
 
-  std::lock_guard<std::mutex> lock(m_buckets_mutex);
-
-  auto bucket_index = getBucketIndexFor(peer.getIdHash());
-  auto bucket = m_buckets.begin();
-  std::advance(bucket, bucket_index);
-
-  bool check = bucket->addNode(std::move(peer));
-
-  m_buckets_mutex.unlock();
-
-  if (check) {
-    return true;
-  }
-
-  auto can_split = false;
-
-  auto shared_prefix_test = (bucket->depth() < DEPTH_B) && ((bucket->depth() % DEPTH_B) != 0);
-
-  auto bucket_has_in_range_my_node = (bucket_index == (m_buckets.size() - 1));
-  can_split |= bucket_has_in_range_my_node;
-
-  can_split |= shared_prefix_test;
-
-  can_split &= (m_buckets.size() < 160);
-
-  can_split &= !(m_buckets.size() > 1 && bucket_index == 0);
-
-  if (can_split) {
-    std::pair<KBucket, KBucket> pair = bucket->split();
-    bucket = m_buckets.insert(bucket, std::move(pair.second));
-    bucket = m_buckets.insert(bucket, std::move(pair.first));
-
+  {
     std::lock_guard<std::mutex> lock(m_buckets_mutex);
-    m_buckets.erase(bucket + 2);
+    auto bucket_index = getBucketIndexFor(peer.getIdHash());
+    auto bucket = m_buckets.begin();
+    std::advance(bucket, bucket_index);
+    if (bucket->addNode(std::move(peer)))
+      return true;
 
-    m_buckets_mutex.unlock();
+    auto can_split = false;
 
-    return true;
+    auto bucket_has_in_range_my_node = (bucket_index == (m_buckets.size() - 1));
+    can_split |= bucket_has_in_range_my_node;
+
+    auto shared_prefix_test = (bucket->depth() < DEPTH_B) && ((bucket->depth() % DEPTH_B) != 0);
+    can_split |= shared_prefix_test;
+
+    can_split &= (m_buckets.size() < 160);
+
+    can_split &= !(m_buckets.size() > 1 && bucket_index == 0);
+
+    if (can_split) {
+      std::pair<KBucket, KBucket> pair = bucket->split();
+      bucket = m_buckets.insert(bucket, std::move(pair.second));
+      bucket = m_buckets.insert(bucket, std::move(pair.first));
+
+      m_buckets.erase(bucket + 2);
+
+      return true;
+    }
   }
-
   return false;
 }
 
 void RoutingTable::removePeer(const Node &peer) {
+  {
+    std::lock_guard<std::mutex> lock(m_buckets_mutex);
+    auto bucket_index = getBucketIndexFor(peer.getIdHash());
+    auto bucket = m_buckets.begin();
+    std::advance(bucket, bucket_index);
 
-  std::lock_guard<std::mutex> lock(m_buckets_mutex);
-  auto bucket_index = getBucketIndexFor(peer.getIdHash());
-  auto bucket = m_buckets.begin();
-  std::advance(bucket, bucket_index);
-
-  bucket->removeNode(peer);
-  m_buckets_mutex.unlock();
+    bucket->removeNode(peer);
+  }
 }
 
 bool RoutingTable::peerTimedOut(Node const &peer) {
@@ -122,12 +112,18 @@ bool RoutingTable::peerTimedOut(Node const &peer) {
     for (auto bn = bucket->begin(); bn != bucket->end(); ++bn) {
       if (bn->getIdHash() == peer.getIdHash()) {
         if (bn->isStale()) {
-          std::lock_guard<std::mutex> lock(m_buckets_mutex);
-          bucket->removeNode(bn);
-          m_buckets_mutex.unlock();
+          {
+            std::lock_guard<std::mutex> lock(m_buckets_mutex);
+            bucket->removeNode(bn);
+          }
+
           return true;
         } else {
-          bn->incReqFailuresCount();
+          {
+            std::lock_guard<std::mutex> lock(m_buckets_mutex);
+            bn->incReqFailuresCount();
+          }
+
           return false;
         }
       }
@@ -138,16 +134,20 @@ bool RoutingTable::peerTimedOut(Node const &peer) {
 }
 
 std::optional<Node> RoutingTable::findNode(const hashed_net_id_type &hashed_id) {
-  auto bucket_index = getBucketIndexFor(hashed_id);
-  auto bucket = m_buckets.begin();
-  std::advance(bucket, bucket_index);
+  {
+    std::lock_guard<std::mutex> lock(m_buckets_mutex);
 
-  for (auto &node : *bucket) {
-    if (hashed_id == node.getIdHash()) {
-      return node;
+    auto bucket_index = getBucketIndexFor(hashed_id);
+    auto bucket = m_buckets.begin();
+    std::advance(bucket, bucket_index);
+
+    for (auto &node : *bucket) {
+      if (hashed_id == node.getIdHash()) {
+        return node;
+      }
     }
+    return {};
   }
-  return {};
 }
 
 std::optional<Node> RoutingTable::findNode(const b58_user_id_type &id) {
@@ -163,63 +163,67 @@ std::vector<Node> RoutingTable::findNeighbors(hashed_net_id_type const &hashed_i
   bool use_left = true;
   bool has_more = true;
 
-  std::lock_guard<std::mutex> lock(m_buckets_mutex);
+  {
+    std::lock_guard<std::mutex> lock(m_buckets_mutex);
 
-  auto bucket_index = getBucketIndexFor(hashed_id);
-  auto bucket = m_buckets.begin();
-  std::advance(bucket, bucket_index);
-  auto left = bucket;
-  auto right = (bucket != m_buckets.end()) ? bucket + 1 : bucket;
+    auto bucket_index = getBucketIndexFor(hashed_id);
+    auto bucket = m_buckets.begin();
+    std::advance(bucket, bucket_index);
+    auto left = bucket;
+    auto right = (bucket != m_buckets.end()) ? bucket + 1 : bucket;
 
-  auto current_bucket = bucket;
+    auto current_bucket = bucket;
 
-  while (has_more) {
-    has_more = false;
+    while (has_more) {
+      has_more = false;
 
-    for (auto const &neighbor : *current_bucket) {
-      // Exclude the node
-      if (neighbor.getIdHash() != hashed_id) {
-        neighbors.emplace_back(neighbor);
+      for (auto const &neighbor : *current_bucket) {
+        // Exclude the node
+        if (neighbor.getIdHash() != hashed_id) {
+          neighbors.emplace_back(neighbor);
 
-        if (neighbors.size() == max_number)
-          return neighbors;
+          if (neighbors.size() == max_number)
+            return neighbors;
+        }
       }
-    }
 
-    if (right == m_buckets.end())
+      if (right == m_buckets.end())
+        use_left = true;
+
+      if (left != m_buckets.begin()) {
+        has_more = true;
+        if (use_left) {
+          --left;
+          current_bucket = left;
+          use_left = false;
+          continue;
+        }
+      }
+
+      if (right != m_buckets.end()) {
+        has_more = true;
+        current_bucket = right;
+        ++right;
+      }
       use_left = true;
-
-    if (left != m_buckets.begin()) {
-      has_more = true;
-      if (use_left) {
-        --left;
-        current_bucket = left;
-        use_left = false;
-        continue;
-      }
     }
 
-    if (right != m_buckets.end()) {
-      has_more = true;
-      current_bucket = right;
-      ++right;
-    }
-    use_left = true;
+    return neighbors;
   }
-
-  return neighbors;
 }
 
 void RoutingTable::mapId(const b58_user_id_type &b58_user_id, const net_id_type &net_id) {
-  std::lock_guard<std::mutex> guard(m_id_map_mutex);
-  m_id_mapping_table.try_emplace(b58_user_id, Hash<160>::sha1(net_id));
-  m_id_map_mutex.unlock();
+  {
+    std::lock_guard<std::mutex> guard(m_id_map_mutex);
+    m_id_mapping_table.try_emplace(b58_user_id, Hash<160>::sha1(net_id));
+  }
 }
 void RoutingTable::unmapId(const b58_user_id_type &b58_user_id) {
   if (m_id_mapping_table.count(b58_user_id) > 0) {
-    std::lock_guard<std::mutex> guard(m_id_map_mutex);
-    m_id_mapping_table.erase(b58_user_id);
-    m_id_map_mutex.unlock();
+    {
+      std::lock_guard<std::mutex> guard(m_id_map_mutex);
+      m_id_mapping_table.erase(b58_user_id);
+    }
   }
 }
 void RoutingTable::unmapId(const hashed_net_id_type &dead_hashed_id) {
