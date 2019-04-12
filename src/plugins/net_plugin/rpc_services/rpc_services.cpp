@@ -1,10 +1,12 @@
 #include "include/rpc_services.hpp"
-
+#include "../../../../lib/gruut-utils/src/hmac.hpp"
 #include "../../../../lib/gruut-utils/src/lz4_compressor.hpp"
 #include "../../../../lib/gruut-utils/src/time_util.hpp"
 #include "../../../../lib/gruut-utils/src/type_converter.hpp"
 #include "../../channel_interface/include/channel_interface.hpp"
 #include "../include/message_builder.hpp"
+#include "../include/message_packer.hpp"
+#include "../include/signer_pool_manager.hpp"
 #include "application.hpp"
 
 #include <boost/algorithm/string.hpp>
@@ -22,9 +24,13 @@ namespace net_plugin {
 using namespace appbase;
 using namespace std;
 
+enum class RequesterType : int { MERGER = 0, SIGNER = 1 };
+
+template <RequesterType T>
 class MessageParser {
 public:
-  optional<InNetMsg> parseMessage(string_view packed_msg, Status &return_rpc_status) {
+  optional<InNetMsg> parseMessage(string_view packed_msg, Status &return_rpc_status,
+                                  shared_ptr<SignerPoolManager> signer_pool_manager = {}) {
     const string raw_header(packed_msg.begin(), packed_msg.begin() + HEADER_LENGTH);
     auto msg_header = parseHeader(raw_header);
     if (!validateMsgHdrFormat(msg_header)) {
@@ -35,12 +41,21 @@ public:
     auto body_size = convertU8ToU32BE(msg_header->total_length);
     string msg_raw_body(packed_msg.begin() + HEADER_LENGTH, packed_msg.begin() + HEADER_LENGTH + body_size);
 
-    if (msg_header->mac_algo_type == MACAlgorithmType::HMAC) {
-      vector<uint8_t> hmac(packed_msg.begin() + HEADER_LENGTH + body_size, packed_msg.end());
-
-      // TODO : verify HMAC
+    if constexpr (T == RequesterType::SIGNER) {
+      if (msg_header->mac_algo_type == MACAlgorithmType::HMAC) {
+        vector<uint8_t> hmac(packed_msg.begin() + HEADER_LENGTH + body_size, packed_msg.end());
+        auto sender_id_b58 = TypeConverter::encodeBase<58>(msg_header->sender_id);
+        auto hmac_key = signer_pool_manager->getHmacKey(sender_id_b58);
+        if(!hmac_key.has_value()){
+          return_rpc_status = Status(StatusCode::UNAUTHENTICATED, "Bad request (cannot find hmac key)");
+          return {};
+        }
+        if (!Hmac::verifyHMAC(msg_raw_body, hmac, hmac_key.value())) {
+          return_rpc_status = Status(StatusCode::UNAUTHENTICATED, "Bad request (Wrong HMAC)");
+          return {};
+        }
+      }
     }
-
     auto json_body = getJson(msg_header->serialization_algo_type, msg_raw_body);
 
     if (!JsonValidator::validateSchema(json_body, msg_header->message_type)) {
@@ -66,8 +81,10 @@ private:
 
   bool validateMsgHdrFormat(MessageHeader *header) {
     bool check = header->identifier == IDENTIFIER;
-    if (header->mac_algo_type == MACAlgorithmType::HMAC) {
-      check &= (header->message_type == MessageType::MSG_SUCCESS || header->message_type == MessageType::MSG_SSIG);
+    if constexpr (T == RequesterType::SIGNER) {
+      if (header->mac_algo_type == MACAlgorithmType::HMAC) {
+        check &= (header->message_type == MessageType::MSG_SUCCESS || header->message_type == MessageType::MSG_SSIG);
+      }
     }
     return check;
   }
@@ -97,13 +114,13 @@ private:
 class MessageHandler {
 public:
   explicit MessageHandler(ServerContext *server_context, shared_ptr<RoutingTable> table) : context(server_context), routing_table(table) {}
-
-  void operator()(InNetMsg &msg) {
-    handle_message(msg);
+  explicit MessageHandler(shared_ptr<SignerPoolManager> pool_manager) : signer_pool_manager(pool_manager) {}
+  optional<OutNetMsg> operator()(InNetMsg &msg) {
+    return handle_message(msg);
   }
 
 private:
-  void handle_message(InNetMsg &msg) {
+  optional<OutNetMsg> handle_message(InNetMsg &msg) {
     auto msg_type = msg.type;
 
     if (msg_type == MessageType::MSG_BLOCK || msg_type == MessageType::MSG_TX || msg_type == MessageType::MSG_REQ_BLOCK) {
@@ -113,9 +130,16 @@ private:
     switch (msg.type) {
     case MessageType::MSG_TX:
       app().getChannel<incoming::channels::transaction::channel_type>().publish(msg.body);
-      break;
+      return {};
+    case MessageType::MSG_JOIN:
+    case MessageType::MSG_RESPONSE_1:
+    case MessageType::MSG_SUCCESS:
+      return signer_pool_manager->handleMsg(msg);
+    case MessageType::MSG_SSIG:
+      // TODO : ssig message must be sent to `block producer`
+      return {};
     default:
-      break;
+      return {};
     }
   }
 
@@ -127,6 +151,7 @@ private:
 
   ServerContext *context;
   shared_ptr<RoutingTable> routing_table;
+  shared_ptr<SignerPoolManager> signer_pool_manager;
 };
 
 void OpenChannelWithSigner::proceed() {
@@ -139,7 +164,7 @@ void OpenChannelWithSigner::proceed() {
   } break;
 
   case RpcCallStatus::READ: {
-    new OpenChannelWithSigner(m_service, m_completion_queue, m_signer_table);
+    new OpenChannelWithSigner(m_service, m_completion_queue, m_signer_conn_table, m_signer_pool_manager);
     m_receive_status = RpcCallStatus::PROCESS;
     m_stream.Read(&m_request, this);
   } break;
@@ -147,16 +172,18 @@ void OpenChannelWithSigner::proceed() {
   case RpcCallStatus::PROCESS: {
     m_signer_id_b58 = m_request.sender();
     m_receive_status = RpcCallStatus::WAIT;
-    m_signer_table->setRpcInfo(m_signer_id_b58, &m_stream, this);
+    m_signer_conn_table->setRpcInfo(m_signer_id_b58, &m_stream, this);
 
   } break;
 
   case RpcCallStatus::WAIT: {
     if (m_context.IsCancelled()) {
-      auto internal_msg = MessageBuilder::build<MessageType::MSG_LEAVE>(m_signer_id_b58);
-      m_signer_table->eraseRpcInfo(m_signer_id_b58);
-      auto &in_msg_channel = app().getChannel<incoming::channels::network::channel_type>();
-      in_msg_channel.publish(internal_msg);
+      m_signer_conn_table->eraseRpcInfo(m_signer_id_b58);
+      m_signer_pool_manager->removeSigner(m_signer_id_b58);
+      m_signer_pool_manager->removeTempSigner(m_signer_id_b58);
+
+      // TODO: signer leave event should be notified to `Block producer`
+
       delete this;
     }
   } break;
@@ -174,27 +201,37 @@ void SignerService::proceed() {
   } break;
 
   case RpcCallStatus::PROCESS: {
-    new SignerService(m_service, m_completion_queue);
+    new SignerService(m_service, m_completion_queue, m_signer_pool_manager);
     Status rpc_status;
 
     try {
       string packed_msg = m_request.message();
-      MessageParser msg_parser;
-      auto input_data = msg_parser.parseMessage(packed_msg, rpc_status);
+      MessageParser<RequesterType::SIGNER> msg_parser;
+      auto input_data = msg_parser.parseMessage(packed_msg, rpc_status, m_signer_pool_manager);
 
       if (rpc_status.ok()) {
-        m_reply.set_status(grpc_signer::MsgStatus_Status_SUCCESS); // SUCCESS
-        m_reply.set_message("OK");
-        auto &in_msg_channel = app().getChannel<incoming::channels::network::channel_type>();
-        in_msg_channel.publish(input_data.value());
+        m_reply.set_status(Reply_Status_SUCCESS); // SUCCESS
+        MessageHandler msg_handler(m_signer_pool_manager);
+        auto reply_msg = msg_handler(input_data.value());
+        if (reply_msg.has_value()) {
+          auto reply_packed_msg = MessagePacker::packMessage(reply_msg.value());
+          if (reply_msg.value().type == MessageType::MSG_ACCEPT) {
+            auto receiver_id_b58 = input_data.value().sender_id;
+            auto hmac_key = m_signer_pool_manager->getHmacKey(receiver_id_b58);
+            auto hmac = Hmac::generateHMAC(packed_msg, hmac_key.value());
+            reply_packed_msg += string(hmac.begin(), hmac.end());
+          }
+          m_reply.set_message(reply_packed_msg);
+        }
       } else {
-        m_reply.set_status(grpc_signer::MsgStatus_Status_INVALID); // INVALID
-        m_reply.set_message(rpc_status.error_message());
+        m_reply.set_status(Reply_Status_HEADER_INVALID); // INVALID
       }
     } catch (exception &e) { // INTERNAL
-      m_reply.set_status(grpc_signer::MsgStatus_Status_INTERNAL);
-      m_reply.set_message("Merger internal error");
+      m_reply.set_status(Reply_Status_INTERNAL);
+    } catch (ErrorMsgType err_msg_type) { // KEY EXCHANGE ERROR
+      m_reply.set_status((Reply_Status)err_msg_type);
     }
+
     m_receive_status = RpcCallStatus::FINISH;
     m_responder.Finish(m_reply, rpc_status, this);
   } break;
@@ -252,7 +289,7 @@ void MergerService::proceed() {
           }
         }
       }
-      MessageParser msg_parser;
+      MessageParser<RequesterType::MERGER> msg_parser;
       auto input_data = msg_parser.parseMessage(packed_msg, rpc_status);
 
       if (rpc_status.ok()) {

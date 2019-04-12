@@ -85,7 +85,6 @@ public:
 private:
   unordered_map<string, Signer> signer_pool;
   std::mutex push_mutex;
-  std::mutex set_mutex;
 };
 
 class SignerPoolManager {
