@@ -39,7 +39,7 @@ namespace protobuf_signer_5fservice_2eproto {
 struct TableStruct {
   static const ::google::protobuf::internal::ParseTableField entries[];
   static const ::google::protobuf::internal::AuxillaryParseTableField aux[];
-  static const ::google::protobuf::internal::ParseTable schema[4];
+  static const ::google::protobuf::internal::ParseTable schema[3];
   static const ::google::protobuf::internal::FieldMetadata field_metadata[];
   static const ::google::protobuf::internal::SerializationTable serialization_table[];
   static const ::google::protobuf::uint32 offsets[];
@@ -50,48 +50,49 @@ namespace grpc_signer {
 class Identity;
 class IdentityDefaultTypeInternal;
 extern IdentityDefaultTypeInternal _Identity_default_instance_;
-class MsgStatus;
-class MsgStatusDefaultTypeInternal;
-extern MsgStatusDefaultTypeInternal _MsgStatus_default_instance_;
-class ReplyMsg;
-class ReplyMsgDefaultTypeInternal;
-extern ReplyMsgDefaultTypeInternal _ReplyMsg_default_instance_;
-class RequestMsg;
-class RequestMsgDefaultTypeInternal;
-extern RequestMsgDefaultTypeInternal _RequestMsg_default_instance_;
+class Reply;
+class ReplyDefaultTypeInternal;
+extern ReplyDefaultTypeInternal _Reply_default_instance_;
+class Request;
+class RequestDefaultTypeInternal;
+extern RequestDefaultTypeInternal _Request_default_instance_;
 }  // namespace grpc_signer
 namespace google {
 namespace protobuf {
 template<> ::grpc_signer::Identity* Arena::CreateMaybeMessage<::grpc_signer::Identity>(Arena*);
-template<> ::grpc_signer::MsgStatus* Arena::CreateMaybeMessage<::grpc_signer::MsgStatus>(Arena*);
-template<> ::grpc_signer::ReplyMsg* Arena::CreateMaybeMessage<::grpc_signer::ReplyMsg>(Arena*);
-template<> ::grpc_signer::RequestMsg* Arena::CreateMaybeMessage<::grpc_signer::RequestMsg>(Arena*);
+template<> ::grpc_signer::Reply* Arena::CreateMaybeMessage<::grpc_signer::Reply>(Arena*);
+template<> ::grpc_signer::Request* Arena::CreateMaybeMessage<::grpc_signer::Request>(Arena*);
 }  // namespace protobuf
 }  // namespace google
 namespace grpc_signer {
 
-enum MsgStatus_Status {
-  MsgStatus_Status_SUCCESS = 0,
-  MsgStatus_Status_INVALID = 1,
-  MsgStatus_Status_INTERNAL = 2,
-  MsgStatus_Status_DUPLICATED = 3,
-  MsgStatus_Status_MsgStatus_Status_INT_MIN_SENTINEL_DO_NOT_USE_ = ::google::protobuf::kint32min,
-  MsgStatus_Status_MsgStatus_Status_INT_MAX_SENTINEL_DO_NOT_USE_ = ::google::protobuf::kint32max
+enum Reply_Status {
+  Reply_Status_UNKOWN = 0,
+  Reply_Status_SUCCESS = 1,
+  Reply_Status_HEADER_INVALID = 2,
+  Reply_Status_INTERNAL = 3,
+  Reply_Status_ECDH_ILLEGAL_ACCESS = 21,
+  Reply_Status_ECDH_MAX_SIGNER_POOL = 22,
+  Reply_Status_ECDH_TIMEOUT = 23,
+  Reply_Status_ECDH_INVALID_SIG = 24,
+  Reply_Status_ECDH_INVALID_PK = 25,
+  Reply_Status_Reply_Status_INT_MIN_SENTINEL_DO_NOT_USE_ = ::google::protobuf::kint32min,
+  Reply_Status_Reply_Status_INT_MAX_SENTINEL_DO_NOT_USE_ = ::google::protobuf::kint32max
 };
-bool MsgStatus_Status_IsValid(int value);
-const MsgStatus_Status MsgStatus_Status_Status_MIN = MsgStatus_Status_SUCCESS;
-const MsgStatus_Status MsgStatus_Status_Status_MAX = MsgStatus_Status_DUPLICATED;
-const int MsgStatus_Status_Status_ARRAYSIZE = MsgStatus_Status_Status_MAX + 1;
+bool Reply_Status_IsValid(int value);
+const Reply_Status Reply_Status_Status_MIN = Reply_Status_UNKOWN;
+const Reply_Status Reply_Status_Status_MAX = Reply_Status_ECDH_INVALID_PK;
+const int Reply_Status_Status_ARRAYSIZE = Reply_Status_Status_MAX + 1;
 
-const ::google::protobuf::EnumDescriptor* MsgStatus_Status_descriptor();
-inline const ::std::string& MsgStatus_Status_Name(MsgStatus_Status value) {
+const ::google::protobuf::EnumDescriptor* Reply_Status_descriptor();
+inline const ::std::string& Reply_Status_Name(Reply_Status value) {
   return ::google::protobuf::internal::NameOfEnum(
-    MsgStatus_Status_descriptor(), value);
+    Reply_Status_descriptor(), value);
 }
-inline bool MsgStatus_Status_Parse(
-    const ::std::string& name, MsgStatus_Status* value) {
-  return ::google::protobuf::internal::ParseNamedEnum<MsgStatus_Status>(
-    MsgStatus_Status_descriptor(), name, value);
+inline bool Reply_Status_Parse(
+    const ::std::string& name, Reply_Status* value) {
+  return ::google::protobuf::internal::ParseNamedEnum<Reply_Status>(
+    Reply_Status_descriptor(), name, value);
 }
 // ===================================================================
 
@@ -206,24 +207,24 @@ class Identity : public ::google::protobuf::Message /* @@protoc_insertion_point(
 };
 // -------------------------------------------------------------------
 
-class ReplyMsg : public ::google::protobuf::Message /* @@protoc_insertion_point(class_definition:grpc_signer.ReplyMsg) */ {
+class Request : public ::google::protobuf::Message /* @@protoc_insertion_point(class_definition:grpc_signer.Request) */ {
  public:
-  ReplyMsg();
-  virtual ~ReplyMsg();
+  Request();
+  virtual ~Request();
 
-  ReplyMsg(const ReplyMsg& from);
+  Request(const Request& from);
 
-  inline ReplyMsg& operator=(const ReplyMsg& from) {
+  inline Request& operator=(const Request& from) {
     CopyFrom(from);
     return *this;
   }
   #if LANG_CXX11
-  ReplyMsg(ReplyMsg&& from) noexcept
-    : ReplyMsg() {
+  Request(Request&& from) noexcept
+    : Request() {
     *this = ::std::move(from);
   }
 
-  inline ReplyMsg& operator=(ReplyMsg&& from) noexcept {
+  inline Request& operator=(Request&& from) noexcept {
     if (GetArenaNoVirtual() == from.GetArenaNoVirtual()) {
       if (this != &from) InternalSwap(&from);
     } else {
@@ -233,34 +234,34 @@ class ReplyMsg : public ::google::protobuf::Message /* @@protoc_insertion_point(
   }
   #endif
   static const ::google::protobuf::Descriptor* descriptor();
-  static const ReplyMsg& default_instance();
+  static const Request& default_instance();
 
   static void InitAsDefaultInstance();  // FOR INTERNAL USE ONLY
-  static inline const ReplyMsg* internal_default_instance() {
-    return reinterpret_cast<const ReplyMsg*>(
-               &_ReplyMsg_default_instance_);
+  static inline const Request* internal_default_instance() {
+    return reinterpret_cast<const Request*>(
+               &_Request_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
     1;
 
-  void Swap(ReplyMsg* other);
-  friend void swap(ReplyMsg& a, ReplyMsg& b) {
+  void Swap(Request* other);
+  friend void swap(Request& a, Request& b) {
     a.Swap(&b);
   }
 
   // implements Message ----------------------------------------------
 
-  inline ReplyMsg* New() const final {
-    return CreateMaybeMessage<ReplyMsg>(NULL);
+  inline Request* New() const final {
+    return CreateMaybeMessage<Request>(NULL);
   }
 
-  ReplyMsg* New(::google::protobuf::Arena* arena) const final {
-    return CreateMaybeMessage<ReplyMsg>(arena);
+  Request* New(::google::protobuf::Arena* arena) const final {
+    return CreateMaybeMessage<Request>(arena);
   }
   void CopyFrom(const ::google::protobuf::Message& from) final;
   void MergeFrom(const ::google::protobuf::Message& from) final;
-  void CopyFrom(const ReplyMsg& from);
-  void MergeFrom(const ReplyMsg& from);
+  void CopyFrom(const Request& from);
+  void MergeFrom(const Request& from);
   void Clear() final;
   bool IsInitialized() const final;
 
@@ -277,7 +278,7 @@ class ReplyMsg : public ::google::protobuf::Message /* @@protoc_insertion_point(
   void SharedCtor();
   void SharedDtor();
   void SetCachedSize(int size) const final;
-  void InternalSwap(ReplyMsg* other);
+  void InternalSwap(Request* other);
   private:
   inline ::google::protobuf::Arena* GetArenaNoVirtual() const {
     return NULL;
@@ -307,7 +308,7 @@ class ReplyMsg : public ::google::protobuf::Message /* @@protoc_insertion_point(
   ::std::string* release_message();
   void set_allocated_message(::std::string* message);
 
-  // @@protoc_insertion_point(class_scope:grpc_signer.ReplyMsg)
+  // @@protoc_insertion_point(class_scope:grpc_signer.Request)
  private:
 
   ::google::protobuf::internal::InternalMetadataWithArena _internal_metadata_;
@@ -317,24 +318,24 @@ class ReplyMsg : public ::google::protobuf::Message /* @@protoc_insertion_point(
 };
 // -------------------------------------------------------------------
 
-class RequestMsg : public ::google::protobuf::Message /* @@protoc_insertion_point(class_definition:grpc_signer.RequestMsg) */ {
+class Reply : public ::google::protobuf::Message /* @@protoc_insertion_point(class_definition:grpc_signer.Reply) */ {
  public:
-  RequestMsg();
-  virtual ~RequestMsg();
+  Reply();
+  virtual ~Reply();
 
-  RequestMsg(const RequestMsg& from);
+  Reply(const Reply& from);
 
-  inline RequestMsg& operator=(const RequestMsg& from) {
+  inline Reply& operator=(const Reply& from) {
     CopyFrom(from);
     return *this;
   }
   #if LANG_CXX11
-  RequestMsg(RequestMsg&& from) noexcept
-    : RequestMsg() {
+  Reply(Reply&& from) noexcept
+    : Reply() {
     *this = ::std::move(from);
   }
 
-  inline RequestMsg& operator=(RequestMsg&& from) noexcept {
+  inline Reply& operator=(Reply&& from) noexcept {
     if (GetArenaNoVirtual() == from.GetArenaNoVirtual()) {
       if (this != &from) InternalSwap(&from);
     } else {
@@ -344,34 +345,34 @@ class RequestMsg : public ::google::protobuf::Message /* @@protoc_insertion_poin
   }
   #endif
   static const ::google::protobuf::Descriptor* descriptor();
-  static const RequestMsg& default_instance();
+  static const Reply& default_instance();
 
   static void InitAsDefaultInstance();  // FOR INTERNAL USE ONLY
-  static inline const RequestMsg* internal_default_instance() {
-    return reinterpret_cast<const RequestMsg*>(
-               &_RequestMsg_default_instance_);
+  static inline const Reply* internal_default_instance() {
+    return reinterpret_cast<const Reply*>(
+               &_Reply_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
     2;
 
-  void Swap(RequestMsg* other);
-  friend void swap(RequestMsg& a, RequestMsg& b) {
+  void Swap(Reply* other);
+  friend void swap(Reply& a, Reply& b) {
     a.Swap(&b);
   }
 
   // implements Message ----------------------------------------------
 
-  inline RequestMsg* New() const final {
-    return CreateMaybeMessage<RequestMsg>(NULL);
+  inline Reply* New() const final {
+    return CreateMaybeMessage<Reply>(NULL);
   }
 
-  RequestMsg* New(::google::protobuf::Arena* arena) const final {
-    return CreateMaybeMessage<RequestMsg>(arena);
+  Reply* New(::google::protobuf::Arena* arena) const final {
+    return CreateMaybeMessage<Reply>(arena);
   }
   void CopyFrom(const ::google::protobuf::Message& from) final;
   void MergeFrom(const ::google::protobuf::Message& from) final;
-  void CopyFrom(const RequestMsg& from);
-  void MergeFrom(const RequestMsg& from);
+  void CopyFrom(const Reply& from);
+  void MergeFrom(const Reply& from);
   void Clear() final;
   bool IsInitialized() const final;
 
@@ -388,7 +389,7 @@ class RequestMsg : public ::google::protobuf::Message /* @@protoc_insertion_poin
   void SharedCtor();
   void SharedDtor();
   void SetCachedSize(int size) const final;
-  void InternalSwap(RequestMsg* other);
+  void InternalSwap(Reply* other);
   private:
   inline ::google::protobuf::Arena* GetArenaNoVirtual() const {
     return NULL;
@@ -402,150 +403,49 @@ class RequestMsg : public ::google::protobuf::Message /* @@protoc_insertion_poin
 
   // nested types ----------------------------------------------------
 
-  // accessors -------------------------------------------------------
-
-  // bytes message = 1;
-  void clear_message();
-  static const int kMessageFieldNumber = 1;
-  const ::std::string& message() const;
-  void set_message(const ::std::string& value);
-  #if LANG_CXX11
-  void set_message(::std::string&& value);
-  #endif
-  void set_message(const char* value);
-  void set_message(const void* value, size_t size);
-  ::std::string* mutable_message();
-  ::std::string* release_message();
-  void set_allocated_message(::std::string* message);
-
-  // @@protoc_insertion_point(class_scope:grpc_signer.RequestMsg)
- private:
-
-  ::google::protobuf::internal::InternalMetadataWithArena _internal_metadata_;
-  ::google::protobuf::internal::ArenaStringPtr message_;
-  mutable ::google::protobuf::internal::CachedSize _cached_size_;
-  friend struct ::protobuf_signer_5fservice_2eproto::TableStruct;
-};
-// -------------------------------------------------------------------
-
-class MsgStatus : public ::google::protobuf::Message /* @@protoc_insertion_point(class_definition:grpc_signer.MsgStatus) */ {
- public:
-  MsgStatus();
-  virtual ~MsgStatus();
-
-  MsgStatus(const MsgStatus& from);
-
-  inline MsgStatus& operator=(const MsgStatus& from) {
-    CopyFrom(from);
-    return *this;
-  }
-  #if LANG_CXX11
-  MsgStatus(MsgStatus&& from) noexcept
-    : MsgStatus() {
-    *this = ::std::move(from);
-  }
-
-  inline MsgStatus& operator=(MsgStatus&& from) noexcept {
-    if (GetArenaNoVirtual() == from.GetArenaNoVirtual()) {
-      if (this != &from) InternalSwap(&from);
-    } else {
-      CopyFrom(from);
-    }
-    return *this;
-  }
-  #endif
-  static const ::google::protobuf::Descriptor* descriptor();
-  static const MsgStatus& default_instance();
-
-  static void InitAsDefaultInstance();  // FOR INTERNAL USE ONLY
-  static inline const MsgStatus* internal_default_instance() {
-    return reinterpret_cast<const MsgStatus*>(
-               &_MsgStatus_default_instance_);
-  }
-  static constexpr int kIndexInFileMessages =
-    3;
-
-  void Swap(MsgStatus* other);
-  friend void swap(MsgStatus& a, MsgStatus& b) {
-    a.Swap(&b);
-  }
-
-  // implements Message ----------------------------------------------
-
-  inline MsgStatus* New() const final {
-    return CreateMaybeMessage<MsgStatus>(NULL);
-  }
-
-  MsgStatus* New(::google::protobuf::Arena* arena) const final {
-    return CreateMaybeMessage<MsgStatus>(arena);
-  }
-  void CopyFrom(const ::google::protobuf::Message& from) final;
-  void MergeFrom(const ::google::protobuf::Message& from) final;
-  void CopyFrom(const MsgStatus& from);
-  void MergeFrom(const MsgStatus& from);
-  void Clear() final;
-  bool IsInitialized() const final;
-
-  size_t ByteSizeLong() const final;
-  bool MergePartialFromCodedStream(
-      ::google::protobuf::io::CodedInputStream* input) final;
-  void SerializeWithCachedSizes(
-      ::google::protobuf::io::CodedOutputStream* output) const final;
-  ::google::protobuf::uint8* InternalSerializeWithCachedSizesToArray(
-      bool deterministic, ::google::protobuf::uint8* target) const final;
-  int GetCachedSize() const final { return _cached_size_.Get(); }
-
-  private:
-  void SharedCtor();
-  void SharedDtor();
-  void SetCachedSize(int size) const final;
-  void InternalSwap(MsgStatus* other);
-  private:
-  inline ::google::protobuf::Arena* GetArenaNoVirtual() const {
-    return NULL;
-  }
-  inline void* MaybeArenaPtr() const {
-    return NULL;
-  }
-  public:
-
-  ::google::protobuf::Metadata GetMetadata() const final;
-
-  // nested types ----------------------------------------------------
-
-  typedef MsgStatus_Status Status;
+  typedef Reply_Status Status;
+  static const Status UNKOWN =
+    Reply_Status_UNKOWN;
   static const Status SUCCESS =
-    MsgStatus_Status_SUCCESS;
-  static const Status INVALID =
-    MsgStatus_Status_INVALID;
+    Reply_Status_SUCCESS;
+  static const Status HEADER_INVALID =
+    Reply_Status_HEADER_INVALID;
   static const Status INTERNAL =
-    MsgStatus_Status_INTERNAL;
-  static const Status DUPLICATED =
-    MsgStatus_Status_DUPLICATED;
+    Reply_Status_INTERNAL;
+  static const Status ECDH_ILLEGAL_ACCESS =
+    Reply_Status_ECDH_ILLEGAL_ACCESS;
+  static const Status ECDH_MAX_SIGNER_POOL =
+    Reply_Status_ECDH_MAX_SIGNER_POOL;
+  static const Status ECDH_TIMEOUT =
+    Reply_Status_ECDH_TIMEOUT;
+  static const Status ECDH_INVALID_SIG =
+    Reply_Status_ECDH_INVALID_SIG;
+  static const Status ECDH_INVALID_PK =
+    Reply_Status_ECDH_INVALID_PK;
   static inline bool Status_IsValid(int value) {
-    return MsgStatus_Status_IsValid(value);
+    return Reply_Status_IsValid(value);
   }
   static const Status Status_MIN =
-    MsgStatus_Status_Status_MIN;
+    Reply_Status_Status_MIN;
   static const Status Status_MAX =
-    MsgStatus_Status_Status_MAX;
+    Reply_Status_Status_MAX;
   static const int Status_ARRAYSIZE =
-    MsgStatus_Status_Status_ARRAYSIZE;
+    Reply_Status_Status_ARRAYSIZE;
   static inline const ::google::protobuf::EnumDescriptor*
   Status_descriptor() {
-    return MsgStatus_Status_descriptor();
+    return Reply_Status_descriptor();
   }
   static inline const ::std::string& Status_Name(Status value) {
-    return MsgStatus_Status_Name(value);
+    return Reply_Status_Name(value);
   }
   static inline bool Status_Parse(const ::std::string& name,
       Status* value) {
-    return MsgStatus_Status_Parse(name, value);
+    return Reply_Status_Parse(name, value);
   }
 
   // accessors -------------------------------------------------------
 
-  // string message = 2;
+  // bytes message = 2;
   void clear_message();
   static const int kMessageFieldNumber = 2;
   const ::std::string& message() const;
@@ -554,18 +454,18 @@ class MsgStatus : public ::google::protobuf::Message /* @@protoc_insertion_point
   void set_message(::std::string&& value);
   #endif
   void set_message(const char* value);
-  void set_message(const char* value, size_t size);
+  void set_message(const void* value, size_t size);
   ::std::string* mutable_message();
   ::std::string* release_message();
   void set_allocated_message(::std::string* message);
 
-  // .grpc_signer.MsgStatus.Status status = 1;
+  // .grpc_signer.Reply.Status status = 1;
   void clear_status();
   static const int kStatusFieldNumber = 1;
-  ::grpc_signer::MsgStatus_Status status() const;
-  void set_status(::grpc_signer::MsgStatus_Status value);
+  ::grpc_signer::Reply_Status status() const;
+  void set_status(::grpc_signer::Reply_Status value);
 
-  // @@protoc_insertion_point(class_scope:grpc_signer.MsgStatus)
+  // @@protoc_insertion_point(class_scope:grpc_signer.Reply)
  private:
 
   ::google::protobuf::internal::InternalMetadataWithArena _internal_metadata_;
@@ -640,194 +540,135 @@ inline void Identity::set_allocated_sender(::std::string* sender) {
 
 // -------------------------------------------------------------------
 
-// ReplyMsg
+// Request
 
 // bytes message = 1;
-inline void ReplyMsg::clear_message() {
+inline void Request::clear_message() {
   message_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }
-inline const ::std::string& ReplyMsg::message() const {
-  // @@protoc_insertion_point(field_get:grpc_signer.ReplyMsg.message)
+inline const ::std::string& Request::message() const {
+  // @@protoc_insertion_point(field_get:grpc_signer.Request.message)
   return message_.GetNoArena();
 }
-inline void ReplyMsg::set_message(const ::std::string& value) {
+inline void Request::set_message(const ::std::string& value) {
   
   message_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), value);
-  // @@protoc_insertion_point(field_set:grpc_signer.ReplyMsg.message)
+  // @@protoc_insertion_point(field_set:grpc_signer.Request.message)
 }
 #if LANG_CXX11
-inline void ReplyMsg::set_message(::std::string&& value) {
+inline void Request::set_message(::std::string&& value) {
   
   message_.SetNoArena(
     &::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::move(value));
-  // @@protoc_insertion_point(field_set_rvalue:grpc_signer.ReplyMsg.message)
+  // @@protoc_insertion_point(field_set_rvalue:grpc_signer.Request.message)
 }
 #endif
-inline void ReplyMsg::set_message(const char* value) {
+inline void Request::set_message(const char* value) {
   GOOGLE_DCHECK(value != NULL);
   
   message_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::string(value));
-  // @@protoc_insertion_point(field_set_char:grpc_signer.ReplyMsg.message)
+  // @@protoc_insertion_point(field_set_char:grpc_signer.Request.message)
 }
-inline void ReplyMsg::set_message(const void* value, size_t size) {
+inline void Request::set_message(const void* value, size_t size) {
   
   message_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(),
       ::std::string(reinterpret_cast<const char*>(value), size));
-  // @@protoc_insertion_point(field_set_pointer:grpc_signer.ReplyMsg.message)
+  // @@protoc_insertion_point(field_set_pointer:grpc_signer.Request.message)
 }
-inline ::std::string* ReplyMsg::mutable_message() {
+inline ::std::string* Request::mutable_message() {
   
-  // @@protoc_insertion_point(field_mutable:grpc_signer.ReplyMsg.message)
+  // @@protoc_insertion_point(field_mutable:grpc_signer.Request.message)
   return message_.MutableNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }
-inline ::std::string* ReplyMsg::release_message() {
-  // @@protoc_insertion_point(field_release:grpc_signer.ReplyMsg.message)
+inline ::std::string* Request::release_message() {
+  // @@protoc_insertion_point(field_release:grpc_signer.Request.message)
   
   return message_.ReleaseNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }
-inline void ReplyMsg::set_allocated_message(::std::string* message) {
+inline void Request::set_allocated_message(::std::string* message) {
   if (message != NULL) {
     
   } else {
     
   }
   message_.SetAllocatedNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), message);
-  // @@protoc_insertion_point(field_set_allocated:grpc_signer.ReplyMsg.message)
+  // @@protoc_insertion_point(field_set_allocated:grpc_signer.Request.message)
 }
 
 // -------------------------------------------------------------------
 
-// RequestMsg
+// Reply
 
-// bytes message = 1;
-inline void RequestMsg::clear_message() {
-  message_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
-}
-inline const ::std::string& RequestMsg::message() const {
-  // @@protoc_insertion_point(field_get:grpc_signer.RequestMsg.message)
-  return message_.GetNoArena();
-}
-inline void RequestMsg::set_message(const ::std::string& value) {
-  
-  message_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), value);
-  // @@protoc_insertion_point(field_set:grpc_signer.RequestMsg.message)
-}
-#if LANG_CXX11
-inline void RequestMsg::set_message(::std::string&& value) {
-  
-  message_.SetNoArena(
-    &::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::move(value));
-  // @@protoc_insertion_point(field_set_rvalue:grpc_signer.RequestMsg.message)
-}
-#endif
-inline void RequestMsg::set_message(const char* value) {
-  GOOGLE_DCHECK(value != NULL);
-  
-  message_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::string(value));
-  // @@protoc_insertion_point(field_set_char:grpc_signer.RequestMsg.message)
-}
-inline void RequestMsg::set_message(const void* value, size_t size) {
-  
-  message_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(),
-      ::std::string(reinterpret_cast<const char*>(value), size));
-  // @@protoc_insertion_point(field_set_pointer:grpc_signer.RequestMsg.message)
-}
-inline ::std::string* RequestMsg::mutable_message() {
-  
-  // @@protoc_insertion_point(field_mutable:grpc_signer.RequestMsg.message)
-  return message_.MutableNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
-}
-inline ::std::string* RequestMsg::release_message() {
-  // @@protoc_insertion_point(field_release:grpc_signer.RequestMsg.message)
-  
-  return message_.ReleaseNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
-}
-inline void RequestMsg::set_allocated_message(::std::string* message) {
-  if (message != NULL) {
-    
-  } else {
-    
-  }
-  message_.SetAllocatedNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), message);
-  // @@protoc_insertion_point(field_set_allocated:grpc_signer.RequestMsg.message)
-}
-
-// -------------------------------------------------------------------
-
-// MsgStatus
-
-// .grpc_signer.MsgStatus.Status status = 1;
-inline void MsgStatus::clear_status() {
+// .grpc_signer.Reply.Status status = 1;
+inline void Reply::clear_status() {
   status_ = 0;
 }
-inline ::grpc_signer::MsgStatus_Status MsgStatus::status() const {
-  // @@protoc_insertion_point(field_get:grpc_signer.MsgStatus.status)
-  return static_cast< ::grpc_signer::MsgStatus_Status >(status_);
+inline ::grpc_signer::Reply_Status Reply::status() const {
+  // @@protoc_insertion_point(field_get:grpc_signer.Reply.status)
+  return static_cast< ::grpc_signer::Reply_Status >(status_);
 }
-inline void MsgStatus::set_status(::grpc_signer::MsgStatus_Status value) {
+inline void Reply::set_status(::grpc_signer::Reply_Status value) {
   
   status_ = value;
-  // @@protoc_insertion_point(field_set:grpc_signer.MsgStatus.status)
+  // @@protoc_insertion_point(field_set:grpc_signer.Reply.status)
 }
 
-// string message = 2;
-inline void MsgStatus::clear_message() {
+// bytes message = 2;
+inline void Reply::clear_message() {
   message_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }
-inline const ::std::string& MsgStatus::message() const {
-  // @@protoc_insertion_point(field_get:grpc_signer.MsgStatus.message)
+inline const ::std::string& Reply::message() const {
+  // @@protoc_insertion_point(field_get:grpc_signer.Reply.message)
   return message_.GetNoArena();
 }
-inline void MsgStatus::set_message(const ::std::string& value) {
+inline void Reply::set_message(const ::std::string& value) {
   
   message_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), value);
-  // @@protoc_insertion_point(field_set:grpc_signer.MsgStatus.message)
+  // @@protoc_insertion_point(field_set:grpc_signer.Reply.message)
 }
 #if LANG_CXX11
-inline void MsgStatus::set_message(::std::string&& value) {
+inline void Reply::set_message(::std::string&& value) {
   
   message_.SetNoArena(
     &::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::move(value));
-  // @@protoc_insertion_point(field_set_rvalue:grpc_signer.MsgStatus.message)
+  // @@protoc_insertion_point(field_set_rvalue:grpc_signer.Reply.message)
 }
 #endif
-inline void MsgStatus::set_message(const char* value) {
+inline void Reply::set_message(const char* value) {
   GOOGLE_DCHECK(value != NULL);
   
   message_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::string(value));
-  // @@protoc_insertion_point(field_set_char:grpc_signer.MsgStatus.message)
+  // @@protoc_insertion_point(field_set_char:grpc_signer.Reply.message)
 }
-inline void MsgStatus::set_message(const char* value, size_t size) {
+inline void Reply::set_message(const void* value, size_t size) {
   
   message_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(),
       ::std::string(reinterpret_cast<const char*>(value), size));
-  // @@protoc_insertion_point(field_set_pointer:grpc_signer.MsgStatus.message)
+  // @@protoc_insertion_point(field_set_pointer:grpc_signer.Reply.message)
 }
-inline ::std::string* MsgStatus::mutable_message() {
+inline ::std::string* Reply::mutable_message() {
   
-  // @@protoc_insertion_point(field_mutable:grpc_signer.MsgStatus.message)
+  // @@protoc_insertion_point(field_mutable:grpc_signer.Reply.message)
   return message_.MutableNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }
-inline ::std::string* MsgStatus::release_message() {
-  // @@protoc_insertion_point(field_release:grpc_signer.MsgStatus.message)
+inline ::std::string* Reply::release_message() {
+  // @@protoc_insertion_point(field_release:grpc_signer.Reply.message)
   
   return message_.ReleaseNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }
-inline void MsgStatus::set_allocated_message(::std::string* message) {
+inline void Reply::set_allocated_message(::std::string* message) {
   if (message != NULL) {
     
   } else {
     
   }
   message_.SetAllocatedNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), message);
-  // @@protoc_insertion_point(field_set_allocated:grpc_signer.MsgStatus.message)
+  // @@protoc_insertion_point(field_set_allocated:grpc_signer.Reply.message)
 }
 
 #ifdef __GNUC__
   #pragma GCC diagnostic pop
 #endif  // __GNUC__
-// -------------------------------------------------------------------
-
 // -------------------------------------------------------------------
 
 // -------------------------------------------------------------------
@@ -840,10 +681,10 @@ inline void MsgStatus::set_allocated_message(::std::string* message) {
 namespace google {
 namespace protobuf {
 
-template <> struct is_proto_enum< ::grpc_signer::MsgStatus_Status> : ::std::true_type {};
+template <> struct is_proto_enum< ::grpc_signer::Reply_Status> : ::std::true_type {};
 template <>
-inline const EnumDescriptor* GetEnumDescriptor< ::grpc_signer::MsgStatus_Status>() {
-  return ::grpc_signer::MsgStatus_Status_descriptor();
+inline const EnumDescriptor* GetEnumDescriptor< ::grpc_signer::Reply_Status>() {
+  return ::grpc_signer::Reply_Status_descriptor();
 }
 
 }  // namespace protobuf
