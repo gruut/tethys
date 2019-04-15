@@ -31,53 +31,53 @@ GruutSignerService::Stub::Stub(const std::shared_ptr< ::grpc::ChannelInterface>&
   , rpcmethod_SignerService_(GruutSignerService_method_names[1], ::grpc::internal::RpcMethod::NORMAL_RPC, channel)
   {}
 
-::grpc::ClientReaderWriter< ::grpc_signer::Identity, ::grpc_signer::ReplyMsg>* GruutSignerService::Stub::OpenChannelRaw(::grpc::ClientContext* context) {
-  return ::grpc::internal::ClientReaderWriterFactory< ::grpc_signer::Identity, ::grpc_signer::ReplyMsg>::Create(channel_.get(), rpcmethod_OpenChannel_, context);
+::grpc::ClientReaderWriter< ::grpc_signer::Identity, ::grpc_signer::Request>* GruutSignerService::Stub::OpenChannelRaw(::grpc::ClientContext* context) {
+  return ::grpc::internal::ClientReaderWriterFactory< ::grpc_signer::Identity, ::grpc_signer::Request>::Create(channel_.get(), rpcmethod_OpenChannel_, context);
 }
 
-::grpc::ClientAsyncReaderWriter< ::grpc_signer::Identity, ::grpc_signer::ReplyMsg>* GruutSignerService::Stub::AsyncOpenChannelRaw(::grpc::ClientContext* context, ::grpc::CompletionQueue* cq, void* tag) {
-  return ::grpc::internal::ClientAsyncReaderWriterFactory< ::grpc_signer::Identity, ::grpc_signer::ReplyMsg>::Create(channel_.get(), cq, rpcmethod_OpenChannel_, context, true, tag);
+::grpc::ClientAsyncReaderWriter< ::grpc_signer::Identity, ::grpc_signer::Request>* GruutSignerService::Stub::AsyncOpenChannelRaw(::grpc::ClientContext* context, ::grpc::CompletionQueue* cq, void* tag) {
+  return ::grpc::internal::ClientAsyncReaderWriterFactory< ::grpc_signer::Identity, ::grpc_signer::Request>::Create(channel_.get(), cq, rpcmethod_OpenChannel_, context, true, tag);
 }
 
-::grpc::ClientAsyncReaderWriter< ::grpc_signer::Identity, ::grpc_signer::ReplyMsg>* GruutSignerService::Stub::PrepareAsyncOpenChannelRaw(::grpc::ClientContext* context, ::grpc::CompletionQueue* cq) {
-  return ::grpc::internal::ClientAsyncReaderWriterFactory< ::grpc_signer::Identity, ::grpc_signer::ReplyMsg>::Create(channel_.get(), cq, rpcmethod_OpenChannel_, context, false, nullptr);
+::grpc::ClientAsyncReaderWriter< ::grpc_signer::Identity, ::grpc_signer::Request>* GruutSignerService::Stub::PrepareAsyncOpenChannelRaw(::grpc::ClientContext* context, ::grpc::CompletionQueue* cq) {
+  return ::grpc::internal::ClientAsyncReaderWriterFactory< ::grpc_signer::Identity, ::grpc_signer::Request>::Create(channel_.get(), cq, rpcmethod_OpenChannel_, context, false, nullptr);
 }
 
-::grpc::Status GruutSignerService::Stub::SignerService(::grpc::ClientContext* context, const ::grpc_signer::RequestMsg& request, ::grpc_signer::MsgStatus* response) {
+::grpc::Status GruutSignerService::Stub::SignerService(::grpc::ClientContext* context, const ::grpc_signer::Request& request, ::grpc_signer::Reply* response) {
   return ::grpc::internal::BlockingUnaryCall(channel_.get(), rpcmethod_SignerService_, context, request, response);
 }
 
-::grpc::ClientAsyncResponseReader< ::grpc_signer::MsgStatus>* GruutSignerService::Stub::AsyncSignerServiceRaw(::grpc::ClientContext* context, const ::grpc_signer::RequestMsg& request, ::grpc::CompletionQueue* cq) {
-  return ::grpc::internal::ClientAsyncResponseReaderFactory< ::grpc_signer::MsgStatus>::Create(channel_.get(), cq, rpcmethod_SignerService_, context, request, true);
+::grpc::ClientAsyncResponseReader< ::grpc_signer::Reply>* GruutSignerService::Stub::AsyncSignerServiceRaw(::grpc::ClientContext* context, const ::grpc_signer::Request& request, ::grpc::CompletionQueue* cq) {
+  return ::grpc::internal::ClientAsyncResponseReaderFactory< ::grpc_signer::Reply>::Create(channel_.get(), cq, rpcmethod_SignerService_, context, request, true);
 }
 
-::grpc::ClientAsyncResponseReader< ::grpc_signer::MsgStatus>* GruutSignerService::Stub::PrepareAsyncSignerServiceRaw(::grpc::ClientContext* context, const ::grpc_signer::RequestMsg& request, ::grpc::CompletionQueue* cq) {
-  return ::grpc::internal::ClientAsyncResponseReaderFactory< ::grpc_signer::MsgStatus>::Create(channel_.get(), cq, rpcmethod_SignerService_, context, request, false);
+::grpc::ClientAsyncResponseReader< ::grpc_signer::Reply>* GruutSignerService::Stub::PrepareAsyncSignerServiceRaw(::grpc::ClientContext* context, const ::grpc_signer::Request& request, ::grpc::CompletionQueue* cq) {
+  return ::grpc::internal::ClientAsyncResponseReaderFactory< ::grpc_signer::Reply>::Create(channel_.get(), cq, rpcmethod_SignerService_, context, request, false);
 }
 
 GruutSignerService::Service::Service() {
   AddMethod(new ::grpc::internal::RpcServiceMethod(
       GruutSignerService_method_names[0],
       ::grpc::internal::RpcMethod::BIDI_STREAMING,
-      new ::grpc::internal::BidiStreamingHandler< GruutSignerService::Service, ::grpc_signer::Identity, ::grpc_signer::ReplyMsg>(
+      new ::grpc::internal::BidiStreamingHandler< GruutSignerService::Service, ::grpc_signer::Identity, ::grpc_signer::Request>(
           std::mem_fn(&GruutSignerService::Service::OpenChannel), this)));
   AddMethod(new ::grpc::internal::RpcServiceMethod(
       GruutSignerService_method_names[1],
       ::grpc::internal::RpcMethod::NORMAL_RPC,
-      new ::grpc::internal::RpcMethodHandler< GruutSignerService::Service, ::grpc_signer::RequestMsg, ::grpc_signer::MsgStatus>(
+      new ::grpc::internal::RpcMethodHandler< GruutSignerService::Service, ::grpc_signer::Request, ::grpc_signer::Reply>(
           std::mem_fn(&GruutSignerService::Service::SignerService), this)));
 }
 
 GruutSignerService::Service::~Service() {
 }
 
-::grpc::Status GruutSignerService::Service::OpenChannel(::grpc::ServerContext* context, ::grpc::ServerReaderWriter< ::grpc_signer::ReplyMsg, ::grpc_signer::Identity>* stream) {
+::grpc::Status GruutSignerService::Service::OpenChannel(::grpc::ServerContext* context, ::grpc::ServerReaderWriter< ::grpc_signer::Request, ::grpc_signer::Identity>* stream) {
   (void) context;
   (void) stream;
   return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
 }
 
-::grpc::Status GruutSignerService::Service::SignerService(::grpc::ServerContext* context, const ::grpc_signer::RequestMsg* request, ::grpc_signer::MsgStatus* response) {
+::grpc::Status GruutSignerService::Service::SignerService(::grpc::ServerContext* context, const ::grpc_signer::Request* request, ::grpc_signer::Reply* response) {
   (void) context;
   (void) request;
   (void) response;

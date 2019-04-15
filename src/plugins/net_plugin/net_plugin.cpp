@@ -3,9 +3,10 @@
 #include "config/include/network_config.hpp"
 #include "include/http_client.hpp"
 #include "include/message_builder.hpp"
+#include "include/message_packer.hpp"
 #include "rpc_services/include/rpc_services.hpp"
 
-#include "../../../lib/gruut-utils/src/lz4_compressor.hpp"
+#include "../../../lib/gruut-utils/src/hmac.hpp"
 #include "../../../lib/gruut-utils/src/random_number_generator.hpp"
 #include "../../../lib/gruut-utils/src/sha256.hpp"
 #include "../../../lib/gruut-utils/src/time_util.hpp"
@@ -42,6 +43,7 @@ public:
   unique_ptr<Server> server;
   unique_ptr<ServerCompletionQueue> completion_queue;
 
+  shared_ptr<SignerPoolManager> signer_pool_manager;
   shared_ptr<SignerConnTable> signer_conn_table;
   shared_ptr<RoutingTable> routing_table;
   shared_ptr<BroadcastMsgTable> broadcast_check_table;
@@ -93,8 +95,8 @@ public:
     signer_conn_table = make_shared<SignerConnTable>();
     broadcast_check_table = make_shared<BroadcastMsgTable>();
 
-    new OpenChannelWithSigner(&signer_service, completion_queue.get(), signer_conn_table);
-    new SignerService(&signer_service, completion_queue.get());
+    new OpenChannelWithSigner(&signer_service, completion_queue.get(), signer_conn_table, signer_pool_manager);
+    new SignerService(&signer_service, completion_queue.get(), signer_pool_manager);
     new MergerService(&merger_service, completion_queue.get(), routing_table, broadcast_check_table);
     new FindNode(&kademlia_service, completion_queue.get(), routing_table);
   }
@@ -284,8 +286,8 @@ public:
 
   void sendMessage(OutNetMsg &out_msg) {
     if (checkMergerMsgType(out_msg.type)) {
+      auto packed_msg = MessagePacker::packMessage<MACAlgorithmType::NONE>(out_msg);
       bool is_broadcast(out_msg.receivers.empty());
-      auto packed_msg = packMsg(out_msg);
 
       grpc_merger::RequestMsg request;
       request.set_message(packed_msg);
@@ -328,64 +330,26 @@ public:
         }
       }
     } else if (checkSignerMsgType(out_msg.type)) {
-      auto packed_msg = packMsg(out_msg);
-
       for (auto &b58_receiver_id : out_msg.receivers) {
         SignerRpcInfo signer_rpc_info = signer_conn_table->getRpcInfo(b58_receiver_id);
         if (signer_rpc_info.send_msg == nullptr)
           continue;
 
-        if (out_msg.type == MessageType::MSG_ACCEPT || out_msg.type == MessageType::MSG_REQ_SSIG) {
-
-          // TODO : generate HMAC using packed msg and then attach to packed msg
-        }
+        string packed_msg;
+        if (out_msg.type == MessageType::MSG_REQ_SSIG) {
+          auto hmac_key = signer_pool_manager->getHmacKey(b58_receiver_id);
+          if (!hmac_key.has_value())
+            continue;
+          packed_msg = MessagePacker::packMessage<MACAlgorithmType::HMAC>(out_msg, hmac_key.value());
+        } else
+          packed_msg = MessagePacker::packMessage<MACAlgorithmType::NONE>(out_msg);
 
         auto tag = static_cast<Identity *>(signer_rpc_info.tag_identity);
-        ReplyMsg reply;
-        reply.set_message(packed_msg);
-        signer_rpc_info.send_msg->Write(reply, tag);
+        Request req;
+        req.set_message(packed_msg);
+        signer_rpc_info.send_msg->Write(req, tag);
       }
     }
-  }
-
-  string packMsg(OutNetMsg &out_msg) {
-    // TODO : serialized-body must be determined by serialization algo type
-    string json_dump = out_msg.body.dump();
-    string serialized_body = LZ4Compressor::compressData(json_dump);
-    string header = makeHeader(serialized_body.size(), out_msg.type, SerializationAlgorithmType::LZ4);
-
-    return (header + serialized_body);
-  }
-
-  string makeHeader(int serialized_json_size, MessageType msg_type, SerializationAlgorithmType serialization_algo_type) {
-    MessageHeader msg_header;
-    msg_header.identifier = IDENTIFIER;
-    msg_header.version = VERSION;
-    msg_header.message_type = msg_type;
-    if (msg_type == MessageType::MSG_ACCEPT || msg_type == MessageType::MSG_REQ_SSIG)
-      msg_header.mac_algo_type = MACAlgorithmType::HMAC;
-    else
-      msg_header.mac_algo_type = MACAlgorithmType::NONE;
-
-    msg_header.serialization_algo_type = serialization_algo_type;
-    msg_header.dummy = NOT_USED;
-
-    int total_length = HEADER_LENGTH + serialized_json_size;
-
-    for (int i = MSG_LENGTH_SIZE; i > 0; i--) {
-      msg_header.total_length[i] |= total_length;
-      total_length >>= 8;
-    }
-    msg_header.total_length[0] |= total_length;
-
-    std::copy(std::begin(WORLD_ID), std::end(WORLD_ID), std::begin(msg_header.world_id));
-    std::copy(std::begin(LOCAL_CHAIN_ID), std::end(LOCAL_CHAIN_ID), std::begin(msg_header.local_chain_id));
-    std::copy(std::begin(MY_ID), std::end(MY_ID), std::begin(msg_header.sender_id));
-
-    auto header_ptr = reinterpret_cast<uint8_t *>(&msg_header);
-    auto serialized_header = std::string(header_ptr, header_ptr + sizeof(msg_header));
-
-    return serialized_header;
   }
 
   bool checkMergerMsgType(MessageType msg_type) {
@@ -393,8 +357,7 @@ public:
   }
 
   bool checkSignerMsgType(MessageType msg_type) {
-    return (msg_type == MessageType::MSG_CHALLENGE || msg_type == MessageType::MSG_RESPONSE_2 || msg_type == MessageType::MSG_ACCEPT ||
-            msg_type == MessageType::MSG_REQ_SSIG);
+    return msg_type == MessageType::MSG_REQ_SSIG;
   }
 };
 

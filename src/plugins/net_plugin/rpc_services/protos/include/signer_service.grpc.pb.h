@@ -34,56 +34,56 @@ class GruutSignerService final {
   class StubInterface {
    public:
     virtual ~StubInterface() {}
-    std::unique_ptr< ::grpc::ClientReaderWriterInterface< ::grpc_signer::Identity, ::grpc_signer::ReplyMsg>> OpenChannel(::grpc::ClientContext* context) {
-      return std::unique_ptr< ::grpc::ClientReaderWriterInterface< ::grpc_signer::Identity, ::grpc_signer::ReplyMsg>>(OpenChannelRaw(context));
+    std::unique_ptr< ::grpc::ClientReaderWriterInterface< ::grpc_signer::Identity, ::grpc_signer::Request>> OpenChannel(::grpc::ClientContext* context) {
+      return std::unique_ptr< ::grpc::ClientReaderWriterInterface< ::grpc_signer::Identity, ::grpc_signer::Request>>(OpenChannelRaw(context));
     }
-    std::unique_ptr< ::grpc::ClientAsyncReaderWriterInterface< ::grpc_signer::Identity, ::grpc_signer::ReplyMsg>> AsyncOpenChannel(::grpc::ClientContext* context, ::grpc::CompletionQueue* cq, void* tag) {
-      return std::unique_ptr< ::grpc::ClientAsyncReaderWriterInterface< ::grpc_signer::Identity, ::grpc_signer::ReplyMsg>>(AsyncOpenChannelRaw(context, cq, tag));
+    std::unique_ptr< ::grpc::ClientAsyncReaderWriterInterface< ::grpc_signer::Identity, ::grpc_signer::Request>> AsyncOpenChannel(::grpc::ClientContext* context, ::grpc::CompletionQueue* cq, void* tag) {
+      return std::unique_ptr< ::grpc::ClientAsyncReaderWriterInterface< ::grpc_signer::Identity, ::grpc_signer::Request>>(AsyncOpenChannelRaw(context, cq, tag));
     }
-    std::unique_ptr< ::grpc::ClientAsyncReaderWriterInterface< ::grpc_signer::Identity, ::grpc_signer::ReplyMsg>> PrepareAsyncOpenChannel(::grpc::ClientContext* context, ::grpc::CompletionQueue* cq) {
-      return std::unique_ptr< ::grpc::ClientAsyncReaderWriterInterface< ::grpc_signer::Identity, ::grpc_signer::ReplyMsg>>(PrepareAsyncOpenChannelRaw(context, cq));
+    std::unique_ptr< ::grpc::ClientAsyncReaderWriterInterface< ::grpc_signer::Identity, ::grpc_signer::Request>> PrepareAsyncOpenChannel(::grpc::ClientContext* context, ::grpc::CompletionQueue* cq) {
+      return std::unique_ptr< ::grpc::ClientAsyncReaderWriterInterface< ::grpc_signer::Identity, ::grpc_signer::Request>>(PrepareAsyncOpenChannelRaw(context, cq));
     }
-    virtual ::grpc::Status SignerService(::grpc::ClientContext* context, const ::grpc_signer::RequestMsg& request, ::grpc_signer::MsgStatus* response) = 0;
-    std::unique_ptr< ::grpc::ClientAsyncResponseReaderInterface< ::grpc_signer::MsgStatus>> AsyncSignerService(::grpc::ClientContext* context, const ::grpc_signer::RequestMsg& request, ::grpc::CompletionQueue* cq) {
-      return std::unique_ptr< ::grpc::ClientAsyncResponseReaderInterface< ::grpc_signer::MsgStatus>>(AsyncSignerServiceRaw(context, request, cq));
+    virtual ::grpc::Status SignerService(::grpc::ClientContext* context, const ::grpc_signer::Request& request, ::grpc_signer::Reply* response) = 0;
+    std::unique_ptr< ::grpc::ClientAsyncResponseReaderInterface< ::grpc_signer::Reply>> AsyncSignerService(::grpc::ClientContext* context, const ::grpc_signer::Request& request, ::grpc::CompletionQueue* cq) {
+      return std::unique_ptr< ::grpc::ClientAsyncResponseReaderInterface< ::grpc_signer::Reply>>(AsyncSignerServiceRaw(context, request, cq));
     }
-    std::unique_ptr< ::grpc::ClientAsyncResponseReaderInterface< ::grpc_signer::MsgStatus>> PrepareAsyncSignerService(::grpc::ClientContext* context, const ::grpc_signer::RequestMsg& request, ::grpc::CompletionQueue* cq) {
-      return std::unique_ptr< ::grpc::ClientAsyncResponseReaderInterface< ::grpc_signer::MsgStatus>>(PrepareAsyncSignerServiceRaw(context, request, cq));
+    std::unique_ptr< ::grpc::ClientAsyncResponseReaderInterface< ::grpc_signer::Reply>> PrepareAsyncSignerService(::grpc::ClientContext* context, const ::grpc_signer::Request& request, ::grpc::CompletionQueue* cq) {
+      return std::unique_ptr< ::grpc::ClientAsyncResponseReaderInterface< ::grpc_signer::Reply>>(PrepareAsyncSignerServiceRaw(context, request, cq));
     }
   private:
-    virtual ::grpc::ClientReaderWriterInterface< ::grpc_signer::Identity, ::grpc_signer::ReplyMsg>* OpenChannelRaw(::grpc::ClientContext* context) = 0;
-    virtual ::grpc::ClientAsyncReaderWriterInterface< ::grpc_signer::Identity, ::grpc_signer::ReplyMsg>* AsyncOpenChannelRaw(::grpc::ClientContext* context, ::grpc::CompletionQueue* cq, void* tag) = 0;
-    virtual ::grpc::ClientAsyncReaderWriterInterface< ::grpc_signer::Identity, ::grpc_signer::ReplyMsg>* PrepareAsyncOpenChannelRaw(::grpc::ClientContext* context, ::grpc::CompletionQueue* cq) = 0;
-    virtual ::grpc::ClientAsyncResponseReaderInterface< ::grpc_signer::MsgStatus>* AsyncSignerServiceRaw(::grpc::ClientContext* context, const ::grpc_signer::RequestMsg& request, ::grpc::CompletionQueue* cq) = 0;
-    virtual ::grpc::ClientAsyncResponseReaderInterface< ::grpc_signer::MsgStatus>* PrepareAsyncSignerServiceRaw(::grpc::ClientContext* context, const ::grpc_signer::RequestMsg& request, ::grpc::CompletionQueue* cq) = 0;
+    virtual ::grpc::ClientReaderWriterInterface< ::grpc_signer::Identity, ::grpc_signer::Request>* OpenChannelRaw(::grpc::ClientContext* context) = 0;
+    virtual ::grpc::ClientAsyncReaderWriterInterface< ::grpc_signer::Identity, ::grpc_signer::Request>* AsyncOpenChannelRaw(::grpc::ClientContext* context, ::grpc::CompletionQueue* cq, void* tag) = 0;
+    virtual ::grpc::ClientAsyncReaderWriterInterface< ::grpc_signer::Identity, ::grpc_signer::Request>* PrepareAsyncOpenChannelRaw(::grpc::ClientContext* context, ::grpc::CompletionQueue* cq) = 0;
+    virtual ::grpc::ClientAsyncResponseReaderInterface< ::grpc_signer::Reply>* AsyncSignerServiceRaw(::grpc::ClientContext* context, const ::grpc_signer::Request& request, ::grpc::CompletionQueue* cq) = 0;
+    virtual ::grpc::ClientAsyncResponseReaderInterface< ::grpc_signer::Reply>* PrepareAsyncSignerServiceRaw(::grpc::ClientContext* context, const ::grpc_signer::Request& request, ::grpc::CompletionQueue* cq) = 0;
   };
   class Stub final : public StubInterface {
    public:
     Stub(const std::shared_ptr< ::grpc::ChannelInterface>& channel);
-    std::unique_ptr< ::grpc::ClientReaderWriter< ::grpc_signer::Identity, ::grpc_signer::ReplyMsg>> OpenChannel(::grpc::ClientContext* context) {
-      return std::unique_ptr< ::grpc::ClientReaderWriter< ::grpc_signer::Identity, ::grpc_signer::ReplyMsg>>(OpenChannelRaw(context));
+    std::unique_ptr< ::grpc::ClientReaderWriter< ::grpc_signer::Identity, ::grpc_signer::Request>> OpenChannel(::grpc::ClientContext* context) {
+      return std::unique_ptr< ::grpc::ClientReaderWriter< ::grpc_signer::Identity, ::grpc_signer::Request>>(OpenChannelRaw(context));
     }
-    std::unique_ptr<  ::grpc::ClientAsyncReaderWriter< ::grpc_signer::Identity, ::grpc_signer::ReplyMsg>> AsyncOpenChannel(::grpc::ClientContext* context, ::grpc::CompletionQueue* cq, void* tag) {
-      return std::unique_ptr< ::grpc::ClientAsyncReaderWriter< ::grpc_signer::Identity, ::grpc_signer::ReplyMsg>>(AsyncOpenChannelRaw(context, cq, tag));
+    std::unique_ptr<  ::grpc::ClientAsyncReaderWriter< ::grpc_signer::Identity, ::grpc_signer::Request>> AsyncOpenChannel(::grpc::ClientContext* context, ::grpc::CompletionQueue* cq, void* tag) {
+      return std::unique_ptr< ::grpc::ClientAsyncReaderWriter< ::grpc_signer::Identity, ::grpc_signer::Request>>(AsyncOpenChannelRaw(context, cq, tag));
     }
-    std::unique_ptr<  ::grpc::ClientAsyncReaderWriter< ::grpc_signer::Identity, ::grpc_signer::ReplyMsg>> PrepareAsyncOpenChannel(::grpc::ClientContext* context, ::grpc::CompletionQueue* cq) {
-      return std::unique_ptr< ::grpc::ClientAsyncReaderWriter< ::grpc_signer::Identity, ::grpc_signer::ReplyMsg>>(PrepareAsyncOpenChannelRaw(context, cq));
+    std::unique_ptr<  ::grpc::ClientAsyncReaderWriter< ::grpc_signer::Identity, ::grpc_signer::Request>> PrepareAsyncOpenChannel(::grpc::ClientContext* context, ::grpc::CompletionQueue* cq) {
+      return std::unique_ptr< ::grpc::ClientAsyncReaderWriter< ::grpc_signer::Identity, ::grpc_signer::Request>>(PrepareAsyncOpenChannelRaw(context, cq));
     }
-    ::grpc::Status SignerService(::grpc::ClientContext* context, const ::grpc_signer::RequestMsg& request, ::grpc_signer::MsgStatus* response) override;
-    std::unique_ptr< ::grpc::ClientAsyncResponseReader< ::grpc_signer::MsgStatus>> AsyncSignerService(::grpc::ClientContext* context, const ::grpc_signer::RequestMsg& request, ::grpc::CompletionQueue* cq) {
-      return std::unique_ptr< ::grpc::ClientAsyncResponseReader< ::grpc_signer::MsgStatus>>(AsyncSignerServiceRaw(context, request, cq));
+    ::grpc::Status SignerService(::grpc::ClientContext* context, const ::grpc_signer::Request& request, ::grpc_signer::Reply* response) override;
+    std::unique_ptr< ::grpc::ClientAsyncResponseReader< ::grpc_signer::Reply>> AsyncSignerService(::grpc::ClientContext* context, const ::grpc_signer::Request& request, ::grpc::CompletionQueue* cq) {
+      return std::unique_ptr< ::grpc::ClientAsyncResponseReader< ::grpc_signer::Reply>>(AsyncSignerServiceRaw(context, request, cq));
     }
-    std::unique_ptr< ::grpc::ClientAsyncResponseReader< ::grpc_signer::MsgStatus>> PrepareAsyncSignerService(::grpc::ClientContext* context, const ::grpc_signer::RequestMsg& request, ::grpc::CompletionQueue* cq) {
-      return std::unique_ptr< ::grpc::ClientAsyncResponseReader< ::grpc_signer::MsgStatus>>(PrepareAsyncSignerServiceRaw(context, request, cq));
+    std::unique_ptr< ::grpc::ClientAsyncResponseReader< ::grpc_signer::Reply>> PrepareAsyncSignerService(::grpc::ClientContext* context, const ::grpc_signer::Request& request, ::grpc::CompletionQueue* cq) {
+      return std::unique_ptr< ::grpc::ClientAsyncResponseReader< ::grpc_signer::Reply>>(PrepareAsyncSignerServiceRaw(context, request, cq));
     }
 
    private:
     std::shared_ptr< ::grpc::ChannelInterface> channel_;
-    ::grpc::ClientReaderWriter< ::grpc_signer::Identity, ::grpc_signer::ReplyMsg>* OpenChannelRaw(::grpc::ClientContext* context) override;
-    ::grpc::ClientAsyncReaderWriter< ::grpc_signer::Identity, ::grpc_signer::ReplyMsg>* AsyncOpenChannelRaw(::grpc::ClientContext* context, ::grpc::CompletionQueue* cq, void* tag) override;
-    ::grpc::ClientAsyncReaderWriter< ::grpc_signer::Identity, ::grpc_signer::ReplyMsg>* PrepareAsyncOpenChannelRaw(::grpc::ClientContext* context, ::grpc::CompletionQueue* cq) override;
-    ::grpc::ClientAsyncResponseReader< ::grpc_signer::MsgStatus>* AsyncSignerServiceRaw(::grpc::ClientContext* context, const ::grpc_signer::RequestMsg& request, ::grpc::CompletionQueue* cq) override;
-    ::grpc::ClientAsyncResponseReader< ::grpc_signer::MsgStatus>* PrepareAsyncSignerServiceRaw(::grpc::ClientContext* context, const ::grpc_signer::RequestMsg& request, ::grpc::CompletionQueue* cq) override;
+    ::grpc::ClientReaderWriter< ::grpc_signer::Identity, ::grpc_signer::Request>* OpenChannelRaw(::grpc::ClientContext* context) override;
+    ::grpc::ClientAsyncReaderWriter< ::grpc_signer::Identity, ::grpc_signer::Request>* AsyncOpenChannelRaw(::grpc::ClientContext* context, ::grpc::CompletionQueue* cq, void* tag) override;
+    ::grpc::ClientAsyncReaderWriter< ::grpc_signer::Identity, ::grpc_signer::Request>* PrepareAsyncOpenChannelRaw(::grpc::ClientContext* context, ::grpc::CompletionQueue* cq) override;
+    ::grpc::ClientAsyncResponseReader< ::grpc_signer::Reply>* AsyncSignerServiceRaw(::grpc::ClientContext* context, const ::grpc_signer::Request& request, ::grpc::CompletionQueue* cq) override;
+    ::grpc::ClientAsyncResponseReader< ::grpc_signer::Reply>* PrepareAsyncSignerServiceRaw(::grpc::ClientContext* context, const ::grpc_signer::Request& request, ::grpc::CompletionQueue* cq) override;
     const ::grpc::internal::RpcMethod rpcmethod_OpenChannel_;
     const ::grpc::internal::RpcMethod rpcmethod_SignerService_;
   };
@@ -93,8 +93,8 @@ class GruutSignerService final {
    public:
     Service();
     virtual ~Service();
-    virtual ::grpc::Status OpenChannel(::grpc::ServerContext* context, ::grpc::ServerReaderWriter< ::grpc_signer::ReplyMsg, ::grpc_signer::Identity>* stream);
-    virtual ::grpc::Status SignerService(::grpc::ServerContext* context, const ::grpc_signer::RequestMsg* request, ::grpc_signer::MsgStatus* response);
+    virtual ::grpc::Status OpenChannel(::grpc::ServerContext* context, ::grpc::ServerReaderWriter< ::grpc_signer::Request, ::grpc_signer::Identity>* stream);
+    virtual ::grpc::Status SignerService(::grpc::ServerContext* context, const ::grpc_signer::Request* request, ::grpc_signer::Reply* response);
   };
   template <class BaseClass>
   class WithAsyncMethod_OpenChannel : public BaseClass {
@@ -108,11 +108,11 @@ class GruutSignerService final {
       BaseClassMustBeDerivedFromService(this);
     }
     // disable synchronous version of this method
-    ::grpc::Status OpenChannel(::grpc::ServerContext* context, ::grpc::ServerReaderWriter< ::grpc_signer::ReplyMsg, ::grpc_signer::Identity>* stream)  override {
+    ::grpc::Status OpenChannel(::grpc::ServerContext* context, ::grpc::ServerReaderWriter< ::grpc_signer::Request, ::grpc_signer::Identity>* stream)  override {
       abort();
       return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
     }
-    void RequestOpenChannel(::grpc::ServerContext* context, ::grpc::ServerAsyncReaderWriter< ::grpc_signer::ReplyMsg, ::grpc_signer::Identity>* stream, ::grpc::CompletionQueue* new_call_cq, ::grpc::ServerCompletionQueue* notification_cq, void *tag) {
+    void RequestOpenChannel(::grpc::ServerContext* context, ::grpc::ServerAsyncReaderWriter< ::grpc_signer::Request, ::grpc_signer::Identity>* stream, ::grpc::CompletionQueue* new_call_cq, ::grpc::ServerCompletionQueue* notification_cq, void *tag) {
       ::grpc::Service::RequestAsyncBidiStreaming(0, context, stream, new_call_cq, notification_cq, tag);
     }
   };
@@ -128,11 +128,11 @@ class GruutSignerService final {
       BaseClassMustBeDerivedFromService(this);
     }
     // disable synchronous version of this method
-    ::grpc::Status SignerService(::grpc::ServerContext* context, const ::grpc_signer::RequestMsg* request, ::grpc_signer::MsgStatus* response) override {
+    ::grpc::Status SignerService(::grpc::ServerContext* context, const ::grpc_signer::Request* request, ::grpc_signer::Reply* response) override {
       abort();
       return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
     }
-    void RequestSignerService(::grpc::ServerContext* context, ::grpc_signer::RequestMsg* request, ::grpc::ServerAsyncResponseWriter< ::grpc_signer::MsgStatus>* response, ::grpc::CompletionQueue* new_call_cq, ::grpc::ServerCompletionQueue* notification_cq, void *tag) {
+    void RequestSignerService(::grpc::ServerContext* context, ::grpc_signer::Request* request, ::grpc::ServerAsyncResponseWriter< ::grpc_signer::Reply>* response, ::grpc::CompletionQueue* new_call_cq, ::grpc::ServerCompletionQueue* notification_cq, void *tag) {
       ::grpc::Service::RequestAsyncUnary(1, context, request, response, new_call_cq, notification_cq, tag);
     }
   };
@@ -149,7 +149,7 @@ class GruutSignerService final {
       BaseClassMustBeDerivedFromService(this);
     }
     // disable synchronous version of this method
-    ::grpc::Status OpenChannel(::grpc::ServerContext* context, ::grpc::ServerReaderWriter< ::grpc_signer::ReplyMsg, ::grpc_signer::Identity>* stream)  override {
+    ::grpc::Status OpenChannel(::grpc::ServerContext* context, ::grpc::ServerReaderWriter< ::grpc_signer::Request, ::grpc_signer::Identity>* stream)  override {
       abort();
       return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
     }
@@ -166,7 +166,7 @@ class GruutSignerService final {
       BaseClassMustBeDerivedFromService(this);
     }
     // disable synchronous version of this method
-    ::grpc::Status SignerService(::grpc::ServerContext* context, const ::grpc_signer::RequestMsg* request, ::grpc_signer::MsgStatus* response) override {
+    ::grpc::Status SignerService(::grpc::ServerContext* context, const ::grpc_signer::Request* request, ::grpc_signer::Reply* response) override {
       abort();
       return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
     }
@@ -183,7 +183,7 @@ class GruutSignerService final {
       BaseClassMustBeDerivedFromService(this);
     }
     // disable synchronous version of this method
-    ::grpc::Status OpenChannel(::grpc::ServerContext* context, ::grpc::ServerReaderWriter< ::grpc_signer::ReplyMsg, ::grpc_signer::Identity>* stream)  override {
+    ::grpc::Status OpenChannel(::grpc::ServerContext* context, ::grpc::ServerReaderWriter< ::grpc_signer::Request, ::grpc_signer::Identity>* stream)  override {
       abort();
       return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
     }
@@ -203,7 +203,7 @@ class GruutSignerService final {
       BaseClassMustBeDerivedFromService(this);
     }
     // disable synchronous version of this method
-    ::grpc::Status SignerService(::grpc::ServerContext* context, const ::grpc_signer::RequestMsg* request, ::grpc_signer::MsgStatus* response) override {
+    ::grpc::Status SignerService(::grpc::ServerContext* context, const ::grpc_signer::Request* request, ::grpc_signer::Reply* response) override {
       abort();
       return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
     }
@@ -218,18 +218,18 @@ class GruutSignerService final {
    public:
     WithStreamedUnaryMethod_SignerService() {
       ::grpc::Service::MarkMethodStreamed(1,
-        new ::grpc::internal::StreamedUnaryHandler< ::grpc_signer::RequestMsg, ::grpc_signer::MsgStatus>(std::bind(&WithStreamedUnaryMethod_SignerService<BaseClass>::StreamedSignerService, this, std::placeholders::_1, std::placeholders::_2)));
+        new ::grpc::internal::StreamedUnaryHandler< ::grpc_signer::Request, ::grpc_signer::Reply>(std::bind(&WithStreamedUnaryMethod_SignerService<BaseClass>::StreamedSignerService, this, std::placeholders::_1, std::placeholders::_2)));
     }
     ~WithStreamedUnaryMethod_SignerService() override {
       BaseClassMustBeDerivedFromService(this);
     }
     // disable regular version of this method
-    ::grpc::Status SignerService(::grpc::ServerContext* context, const ::grpc_signer::RequestMsg* request, ::grpc_signer::MsgStatus* response) override {
+    ::grpc::Status SignerService(::grpc::ServerContext* context, const ::grpc_signer::Request* request, ::grpc_signer::Reply* response) override {
       abort();
       return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
     }
     // replace default version of method with streamed unary
-    virtual ::grpc::Status StreamedSignerService(::grpc::ServerContext* context, ::grpc::ServerUnaryStreamer< ::grpc_signer::RequestMsg,::grpc_signer::MsgStatus>* server_unary_streamer) = 0;
+    virtual ::grpc::Status StreamedSignerService(::grpc::ServerContext* context, ::grpc::ServerUnaryStreamer< ::grpc_signer::Request,::grpc_signer::Reply>* server_unary_streamer) = 0;
   };
   typedef WithStreamedUnaryMethod_SignerService<Service > StreamedUnaryService;
   typedef Service SplitStreamedService;
