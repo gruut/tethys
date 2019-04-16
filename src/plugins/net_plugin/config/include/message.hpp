@@ -84,6 +84,19 @@ struct MessageHeader {
   sender_id_type sender_id;
 };
 
+enum class ErrorMsgType : int {
+  UNKNOWN = 0,
+  MERGER_BOOTSTRAP = 11,
+  ECDH_ILLEGAL_ACCESS = 21,
+  ECDH_MAX_SIGNER_POOL = 22,
+  ECDH_TIMEOUT = 23,
+  ECDH_INVALID_SIG = 24,
+  ECDH_INVALID_PK = 25,
+  TIME_SYNC = 61,
+  BSYNC_NO_BLOCK = 88,
+  NO_SUCH_BLOCK = 89
+};
+
 enum class MsgEntryType { BASE64, TIMESTAMP, TIMESTAMP_NOW, HEX, STRING, UINT, BOOL, ARRAYOFOBJECT, ARRAYOFSTRING };
 
 enum class MsgEntryLength : int {

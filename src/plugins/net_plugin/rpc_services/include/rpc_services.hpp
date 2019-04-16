@@ -8,7 +8,8 @@
 
 #include "../../../channel_interface/include/channel_interface.hpp"
 #include "../../config/include/network_type.hpp"
-#include "../../include/signer_conn_manager.hpp"
+#include "../../include/signer_conn_table.hpp"
+#include "../../include/signer_pool_manager.hpp"
 #include "../../kademlia/include/node.hpp"
 #include "../../kademlia/include/routing.hpp"
 
@@ -46,8 +47,9 @@ protected:
 
 class OpenChannelWithSigner final : public CallData {
 public:
-  OpenChannelWithSigner(GruutSignerService::AsyncService *service, ServerCompletionQueue *cq, shared_ptr<SignerConnTable> signer_table)
-      : m_stream(&m_context), m_signer_table(move(signer_table)) {
+  OpenChannelWithSigner(GruutSignerService::AsyncService *service, ServerCompletionQueue *cq, shared_ptr<SignerConnTable> signer_conn_table,
+                        shared_ptr<SignerPoolManager> signer_pool_manager)
+      : m_stream(&m_context), m_signer_conn_table(move(signer_conn_table)), m_signer_pool_manager(move(signer_pool_manager)) {
 
     m_service = service;
     m_completion_queue = cq;
@@ -60,15 +62,17 @@ private:
   string m_signer_id_b58;
   GruutSignerService::AsyncService *m_service;
   Identity m_request;
-  ServerAsyncReaderWriter<ReplyMsg, Identity> m_stream;
+  ServerAsyncReaderWriter<Request, Identity> m_stream;
 
-  shared_ptr<SignerConnTable> m_signer_table;
+  shared_ptr<SignerConnTable> m_signer_conn_table;
+  shared_ptr<SignerPoolManager> m_signer_pool_manager;
   void proceed() override;
 };
 
 class SignerService final : public CallData {
 public:
-  SignerService(GruutSignerService::AsyncService *service, ServerCompletionQueue *cq) : m_responder(&m_context) {
+  SignerService(GruutSignerService::AsyncService *service, ServerCompletionQueue *cq, shared_ptr<SignerPoolManager> signer_pool_manager)
+      : m_responder(&m_context), m_signer_pool_manager(move(signer_pool_manager)) {
     m_service = service;
     m_completion_queue = cq;
     m_receive_status = RpcCallStatus::CREATE;
@@ -76,10 +80,12 @@ public:
 
 private:
   GruutSignerService::AsyncService *m_service;
-  grpc_signer::RequestMsg m_request;
-  grpc_signer::MsgStatus m_reply;
-  ServerAsyncResponseWriter<grpc_signer::MsgStatus> m_responder;
+  Request m_request;
+  Reply m_reply;
+  ServerAsyncResponseWriter<Reply> m_responder;
 
+  shared_ptr<SignerPoolManager> m_signer_pool_manager;
+  grpc::Status verifyHMAC(string_view packed_msg, vector<uint8_t> &hmac_key);
   void proceed() override;
 };
 
