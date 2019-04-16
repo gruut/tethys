@@ -8,8 +8,10 @@
 
 #include "../../../channel_interface/include/channel_interface.hpp"
 #include "../../config/include/network_type.hpp"
+#include "../../include/id_mapping_table.hpp"
 #include "../../include/signer_conn_table.hpp"
 #include "../../include/signer_pool_manager.hpp"
+
 #include "../../kademlia/include/node.hpp"
 #include "../../kademlia/include/routing.hpp"
 
@@ -92,8 +94,9 @@ private:
 class MergerService final : public CallData {
 public:
   MergerService(GruutMergerService::AsyncService *service, ServerCompletionQueue *cq, shared_ptr<RoutingTable> routing_table,
-                shared_ptr<BroadcastMsgTable> broadcast_check_table)
-      : m_responder(&m_context), m_routing_table(move(routing_table)), m_broadcast_check_table(move(broadcast_check_table)) {
+                shared_ptr<BroadcastMsgTable> broadcast_check_table, shared_ptr<IdMappingTable> id_table)
+      : m_responder(&m_context), m_routing_table(move(routing_table)), m_broadcast_check_table(move(broadcast_check_table)),
+        id_mapping_table(id_table) {
 
     m_service = service;
     m_completion_queue = cq;
@@ -110,6 +113,7 @@ private:
 
   shared_ptr<BroadcastMsgTable> m_broadcast_check_table;
   shared_ptr<RoutingTable> m_routing_table;
+  shared_ptr<IdMappingTable> id_mapping_table;
 
   void proceed() override;
 };
