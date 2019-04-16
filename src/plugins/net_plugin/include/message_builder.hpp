@@ -37,11 +37,11 @@ public:
   }
 
   template <MessageType T, typename = enable_if_t<T == MessageType::MSG_RESPONSE_2>>
-  static auto build(const string &b58_recv_id, const string &dhx, const string &dhy, const string &cert, const string &sig) {
+  static auto build(const string &timestamp, const string &b58_recv_id, const string &dhx, const string &dhy, const string &cert, const string &sig) {
     OutNetMsg msg_response2;
     nlohmann::json msg_body;
 
-    msg_body["time"] = TimeUtil::now();
+    msg_body["time"] = timestamp;
     msg_body["dh"]["x"] = dhx;
     msg_body["dh"]["y"] = dhy;
     msg_body["merger"]["id"] = MY_ID_BASE58;
