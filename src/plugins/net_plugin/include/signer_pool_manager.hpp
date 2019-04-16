@@ -55,38 +55,45 @@ public:
     new_signer.user_id = TypeConverter::decodeBase<58>(b58_user_id);
     new_signer.hmac_key = hmac_key;
 
-    lock_guard<std::mutex> guard(push_mutex);
-    signer_pool[b58_user_id] = new_signer;
-    push_mutex.unlock();
+    {
+      lock_guard<std::mutex> guard(pool_mutex);
+      signer_pool[b58_user_id] = new_signer;
+    }
   }
 
   bool eraseSigner(const string &b58_user_id) {
-    if (signer_pool.count(b58_user_id) > 0) {
-      lock_guard<std::mutex> guard(push_mutex);
-      signer_pool.erase(b58_user_id);
-      push_mutex.unlock();
-      return true;
-    }
-    return false;
-  }
+    {
+      lock_guard<std::mutex> guard(pool_mutex);
 
-  const size_t size() {
-    return signer_pool.size();
+      if (signer_pool.count(b58_user_id) > 0) {
+        signer_pool.erase(b58_user_id);
+        return true;
+      }
+      return false;
+    }
   }
 
   optional<vector<uint8_t>> getHmacKey(const string &b58_user_id) {
-    if (signer_pool.count(b58_user_id) > 0)
-      return signer_pool[b58_user_id].hmac_key;
-    return {};
+    {
+      lock_guard<std::mutex> guard(pool_mutex);
+
+      if (signer_pool.count(b58_user_id) > 0)
+        return signer_pool[b58_user_id].hmac_key;
+      return {};
+    }
   }
 
   bool full() {
-    return MAX_SIGNER >= signer_pool.size();
+    {
+      lock_guard<std::mutex> guard(pool_mutex);
+
+      return MAX_SIGNER >= signer_pool.size();
+    }
   }
 
 private:
   unordered_map<string, Signer> signer_pool;
-  std::mutex push_mutex;
+  std::mutex pool_mutex;
 };
 
 class SignerPoolManager {
