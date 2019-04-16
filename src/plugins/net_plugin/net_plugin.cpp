@@ -2,6 +2,7 @@
 #include "../../../lib/json/include/json.hpp"
 #include "config/include/network_config.hpp"
 #include "include/http_client.hpp"
+#include "include/id_mapping_table.hpp"
 #include "include/message_builder.hpp"
 #include "include/message_packer.hpp"
 #include "rpc_services/include/rpc_services.hpp"
@@ -46,6 +47,7 @@ public:
   shared_ptr<SignerPoolManager> signer_pool_manager;
   shared_ptr<SignerConnTable> signer_conn_table;
   shared_ptr<RoutingTable> routing_table;
+  shared_ptr<IdMappingTable> id_mapping_table;
   shared_ptr<BroadcastMsgTable> broadcast_check_table;
 
   unique_ptr<boost::asio::steady_timer> connection_check_timer;
@@ -97,7 +99,7 @@ public:
 
     new OpenChannelWithSigner(&signer_service, completion_queue.get(), signer_conn_table, signer_pool_manager);
     new SignerService(&signer_service, completion_queue.get(), signer_pool_manager);
-    new MergerService(&merger_service, completion_queue.get(), routing_table, broadcast_check_table);
+    new MergerService(&merger_service, completion_queue.get(), routing_table, broadcast_check_table, id_mapping_table);
     new FindNode(&kademlia_service, completion_queue.get(), routing_table);
   }
 
@@ -180,7 +182,7 @@ public:
         auto dead_node_ids = bucket.removeDeadNodes();
         if (dead_node_ids.has_value()) {
           for (auto &dead_hashed_id : dead_node_ids.value()) {
-            routing_table->unmapId(dead_hashed_id);
+            id_mapping_table->unmapId(dead_hashed_id);
           }
         }
         auto nodes = bucket.selectAliveNodes(false);
@@ -320,12 +322,17 @@ public:
         }
       } else {
         for (auto &b58_receiver_id : out_msg.receivers) {
-          auto node = routing_table->findNode(b58_receiver_id);
-          if (node.has_value()) {
-            auto stub = genStub<GruutMergerService::Stub, GruutMergerService>(node.value().getChannelPtr());
-            auto status = stub->MergerService(&context, request, &msg_status);
-          } else {
-            routing_table->unmapId(b58_receiver_id);
+          auto hashed_net_id = id_mapping_table->get(b58_receiver_id);
+
+          if(hashed_net_id.has_value()) {
+            auto node = routing_table->findNode(hashed_net_id.value());
+
+            if (node.has_value()) {
+              auto stub = genStub<GruutMergerService::Stub, GruutMergerService>(node.value().getChannelPtr());
+              auto status = stub->MergerService(&context, request, &msg_status);
+            } else {
+              id_mapping_table->unmapId(b58_receiver_id);
+            }
           }
         }
       }

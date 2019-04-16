@@ -4,6 +4,7 @@
 #include "../../../../lib/gruut-utils/src/time_util.hpp"
 #include "../../../../lib/gruut-utils/src/type_converter.hpp"
 #include "../../channel_interface/include/channel_interface.hpp"
+#include "../include/id_mapping_table.hpp"
 #include "../include/message_builder.hpp"
 #include "../include/message_packer.hpp"
 #include "../include/signer_pool_manager.hpp"
@@ -90,7 +91,8 @@ private:
 
 class MessageHandler {
 public:
-  explicit MessageHandler(ServerContext *server_context, shared_ptr<RoutingTable> table) : context(server_context), routing_table(table) {}
+  explicit MessageHandler(ServerContext *server_context, shared_ptr<IdMappingTable> table)
+      : context(server_context), id_mapping_table(table) {}
   explicit MessageHandler(shared_ptr<SignerPoolManager> pool_manager) : signer_pool_manager(pool_manager) {}
   optional<OutNetMsg> operator()(InNetMsg &msg) {
     return handle_message(msg);
@@ -123,11 +125,11 @@ private:
   void mapping_user_id_to_net_id(InNetMsg &msg) {
     auto b58_user_id = TypeConverter::encodeBase<58>(msg.sender_id);
     auto net_id = context->client_metadata().find("net_id")->second;
-    routing_table->mapId(b58_user_id, string(net_id.data()));
+    id_mapping_table->mapId(b58_user_id, string(net_id.data()));
   }
 
   ServerContext *context;
-  shared_ptr<RoutingTable> routing_table;
+  shared_ptr<IdMappingTable> id_mapping_table;
   shared_ptr<SignerPoolManager> signer_pool_manager;
 };
 
@@ -206,6 +208,7 @@ void SignerService::proceed() {
         if (rpc_status.ok()) {
           MessageHandler msg_handler(m_signer_pool_manager);
           auto reply_msg = msg_handler(input_data.value());
+
           if (reply_msg.has_value()) {
             auto reply_msg_type = reply_msg.value().type;
             string reply_packed_msg;
@@ -258,7 +261,7 @@ void MergerService::proceed() {
   } break;
 
   case RpcCallStatus::PROCESS: {
-    new MergerService(m_service, m_completion_queue, m_routing_table, m_broadcast_check_table);
+    new MergerService(m_service, m_completion_queue, m_routing_table, m_broadcast_check_table, id_mapping_table);
     Status rpc_status;
 
     try {
@@ -304,7 +307,7 @@ void MergerService::proceed() {
         m_reply.set_status(grpc_merger::MsgStatus_Status_SUCCESS); // SUCCESS
         m_reply.set_message("OK");
 
-        MessageHandler msg_handler(&m_context, m_routing_table);
+        MessageHandler msg_handler(&m_context, id_mapping_table);
         msg_handler(input_data.value());
       } else {
         m_reply.set_status(grpc_merger::MsgStatus_Status_INVALID); // INVALID
