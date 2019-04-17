@@ -34,27 +34,31 @@ public:
   ~SignerConnTable() = default;
 
   void setRpcInfo(const string &recv_id_b58, ServerAsyncReaderWriter<Request, Identity> *reply_rpc, void *tag) {
-    lock_guard<std::mutex> lock(m_mutex);
-    m_signer_list[recv_id_b58].send_msg = reply_rpc;
-    m_signer_list[recv_id_b58].tag_identity = tag;
-    m_mutex.unlock();
+    {
+      lock_guard<std::mutex> lock(table_mutex);
+      signer_conn_table[recv_id_b58].send_msg = reply_rpc;
+      signer_conn_table[recv_id_b58].tag_identity = tag;
+    }
   }
 
   void eraseRpcInfo(const string &recv_id_b58) {
-    lock_guard<std::mutex> lock(m_mutex);
-    m_signer_list.erase(recv_id_b58);
-    m_mutex.unlock();
+    {
+      lock_guard<std::mutex> lock(table_mutex);
+      signer_conn_table.erase(recv_id_b58);
+    }
   }
 
   SignerRpcInfo getRpcInfo(const string &recv_id_b58) {
-    lock_guard<std::mutex> lock(m_mutex);
-    SignerRpcInfo rpc_info = m_signer_list[recv_id_b58];
-    m_mutex.unlock();
-    return rpc_info;
+    {
+      lock_guard<std::mutex> lock(table_mutex);
+      SignerRpcInfo rpc_info = signer_conn_table[recv_id_b58];
+
+      return rpc_info;
+    }
   }
 
 private:
-  unordered_map<string, SignerRpcInfo> m_signer_list;
-  std::mutex m_mutex;
+  unordered_map<string, SignerRpcInfo> signer_conn_table;
+  std::mutex table_mutex;
 };
 } // namespace gruut
