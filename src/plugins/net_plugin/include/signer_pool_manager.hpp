@@ -113,7 +113,7 @@ public:
         throw ErrorMsgType::ECDH_MAX_SIGNER_POOL;
       }
 
-      auto signer_id_in_body = json::get<string>(msg.body, "signer");
+      auto signer_id_in_body = json::get<string>(msg.body, "user");
       if (signer_id_in_body.value() == msg.sender_id) {
         logger::ERROR("[ECDH] Message header and body id are different");
         throw ErrorMsgType::ECDH_ILLEGAL_ACCESS;
