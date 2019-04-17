@@ -135,6 +135,9 @@ const auto SCHEMA_BLOCK = R"({
   "title": "Block",
   "type": "object",
   "properties": {
+    "btime": {
+      "type": "string"
+    },
     "block": {
       "type": "object",
       "properties": {
@@ -251,12 +254,13 @@ const auto SCHEMA_BLOCK = R"({
     }
   },
   "required": [
+    "btime",
     "block",
     "tx",
-	"aggz",
+    "aggz",
     "state",
     "signer",
-	"certificate",
+    "certificate",
     "producer"
   ]
 })"_json;
@@ -422,6 +426,15 @@ const auto SCHEMA_TX = R"({
         "cid": {
           "type": "string"
         },
+        "receiver": {
+          "type": "string"
+        },
+        "fee": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
         "input": {
           "type": "array",
           "items": {
@@ -434,6 +447,8 @@ const auto SCHEMA_TX = R"({
       },
       "required": [
         "cid",
+        "receiver",
+        "fee",
         "input"
       ]
     },
