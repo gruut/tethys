@@ -10,7 +10,19 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2019_04_18_011345) do
+ActiveRecord::Schema.define(version: 2019_04_18_021326) do
+
+  create_table "contract_scope", primary_key: "csidx", id: :integer, options: "ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci", force: :cascade do |t|
+    t.string "contract_id"
+    t.string "var_name"
+    t.integer "var_value"
+    t.string "var_type", limit: 10
+    t.text "var_info"
+    t.bigint "up_time"
+    t.string "pid", limit: 43
+    t.index ["contract_id"], name: "index_contract_scope_on_contract_id", unique: true
+    t.index ["pid"], name: "index_contract_scope_on_pid", unique: true
+  end
 
   create_table "users", primary_key: "usidx", id: :integer, options: "ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci", force: :cascade do |t|
     t.string "var_name"
