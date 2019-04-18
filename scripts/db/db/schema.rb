@@ -10,7 +10,26 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2019_04_18_021326) do
+ActiveRecord::Schema.define(version: 2019_04_18_031710) do
+
+  create_table "blocks", primary_key: "bsidx", id: :integer, options: "ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci", force: :cascade do |t|
+    t.string "block_id", limit: 44
+    t.integer "block_height"
+    t.string "block_hash", limit: 44
+    t.bigint "block_time"
+    t.bigint "block_pub_time"
+    t.string "block_prev_id", limit: 44
+    t.string "producer_id", limit: 44
+    t.string "producer_sig", limit: 100
+    t.text "txs", limit: 16777215
+    t.string "tx_root", limit: 44
+    t.string "us_state_root", limit: 44
+    t.string "sc_state_root", limit: 44
+    t.string "sg_root", limit: 44
+    t.string "aggz", limit: 50
+    t.text "certificate", limit: 16777215
+    t.index ["block_id"], name: "index_blocks_on_block_id", unique: true
+  end
 
   create_table "contract_scope", primary_key: "csidx", id: :integer, options: "ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci", force: :cascade do |t|
     t.string "contract_id"
