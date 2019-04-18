@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2019_04_18_031710) do
+ActiveRecord::Schema.define(version: 2019_04_18_045654) do
 
   create_table "blocks", primary_key: "bsidx", id: :integer, options: "ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci", force: :cascade do |t|
     t.string "block_id", limit: 44
@@ -41,6 +41,14 @@ ActiveRecord::Schema.define(version: 2019_04_18_031710) do
     t.string "pid", limit: 43
     t.index ["contract_id"], name: "index_contract_scope_on_contract_id", unique: true
     t.index ["pid"], name: "index_contract_scope_on_pid", unique: true
+  end
+
+  create_table "signatures", primary_key: "ssidx", id: :integer, options: "ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci", force: :cascade do |t|
+    t.integer "bsidx", null: false
+    t.string "ss_id", limit: 44
+    t.string "ss_sig", limit: 100
+    t.integer "ss_pos"
+    t.index ["bsidx"], name: "index_signatures_on_bsidx"
   end
 
   create_table "users", primary_key: "usidx", id: :integer, options: "ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci", force: :cascade do |t|
