@@ -96,6 +96,7 @@ public:
   void registerServices() {
     signer_conn_table = make_shared<SignerConnTable>();
     broadcast_check_table = make_shared<BroadcastMsgTable>();
+    id_mapping_table = make_shared<IdMappingTable>();
 
     new OpenChannelWithSigner(&signer_service, completion_queue.get(), signer_conn_table, signer_pool_manager);
     new SignerService(&signer_service, completion_queue.get(), signer_pool_manager);

@@ -78,6 +78,8 @@ public:
     m_service = service;
     m_completion_queue = cq;
     m_receive_status = RpcCallStatus::CREATE;
+
+    proceed();
   }
 
 private:
