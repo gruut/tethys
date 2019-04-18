@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2019_04_18_064726) do
+ActiveRecord::Schema.define(version: 2019_04_18_065211) do
 
   create_table "blocks", primary_key: "bsidx", id: :integer, options: "ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci", force: :cascade do |t|
     t.string "block_id", limit: 44
@@ -76,6 +76,18 @@ ActiveRecord::Schema.define(version: 2019_04_18_064726) do
     t.integer "tx_pos"
     t.text "tx_output", limit: 16777215
     t.index ["tx_id"], name: "index_transactions_on_tx_id", unique: true
+  end
+
+  create_table "user_attributes", primary_key: "uaidx", id: :integer, options: "ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci", force: :cascade do |t|
+    t.string "uid", limit: 44
+    t.bigint "register_day"
+    t.integer "gender", limit: 1
+    t.string "isc_type", limit: 10
+    t.string "isc_code", limit: 10
+    t.text "location"
+    t.integer "age_limit"
+    t.string "sigma", limit: 100
+    t.index ["uid"], name: "index_user_attributes_on_uid", unique: true
   end
 
   create_table "user_certificates", primary_key: "ucidx", id: :integer, options: "ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci", force: :cascade do |t|
