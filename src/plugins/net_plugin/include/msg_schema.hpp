@@ -278,7 +278,7 @@ const auto SCHEMA_JOIN = R"({
     "chain": {
       "type": "string"
     },
-    "signer": {
+    "user": {
       "type": "string"
     },
     "merger": {
@@ -289,7 +289,7 @@ const auto SCHEMA_JOIN = R"({
     "time",
     "world",
     "chain",
-    "signer",
+    "user",
     "merger"
   ]
 })"_json;
