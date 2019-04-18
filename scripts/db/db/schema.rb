@@ -10,8 +10,9 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2019_04_18_045654) do
-  
+
+ActiveRecord::Schema.define(version: 2019_04_18_055932) do
+
   create_table "blocks", primary_key: "bsidx", id: :integer, options: "ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci", force: :cascade do |t|
     t.string "block_id", limit: 44
     t.integer "block_height"
@@ -49,6 +50,25 @@ ActiveRecord::Schema.define(version: 2019_04_18_045654) do
     t.string "ss_sig", limit: 100
     t.integer "ss_pos"
     t.index ["bsidx"], name: "index_signatures_on_bsidx"
+  end
+
+  create_table "transactions", primary_key: "tsidx", id: :integer, options: "ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci", force: :cascade do |t|
+    t.string "tx_id", limit: 44
+    t.bigint "tx_time"
+    t.string "tx_seed", limit: 22
+    t.string "tx_contract_id"
+    t.integer "tx_fee_author"
+    t.integer "tx_fee_user"
+    t.string "tx_user", limit: 44
+    t.text "tx_user_pk"
+    t.string "tx_receiver", limit: 44
+    t.text "tx_input", limit: 16777215
+    t.string "tx_user_sig", limit: 100
+    t.text "tx_agg_cbor", limit: 16777215
+    t.string "block_id", limit: 44
+    t.integer "tx_pos"
+    t.text "tx_output", limit: 16777215
+    t.index ["tx_id"], name: "index_transactions_on_tx_id", unique: true
   end
 
   create_table "users", primary_key: "usidx", id: :integer, options: "ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci", force: :cascade do |t|
