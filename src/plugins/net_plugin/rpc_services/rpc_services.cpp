@@ -34,11 +34,11 @@ public:
       return_rpc_status = Status(StatusCode::INVALID_ARGUMENT, "Bad request (Invalid parameter)");
       return {};
     }
-    auto body_size = convertU8ToU32BE(msg_header->total_length);
+    auto body_size = convertU8ToU32BE(msg_header.total_length) - HEADER_LENGTH;
     string msg_raw_body(packed_msg.begin() + HEADER_LENGTH, packed_msg.begin() + HEADER_LENGTH + body_size);
-    auto json_body = getJson(msg_header->serialization_algo_type, msg_raw_body);
+    auto json_body = getJson(msg_header.serialization_algo_type, msg_raw_body);
 
-    if (!JsonValidator::validateSchema(json_body, msg_header->message_type)) {
+    if (!JsonValidator::validateSchema(json_body, msg_header.message_type)) {
       return_rpc_status = Status(StatusCode::INVALID_ARGUMENT, "Bad request (Json schema error)");
       return {};
     }
@@ -46,23 +46,39 @@ public:
     return_rpc_status = Status::OK;
 
     InNetMsg in_msg;
-    in_msg.type = msg_header->message_type;
+    in_msg.type = msg_header.message_type;
     in_msg.body = json_body;
-    in_msg.sender_id = TypeConverter::encodeBase<58>(msg_header->sender_id);
+    in_msg.sender_id = TypeConverter::encodeBase<58>(msg_header.sender_id);
 
     return in_msg;
   }
 
 private:
-  MessageHeader *parseHeader(string_view raw_header) {
-    auto msg_header = reinterpret_cast<MessageHeader *>(&raw_header);
+  MessageHeader parseHeader(string_view raw_header) {
+    MessageHeader msg_header;
+
+    int offset = 0;
+    msg_header.identifier = raw_header[offset++];
+    msg_header.version = raw_header[offset++];
+    msg_header.message_type = (MessageType)raw_header[offset++];
+    msg_header.mac_algo_type = (MACAlgorithmType)raw_header[offset++];
+    msg_header.serialization_algo_type = (SerializationAlgorithmType)raw_header[offset++];
+    msg_header.dummy = raw_header[offset++];
+
+    copy(raw_header.begin() + offset, raw_header.begin() + offset + MSG_LENGTH_SIZE, msg_header.total_length.begin());
+    offset += MSG_LENGTH_SIZE;
+    copy(raw_header.begin() + offset, raw_header.begin() + offset + WORLD_ID_TYPE_SIZE, msg_header.world_id.begin());
+    offset += WORLD_ID_TYPE_SIZE;
+    copy(raw_header.begin() + offset, raw_header.begin() + offset + CHAIN_ID_TYPE_SIZE, msg_header.local_chain_id.begin());
+    offset += CHAIN_ID_TYPE_SIZE;
+    copy(raw_header.begin() + offset, raw_header.begin() + offset + SENDER_ID_TYPE_SIZE, msg_header.sender_id.begin());
     return msg_header;
   }
 
-  bool validateMsgHdrFormat(MessageHeader *header) {
-    bool check = header->identifier == IDENTIFIER;
-    if (header->mac_algo_type == MACAlgorithmType::HMAC) {
-      check &= (header->message_type == MessageType::MSG_SUCCESS || header->message_type == MessageType::MSG_SSIG);
+  bool validateMsgHdrFormat(MessageHeader &header) {
+    bool check = header.identifier == IDENTIFIER;
+    if (header.mac_algo_type == MACAlgorithmType::HMAC) {
+      check &= (header.message_type == MessageType::MSG_SUCCESS || header.message_type == MessageType::MSG_SSIG);
     }
     return check;
   }
@@ -159,7 +175,6 @@ void OpenChannelWithSigner::proceed() {
       m_signer_conn_table->eraseRpcInfo(m_signer_id_b58);
       m_signer_pool_manager->removeSigner(m_signer_id_b58);
       m_signer_pool_manager->removeTempSigner(m_signer_id_b58);
-
       // TODO: signer leave event should be notified to `Block producer`
 
       delete this;
@@ -242,7 +257,6 @@ void SignerService::proceed() {
     } catch (ErrorMsgType err_msg_type) { // KEY EXCHANGE ERROR
       m_reply.set_status((Reply_Status)err_msg_type);
     }
-
     m_receive_status = RpcCallStatus::FINISH;
     m_responder.Finish(m_reply, rpc_status, this);
   } break;

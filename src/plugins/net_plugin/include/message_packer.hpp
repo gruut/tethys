@@ -34,33 +34,24 @@ private:
   }
 
   static string makeHeader(int serialized_json_size, MessageType msg_type, SerializationAlgorithmType serialization_algo_type) {
-    MessageHeader msg_header;
-    msg_header.identifier = IDENTIFIER;
-    msg_header.version = VERSION;
-    msg_header.message_type = msg_type;
+    string serialized_header;
+
+    serialized_header.push_back(IDENTIFIER);
+    serialized_header.push_back(VERSION);
+    serialized_header.push_back((uint8_t)msg_type);
     if (msg_type == MessageType::MSG_ACCEPT || msg_type == MessageType::MSG_REQ_SSIG)
-      msg_header.mac_algo_type = MACAlgorithmType::HMAC;
+      serialized_header.push_back((uint8_t)MACAlgorithmType::HMAC);
     else
-      msg_header.mac_algo_type = MACAlgorithmType::NONE;
+      serialized_header.push_back((uint8_t)MACAlgorithmType::NONE);
 
-    msg_header.serialization_algo_type = serialization_algo_type;
-    msg_header.dummy = NOT_USED;
+    serialized_header.push_back((uint8_t)serialization_algo_type);
+    serialized_header.push_back(NOT_USED);
 
-    int total_length = HEADER_LENGTH + serialized_json_size;
-
-    for (int i = MSG_LENGTH_SIZE; i > 0; i--) {
-      msg_header.total_length[i] |= total_length;
-      total_length >>= 8;
-    }
-    msg_header.total_length[0] |= total_length;
-
-    copy(begin(WORLD_ID), end(WORLD_ID), begin(msg_header.world_id));
-    copy(begin(LOCAL_CHAIN_ID), end(LOCAL_CHAIN_ID), begin(msg_header.local_chain_id));
-    copy(begin(MY_ID), end(MY_ID), begin(msg_header.sender_id));
-
-    auto header_ptr = reinterpret_cast<uint8_t *>(&msg_header);
-    auto serialized_header = string(header_ptr, header_ptr + sizeof(msg_header));
-
+    auto total_length = TypeConverter::integerToBytes(HEADER_LENGTH + serialized_json_size);
+    serialized_header.insert(serialized_header.end(), begin(total_length), end(total_length));
+    serialized_header.insert(serialized_header.end(), begin(WORLD_ID), end(WORLD_ID));
+    serialized_header.insert(serialized_header.end(), begin(LOCAL_CHAIN_ID), end(LOCAL_CHAIN_ID));
+    serialized_header.insert(serialized_header.end(), begin(MY_ID), end(MY_ID));
     return serialized_header;
   }
 };
