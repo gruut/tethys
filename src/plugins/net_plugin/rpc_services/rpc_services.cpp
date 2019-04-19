@@ -212,9 +212,10 @@ void SignerService::proceed() {
       auto input_data = msg_parser.parseMessage(packed_msg, rpc_status);
       if (input_data.has_value()) {
         auto msg_type = input_data.value().type;
+        auto signer_id_b58 = input_data.value().sender_id;
         if (msg_type == MessageType::MSG_SSIG || msg_type == MessageType::MSG_SUCCESS) {
-          auto signer_id_b58 = input_data.value().sender_id;
-          auto hmac_key = m_signer_pool_manager->getHmacKey(signer_id_b58);
+          auto hmac_key = msg_type == MessageType::MSG_SSIG ? m_signer_pool_manager->getHmacKey(signer_id_b58)
+                                                            : m_signer_pool_manager->getTempHmacKey(signer_id_b58);
           if (hmac_key.has_value())
             rpc_status = verifyHMAC(packed_msg, hmac_key.value());
           else
@@ -228,8 +229,7 @@ void SignerService::proceed() {
             auto reply_msg_type = reply_msg.value().type;
             string reply_packed_msg;
             if (reply_msg_type == MessageType::MSG_ACCEPT) {
-              auto receiver_id_b58 = reply_msg.value().receivers[0];
-              auto hmac_key = m_signer_pool_manager->getHmacKey(receiver_id_b58);
+              auto hmac_key = m_signer_pool_manager->getHmacKey(signer_id_b58);
               if (hmac_key.has_value())
                 reply_packed_msg = MessagePacker::packMessage<MACAlgorithmType::HMAC>(reply_msg.value(), hmac_key.value());
               else

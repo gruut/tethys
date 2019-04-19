@@ -94,6 +94,7 @@ public:
   }
 
   void registerServices() {
+    signer_pool_manager = make_shared<SignerPoolManager>();
     signer_conn_table = make_shared<SignerConnTable>();
     broadcast_check_table = make_shared<BroadcastMsgTable>();
     id_mapping_table = make_shared<IdMappingTable>();
