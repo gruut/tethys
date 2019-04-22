@@ -93,9 +93,12 @@ private:
       switch (comperssion_type) {
       case SerializationAlgorithmType::LZ4: {
         string origin_data = LZ4Compressor::decompressData(raw_body);
+        unpacked_body = json::parse(origin_data);
+        break;
       }
       case SerializationAlgorithmType::NONE: {
         unpacked_body = json::parse(raw_body);
+        break;
       }
       default:
         break;
