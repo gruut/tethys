@@ -114,7 +114,7 @@ public:
       }
 
       auto signer_id_in_body = json::get<string>(msg.body, "user");
-      if (signer_id_in_body.value() == msg.sender_id) {
+      if (signer_id_in_body.value() != msg.sender_id) {
         logger::ERROR("[ECDH] Message header and body id are different");
         throw ErrorMsgType::ECDH_ILLEGAL_ACCESS;
       }
@@ -154,7 +154,7 @@ public:
       }
       temp_signer_pool[msg.sender_id].shared_sk = shared_sk_bytes;
 
-      auto sn = json::get<string>(msg.body["user"], "sn").value();
+      auto sn = json::get<string>(msg.body, "sn").value();
       auto mn = temp_signer_pool[msg.sender_id].merger_nonce;
       auto curr_time = TimeUtil::now();
       // TODO : get sk, sk_pass, cert
@@ -195,6 +195,13 @@ public:
 
   optional<vector<uint8_t>> getHmacKey(const string &b58_signer_id) {
     return signer_pool.getHmacKey(b58_signer_id);
+  }
+
+  optional<vector<uint8_t>> getTempHmacKey(const string &b58_signer_id) {
+    if(temp_signer_pool.count(b58_signer_id) > 0){
+      return temp_signer_pool[b58_signer_id].shared_sk;
+    }
+    return {};
   }
 
 private:
