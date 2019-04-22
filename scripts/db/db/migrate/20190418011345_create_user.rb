@@ -3,8 +3,8 @@ class CreateUser < ActiveRecord::Migration[5.2]
     create_table :users, id: false do |t|
       t.integer :usidx, primary_key: true
       t.string :var_name, limit: 255
-      t.integer :var_value
-      t.string :var_type, limit: 10
+      t.text :var_value
+      t.integer :var_type, limit: 1
       t.column :var_owner, 'char(44)'
       t.integer :up_time, limit: 8
       t.integer :up_block

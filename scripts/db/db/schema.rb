@@ -34,8 +34,8 @@ ActiveRecord::Schema.define(version: 2019_04_18_071722) do
   create_table "contract_scope", primary_key: "csidx", id: :integer, options: "ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci", force: :cascade do |t|
     t.string "contract_id"
     t.string "var_name"
-    t.integer "var_value"
-    t.string "var_type", limit: 10
+    t.text "var_value"
+    t.integer "var_type", limit: 1
     t.text "var_info"
     t.bigint "up_time"
     t.string "pid", limit: 43
@@ -113,8 +113,8 @@ ActiveRecord::Schema.define(version: 2019_04_18_071722) do
 
   create_table "users", primary_key: "usidx", id: :integer, options: "ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci", force: :cascade do |t|
     t.string "var_name"
-    t.integer "var_value"
-    t.string "var_type", limit: 10
+    t.text "var_value"
+    t.integer "var_type", limit: 1
     t.string "var_owner", limit: 44
     t.bigint "up_time"
     t.integer "up_block"
