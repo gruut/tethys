@@ -9,9 +9,10 @@ namespace gruut {
 namespace net_plugin {
 
 using nlohmann::json_schema_draft4::json_validator;
-using SchemaCheckMap = std::map<MessageType, json_validator>;
+using SchemaMap = std::map<MessageType, nlohmann::json>;
 
-const auto SCHEMA_PING = R"({
+static SchemaMap schema_map = {{MessageType::MSG_PING,
+                                R"({
   "title": "Ping",
   "type": "object",
   "properties": {
@@ -78,8 +79,9 @@ const auto SCHEMA_PING = R"({
     "status",
     "merger"
   ]
-})"_json;
-const auto SCHEMA_REQ_BLOCK = R"({
+})"_json},
+                               {MessageType::MSG_REQ_BLOCK,
+                                R"({
   "title": "Request block",
   "type": "object",
   "properties": {
@@ -130,8 +132,9 @@ const auto SCHEMA_REQ_BLOCK = R"({
     "block",
     "merger"
   ]
-})"_json;
-const auto SCHEMA_BLOCK = R"({
+})"_json},
+                               {MessageType::MSG_BLOCK,
+                                R"({
   "title": "Block",
   "type": "object",
   "properties": {
@@ -267,8 +270,9 @@ const auto SCHEMA_BLOCK = R"({
     "certificate",
     "producer"
   ]
-})"_json;
-const auto SCHEMA_REQ_BONE = R"({
+})"_json},
+                               {MessageType::MSG_REQ_BONE,
+                                R"({
   "title": "Request back bone",
   "type": "object",
   "properties": {
@@ -319,8 +323,9 @@ const auto SCHEMA_REQ_BONE = R"({
     "block",
     "merger"
   ]
-})"_json;
-const auto SCHEMA_BONE = R"({
+})"_json},
+                               {MessageType::MSG_BONE,
+                                R"({
   "title": "Request back bone",
   "type": "object",
   "properties": {
@@ -427,9 +432,9 @@ const auto SCHEMA_BONE = R"({
     "count",
     "producer"
   ]
-})"_json;
-
-const auto SCHEMA_JOIN = R"({
+})"_json},
+                               {MessageType::MSG_JOIN,
+                                R"({
   "title": "Join",
   "type": "object",
   "properties": {
@@ -456,8 +461,9 @@ const auto SCHEMA_JOIN = R"({
     "user",
     "merger"
   ]
-})"_json;
-const auto SCHEMA_RESPONSE_FIRST = R"({
+})"_json},
+                               {MessageType::MSG_RESPONSE_1,
+                                R"({
   "title": "Response 1 to Challenge",
   "type": "object",
   "properties": {
@@ -508,8 +514,9 @@ const auto SCHEMA_RESPONSE_FIRST = R"({
     "dh",
     "user"
   ]
-})"_json;
-const auto SCHEMA_SUCCESS = R"({
+})"_json},
+                               {MessageType::MSG_SUCCESS,
+                                R"({
   "title": "Success in Key Exchange",
   "type": "object",
   "properties": {
@@ -528,8 +535,9 @@ const auto SCHEMA_SUCCESS = R"({
     "user",
     "val"
   ]
-})"_json;
-const auto SCHEMA_SSIG = R"({
+})"_json},
+                               {MessageType::MSG_SSIG,
+                                R"({
   "title": "Signer's Signature",
   "type": "object",
   "properties": {
@@ -564,8 +572,9 @@ const auto SCHEMA_SSIG = R"({
     "block",
     "signer"
   ]
-})"_json;
-const auto SCHEMA_TX = R"({
+})"_json},
+                               {MessageType::MSG_TX,
+                                R"({
   "title": "Transaction",
   "type": "object",
   "properties": {
@@ -670,66 +679,20 @@ const auto SCHEMA_TX = R"({
     "user",
     "endorser"
   ]
-})"_json;
+})"_json}};
 
 class JsonValidator {
 public:
   static bool validateSchema(nlohmann::json &json_obj, MessageType msg_type) {
     try {
-      schema_map[msg_type].validate(json_obj);
+      json_validator validator;
+      validator.set_root_schema(schema_map[msg_type]);
+      validator.validate(json_obj);
       return true;
     } catch (const std::exception &e) {
       return false;
     }
   }
-
-private:
-  static SchemaCheckMap initMap() {
-    SchemaCheckMap init_map;
-
-    json_validator validator_ping;
-    validator_ping.set_root_schema(SCHEMA_PING);
-    init_map[MessageType::MSG_PING] = validator_ping;
-
-    json_validator validator_req_block;
-    validator_req_block.set_root_schema(SCHEMA_REQ_BLOCK);
-    init_map[MessageType::MSG_REQ_BLOCK] = validator_req_block;
-
-    json_validator validator_block;
-    validator_block.set_root_schema(SCHEMA_BLOCK);
-    init_map[MessageType::MSG_BLOCK] = validator_block;
-    
-    json_validator validator_req_bone;
-    validator_req_bone.set_root_schema(SCHEMA_REQ_BONE);
-    init_map[MessageType::MSG_REQ_BONE] = validator_req_bone;
-    
-    json_validator validator_bone;
-    validator_bone.set_root_schema(SCHEMA_BONE);
-    init_map[MessageType::MSG_BONE] = validator_bone;
-
-    json_validator validator_join;
-    validator_join.set_root_schema(SCHEMA_JOIN);
-    init_map[MessageType::MSG_JOIN] = validator_join;
-
-    json_validator validator_response_first;
-    validator_response_first.set_root_schema(SCHEMA_RESPONSE_FIRST);
-    init_map[MessageType::MSG_RESPONSE_1] = validator_response_first;
-
-    json_validator validator_success;
-    validator_success.set_root_schema(SCHEMA_SUCCESS);
-    init_map[MessageType::MSG_SUCCESS] = validator_success;
-
-    json_validator validator_ssig;
-    validator_ssig.set_root_schema(SCHEMA_SSIG);
-    init_map[MessageType::MSG_SSIG] = validator_ssig;
-
-    json_validator validator_tx;
-    validator_tx.set_root_schema(SCHEMA_TX);
-    init_map[MessageType::MSG_TX] = validator_tx;
-
-    return init_map;
-  }
-  inline static SchemaCheckMap schema_map = initMap();
 };
 
 } // namespace net_plugin
