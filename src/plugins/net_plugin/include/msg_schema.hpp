@@ -191,6 +191,9 @@ const auto SCHEMA_BLOCK = R"({
         "usroot":{
           "type": "string"
         },
+        "csroot":{
+          "type": "string"
+        },
         "sgroot":{
           "type": "string"
         }
@@ -198,6 +201,7 @@ const auto SCHEMA_BLOCK = R"({
       "required":[
         "txroot",
         "usroot",
+        "csroot",
         "sgroot"
       ]
     },
@@ -222,19 +226,19 @@ const auto SCHEMA_BLOCK = R"({
     "certificate":{
       "type": "array",
       "itmes": {
-            "type": "object",
-            "properties": {
-              "id": {
-                    "type": "string"
-              },
-              "pk": {
-                    "type": "string"
-              }
-            },
-            "required": [
-              "id",
-              "pk"
-            ]
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "pk": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "pk"
+        ]
       }
     },
     "producer": {
@@ -261,6 +265,166 @@ const auto SCHEMA_BLOCK = R"({
     "state",
     "signer",
     "certificate",
+    "producer"
+  ]
+})"_json;
+const auto SCHEMA_REQ_BONE = R"({
+  "title": "Request back bone",
+  "type": "object",
+  "properties": {
+    "time": {
+      "type": "string"
+    },
+    "world": {
+      "type": "string"
+    },
+    "chain": {
+      "type": "string"
+    },
+    "block": {
+      "type": "object",
+      "properties": {
+        "id" : {
+            "type": "string"
+        },
+        "height" : {
+            "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "height"
+      ]
+    },
+    "merger": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "sig": {
+          "type": "string"
+        }
+      },
+      "required": [
+          "id",
+          "sig"
+      ]
+    }
+  },
+  "required": [
+    "time",
+    "world",
+    "chain",
+    "block",
+    "merger"
+  ]
+})"_json;
+const auto SCHEMA_BONE = R"({
+  "title": "Request back bone",
+  "type": "object",
+  "properties": {
+    "time": {
+      "type": "string"
+    },
+    "block": {
+      "type": "object",
+      "properties": {
+        "id":{
+          "type": "string"
+        },
+        "time":{
+          "type": "string"
+        },
+        "world":{
+          "type": "string"
+        },
+        "chain":{
+          "type": "string"
+        },
+        "height":{
+          "type": "string"
+        },
+        "pid":{
+          "type": "string"
+        },
+        "hash":{
+          "type": "string"
+        }
+      },
+      "required":[
+        "id",
+        "time",
+        "world",
+        "chain",
+        "height",
+        "pid",
+        "hash"
+      ]
+    },
+    "state":{
+      "type": "object",
+      "properties":{
+        "txroot":{
+          "type": "string"
+        },
+        "usroot":{
+          "type": "string"
+        },
+        "csroot":{
+          "type": "string"
+        },
+        "sgroot":{
+          "type": "string"
+        }
+      },
+      "required":[
+        "txroot",
+        "usroot",
+        "csroot",
+        "sgroot"
+      ]
+    },
+    "count": {
+      "type": "object",
+      "properties": {
+        "tx": {
+            "type": "string"
+        },
+        "signer": {
+            "type": "string"
+        }
+      },
+      "required": [
+        "tx",
+        "signer"
+      ]
+    },
+    "producer": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "cert": {
+          "type": "string"
+        },
+        "sig": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "cert",
+        "sig"
+      ]
+    }
+  },
+  "required": [
+    "time",
+    "block",
+    "state",
+    "count",
     "producer"
   ]
 })"_json;
@@ -430,17 +594,19 @@ const auto SCHEMA_TX = R"({
           "type": "string"
         },
         "fee": {
-          "type": "array",
-          "items": {
-            "type": "string"
-          }
+          "type": "string"
         },
         "input": {
           "type": "array",
           "items": {
-            "type": "array",
-            "itmes": {
-              "type": "string"
+            "type": "object",
+            "properties": {
+              "key":{
+                "type": "string"
+              },
+              "value" : {
+                "type" : "string"
+              }
             }
           }
         }
@@ -532,6 +698,14 @@ private:
     json_validator validator_block;
     validator_block.set_root_schema(SCHEMA_BLOCK);
     init_map[MessageType::MSG_BLOCK] = validator_block;
+    
+    json_validator validator_req_bone;
+    validator_req_bone.set_root_schema(SCHEMA_REQ_BONE);
+    init_map[MessageType::MSG_REQ_BONE] = validator_req_bone;
+    
+    json_validator validator_bone;
+    validator_bone.set_root_schema(SCHEMA_BONE);
+    init_map[MessageType::MSG_BONE] = validator_bone;
 
     json_validator validator_join;
     validator_join.set_root_schema(SCHEMA_JOIN);
