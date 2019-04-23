@@ -19,6 +19,7 @@ enum class SerializationAlgorithmType : uint8_t { LZ4 = 0x04, MessagePack = 0x05
 enum class MessageType : uint8_t {
   MSG_PING = 0x31,
   MSG_REQ_BLOCK = 0x32,
+  MSG_REQ_BONE = 0x36,
 
   MSG_JOIN = 0x54,
   MSG_CHALLENGE = 0x55,
@@ -32,6 +33,7 @@ enum class MessageType : uint8_t {
   MSG_REQ_SSIG = 0xB2,
   MSG_SSIG = 0xB3,
   MSG_BLOCK = 0xB4,
+  MSG_BONE = 0xB8
 };
 
 using message_version_type = uint8_t;
