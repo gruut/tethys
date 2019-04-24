@@ -8,7 +8,7 @@ class CreateContractScope < ActiveRecord::Migration[5.2]
       t.integer :var_type, limit: 1
       t.text :var_info
       t.integer :up_time, limit: 8
-      t.column :pid, 'char(43)', index: { unique: true }
+      t.column :pid, 'char(44)', index: { unique: true }
     end
   end
 end
