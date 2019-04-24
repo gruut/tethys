@@ -99,34 +99,24 @@ enum class ErrorMsgType : int {
   NO_SUCH_BLOCK = 89
 };
 
-enum class MsgEntryType { BASE64, TIMESTAMP, TIMESTAMP_NOW, HEX, STRING, UINT, BOOL, ARRAYOFOBJECT, ARRAYOFSTRING };
-
-enum class MsgEntryLength : int {
-  ID = 12,        // Base64 64-bit = 4 * ceil(8-byte/3) = 12 chars
-  SIG_NONCE = 44, // Base64 256-bit = 4 * ceil(32-byte/3) = 44 chars
-  ECDH_XY = 64,   // Hex 256-bit = 64 chars
-  TX_ID = 44,     // Base64 256-bit = 44 chars
-  NOT_LIMITED = 0
+enum class MsgEntryType {
+  TIMESTAMP,
+  BASE58_256,
+  BASE64,
+  BASE64_256,
+  BASE64_SIG,
+  DECIMAL,
+  ALPHA_64,
+  PEM,
+  PK,
+  PEM_PK,
+  HEX_256,
+  CONTRACT_ID,
+  BOOL,
+  NONE
 };
 
-using EntryAttribute = std::tuple<std::string, MsgEntryType, MsgEntryLength>;
+enum class MsgEntryLength : int { NOT_LIMITED = 0, BASE64_256 = 44, BASE58_256 = 44, ALPHA_64 = 8, HEX_256 = 64 };
 
-const std::unordered_map<MessageType, std::vector<EntryAttribute>> MSG_VALID_FILTER = {
-    {MessageType::MSG_JOIN, std::vector<EntryAttribute>{{"sID", MsgEntryType::BASE64, MsgEntryLength::ID},
-                                                        {"time", MsgEntryType::TIMESTAMP_NOW, MsgEntryLength::NOT_LIMITED},
-                                                        {"cID", MsgEntryType::BASE64, MsgEntryLength::ID}}},
-
-    {MessageType::MSG_RESPONSE_1, std::vector<EntryAttribute>{{"sID", MsgEntryType::BASE64, MsgEntryLength::ID},
-                                                              {"time", MsgEntryType::TIMESTAMP_NOW, MsgEntryLength::NOT_LIMITED},
-                                                              {"sN", MsgEntryType::BASE64, MsgEntryLength::SIG_NONCE},
-                                                              {"dhx", MsgEntryType::HEX, MsgEntryLength::ECDH_XY},
-                                                              {"dhy", MsgEntryType::HEX, MsgEntryLength::ECDH_XY}}},
-
-    {MessageType::MSG_SUCCESS, std::vector<EntryAttribute>{{"sID", MsgEntryType::BASE64, MsgEntryLength::ID},
-                                                           {"time", MsgEntryType::TIMESTAMP_NOW, MsgEntryLength::NOT_LIMITED},
-                                                           {"val", MsgEntryType::BOOL, MsgEntryLength::NOT_LIMITED}}},
-
-    {MessageType::MSG_SSIG, std::vector<EntryAttribute>{{"sID", MsgEntryType::BASE64, MsgEntryLength::ID},
-                                                        {"time", MsgEntryType::TIMESTAMP, MsgEntryLength::NOT_LIMITED}}}};
 } // namespace net_plugin
 } // namespace gruut
