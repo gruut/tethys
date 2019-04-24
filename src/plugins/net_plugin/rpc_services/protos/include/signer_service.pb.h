@@ -69,7 +69,7 @@ namespace grpc_signer {
 enum Reply_Status {
   Reply_Status_UNKOWN = 0,
   Reply_Status_SUCCESS = 1,
-  Reply_Status_HEADER_INVALID = 2,
+  Reply_Status_INVALID = 2,
   Reply_Status_INTERNAL = 3,
   Reply_Status_ECDH_ILLEGAL_ACCESS = 21,
   Reply_Status_ECDH_MAX_SIGNER_POOL = 22,
@@ -408,8 +408,8 @@ class Reply : public ::google::protobuf::Message /* @@protoc_insertion_point(cla
     Reply_Status_UNKOWN;
   static const Status SUCCESS =
     Reply_Status_SUCCESS;
-  static const Status HEADER_INVALID =
-    Reply_Status_HEADER_INVALID;
+  static const Status INVALID =
+    Reply_Status_INVALID;
   static const Status INTERNAL =
     Reply_Status_INTERNAL;
   static const Status ECDH_ILLEGAL_ACCESS =

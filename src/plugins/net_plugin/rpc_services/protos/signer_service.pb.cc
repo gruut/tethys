@@ -144,21 +144,21 @@ void AddDescriptorsImpl() {
   static const char descriptor[] GOOGLE_PROTOBUF_ATTRIBUTE_SECTION_VARIABLE(protodesc_cold) = {
       "\n\024signer_service.proto\022\013grpc_signer\"\032\n\010I"
       "dentity\022\016\n\006sender\030\001 \001(\014\"\032\n\007Request\022\017\n\007me"
-      "ssage\030\001 \001(\014\"\371\001\n\005Reply\022)\n\006status\030\001 \001(\0162\031."
+      "ssage\030\001 \001(\014\"\362\001\n\005Reply\022)\n\006status\030\001 \001(\0162\031."
       "grpc_signer.Reply.Status\022\017\n\007message\030\002 \001("
-      "\014\"\263\001\n\006Status\022\n\n\006UNKOWN\020\000\022\013\n\007SUCCESS\020\001\022\022\n"
-      "\016HEADER_INVALID\020\002\022\014\n\010INTERNAL\020\003\022\027\n\023ECDH_"
-      "ILLEGAL_ACCESS\020\025\022\030\n\024ECDH_MAX_SIGNER_POOL"
-      "\020\026\022\020\n\014ECDH_TIMEOUT\020\027\022\024\n\020ECDH_INVALID_SIG"
-      "\020\030\022\023\n\017ECDH_INVALID_PK\020\0312\223\001\n\022GruutSignerS"
-      "ervice\022@\n\013OpenChannel\022\025.grpc_signer.Iden"
-      "tity\032\024.grpc_signer.Request\"\000(\0010\001\022;\n\rSign"
-      "erService\022\024.grpc_signer.Request\032\022.grpc_s"
-      "igner.Reply\"\000B0\n\036com.gruutnetworks.gruut"
-      "generalB\014GruutNetworkP\001b\006proto3"
+      "\014\"\254\001\n\006Status\022\n\n\006UNKOWN\020\000\022\013\n\007SUCCESS\020\001\022\013\n"
+      "\007INVALID\020\002\022\014\n\010INTERNAL\020\003\022\027\n\023ECDH_ILLEGAL"
+      "_ACCESS\020\025\022\030\n\024ECDH_MAX_SIGNER_POOL\020\026\022\020\n\014E"
+      "CDH_TIMEOUT\020\027\022\024\n\020ECDH_INVALID_SIG\020\030\022\023\n\017E"
+      "CDH_INVALID_PK\020\0312\223\001\n\022GruutSignerService\022"
+      "@\n\013OpenChannel\022\025.grpc_signer.Identity\032\024."
+      "grpc_signer.Request\"\000(\0010\001\022;\n\rSignerServi"
+      "ce\022\024.grpc_signer.Request\032\022.grpc_signer.R"
+      "eply\"\000B0\n\036com.gruutnetworks.gruutgeneral"
+      "B\014GruutNetworkP\001b\006proto3"
   };
   ::google::protobuf::DescriptorPool::InternalAddGeneratedFile(
-      descriptor, 551);
+      descriptor, 544);
   ::google::protobuf::MessageFactory::InternalRegisterGeneratedFile(
     "signer_service.proto", &protobuf_RegisterTypes);
 }
@@ -199,7 +199,7 @@ bool Reply_Status_IsValid(int value) {
 #if !defined(_MSC_VER) || _MSC_VER >= 1900
 const Reply_Status Reply::UNKOWN;
 const Reply_Status Reply::SUCCESS;
-const Reply_Status Reply::HEADER_INVALID;
+const Reply_Status Reply::INVALID;
 const Reply_Status Reply::INTERNAL;
 const Reply_Status Reply::ECDH_ILLEGAL_ACCESS;
 const Reply_Status Reply::ECDH_MAX_SIGNER_POOL;

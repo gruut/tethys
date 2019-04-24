@@ -13,17 +13,163 @@
 #include <boost/algorithm/string.hpp>
 
 #include <algorithm>
+#include <cctype>
 #include <cstring>
 #include <exception>
 #include <future>
 #include <regex>
 #include <thread>
+#include <type_traits>
 
 namespace gruut {
 namespace net_plugin {
 
 using namespace appbase;
 using namespace std;
+
+const auto BASE64_REGEX = "^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{3}=|[A-Za-z0-9+/]{2}==)?$";
+const auto BASE58_REGEX = "^[A-HJ-NP-Za-km-z1-9]*$";
+const auto ALPHA_REGEX = "^[A-Z]*$";
+
+class MessageValidator {
+public:
+  bool validate(nlohmann::json &msg_body, MessageType msg_type) {
+    bool check;
+    for (auto &[key, val] : msg_body.items()) {
+      if (val.is_array())
+        continue;
+      else if (val.is_object()) {
+        check = validate(val, msg_type);
+        if (!check)
+          return false;
+      } else {
+        check = checkEntry(key, val);
+        if (!check)
+          return false;
+      }
+    }
+    return true;
+  }
+
+private:
+  template <typename T>
+  bool checkEntry(const string &key, T &val) {
+    auto entry_type = getEntryType(key);
+    if (is_same<string, T>::value)
+      return validateEntry(entry_type, val);
+    else if (is_same<bool, T>::value)
+      return true;
+    return false;
+  }
+  bool validateEntry(MsgEntryType entry_type, const string &val) {
+    switch (entry_type) {
+    case MsgEntryType::DECIMAL:
+    case MsgEntryType::TIMESTAMP: {
+      if (!all_of(val.begin(), val.end(), ::isdigit)) {
+        logger::ERROR("[MVAL] Error on TIMESTAMP");
+        return false;
+      }
+      return true;
+    }
+    case MsgEntryType::PK:
+    case MsgEntryType::BASE64:
+    case MsgEntryType::BASE64_SIG: {
+      regex rgx(BASE64_REGEX);
+      if (!regex_match(val, rgx)) {
+        logger::ERROR("[MVAL] Error on BASE64");
+        return false;
+      }
+      return true;
+    }
+    case MsgEntryType::BASE64_256: {
+      regex rgx(BASE64_REGEX);
+      if (val.size() != static_cast<int>(MsgEntryLength::BASE64_256) || !regex_match(val, rgx)) {
+        logger::ERROR("[MVAL] Error on BASE64_256");
+        return false;
+      }
+      return true;
+    }
+    case MsgEntryType::BASE58_256: {
+      regex rgx(BASE58_REGEX);
+      if (val.size() != static_cast<int>(MsgEntryLength::BASE58_256) || !regex_match(val, rgx)) {
+        logger::ERROR("[MVAL] Error on BASE58_256");
+        return false;
+      }
+      return true;
+    }
+    case MsgEntryType::ALPHA_64: {
+      regex rgx(ALPHA_REGEX);
+      if (val.size() != static_cast<int>(MsgEntryLength::ALPHA_64) || !regex_match(val, rgx)) {
+        logger::ERROR("[MVAL] Error on ALPHA_64");
+        return false;
+      }
+      return true;
+    }
+    case MsgEntryType::PEM: {
+      string begin_str = "-----BEGIN CERTIFICATE-----";
+      string end_str = "-----END CERTIFICATE-----";
+      auto found1 = val.find(begin_str);
+      auto found2 = val.find(end_str);
+      if (found1 == string::npos || found2 == string::npos) {
+        logger::ERROR("[MVAL] Error on PEM");
+        return false;
+      }
+      auto content_len = val.length() - begin_str.length() - end_str.length();
+      auto content = val.substr(begin_str.length(), content_len);
+      return validateEntry(MsgEntryType::BASE64, content);
+    }
+    case MsgEntryType::PEM_PK: {
+      if (val.find("BEGIN") != string::npos)
+        return validateEntry(MsgEntryType::PEM, val);
+      else
+        return validateEntry(MsgEntryType::PK, val);
+    }
+    case MsgEntryType::HEX_256: {
+      if (val.size() != static_cast<int>(MsgEntryLength::HEX_256) || !all_of(val.begin(), val.end(), ::isxdigit)) {
+        logger::ERROR("[MVAL] Error on HEX_256");
+        return false;
+      }
+      return true;
+    }
+    case MsgEntryType::CONTRACT_ID: {
+      vector<string> tokens;
+      boost::iter_split(tokens, val, boost::algorithm::first_finder("::"));
+      if (tokens.size() != 4)
+        return false;
+      // TODO : Each tokens may need to be validated
+      return true;
+    }
+    default:
+      return false;
+    }
+  }
+  MsgEntryType getEntryType(const string &key) {
+    if (key == "time" || key == "btime")
+      return MsgEntryType::TIMESTAMP;
+    else if (key == "pid" || key == "txid" || key == "receiver" || key == "id" || key == "user" || key == "merger")
+      return MsgEntryType::BASE58_256;
+    else if (key == "aggz")
+      return MsgEntryType::BASE64;
+    else if (key == "txroot" || key == "usroot" || key == "csroot" || key == "sgroot" || key == "hash")
+      return MsgEntryType::BASE64_256;
+    else if (key == "sig")
+      return MsgEntryType::BASE64_SIG;
+    else if (key == "fee" || key == "height" || key == "tx" || key == "signer")
+      return MsgEntryType::DECIMAL;
+    else if (key == "world" || key == "chain")
+      return MsgEntryType::ALPHA_64;
+    else if (key == "cert")
+      return MsgEntryType::PEM;
+    else if (key == "pk")
+      return MsgEntryType::PEM_PK;
+    else if (key == "x" || key == "y")
+      return MsgEntryType::HEX_256;
+    else if (key == "val")
+      return MsgEntryType::BOOL;
+    else
+      return MsgEntryType::NONE;
+  }
+};
 
 class MessageParser {
 public:
@@ -216,7 +362,11 @@ void SignerService::proceed() {
       if (input_data.has_value()) {
         auto msg_type = input_data.value().type;
         auto signer_id_b58 = input_data.value().sender_id;
-        if (msg_type == MessageType::MSG_SSIG || msg_type == MessageType::MSG_SUCCESS) {
+        MessageValidator msg_validator;
+        if (!msg_validator.validate(input_data.value().body, msg_type))
+          rpc_status = Status(StatusCode::INVALID_ARGUMENT, "Bad request (message validate fail");
+
+        if (rpc_status.ok() && (msg_type == MessageType::MSG_SSIG || msg_type == MessageType::MSG_SUCCESS)) {
           auto hmac_key = msg_type == MessageType::MSG_SSIG ? m_signer_pool_manager->getHmacKey(signer_id_b58)
                                                             : m_signer_pool_manager->getTempHmacKey(signer_id_b58);
           if (hmac_key.has_value())
@@ -244,16 +394,14 @@ void SignerService::proceed() {
               m_reply.set_message(reply_packed_msg);
               m_reply.set_status(Reply_Status_SUCCESS); // SUCCESS
             } else {
-              // TODO : need other reply_status code ( INVALID HMAC )
-              m_reply.set_status(Reply_Status_HEADER_INVALID);
+              m_reply.set_status(Reply_Status_INVALID);
             }
           }
         } else {
-          // TODO : need other reply_status code ( INVALID HMAC )
-          m_reply.set_status(Reply_Status_HEADER_INVALID);
+          m_reply.set_status(Reply_Status_INVALID);
         }
       } else {
-        m_reply.set_status(Reply_Status_HEADER_INVALID); // INVALID
+        m_reply.set_status(Reply_Status_INVALID); // INVALID
       }
     } catch (exception &e) { // INTERNAL
       m_reply.set_status(Reply_Status_INTERNAL);
@@ -283,44 +431,48 @@ void MergerService::proceed() {
 
     try {
       string packed_msg = m_request.message();
-      // Forwarding message to other nodes
-      if (m_request.broadcast()) {
-        string msg_id = m_request.message_id();
+      MessageParser msg_parser;
+      auto input_data = msg_parser.parseMessage(packed_msg, rpc_status);
+      if (input_data.has_value()) {
+        MessageValidator msg_validator;
+        if (!msg_validator.validate(input_data.value().body, input_data.value().type))
+          rpc_status = Status(StatusCode::INVALID_ARGUMENT, "Bad request (message validate fail");
+      }
+      if (rpc_status.ok()) {
+        // Forwarding message to other nodes
+        if (m_request.broadcast()) {
+          string msg_id = m_request.message_id();
 
-        if (m_broadcast_check_table->count(msg_id) > 0) {
-          m_reply.set_status(grpc_merger::MsgStatus_Status_DUPLICATED);
-          m_reply.set_message("duplicate message");
-          m_receive_status = RpcCallStatus::FINISH;
-          m_responder.Finish(m_reply, rpc_status, this);
-          break;
-        }
-        uint64_t now = TimeUtil::nowBigInt();
-        m_broadcast_check_table->insert({msg_id, now});
+          if (m_broadcast_check_table->count(msg_id) > 0) {
+            m_reply.set_status(grpc_merger::MsgStatus_Status_DUPLICATED);
+            m_reply.set_message("duplicate message");
+            m_receive_status = RpcCallStatus::FINISH;
+            m_responder.Finish(m_reply, rpc_status, this);
+            break;
+          }
+          uint64_t now = TimeUtil::nowBigInt();
+          m_broadcast_check_table->insert({msg_id, now});
 
-        grpc_merger::RequestMsg request;
-        request.set_message(packed_msg);
-        request.set_broadcast(true);
+          grpc_merger::RequestMsg request;
+          request.set_message(packed_msg);
+          request.set_broadcast(true);
 
-        ClientContext context;
-        std::chrono::time_point deadline = std::chrono::system_clock::now() + GENERAL_SERVICE_TIMEOUT;
-        context.set_deadline(deadline);
+          ClientContext context;
+          std::chrono::time_point deadline = std::chrono::system_clock::now() + GENERAL_SERVICE_TIMEOUT;
+          context.set_deadline(deadline);
 
-        grpc_merger::MsgStatus msg_status;
+          grpc_merger::MsgStatus msg_status;
 
-        for (auto &bucket : *m_routing_table) {
-          if (!bucket.empty()) {
-            auto nodes = bucket.selectRandomAliveNodes(PARALLELISM_ALPHA);
-            for (auto &n : nodes) {
-              auto stub = GruutMergerService::NewStub(n.getChannelPtr());
-              stub->MergerService(&context, request, &msg_status);
+          for (auto &bucket : *m_routing_table) {
+            if (!bucket.empty()) {
+              auto nodes = bucket.selectRandomAliveNodes(PARALLELISM_ALPHA);
+              for (auto &n : nodes) {
+                auto stub = GruutMergerService::NewStub(n.getChannelPtr());
+                stub->MergerService(&context, request, &msg_status);
+              }
             }
           }
         }
-      }
-      MessageParser msg_parser;
-      auto input_data = msg_parser.parseMessage(packed_msg, rpc_status);
-
-      if (rpc_status.ok()) {
         m_reply.set_status(grpc_merger::MsgStatus_Status_SUCCESS); // SUCCESS
         m_reply.set_message("OK");
 
