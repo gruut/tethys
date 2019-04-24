@@ -1,6 +1,6 @@
-class CreateSignature < ActiveRecord::Migration[5.2]
+class CreateSupportSignature < ActiveRecord::Migration[5.2]
   def change
-    create_table :signatures, id: false do |t|
+    create_table :support_signatures, id: false do |t|
       t.integer :ssidx, primary_key: true
       t.integer :bsidx, index: true, null: false
       t.column :ss_id, 'char(44)'

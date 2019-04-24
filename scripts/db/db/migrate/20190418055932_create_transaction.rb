@@ -4,7 +4,6 @@ class CreateTransaction < ActiveRecord::Migration[5.2]
       t.integer :tsidx, primary_key: true
       t.column :tx_id, 'char(44)', index: { unique: true }
       t.integer :tx_time, limit: 8
-      t.column :tx_seed, 'char(22)'
       t.string :tx_contract_id, limit: 255
       t.integer :tx_fee_author
       t.integer :tx_fee_user
