@@ -22,7 +22,7 @@ message Reply {
     enum Status{
         UNKOWN = 0;
         SUCCESS = 1;
-        HEADER_INVALID = 2;
+        INVALID = 2;
         INTERNAL = 3;
         ECDH_ILLEGAL_ACCESS = 21;
         ECDH_MAX_SIGNER_POOL = 22;
