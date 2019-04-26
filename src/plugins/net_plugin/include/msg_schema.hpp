@@ -707,6 +707,37 @@ static SchemaMap schema_map = {{MessageType::MSG_PING,
           "txid"
   ]
 })"_json},
+                               {MessageType::MSG_RES_TX_CHECK,
+                                R"({
+    "title": "Result of REQ_TX_CHECK",
+    "type": "object",
+    "properties": {
+        "time": { "type": "string" },
+        "block": { "type": "string"},
+        "confirm": { "type": "boolean"},
+        "proof": {"type": "string"},
+        "output": {"type": "string"},
+        "merger": {
+            "type": "object",
+            "properties":{
+                "id": {"type": "string"},
+                "sig": {"type": "string"}
+            },
+            "required":[
+                "id",
+                "sig"
+            ]
+        }
+    },
+    "required": [
+        "time",
+        "block",
+        "confirm",
+        "proof",
+        "output",
+        "merger"
+    ]
+})"_json},
                                {MessageType::MSG_QUERY,
                                 R"({
    "title": "Request Queries",
@@ -719,6 +750,31 @@ static SchemaMap schema_map = {{MessageType::MSG_PING,
        "type",
        "where"
    ]
+})"_json},
+                               {MessageType::MSG_RESULT, R"({
+    "title": "Result Queries",
+    "type": "object",
+    "properties": {
+        "name": {
+            "type": "array",
+            "items": {
+                "type": "string"
+            }
+        },
+        "data": {
+            "type": "array",
+            "items": {
+                "type": "array",
+                "items":{
+                    "type": "string"
+                }
+            }
+        }
+    },
+    "required": [
+        "name",
+        "data"
+    ]
 })"_json}};
 
 class JsonValidator {
