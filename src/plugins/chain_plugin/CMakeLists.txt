@@ -16,8 +16,9 @@ endif()
 
 target_link_libraries(chain_plugin appbase log)
 target_include_directories(chain_plugin PUBLIC
-        "/usr/local/include/soci"
         "/usr/local/include/mysql"
+        "/usr/include/mysql"
+        "${SOCI_INCLUDE_DIR}"
         "${CMAKE_CURRENT_SOURCE_DIR}/../../../lib/appbase"
         "${CMAKE_CURRENT_SOURCE_DIR}/../../../lib/log"
         )
