@@ -33,7 +33,9 @@ enum class MessageType : uint8_t {
   MSG_REQ_SSIG = 0xB2,
   MSG_SSIG = 0xB3,
   MSG_BLOCK = 0xB4,
-  MSG_BONE = 0xB8
+  MSG_BONE = 0xB8,
+
+  MSG_SETUP_MERGER = 0xE1
 };
 
 using message_version_type = uint8_t;

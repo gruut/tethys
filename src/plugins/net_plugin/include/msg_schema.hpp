@@ -608,13 +608,9 @@ static SchemaMap schema_map = {{MessageType::MSG_PING,
         "input": {
           "type": "array",
           "items": {
-            "type": "object",
-            "properties": {
-              "key":{
-                "type": "string"
-              },
-              "value" : {
-                "type" : "string"
+            "type": "array",
+            "items": {
+                "type": "object"
               }
             }
           }
@@ -674,11 +670,22 @@ static SchemaMap schema_map = {{MessageType::MSG_PING,
     "world",
     "chain",
     "time",
-    "seed",
     "body",
     "user",
     "endorser"
   ]
+})"_json},
+                               {MessageType::MSG_SETUP_MERGER, R"({
+	"title": "Setup merger",
+	"type": "object",
+	"properties": {
+		"enc_sk": { "type": "string" },
+		"cert": { "type": "string" }
+	},
+	"required": [
+		"enc_sk",
+		"cert"
+	]
 })"_json}};
 
 class JsonValidator {
