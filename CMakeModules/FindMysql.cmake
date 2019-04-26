@@ -31,6 +31,7 @@ else(WIN32)
             $ENV{MYSQL_INCLUDE_DIR}
             $ENV{MYSQL_DIR}/include
             /usr/local/mysql/include
+            /usr/include/mysql
             /opt/mysql/mysql/include
             PATH_SUFFIXES
             mysql
@@ -79,11 +80,7 @@ else(WIN32)
             $ENV{MYSQL_DIR}/lib/mysql
             /usr/local/mysql/lib
             /opt/mysql/mysql/lib
-            $ENV{MYSQL_DIR}/libmysql_r/.libs
-            $ENV{MYSQL_DIR}/lib
-            $ENV{MYSQL_DIR}/lib/mysql
-            /usr/local/mysql/lib
-            /opt/mysql/mysql/lib
+            /usr/lib/x86_64-linux-gnu
             PATH_SUFFIXES
             mysql
             )
