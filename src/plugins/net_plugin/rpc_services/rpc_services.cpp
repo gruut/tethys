@@ -33,13 +33,15 @@ const auto ALPHA_REGEX = "^[A-Z]*$";
 
 class MessageValidator {
 public:
-  bool validate(nlohmann::json &msg_body, MessageType msg_type) {
+  bool validate(nlohmann::json &msg_body) {
     bool check;
     for (auto &[key, val] : msg_body.items()) {
       if (val.is_array())
         continue;
       else if (val.is_object()) {
-        check = validate(val, msg_type);
+        if(key == "where")
+          continue;
+        check = validate(val);
         if (!check)
           return false;
       } else {
@@ -105,18 +107,11 @@ private:
       }
       return true;
     }
+    case MsgEntryType::ENC_PRIVATE_PEM: {
+      return checkPemContents(MsgEntryType::ENC_PRIVATE_PEM, val);
+    }
     case MsgEntryType::PEM: {
-      string begin_str = "-----BEGIN CERTIFICATE-----";
-      string end_str = "-----END CERTIFICATE-----";
-      auto found1 = val.find(begin_str);
-      auto found2 = val.find(end_str);
-      if (found1 == string::npos || found2 == string::npos) {
-        logger::ERROR("[MVAL] Error on PEM");
-        return false;
-      }
-      auto content_len = val.length() - begin_str.length() - end_str.length();
-      auto content = val.substr(begin_str.length(), content_len);
-      return validateEntry(MsgEntryType::BASE64, content);
+      return checkPemContents(MsgEntryType::PEM, val);
     }
     case MsgEntryType::PEM_PK: {
       if (val.find("BEGIN") != string::npos)
@@ -148,7 +143,7 @@ private:
       return MsgEntryType::TIMESTAMP;
     else if (key == "pid" || key == "txid" || key == "receiver" || key == "id" || key == "user" || key == "merger")
       return MsgEntryType::BASE58_256;
-    else if (key == "aggz")
+    else if (key == "aggz" || key == "block" || key == "proof" || key == "output")
       return MsgEntryType::BASE64;
     else if (key == "txroot" || key == "usroot" || key == "csroot" || key == "sgroot" || key == "hash")
       return MsgEntryType::BASE64_256;
@@ -164,10 +159,37 @@ private:
       return MsgEntryType::PEM_PK;
     else if (key == "x" || key == "y")
       return MsgEntryType::HEX_256;
-    else if (key == "val")
+    else if (key == "val" || key == "confirm")
       return MsgEntryType::BOOL;
     else
       return MsgEntryType::NONE;
+  }
+  bool checkPemContents(MsgEntryType pem_type, const string &pem){
+    string begin_str, end_str;
+    switch(pem_type){
+    case MsgEntryType::PEM:{
+      begin_str = "-----BEGIN CERTIFICATE-----";
+      end_str = "-----END CERTIFICATE-----";
+      break;
+    }
+    case MsgEntryType::ENC_PRIVATE_PEM:{
+      begin_str = "-----BEGIN ENCRYPTED PRIVATE KEY-----";
+      end_str = "-----END ENCRYPTED PRIVATE KEY-----";
+      break;
+    }
+    default: {
+      return false;
+    }
+    }
+    auto found1 = pem.find(begin_str);
+    auto found2 = pem.find(end_str);
+    if(found1 == string::npos || found2 == string::npos) {
+      logger::ERROR("[MVAL] Error on PEM");
+      return false;
+    }
+    auto content_len = pem.length() - begin_str.length() - end_str.length();
+    auto content = pem.substr(begin_str.length(), content_len);
+    return validateEntry(MsgEntryType::BASE64, content);
   }
 };
 
@@ -363,7 +385,7 @@ void SignerService::proceed() {
         auto msg_type = input_data.value().type;
         auto signer_id_b58 = input_data.value().sender_id;
         MessageValidator msg_validator;
-        if (!msg_validator.validate(input_data.value().body, msg_type))
+        if (!msg_validator.validate(input_data.value().body))
           rpc_status = Status(StatusCode::INVALID_ARGUMENT, "Bad request (message validate fail");
 
         if (rpc_status.ok() && (msg_type == MessageType::MSG_SSIG || msg_type == MessageType::MSG_SUCCESS)) {
@@ -435,7 +457,7 @@ void MergerService::proceed() {
       auto input_data = msg_parser.parseMessage(packed_msg, rpc_status);
       if (input_data.has_value()) {
         MessageValidator msg_validator;
-        if (!msg_validator.validate(input_data.value().body, input_data.value().type))
+        if (!msg_validator.validate(input_data.value().body))
           rpc_status = Status(StatusCode::INVALID_ARGUMENT, "Bad request (message validate fail");
       }
       if (rpc_status.ok()) {
