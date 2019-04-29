@@ -115,6 +115,7 @@ enum class MsgEntryType {
   DECIMAL,
   ALPHA_64,
   PEM,
+  ENC_PRIVATE_PEM,
   PK,
   PEM_PK,
   HEX_256,
