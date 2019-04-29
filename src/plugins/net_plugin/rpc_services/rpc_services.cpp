@@ -292,7 +292,7 @@ private:
   optional<OutNetMsg> handle_message(InNetMsg &msg) {
     auto msg_type = msg.type;
 
-    if (msg_type == MessageType::MSG_BLOCK || msg_type == MessageType::MSG_TX || msg_type == MessageType::MSG_REQ_BLOCK) {
+    if (msg_type == MessageType::MSG_REQ_BONE || msg_type == MessageType::MSG_REQ_BLOCK) {
       mapping_user_id_to_net_id(msg);
     }
 
@@ -308,7 +308,9 @@ private:
       // TODO : ssig message must be sent to `block producer`
     case MessageType::MSG_REQ_TX_CHECK:
     case MessageType::MSG_QUERY:
-      // TODO : REQ_TX_CHECK & QUERY message must be sent to `chain plugin`
+    case MessageType::MSG_REQ_BONE:
+    case MessageType::MSG_REQ_BLOCK:
+      // TODO : REQ_TX_CHECK , QUERY, REQ_BONE, REQ_BLOCK message must be sent to `chain plugin`
       return {};
     default:
       return {};

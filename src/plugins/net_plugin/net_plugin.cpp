@@ -360,7 +360,7 @@ public:
   }
 
   bool checkMergerMsgType(MessageType msg_type) {
-    return (msg_type == MessageType::MSG_TX || msg_type == MessageType::MSG_REQ_BLOCK || msg_type == MessageType::MSG_BLOCK);
+    return (msg_type == MessageType::MSG_TX || msg_type == MessageType::MSG_BONE || msg_type == MessageType::MSG_BLOCK);
   }
 
   bool checkUserMsgType(MessageType msg_type) {
