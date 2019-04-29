@@ -2,7 +2,7 @@
 
 #include "../protos/include/kademlia_service.grpc.pb.h"
 #include "../protos/include/merger_service.grpc.pb.h"
-#include "../protos/include/signer_service.grpc.pb.h"
+#include "../protos/include/user_service.grpc.pb.h"
 #include <grpc/support/log.h>
 #include <grpcpp/grpcpp.h>
 

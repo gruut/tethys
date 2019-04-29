@@ -1,7 +1,7 @@
 #pragma once
 
-#include "../rpc_services/protos/include/signer_service.grpc.pb.h"
-#include "../rpc_services/protos/include/signer_service.pb.h"
+#include "../rpc_services/protos/include/user_service.grpc.pb.h"
+#include "../rpc_services/protos/include/user_service.pb.h"
 
 #include <memory>
 #include <mutex>
