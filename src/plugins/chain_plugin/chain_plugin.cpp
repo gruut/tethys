@@ -25,6 +25,7 @@ public:
 
   void initialize() {
     chain = make_unique<Chain>(dbms, table_name, db_user_id, db_password);
+    chain->startup(genesis_state);
   }
 
   void push_transaction(nlohmann::json transaction) {

@@ -663,8 +663,7 @@ static SchemaMap schema_map = {{MessageType::MSG_PING,
           "sig"
         ]
       }
-    }
-  },
+    },
   "required": [
     "txid",
     "world",
