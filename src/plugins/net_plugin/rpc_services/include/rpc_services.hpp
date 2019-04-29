@@ -2,7 +2,7 @@
 
 #include "../protos/include/kademlia_service.grpc.pb.h"
 #include "../protos/include/merger_service.grpc.pb.h"
-#include "../protos/include/signer_service.grpc.pb.h"
+#include "../protos/include/user_service.grpc.pb.h"
 #include <grpc/support/log.h>
 #include <grpcpp/grpcpp.h>
 
@@ -26,7 +26,7 @@ namespace net_plugin {
 
 using namespace grpc;
 using namespace grpc_merger;
-using namespace grpc_signer;
+using namespace grpc_user;
 using namespace kademlia;
 
 enum class RpcCallStatus { CREATE, PROCESS, READ, WAIT, FINISH };
@@ -49,7 +49,7 @@ protected:
 
 class OpenChannelWithSigner final : public CallData {
 public:
-  OpenChannelWithSigner(GruutSignerService::AsyncService *service, ServerCompletionQueue *cq, shared_ptr<SignerConnTable> signer_conn_table,
+  OpenChannelWithSigner(GruutUserService::AsyncService *service, ServerCompletionQueue *cq, shared_ptr<SignerConnTable> signer_conn_table,
                         shared_ptr<SignerPoolManager> signer_pool_manager)
       : m_stream(&m_context), m_signer_conn_table(move(signer_conn_table)), m_signer_pool_manager(move(signer_pool_manager)) {
 
@@ -62,18 +62,18 @@ public:
 
 private:
   string m_signer_id_b58;
-  GruutSignerService::AsyncService *m_service;
+  GruutUserService::AsyncService *m_service;
   Identity m_request;
-  ServerAsyncReaderWriter<Request, Identity> m_stream;
+  ServerAsyncReaderWriter<Message, Identity> m_stream;
 
   shared_ptr<SignerConnTable> m_signer_conn_table;
   shared_ptr<SignerPoolManager> m_signer_pool_manager;
   void proceed() override;
 };
 
-class SignerService final : public CallData {
+class KeyExService final : public CallData {
 public:
-  SignerService(GruutSignerService::AsyncService *service, ServerCompletionQueue *cq, shared_ptr<SignerPoolManager> signer_pool_manager)
+  KeyExService(GruutUserService::AsyncService *service, ServerCompletionQueue *cq, shared_ptr<SignerPoolManager> signer_pool_manager)
       : m_responder(&m_context), m_signer_pool_manager(move(signer_pool_manager)) {
     m_service = service;
     m_completion_queue = cq;
@@ -83,7 +83,7 @@ public:
   }
 
 private:
-  GruutSignerService::AsyncService *m_service;
+  GruutUserService::AsyncService *m_service;
   Request m_request;
   Reply m_reply;
   ServerAsyncResponseWriter<Reply> m_responder;

@@ -34,7 +34,7 @@ constexpr auto FIND_NODE_TIMEOUT = std::chrono::milliseconds(100);
 class NetPluginImpl {
 public:
   GruutMergerService::AsyncService merger_service;
-  GruutSignerService::AsyncService signer_service;
+  GruutUserService::AsyncService user_service;
   KademliaService::AsyncService kademlia_service;
 
   string p2p_address;
@@ -83,7 +83,7 @@ public:
     ServerBuilder builder;
 
     builder.AddListeningPort(p2p_address, grpc::InsecureServerCredentials());
-    builder.RegisterService(&signer_service);
+    builder.RegisterService(&user_service);
     builder.RegisterService(&merger_service);
     builder.RegisterService(&kademlia_service);
 
@@ -99,8 +99,8 @@ public:
     broadcast_check_table = make_shared<BroadcastMsgTable>();
     id_mapping_table = make_shared<IdMappingTable>();
 
-    new OpenChannelWithSigner(&signer_service, completion_queue.get(), signer_conn_table, signer_pool_manager);
-    new SignerService(&signer_service, completion_queue.get(), signer_pool_manager);
+    new OpenChannelWithSigner(&user_service, completion_queue.get(), signer_conn_table, signer_pool_manager);
+    new KeyExService(&user_service, completion_queue.get(), signer_pool_manager);
     new MergerService(&merger_service, completion_queue.get(), routing_table, broadcast_check_table, id_mapping_table);
     new FindNode(&kademlia_service, completion_queue.get(), routing_table);
   }
@@ -354,9 +354,9 @@ public:
           packed_msg = MessagePacker::packMessage<MACAlgorithmType::NONE>(out_msg);
 
         auto tag = static_cast<Identity *>(signer_rpc_info.tag_identity);
-        Request req;
-        req.set_message(packed_msg);
-        signer_rpc_info.send_msg->Write(req, tag);
+        Message msg;
+        msg.set_message(packed_msg);
+        signer_rpc_info.send_msg->Write(msg, tag);
       }
     }
   }

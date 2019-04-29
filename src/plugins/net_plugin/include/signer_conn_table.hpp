@@ -1,7 +1,7 @@
 #pragma once
 
-#include "../rpc_services/protos/include/signer_service.grpc.pb.h"
-#include "../rpc_services/protos/include/signer_service.pb.h"
+#include "../rpc_services/protos/include/user_service.grpc.pb.h"
+#include "../rpc_services/protos/include/user_service.pb.h"
 
 #include <memory>
 #include <mutex>
@@ -11,12 +11,12 @@
 
 namespace gruut {
 using namespace grpc;
-using namespace grpc_signer;
+using namespace grpc_user;
 using namespace std;
 
 struct SignerRpcInfo {
   void *tag_identity;
-  ServerAsyncReaderWriter<Request, Identity> *send_msg;
+  ServerAsyncReaderWriter<Message, Identity> *send_msg;
 };
 
 class SignerConnTable {
@@ -33,7 +33,7 @@ public:
 
   ~SignerConnTable() = default;
 
-  void setRpcInfo(const string &recv_id_b58, ServerAsyncReaderWriter<Request, Identity> *reply_rpc, void *tag) {
+  void setRpcInfo(const string &recv_id_b58, ServerAsyncReaderWriter<Message, Identity> *reply_rpc, void *tag) {
     {
       lock_guard<std::mutex> lock(table_mutex);
       signer_conn_table[recv_id_b58].send_msg = reply_rpc;
