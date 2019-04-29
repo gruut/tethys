@@ -357,7 +357,7 @@ void OpenChannelWithSigner::proceed() {
   }
 }
 
-Status SignerService::verifyHMAC(string_view packed_msg, vector<uint8_t> &hmac_key) {
+Status KeyExService::verifyHMAC(string_view packed_msg, vector<uint8_t> &hmac_key) {
   auto hmac_str = packed_msg.substr(packed_msg.length() - 32);
   vector<uint8_t> hmac(hmac_str.begin(), hmac_str.end());
   auto raw_msg = string(packed_msg.substr(0, packed_msg.length() - 32));
@@ -367,15 +367,15 @@ Status SignerService::verifyHMAC(string_view packed_msg, vector<uint8_t> &hmac_k
   return Status::OK;
 }
 
-void SignerService::proceed() {
+void KeyExService::proceed() {
   switch (m_receive_status) {
   case RpcCallStatus::CREATE: {
     m_receive_status = RpcCallStatus::PROCESS;
-    m_service->RequestSignerService(&m_context, &m_request, &m_responder, m_completion_queue, m_completion_queue, this);
+    m_service->RequestKeyExService(&m_context, &m_request, &m_responder, m_completion_queue, m_completion_queue, this);
   } break;
 
   case RpcCallStatus::PROCESS: {
-    new SignerService(m_service, m_completion_queue, m_signer_pool_manager);
+    new KeyExService(m_service, m_completion_queue, m_signer_pool_manager);
     Status rpc_status;
     try {
       string packed_msg = m_request.message();
