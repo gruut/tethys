@@ -39,7 +39,7 @@ public:
       if (val.is_array())
         continue;
       else if (val.is_object()) {
-        if(key == "where")
+        if (key == "where")
           continue;
         check = validate(val);
         if (!check)
@@ -164,15 +164,15 @@ private:
     else
       return MsgEntryType::NONE;
   }
-  bool checkPemContents(MsgEntryType pem_type, const string &pem){
+  bool checkPemContents(MsgEntryType pem_type, const string &pem) {
     string begin_str, end_str;
-    switch(pem_type){
-    case MsgEntryType::PEM:{
+    switch (pem_type) {
+    case MsgEntryType::PEM: {
       begin_str = "-----BEGIN CERTIFICATE-----";
       end_str = "-----END CERTIFICATE-----";
       break;
     }
-    case MsgEntryType::ENC_PRIVATE_PEM:{
+    case MsgEntryType::ENC_PRIVATE_PEM: {
       begin_str = "-----BEGIN ENCRYPTED PRIVATE KEY-----";
       end_str = "-----END ENCRYPTED PRIVATE KEY-----";
       break;
@@ -183,7 +183,7 @@ private:
     }
     auto found1 = pem.find(begin_str);
     auto found2 = pem.find(end_str);
-    if(found1 == string::npos || found2 == string::npos) {
+    if (found1 == string::npos || found2 == string::npos) {
       logger::ERROR("[MVAL] Error on PEM");
       return false;
     }

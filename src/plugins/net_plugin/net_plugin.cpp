@@ -327,7 +327,7 @@ public:
         for (auto &b58_receiver_id : out_msg.receivers) {
           auto hashed_net_id = id_mapping_table->get(b58_receiver_id);
 
-          if(hashed_net_id.has_value()) {
+          if (hashed_net_id.has_value()) {
             auto node = routing_table->findNode(hashed_net_id.value());
 
             if (node.has_value()) {
