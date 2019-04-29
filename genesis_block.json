@@ -18,7 +18,7 @@
   "eden" : {
     "chain": {
       "id": "TSTCHAIN",
-      "world": "GRUUNET",
+      "world": "GRUUTNET",
       "after": "1556504053"
     },
     "policy": {
