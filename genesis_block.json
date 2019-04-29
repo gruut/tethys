@@ -1,4 +1,66 @@
 {
-  "initial_timestamp": "2018-06-01T12:00:00.000",
-  "initial_key": "TEST"
+  "world": {
+    "id": "GRUUTNET",
+    "after": "1556504053"
+  },
+  "key_currency": {
+    "name": "GRU",
+    "initial_amount": "200000000000"
+  },
+  "mining_policy": {
+    "allow_mining": false,
+    "rule": null
+  },
+  "user_policy": {
+    "allow_anonymous_user": true,
+    "join_fee": "0"
+  },
+  "eden" : {
+    "chain": {
+      "id": "TSTCHAIN",
+      "world": "GRUUNET",
+      "after": "1556504053"
+    },
+    "policy": {
+      "allow_custom_contract": false,
+      "allow_oracle": false,
+      "allow_tag": true,
+      "allow_heavy_contract": false
+    },
+    "creator": {
+      "id": "5g9CMGLSXbNAKJMbWqBNp7rm78BJCMKhLzZVukBNGHSF",
+      "pk": [
+        "-----BEGIN CERTIFICATE-----",
+        "MIIFEDCCAz+gAwIBAgIRAL2RcbL4kFwgq5ypdBQ8AxwwRgYJKoZIhvcNAQEKMDmg",
+        "DzANBglghkgBZQMEAgEFAKEcMBoGCSqGSIb3DQEBCDANBglghkgBZQMEAgEFAKID",
+        "AgEgowMCAQEwPTEVMBMGA1UEAxMMLy8vLy8vLy8vLzg9MQswCQYDVQQGEwJLUjEX",
+        "AA1+pw==",
+        "-----END CERTIFICATE-----"
+      ],
+      "sig": "AgEgowMCAQEwPTEVMBMGA1UEAxMMLy8vLy8vLy8vLzg9MQswCQYDVQQGEwJLUjEX..."
+    }
+  },
+  "authority": {
+    "id": "GruutAuthority",
+    "cert": [
+      "-----BEGIN CERTIFICATE-----",
+      "MIIFEDCCAz+gAwIBAgIRAL2RcbL4kFwgq5ypdBQ8AxwwRgYJKoZIhvcNAQEKMDmg",
+      "DzANBglghkgBZQMEAgEFAKEcMBoGCSqGSIb3DQEBCDANBglghkgBZQMEAgEFAKID",
+      "AgEgowMCAQEwPTEVMBMGA1UEAxMMLy8vLy8vLy8vLzg9MQswCQYDVQQGEwJLUjEX",
+      "AA1+pw==",
+      "-----END CERTIFICATE-----"
+    ]
+  },
+  "creator": {
+    "id": "5g9CMGLSXbNAKJMbWqBNp7rm78BJCMKhLzZVukBNGHSF",
+    "cert": [
+      "-----BEGIN CERTIFICATE-----",
+      "MIIFEDCCAz+gAwIBAgIRAL2RcbL4kFwgq5ypdBQ8AxwwRgYJKoZIhvcNAQEKMDmg",
+      "DzANBglghkgBZQMEAgEFAKEcMBoGCSqGSIb3DQEBCDANBglghkgBZQMEAgEFAKID",
+      "AgEgowMCAQEwPTEVMBMGA1UEAxMMLy8vLy8vLy8vLzg9MQswCQYDVQQGEwJLUjEX",
+      "AA1+pw==",
+      "-----END CERTIFICATE-----"
+    ],
+    "sig": "AgEgowMCAQEwPTEVMBMGA1UEAxMMLy8vLy8vLy8vLzg9MQswCQYDVQQGEwJLUjEX..."
+  }
 }
