@@ -1,20 +1,39 @@
-cmake_minimum_required(VERSION 3.10)
-
-add_library(chain_plugin
-        chain_plugin.cpp
-        chain.cpp
-        include/chain_plugin.hpp)
+cmake_minimum_required(VERSION 3.13)
+set(CMAKE_CXX_STANDARD 17)
 
 list(APPEND CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/CMakeModules")
 
-find_package(Soci)
-if(SOCI_FOUND)
-    target_link_libraries(chain_plugin ${SOCI_LIBRARY} ${SOCI_mysql_PLUGIN})
-else()
-    message(WARNING "SOCI NOT FOUND")
-endif()
+file(GLOB HEADERS
+        *.hpp
+        include/*.hpp
+        config/*.hpp
+        )
 
-target_link_libraries(chain_plugin appbase log)
+file(GLOB SOURCES
+        *.cpp
+        include/*.cpp
+        )
+
+add_library(chain_plugin
+        ${HEADERS}
+        ${SOURCES}
+        )
+
+find_package(Boost REQUIRED COMPONENTS system filesystem)
+find_package(Soci)
+if (SOCI_FOUND)
+    target_link_libraries(chain_plugin ${SOCI_LIBRARY} ${SOCI_mysql_PLUGIN})
+else ()
+    message(WARNING "SOCI NOT FOUND")
+endif ()
+
+set(LIB_PREFIX "/usr/local/lib")
+set(BOTAN_LIB "${LIB_PREFIX}/libbotan-2.a")
+
+target_link_libraries(chain_plugin appbase log
+        ${Boost_LIBRARIES}
+        ${BOTAN_LIB}
+        )
 target_include_directories(chain_plugin PUBLIC
         "/usr/local/include/mysql"
         "/usr/include/mysql"
