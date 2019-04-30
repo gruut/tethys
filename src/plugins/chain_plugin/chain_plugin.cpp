@@ -2,6 +2,9 @@
 #include "../../../include/json.hpp"
 #include "../../../include/types/transaction.hpp"
 #include "../../../lib/appbase/include/application.hpp"
+#include "../../../lib/gruut-utils/src/bytes_builder.hpp"
+#include "../../../lib/gruut-utils/src/sha256.hpp"
+#include "../../../lib/gruut-utils/src/type_converter.hpp"
 #include "../../../lib/log/include/log.hpp"
 #include "include/chain.hpp"
 
@@ -13,27 +16,59 @@ using namespace std;
 
 class TransactionMsgParser {
 public:
-  TransactionMessage operator()(const nlohmann::json &transaction_message) {
-    TransactionMessage tx_message;
+  optional<TransactionMessage> operator()(const nlohmann::json &transaction_message) {
+    try {
+      TransactionMessage tx_message;
 
-    tx_message.txid = transaction_message["/txid"_json_pointer];
-    tx_message.world = transaction_message["/world"_json_pointer];
-    tx_message.chain = transaction_message["/chain"_json_pointer];
-    tx_message.time = transaction_message["/time"_json_pointer];
+      tx_message.txid = transaction_message["/txid"_json_pointer];
+      tx_message.world = transaction_message["/world"_json_pointer];
+      tx_message.chain = transaction_message["/chain"_json_pointer];
+      tx_message.time = transaction_message["/time"_json_pointer];
 
-    tx_message.cid = transaction_message["/body/cid"_json_pointer];
-    tx_message.receiver = transaction_message["/body/receiver"_json_pointer];
-    tx_message.fee = transaction_message["/body/fee"_json_pointer];
+      tx_message.cid = transaction_message["/body/cid"_json_pointer];
+      tx_message.receiver = transaction_message["/body/receiver"_json_pointer];
+      tx_message.fee = transaction_message["/body/fee"_json_pointer];
+      tx_message.input = nlohmann::json::to_cbor(transaction_message["body"]["input"]);
 
-    tx_message.user_id = transaction_message["/user/id"_json_pointer];
-    tx_message.user_pk = transaction_message["/user/pk"_json_pointer];
-    tx_message.user_sig = transaction_message["/user/sig"_json_pointer];
+      tx_message.user_id = transaction_message["/user/id"_json_pointer];
+      tx_message.user_pk = transaction_message["/user/pk"_json_pointer];
+      tx_message.user_sig = transaction_message["/user/sig"_json_pointer];
 
-    tx_message.endorser_id = transaction_message["/endorser/id"_json_pointer];
-    tx_message.endorser_pk = transaction_message["/endorser/pk"_json_pointer];
-    tx_message.endorser_sig = transaction_message["/endorser/sig"_json_pointer];
+      tx_message.endorser_id = transaction_message["/endorser/id"_json_pointer];
+      tx_message.endorser_pk = transaction_message["/endorser/pk"_json_pointer];
+      tx_message.endorser_sig = transaction_message["/endorser/sig"_json_pointer];
 
-    return tx_message;
+      return tx_message;
+    } catch (nlohmann::json::parse_error &e) {
+      logger::ERROR("Failed to parse MSG_TX: {}", e.what());
+      return {};
+
+    }
+  }
+};
+
+class TransactionMessageVerifier {
+public:
+  bool operator()(const TransactionMessage &transaction_message) {
+    BytesBuilder tx_id_builder;
+    tx_id_builder.appendBase<58>(transaction_message.user_id);
+    tx_id_builder.append(transaction_message.world);
+    tx_id_builder.append(transaction_message.chain);
+    tx_id_builder.appendDec(transaction_message.time);
+
+    transaction_message.receiver.empty() ? tx_id_builder.append("") : tx_id_builder.appendBase<58>(transaction_message.receiver);
+
+    tx_id_builder.appendDec(transaction_message.fee);
+    tx_id_builder.append(transaction_message.cid);
+    tx_id_builder.append(transaction_message.input);
+
+    vector<uint8_t> tx_id = Sha256::hash(tx_id_builder.getBytes());
+    if (transaction_message.txid != TypeConverter::encodeBase<58>(tx_id)) {
+      return false;
+    }
+
+    // TODO: SignByUser, SignByEndorser 검증 구현
+    return true;
   }
 };
 
@@ -55,14 +90,14 @@ public:
     chain->startup(genesis_state);
   }
 
-  void push_transaction(const nlohmann::json &transaction_json) {
-    logger::INFO("Do something");
-    // TODO: transaction 처리
+  void pushTransaction(const nlohmann::json &transaction_json) {
     TransactionMsgParser parser;
-    auto transaction = parser(transaction_json);
-    // TODO
-    // STEP 1, Verify
-    //    auto valid = verifyTransaction(transaction);
+    auto transaction_message = parser(transaction_json);
+    if(transaction_message.has_value())
+      return;
+
+    TransactionMessageVerifier verfier;
+    auto valid = verfier(transaction_message.value());
     // STEP 2, If the transaction is valid, push it into transaction pool.
     //    if (valid) {
     //      transaction_pool.push(transaction);
@@ -119,7 +154,7 @@ void ChainPlugin::pluginInitialize(const boost::program_options::variables_map &
 
   auto &transaction_channel = app().getChannel<incoming::channels::transaction::channel_type>();
   impl->incoming_transaction_subscription =
-      transaction_channel.subscribe([this](nlohmann::json transaction) { impl->push_transaction(transaction); });
+      transaction_channel.subscribe([this](nlohmann::json transaction) { impl->pushTransaction(transaction); });
 
   impl->initialize();
 }

@@ -15,6 +15,7 @@ struct TransactionMessage {
   string cid;
   string receiver;
   string fee;
+  vector<uint8_t> input;
 
   string user_id;
   string user_pk;
