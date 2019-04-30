@@ -1,6 +1,7 @@
-#include "../../../lib/appbase/include/application.hpp"
 #include "include/chain_plugin.hpp"
 #include "../../../include/json.hpp"
+#include "../../../include/types/transaction.hpp"
+#include "../../../lib/appbase/include/application.hpp"
 #include "../../../lib/log/include/log.hpp"
 #include "include/chain.hpp"
 
@@ -9,6 +10,32 @@ namespace gruut {
 namespace fs = boost::filesystem;
 
 using namespace std;
+
+class TransactionMsgParser {
+public:
+  TransactionMessage operator()(const nlohmann::json &transaction_message) {
+    TransactionMessage tx_message;
+
+    tx_message.txid = transaction_message["/txid"_json_pointer];
+    tx_message.world = transaction_message["/world"_json_pointer];
+    tx_message.chain = transaction_message["/chain"_json_pointer];
+    tx_message.time = transaction_message["/time"_json_pointer];
+
+    tx_message.cid = transaction_message["/body/cid"_json_pointer];
+    tx_message.receiver = transaction_message["/body/receiver"_json_pointer];
+    tx_message.fee = transaction_message["/body/fee"_json_pointer];
+
+    tx_message.user_id = transaction_message["/user/id"_json_pointer];
+    tx_message.user_pk = transaction_message["/user/pk"_json_pointer];
+    tx_message.user_sig = transaction_message["/user/sig"_json_pointer];
+
+    tx_message.endorser_id = transaction_message["/endorser/id"_json_pointer];
+    tx_message.endorser_pk = transaction_message["/endorser/pk"_json_pointer];
+    tx_message.endorser_sig = transaction_message["/endorser/sig"_json_pointer];
+
+    return tx_message;
+  }
+};
 
 class ChainPluginImpl {
 public:
@@ -28,8 +55,18 @@ public:
     chain->startup(genesis_state);
   }
 
-  void push_transaction(nlohmann::json transaction) {
+  void push_transaction(const nlohmann::json &transaction_json) {
     logger::INFO("Do something");
+    // TODO: transaction 처리
+    TransactionMsgParser parser;
+    auto transaction = parser(transaction_json);
+    // TODO
+    // STEP 1, Verify
+    //    auto valid = verifyTransaction(transaction);
+    // STEP 2, If the transaction is valid, push it into transaction pool.
+    //    if (valid) {
+    //      transaction_pool.push(transaction);
+    //    }
   }
 };
 
@@ -81,9 +118,8 @@ void ChainPlugin::pluginInitialize(const boost::program_options::variables_map &
   }
 
   auto &transaction_channel = app().getChannel<incoming::channels::transaction::channel_type>();
-  impl->incoming_transaction_subscription = transaction_channel.subscribe([this](nlohmann::json transaction){
-    impl->push_transaction(transaction);
-  });
+  impl->incoming_transaction_subscription =
+      transaction_channel.subscribe([this](nlohmann::json transaction) { impl->push_transaction(transaction); });
 
   impl->initialize();
 }
