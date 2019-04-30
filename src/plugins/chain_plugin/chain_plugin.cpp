@@ -24,7 +24,7 @@ public:
   incoming::channels::transaction::channel_type::Handle incoming_transaction_subscription;
 
   void initialize() {
-    chain = make_unique<Chain>(dbms, table_name, db_user_id, db_password);
+    chain = make_unique<Chain>();
     chain->startup(genesis_state);
   }
 

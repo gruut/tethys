@@ -19,11 +19,10 @@ class Transaction {
 private:
   base58_type m_txid;
   timestamp_t m_tx_time;
-  base64_type m_seed;
 
   string m_contract_id;
   base58_type m_receiver_id;
-  int m_fee;
+  int m_fee;    // TODO: 처리 절차에 따라 author과 user로 나눠야 할 수 있음
   bytes m_tx_input_cbor; // to_cbor 된 상태
 
   base58_type m_tx_user_id;

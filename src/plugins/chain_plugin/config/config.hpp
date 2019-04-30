@@ -27,6 +27,7 @@ namespace config {
         constexpr size_t MIN_SIGNATURE_COLLECT_SIZE = 1;
         constexpr size_t MAX_SIGNATURE_COLLECT_SIZE = 20;
         constexpr size_t MAX_UNICAST_MISSING_BLOCK = 4;
+        constexpr size_t DB_SESSION_POOL_SIZE = 10;
 
 // KNOWLEDGE
 
