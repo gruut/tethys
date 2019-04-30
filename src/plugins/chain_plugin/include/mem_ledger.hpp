@@ -57,7 +57,7 @@ private:
 
 public:
   MemLedger() {
-    el::Loggers::getLogger("MEML");
+    logger::getLogger("MEML");
   }
 
   bool addUserScope(std::string var_name, std::string var_val, std::string var_type, std::string var_owner, timestamp_t up_time,

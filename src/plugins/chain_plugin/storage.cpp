@@ -5,7 +5,7 @@ namespace gruut {
 //Storage::Storage() {
 //  setupDB();
 //
-//  el::Loggers::getLogger("STRG");
+//  logger::getLogger("STRG");
 //
 //  auto setting = Setting::getInstance();
 //  m_db_path = setting->getMyDbPath();

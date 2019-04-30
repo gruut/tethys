@@ -79,10 +79,10 @@ void StateMerkleNode::reHash() {
   string l_value = "", r_value = "";
 
   if (getLeft() != nullptr) {
-    l_value = TypeConverter::encodeBase64(getLeft()->getValue());
+    l_value = TypeConverter::encodeBase<64>(getLeft()->getValue());
   }
   if (getRight() != nullptr) {
-    r_value = TypeConverter::encodeBase64(getRight()->getValue());
+    r_value = TypeConverter::encodeBase<64>(getRight()->getValue());
   }
 
   reHash(l_value, r_value);
@@ -176,7 +176,7 @@ void StateMerkleTree::visit(StateMerkleNode *node, bool isPrint) {
     if (isPrint) {
       printf("%s%s\t", _debug_str_dir.substr(0, _debug_depth).c_str(), str_dir.c_str());
       printf("[path: %s] suffix_len: %d, suffix: %s,  hash_value: %s\n", intToBin(node->getDebugPath()), node->getSuffixLen(),
-             intToBin(node->getSuffix()), TypeConverter::encodeBase64(node->getValue()).c_str());
+             intToBin(node->getSuffix()), TypeConverter::encodeBase<64>(node->getValue()).c_str());
     }
     stk.push(node);
   }
@@ -479,7 +479,7 @@ void StateMerkleTree::printTreePostOrder() {
   postOrder(root, isPrint);
 
   if (isPrint) {
-    printf("root Value: %s\n", TypeConverter::encodeBase64(root->getValue()).c_str());
+    printf("root Value: %s\n", TypeConverter::encodeBase<64>(root->getValue()).c_str());
     printf("*********** finish traversal ***********\n");
   }
 }

@@ -6,7 +6,7 @@ namespace gruut {
 
 UnresolvedBlockPool::UnresolvedBlockPool() {
 
-  el::Loggers::getLogger("URBP");
+    logger::getLogger("URBP");
 }
 
 void UnresolvedBlockPool::setPool(const base64_type &last_block_id, block_height_type last_height, timestamp_t last_time,

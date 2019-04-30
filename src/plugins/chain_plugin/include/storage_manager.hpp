@@ -14,7 +14,7 @@ namespace gruut {
 //
 //public:
 //  StorageManager() {
-//    el::Loggers::getLogger("LAYS");
+//    logger::getLogger("LAYS");
 //    m_storage = Storage::getInstance();
 //  }
 //

@@ -2,13 +2,12 @@
 #define GRUUT_PUBLIC_MERGER_BLOCK_HPP
 
 #include "../config/storage_type.hpp"
+#include "../include/static_merkle_tree.hpp"
 #include "certificate.hpp"
 #include "signature.hpp"
-#include "static_merkle_tree.hpp"
 #include "transaction.hpp"
 
 #include "../../../../lib/json/include/json.hpp"
-#include "block_validator.hpp"
 
 using namespace std;
 
@@ -44,8 +43,8 @@ private:
   string m_block_certificate;
 
 public:
-  Block() {
-    el::Loggers::getLogger("BLOC");
+  Block(){
+      //  logger::getLogger("BLOC");
   };
 
   bool operator==(Block &other) const {
@@ -72,7 +71,6 @@ public:
 
     m_aggz = json::get<string>(msg_block, "aggz").value();
 
-    m_tx_merkle_tree = makeStaticMerkleTree(m_txaggs);
     m_tx_root = json::get<string>(msg_block["state"], "txroot").value();
     m_us_state_root = json::get<string>(msg_block["state"], "usroot").value();
     m_cs_state_root = json::get<string>(msg_block["state"], "csroot").value();

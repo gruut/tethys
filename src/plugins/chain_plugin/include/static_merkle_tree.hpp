@@ -9,7 +9,7 @@
 #include "../../../../lib/gruut-utils/src/type_converter.hpp"
 #include "../config/config.hpp"
 #include "../config/storage_type.hpp"
-#include "transaction.hpp"
+#include "../structure/transaction.hpp"
 
 using namespace std;
 using namespace gruut::config;

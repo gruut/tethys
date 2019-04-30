@@ -42,7 +42,7 @@ public:
 
     m_txid = json::get<string>(tx_json, "txid").value();
     m_tx_time = static_cast<gruut::timestamp_t>(stoll(json::get<string>(tx_json, "time").value()));
-    m_seed = json::get<string>(tx_json, "seed").value());
+    m_seed = json::get<string>(tx_json, "seed").value();
 
     m_contract_id = json::get<string>(tx_json["body"], "cid").value();
     m_receiver_id = json::get<string>(tx_json["body"], "receiver").value();

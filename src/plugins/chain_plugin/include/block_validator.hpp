@@ -1,11 +1,9 @@
 #ifndef GRUUT_PUBLIC_MERGER_BLOCK_VALIDATOR_HPP
 #define GRUUT_PUBLIC_MERGER_BLOCK_VALIDATOR_HPP
 
-#include "block.hpp"
-
 namespace gruut {
 
-std::vector<hash_t> makeStaticMerkleTree(std::vector<string> &material) {
+std::vector<hash_t> makeStaticMerkleTree(const std::vector<string> &material) {
 
   std::vector<hash_t> merkle_tree_vector;
   std::vector<hash_t> sha256_material;
@@ -66,7 +64,7 @@ bool verifyTransaction(Transaction &tx, string world, string chain) {
   return true;
 }
 
-bool verifyBlock(Block &block) {
+bool verifyBlock(gruut::Block &block) {
 
   //
   // TODO: SSig의 퀄리티, 수 검증 추가

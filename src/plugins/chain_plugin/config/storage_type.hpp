@@ -27,7 +27,7 @@ using txagg_cbor_b64 = std::string;
 
 
 using proof_type = struct _proof_type {
-  std::string block_id_b64;
+  std::string block_id_b58;
   std::vector<std::pair<bool, std::string>> siblings;
 };
 
