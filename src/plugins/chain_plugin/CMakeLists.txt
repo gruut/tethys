@@ -14,6 +14,13 @@ else()
     message(WARNING "SOCI NOT FOUND")
 endif()
 
+find_package(RTTR CONFIG REQUIRED Core)
+if(RTTR_FOUND)
+    target_link_libraries(chain_plugin RTTR::Core)
+else()
+    message(WARNING "RTTR NOT FOUND")
+endif()
+
 target_link_libraries(chain_plugin appbase log)
 target_include_directories(chain_plugin PUBLIC
         "/usr/local/include/mysql"
