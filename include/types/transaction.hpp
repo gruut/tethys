@@ -1,7 +1,7 @@
 #pragma once
 
-#include <rttr/registration>
 #include <string>
+#include <vector>
 
 using namespace std;
 
@@ -42,25 +42,4 @@ struct Transaction {
   string block_id;       // block’s identifier including this transaction
   int tx_pos;            // position on Merkle tree
   string tx_output;      // contract’s output
-
-  RTTR_ENABLE()
 };
-
-RTTR_REGISTRATION {
-  rttr::registration::class_<Transaction>("Transaction")
-      .property("tsidx", &Transaction::tsidx)
-      .property("tx_id", &Transaction::tx_id)
-      .property("tx_time", &Transaction::tx_time)
-      .property("tx_contract_id", &Transaction::tx_contract_id)
-      .property("tx_fee_author", &Transaction::tx_fee_author)
-      .property("tx_fee_user", &Transaction::tx_fee_user)
-      .property("tx_user", &Transaction::tx_user)
-      .property("tx_user_pk", &Transaction::tx_user_pk)
-      .property("tx_user_sig", &Transaction::tx_user_sig)
-      .property("tx_receiver", &Transaction::tx_receiver)
-      .property("tx_input", &Transaction::tx_input)
-      .property("tx_agg_cbor", &Transaction::tx_agg_cbor)
-      .property("block_id", &Transaction::block_id)
-      .property("tx_pos", &Transaction::tx_pos)
-      .property("tx_output", &Transaction::tx_output);
-}

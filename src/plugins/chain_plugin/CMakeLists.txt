@@ -14,18 +14,13 @@ else()
     message(WARNING "SOCI NOT FOUND")
 endif()
 
-find_package(RTTR CONFIG REQUIRED Core)
-if(RTTR_FOUND)
-    target_link_libraries(chain_plugin RTTR::Core)
-else()
-    message(WARNING "RTTR NOT FOUND")
-endif()
-
-target_link_libraries(chain_plugin appbase log)
+target_link_libraries(chain_plugin appbase log core)
 target_include_directories(chain_plugin PUBLIC
         "/usr/local/include/mysql"
         "/usr/include/mysql"
         "${SOCI_INCLUDE_DIR}"
+
         "${CMAKE_CURRENT_SOURCE_DIR}/../../../lib/appbase"
         "${CMAKE_CURRENT_SOURCE_DIR}/../../../lib/log"
+        "${CMAKE_CURRENT_SOURCE_DIR}/../../../lib/core"
         )
