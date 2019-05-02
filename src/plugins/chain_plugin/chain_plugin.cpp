@@ -14,6 +14,7 @@ namespace gruut {
 namespace fs = boost::filesystem;
 
 using namespace std;
+using namespace core;
 
 class TransactionMsgParser {
 public:
@@ -76,6 +77,7 @@ public:
 class ChainPluginImpl {
 public:
   unique_ptr<Chain> chain;
+  unique_ptr<TransactionPool> transaction_pool;
 
   string dbms;
   string table_name;
@@ -88,6 +90,8 @@ public:
 
   void initialize() {
     chain = make_unique<Chain>(dbms, table_name, db_user_id, db_password);
+    transaction_pool = make_unique<TransactionPool>();
+
     chain->startup(genesis_state);
   }
 
@@ -104,8 +108,6 @@ public:
       transaction_pool->add(transaction_message.value());
     }
   }
-private:
-  shared_ptr<core::TransactionPool> transaction_pool;
 };
 
 ChainPlugin::ChainPlugin() : impl(make_unique<ChainPluginImpl>()) {}
