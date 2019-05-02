@@ -84,16 +84,6 @@ if [[ ! -d "/usr/local/include/soci" ]]; then
     make install
 fi
 
-if [[ ! -d "/usr/local/include/rttr" ]]; then
-    check_and_require_sudo
-
-    git clone https://github.com/rttrorg/rttr.git && cd rttr
-    mkdir -p build && cd build
-    cmake -DBUILD_UNIT_TESTS=OFF -DCMAKE_INSTALL_PREFIX=/usr/local ..
-    make
-    make install
-fi
-
 # CMake build
 if [[ ! -d "${BUILD_DIR}" ]]; then
     mkdir -p ${BUILD_DIR}

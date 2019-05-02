@@ -6,6 +6,7 @@
 #include "../../../lib/gruut-utils/src/sha256.hpp"
 #include "../../../lib/gruut-utils/src/type_converter.hpp"
 #include "../../../lib/log/include/log.hpp"
+#include "../../../lib/core/include/transaction_pool.hpp"
 #include "include/chain.hpp"
 
 namespace gruut {
@@ -92,17 +93,19 @@ public:
 
   void pushTransaction(const nlohmann::json &transaction_json) {
     TransactionMsgParser parser;
-    auto transaction_message = parser(transaction_json);
-    if(transaction_message.has_value())
+    const auto transaction_message = parser(transaction_json);
+    if(!transaction_message.has_value())
       return;
 
     TransactionMessageVerifier verfier;
     auto valid = verfier(transaction_message.value());
-    // STEP 2, If the transaction is valid, push it into transaction pool.
-    //    if (valid) {
-    //      transaction_pool.push(transaction);
-    //    }
+
+    if (valid) {
+      transaction_pool->add(transaction_message.value());
+    }
   }
+private:
+  shared_ptr<core::TransactionPool> transaction_pool;
 };
 
 ChainPlugin::ChainPlugin() : impl(make_unique<ChainPluginImpl>()) {}
