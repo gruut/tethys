@@ -7,6 +7,7 @@
 #include "../../../../lib/log/include/log.hpp"
 #include "../../channel_interface/include/channel_interface.hpp"
 #include "plugin.hpp"
+#include "db_controller.hpp"
 
 using namespace appbase;
 
@@ -21,9 +22,7 @@ public:
 
   void pluginInitialize(const boost::program_options::variables_map &options);
 
-  void pluginStart() {
-    logger::INFO("ChainPlugin Start");
-  }
+  void pluginStart();
 
   void pluginShutdown() {
     logger::INFO("ChainPlugin Shutdown");

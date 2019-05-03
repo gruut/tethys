@@ -103,7 +103,7 @@ public:
 
       return genesis_state;
     } catch (json::parse_error &e) {
-      logger::ERROR("Failed to parse genesis.json: {}", e.what());
+      logger::ERROR("Failed to parse world_create.json: {}", e.what());
       throw e;
     }
   }
@@ -111,8 +111,7 @@ public:
   Chain &self;
 };
 
-Chain::Chain(const string &dbms, const string &table_name, const string &db_user_id, const string &db_password)
-    : db_session(dbms, "service=" + table_name + " user=" + db_user_id + " password=" + db_password) {
+Chain::Chain() {
   impl = make_unique<ChainImpl>(*this);
 }
 
