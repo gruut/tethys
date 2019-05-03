@@ -39,7 +39,7 @@ public:
       if (val.is_array())
         continue;
       else if (val.is_object()) {
-        if(key == "where")
+        if (key == "where")
           continue;
         check = validate(val);
         if (!check)
@@ -164,15 +164,15 @@ private:
     else
       return MsgEntryType::NONE;
   }
-  bool checkPemContents(MsgEntryType pem_type, const string &pem){
+  bool checkPemContents(MsgEntryType pem_type, const string &pem) {
     string begin_str, end_str;
-    switch(pem_type){
-    case MsgEntryType::PEM:{
+    switch (pem_type) {
+    case MsgEntryType::PEM: {
       begin_str = "-----BEGIN CERTIFICATE-----";
       end_str = "-----END CERTIFICATE-----";
       break;
     }
-    case MsgEntryType::ENC_PRIVATE_PEM:{
+    case MsgEntryType::ENC_PRIVATE_PEM: {
       begin_str = "-----BEGIN ENCRYPTED PRIVATE KEY-----";
       end_str = "-----END ENCRYPTED PRIVATE KEY-----";
       break;
@@ -183,7 +183,7 @@ private:
     }
     auto found1 = pem.find(begin_str);
     auto found2 = pem.find(end_str);
-    if(found1 == string::npos || found2 == string::npos) {
+    if (found1 == string::npos || found2 == string::npos) {
       logger::ERROR("[MVAL] Error on PEM");
       return false;
     }
@@ -246,7 +246,9 @@ private:
   bool validateMsgHdrFormat(MessageHeader &header) {
     bool check = header.identifier == IDENTIFIER;
     if (header.mac_algo_type == MACAlgorithmType::HMAC) {
-      check &= (header.message_type == MessageType::MSG_SUCCESS || header.message_type == MessageType::MSG_SSIG);
+      check &= (header.message_type == MessageType::MSG_SUCCESS || header.message_type == MessageType::MSG_SSIG ||
+                header.message_type == MessageType::MSG_REQ_TX_CHECK || header.message_type == MessageType::MSG_QUERY ||
+                header.message_type == MessageType::MSG_TX);
     }
     return check;
   }
@@ -278,6 +280,7 @@ private:
 
 class MessageHandler {
 public:
+  MessageHandler() = default;
   explicit MessageHandler(ServerContext *server_context, shared_ptr<IdMappingTable> table)
       : context(server_context), id_mapping_table(table) {}
   explicit MessageHandler(shared_ptr<SignerPoolManager> pool_manager) : signer_pool_manager(pool_manager) {}
@@ -289,7 +292,7 @@ private:
   optional<OutNetMsg> handle_message(InNetMsg &msg) {
     auto msg_type = msg.type;
 
-    if (msg_type == MessageType::MSG_BLOCK || msg_type == MessageType::MSG_TX || msg_type == MessageType::MSG_REQ_BLOCK) {
+    if (msg_type == MessageType::MSG_REQ_BONE || msg_type == MessageType::MSG_REQ_BLOCK) {
       mapping_user_id_to_net_id(msg);
     }
 
@@ -303,6 +306,11 @@ private:
       return signer_pool_manager->handleMsg(msg);
     case MessageType::MSG_SSIG:
       // TODO : ssig message must be sent to `block producer`
+    case MessageType::MSG_REQ_TX_CHECK:
+    case MessageType::MSG_QUERY:
+    case MessageType::MSG_REQ_BONE:
+    case MessageType::MSG_REQ_BLOCK:
+      // TODO : REQ_TX_CHECK , QUERY, REQ_BONE, REQ_BLOCK message must be sent to `chain plugin`
       return {};
     default:
       return {};
@@ -357,7 +365,7 @@ void OpenChannelWithSigner::proceed() {
   }
 }
 
-Status KeyExService::verifyHMAC(string_view packed_msg, vector<uint8_t> &hmac_key) {
+Status verifyHMAC(string_view packed_msg, vector<uint8_t> &hmac_key) {
   auto hmac_str = packed_msg.substr(packed_msg.length() - 32);
   vector<uint8_t> hmac(hmac_str.begin(), hmac_str.end());
   auto raw_msg = string(packed_msg.substr(0, packed_msg.length() - 32));
@@ -437,6 +445,56 @@ void KeyExService::proceed() {
   default: {
     delete this;
   } break;
+  }
+}
+
+void UserService::proceed() {
+  switch (m_receive_status) {
+  case RpcCallStatus::CREATE: {
+    m_receive_status = RpcCallStatus::PROCESS;
+    m_service->RequestUserService(&m_context, &m_request, &m_responder, m_completion_queue, m_completion_queue, this);
+    break;
+  }
+  case RpcCallStatus::PROCESS: {
+    new UserService(m_service, m_completion_queue, m_signer_pool_manager);
+    Status rpc_status;
+    try {
+      string packed_msg = m_request.message();
+      MessageParser msg_parser;
+      auto input_data = msg_parser.parseMessage(packed_msg, rpc_status);
+      if (input_data.has_value()) {
+        auto signer_id_b58 = input_data.value().sender_id;
+        MessageValidator msg_validator;
+        if (!msg_validator.validate(input_data.value().body)) {
+          rpc_status = Status(StatusCode::INVALID_ARGUMENT, "Bad request (message validation fail)");
+        }
+        if (rpc_status.ok()) {
+          auto hmac_key = m_signer_pool_manager->getHmacKey(signer_id_b58);
+          if (!hmac_key.has_value())
+            rpc_status = verifyHMAC(packed_msg, hmac_key.value());
+          else
+            rpc_status = Status(StatusCode::UNAUTHENTICATED, "Bad request (cannot find hmac key)");
+          if (rpc_status.ok()) {
+            MessageHandler msg_handler;
+            msg_handler(input_data.value());
+            m_reply.set_status(Reply_Status_SUCCESS);
+          } else
+            m_reply.set_status(Reply_Status_INVALID);
+        }
+      } else {
+        m_reply.set_status(Reply_Status_INVALID);
+      }
+    } catch (exception &e) {
+      m_reply.set_status(Reply_Status_INTERNAL);
+    }
+    m_receive_status = RpcCallStatus::FINISH;
+    m_responder.Finish(m_reply, rpc_status, this);
+    break;
+  }
+  default: {
+    delete this;
+    break;
+  }
   }
 }
 

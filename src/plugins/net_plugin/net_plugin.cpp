@@ -101,6 +101,7 @@ public:
 
     new OpenChannelWithSigner(&user_service, completion_queue.get(), signer_conn_table, signer_pool_manager);
     new KeyExService(&user_service, completion_queue.get(), signer_pool_manager);
+    new UserService(&user_service, completion_queue.get(), signer_pool_manager);
     new MergerService(&merger_service, completion_queue.get(), routing_table, broadcast_check_table, id_mapping_table);
     new FindNode(&kademlia_service, completion_queue.get(), routing_table);
   }
@@ -326,7 +327,7 @@ public:
         for (auto &b58_receiver_id : out_msg.receivers) {
           auto hashed_net_id = id_mapping_table->get(b58_receiver_id);
 
-          if(hashed_net_id.has_value()) {
+          if (hashed_net_id.has_value()) {
             auto node = routing_table->findNode(hashed_net_id.value());
 
             if (node.has_value()) {
@@ -338,20 +339,17 @@ public:
           }
         }
       }
-    } else if (checkSignerMsgType(out_msg.type)) {
+    } else if (checkUserMsgType(out_msg.type)) {
       for (auto &b58_receiver_id : out_msg.receivers) {
         SignerRpcInfo signer_rpc_info = signer_conn_table->getRpcInfo(b58_receiver_id);
         if (signer_rpc_info.send_msg == nullptr)
           continue;
 
         string packed_msg;
-        if (out_msg.type == MessageType::MSG_REQ_SSIG) {
-          auto hmac_key = signer_pool_manager->getHmacKey(b58_receiver_id);
-          if (!hmac_key.has_value())
-            continue;
-          packed_msg = MessagePacker::packMessage<MACAlgorithmType::HMAC>(out_msg, hmac_key.value());
-        } else
-          packed_msg = MessagePacker::packMessage<MACAlgorithmType::NONE>(out_msg);
+        auto hmac_key = signer_pool_manager->getHmacKey(b58_receiver_id);
+        if (!hmac_key.has_value())
+          continue;
+        packed_msg = MessagePacker::packMessage<MACAlgorithmType::HMAC>(out_msg, hmac_key.value());
 
         auto tag = static_cast<Identity *>(signer_rpc_info.tag_identity);
         Message msg;
@@ -362,11 +360,11 @@ public:
   }
 
   bool checkMergerMsgType(MessageType msg_type) {
-    return (msg_type == MessageType::MSG_TX || msg_type == MessageType::MSG_REQ_BLOCK || msg_type == MessageType::MSG_BLOCK);
+    return (msg_type == MessageType::MSG_TX || msg_type == MessageType::MSG_BONE || msg_type == MessageType::MSG_BLOCK);
   }
 
-  bool checkSignerMsgType(MessageType msg_type) {
-    return msg_type == MessageType::MSG_REQ_SSIG;
+  bool checkUserMsgType(MessageType msg_type) {
+    return (msg_type == MessageType::MSG_REQ_SSIG || msg_type == MessageType::MSG_RES_TX_CHECK || msg_type == MessageType::MSG_RESULT);
   }
 };
 

@@ -96,6 +96,11 @@ public:
       genesis_state.cert = state["creator"]["cert"].get<vector<string>>();
       genesis_state.sig = state["/creator/sig"_json_pointer];
 
+      assert(genesis_state.world_id == genesis_state.local_chain_state.world_id);
+      assert(genesis_state.creator_id == genesis_state.local_chain_state.creator_id);
+      assert(genesis_state.cert == genesis_state.local_chain_state.creator_pk);
+      assert(genesis_state.sig == genesis_state.local_chain_state.creator_sig);
+
       return genesis_state;
     } catch (json::parse_error &e) {
       logger::ERROR("Failed to parse world_create.json: {}", e.what());

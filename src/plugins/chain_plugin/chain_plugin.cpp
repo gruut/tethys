@@ -1,8 +1,13 @@
 #include "include/chain.hpp"
 #include "include/chain_plugin.hpp"
 #include "../../../include/json.hpp"
+#include "../../../include/types/transaction.hpp"
 #include "../../../lib/appbase/include/application.hpp"
+#include "../../../lib/gruut-utils/src/bytes_builder.hpp"
+#include "../../../lib/gruut-utils/src/sha256.hpp"
+#include "../../../lib/gruut-utils/src/type_converter.hpp"
 #include "../../../lib/log/include/log.hpp"
+#include "../../../lib/core/include/transaction_pool.hpp"
 #include "structure/block.hpp"
 
 namespace gruut {
@@ -10,11 +15,71 @@ namespace gruut {
 namespace fs = boost::filesystem;
 
 using namespace std;
+using namespace core;
+
+class TransactionMsgParser {
+public:
+  optional<TransactionMessage> operator()(const nlohmann::json &transaction_message) {
+    try {
+      TransactionMessage tx_message;
+
+      tx_message.txid = transaction_message["/txid"_json_pointer];
+      tx_message.world = transaction_message["/world"_json_pointer];
+      tx_message.chain = transaction_message["/chain"_json_pointer];
+      tx_message.time = transaction_message["/time"_json_pointer];
+
+      tx_message.cid = transaction_message["/body/cid"_json_pointer];
+      tx_message.receiver = transaction_message["/body/receiver"_json_pointer];
+      tx_message.fee = transaction_message["/body/fee"_json_pointer];
+      tx_message.input = nlohmann::json::to_cbor(transaction_message["body"]["input"]);
+
+      tx_message.user_id = transaction_message["/user/id"_json_pointer];
+      tx_message.user_pk = transaction_message["/user/pk"_json_pointer];
+      tx_message.user_sig = transaction_message["/user/sig"_json_pointer];
+
+      tx_message.endorser_id = transaction_message["/endorser/id"_json_pointer];
+      tx_message.endorser_pk = transaction_message["/endorser/pk"_json_pointer];
+      tx_message.endorser_sig = transaction_message["/endorser/sig"_json_pointer];
+
+      return tx_message;
+    } catch (nlohmann::json::parse_error &e) {
+      logger::ERROR("Failed to parse MSG_TX: {}", e.what());
+      return {};
+
+    }
+  }
+};
+
+class TransactionMessageVerifier {
+public:
+  bool operator()(const TransactionMessage &transaction_message) {
+    BytesBuilder tx_id_builder;
+    tx_id_builder.appendBase<58>(transaction_message.user_id);
+    tx_id_builder.append(transaction_message.world);
+    tx_id_builder.append(transaction_message.chain);
+    tx_id_builder.appendDec(transaction_message.time);
+
+    transaction_message.receiver.empty() ? tx_id_builder.append("") : tx_id_builder.appendBase<58>(transaction_message.receiver);
+
+    tx_id_builder.appendDec(transaction_message.fee);
+    tx_id_builder.append(transaction_message.cid);
+    tx_id_builder.append(transaction_message.input);
+
+    vector<uint8_t> tx_id = Sha256::hash(tx_id_builder.getBytes());
+    if (transaction_message.txid != TypeConverter::encodeBase<58>(tx_id)) {
+      return false;
+    }
+
+    // TODO: SignByUser, SignByEndorser 검증 구현
+    return true;
+  }
+};
 
 class ChainPluginImpl {
 public:
   unique_ptr<Chain> chain;
   shared_ptr<DBController> rdb_controller;
+  unique_ptr<TransactionPool> transaction_pool;
 
   string dbms;
   string table_name;
@@ -27,13 +92,25 @@ public:
 
   void initialize() {
     chain = make_unique<Chain>();
+    transaction_pool = make_unique<TransactionPool>();
+
     chain->startup(genesis_state);
 
     rdb_controller = make_shared<DBController>(dbms, table_name, db_user_id, db_password);
   }
 
-  void push_transaction(nlohmann::json transaction) {
-    logger::INFO("Do something");
+  void pushTransaction(const nlohmann::json &transaction_json) {
+    TransactionMsgParser parser;
+    const auto transaction_message = parser(transaction_json);
+    if(!transaction_message.has_value())
+      return;
+
+    TransactionMessageVerifier verfier;
+    auto valid = verfier(transaction_message.value());
+
+    if (valid) {
+      transaction_pool->add(transaction_message.value());
+    }
   }
 
   void start() {
@@ -108,7 +185,7 @@ void ChainPlugin::pluginInitialize(const boost::program_options::variables_map &
 
   auto &transaction_channel = app().getChannel<incoming::channels::transaction::channel_type>();
   impl->incoming_transaction_subscription =
-      transaction_channel.subscribe([this](nlohmann::json transaction) { impl->push_transaction(transaction); });
+      transaction_channel.subscribe([this](nlohmann::json transaction) { impl->pushTransaction(transaction); });
 
   impl->initialize();
 }
