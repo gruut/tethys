@@ -5,8 +5,8 @@
 namespace gruut {
 
 UnresolvedBlockPool::UnresolvedBlockPool() {
-
-    logger::getLogger("URBP");
+  logger::INFO("URBP");
+  m_block_pool.clear();
 }
 
 void UnresolvedBlockPool::setPool(const base64_type &last_block_id, block_height_type last_height, timestamp_t last_time,
@@ -80,7 +80,7 @@ unblk_push_result_type UnresolvedBlockPool::push(Block &block, bool is_restore) 
 
   int queue_idx = m_block_pool[bin_idx].size();
 
-  m_block_pool[bin_idx].emplace_back(block, prev_queue_idx); // pool에 블록 추가
+  //m_block_pool[bin_idx].emplace_back(block, prev_queue_idx); // pool에 블록 추가
 
   ret_val.height = block_height;
 
@@ -155,7 +155,7 @@ void UnresolvedBlockPool::processTxResult(UnresolvedBlock &new_UR_block, nlohman
       } else if (type == "run.contract") {
         queryRunContract(new_UR_block, option);
       } else {
-        CLOG(ERROR, "URBP") << "Something error in query process";
+        logger::ERROR("URBP, Something error in query process");
       }
     }
   }
@@ -186,7 +186,7 @@ void UnresolvedBlockPool::moveHead(const base64_type &target_block_id_b64, const
     int current_queue_idx = m_head_queue_idx;
 
     if (target_queue_idx == -1 || current_queue_idx == -1) {
-      CLOG(ERROR, "URBP") << "Something error in move_head() - Cannot find pool element";
+      logger::ERROR("URBP, Something error in move_head() - Cannot find pool element");
       return;
     }
 
@@ -226,19 +226,19 @@ void UnresolvedBlockPool::moveHead(const base64_type &target_block_id_b64, const
       back_count++;
 
       if (target_bin_idx < -1 || current_bin_idx < -1) {
-        CLOG(ERROR, "URBP") << "Something error in move_head() - Find common ancestor(1)";
+        logger::ERROR("URBP, Something error in move_head() - Find common ancestor(1)");
         return; // 나중에 예외처리 한 번 더 살필 것
       }
     }
 
     if (target_bin_idx == -1 && current_bin_idx == -1) {
       if (target_queue_idx != 0 || current_queue_idx != 0) {
-        CLOG(ERROR, "URBP") << "Something error in move_head() - Find common ancestor(2)";
+        logger::ERROR("URBP, Something error in move_head() - Find common ancestor(2)");
         return;
       }
     } else if (m_block_pool[target_bin_idx][target_queue_idx].block.getBlockId() !=
                m_block_pool[current_bin_idx][current_queue_idx].block.getBlockId()) {
-      CLOG(ERROR, "URBP") << "Something error in move_head() - Find common ancestor(2)";
+      logger::ERROR("URBP, Something error in move_head() - Find common ancestor(2)");
       return;
     }
 
@@ -256,7 +256,7 @@ void UnresolvedBlockPool::moveHead(const base64_type &target_block_id_b64, const
 
     for (auto &deque_front : where_to_go) {
       if (current_bin_idx + 1 != deque_front.first) {
-        CLOG(ERROR, "URBP") << "Something height error in move_head() - go front";
+        logger::ERROR("URBP, Something height error in move_head() - go front");
         return;
       }
       current_bin_idx = deque_front.first;
@@ -273,7 +273,7 @@ void UnresolvedBlockPool::moveHead(const base64_type &target_block_id_b64, const
     m_head_queue_idx = current_queue_idx;
 
     if (m_block_pool[m_head_bin_idx][m_head_queue_idx].block.getHeight() != m_head_height) {
-      CLOG(ERROR, "URBP") << "Something error in move_head() - end part, check height";
+      logger::ERROR("URBP, Something error in move_head() - end part, check height");
       return;
     }
 
@@ -290,6 +290,7 @@ bool UnresolvedBlockPool::queryUserJoin(UnresolvedBlock &UR_block, nlohmann::jso
   string location = json::get<string>(option, "location").value();
 
   // TODO: 2.1.2. User Attributes 테이블에 추가하는 코드 작성
+  return true;
 }
 
 bool UnresolvedBlockPool::queryUserCert(UnresolvedBlock &UR_block, nlohmann::json &option) {
@@ -300,6 +301,7 @@ bool UnresolvedBlockPool::queryUserCert(UnresolvedBlock &UR_block, nlohmann::jso
   string x509 = json::get<string>(option, "x509").value();
 
   // TODO: 2.1.1. User Certificates 테이블에 추가하는 코드 작성
+  return true;
 }
 
 bool UnresolvedBlockPool::queryIncinerate(UnresolvedBlock &UR_block, nlohmann::json &option) {
@@ -307,6 +309,7 @@ bool UnresolvedBlockPool::queryIncinerate(UnresolvedBlock &UR_block, nlohmann::j
   string pid = json::get<string>(option, "pid").value();
 
   // TODO: m_mem_ledger 사용하여 갱신값 계산
+  return true;
 }
 
 bool UnresolvedBlockPool::queryCreate(UnresolvedBlock &UR_block, nlohmann::json &option) {
@@ -316,6 +319,7 @@ bool UnresolvedBlockPool::queryCreate(UnresolvedBlock &UR_block, nlohmann::json 
   string tag = json::get<string>(option, "tag").value();
 
   // TODO: m_mem_ledger 사용하여 갱신값 계산
+  return true;
 }
 
 bool UnresolvedBlockPool::queryTransfer(UnresolvedBlock &UR_block, nlohmann::json &option) {
@@ -328,6 +332,7 @@ bool UnresolvedBlockPool::queryTransfer(UnresolvedBlock &UR_block, nlohmann::jso
 
   // TODO: m_mem_ledger 사용하여 갱신값 계산
   // from과 to가 user/contract 따라 처리될 수 있도록 구현 필요
+  return true;
 }
 
 bool UnresolvedBlockPool::queryUserScope(UnresolvedBlock &UR_block, nlohmann::json &option) {
@@ -338,6 +343,7 @@ bool UnresolvedBlockPool::queryUserScope(UnresolvedBlock &UR_block, nlohmann::js
   string tag = json::get<string>(option, "tag").value();
 
   // TODO: m_mem_ledger 사용하여 갱신값 계산
+  return true;
 }
 
 bool UnresolvedBlockPool::queryContractScope(UnresolvedBlock &UR_block, nlohmann::json &option) {
@@ -347,6 +353,7 @@ bool UnresolvedBlockPool::queryContractScope(UnresolvedBlock &UR_block, nlohmann
   string pid = json::get<string>(option, "pid").value();
 
   // TODO: m_mem_ledger 사용하여 갱신값 계산
+  return true;
 }
 
 bool UnresolvedBlockPool::queryRunQuery(UnresolvedBlock &UR_block, nlohmann::json &option) {
@@ -355,6 +362,7 @@ bool UnresolvedBlockPool::queryRunQuery(UnresolvedBlock &UR_block, nlohmann::jso
   timestamp_t after = static_cast<uint64_t>(stoll(json::get<string>(option, "after").value()));
 
   // TODO: Scheduler에게 지연 처리 요청 전송
+  return true;
 }
 
 bool UnresolvedBlockPool::queryRunContract(UnresolvedBlock &UR_block, nlohmann::json &option) {
@@ -363,6 +371,7 @@ bool UnresolvedBlockPool::queryRunContract(UnresolvedBlock &UR_block, nlohmann::
   timestamp_t after = static_cast<uint64_t>(stoll(json::get<string>(option, "after").value()));
 
   // TODO: authority.user를 현재 user로 대체하여 Scheduler에게 요청 전송
+  return true;
 }
 
 bool UnresolvedBlockPool::resolveBlock(Block &block) {
@@ -428,6 +437,7 @@ bool UnresolvedBlockPool::resolveBlocksStepByStep(Block &block) {
       each_block.prev_vector_idx = -1;
     }
   }
+  return true;
 }
 
 void UnresolvedBlockPool::updateTotalNumSSig() {

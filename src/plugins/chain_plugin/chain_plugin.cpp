@@ -1,8 +1,9 @@
-#include "../../../lib/appbase/include/application.hpp"
+#include "include/chain.hpp"
 #include "include/chain_plugin.hpp"
 #include "../../../include/json.hpp"
+#include "../../../lib/appbase/include/application.hpp"
 #include "../../../lib/log/include/log.hpp"
-#include "include/chain.hpp"
+#include "structure/block.hpp"
 
 namespace gruut {
 
@@ -13,6 +14,7 @@ using namespace std;
 class ChainPluginImpl {
 public:
   unique_ptr<Chain> chain;
+  shared_ptr<DBController> rdb_controller;
 
   string dbms;
   string table_name;
@@ -26,10 +28,34 @@ public:
   void initialize() {
     chain = make_unique<Chain>();
     chain->startup(genesis_state);
+
+    rdb_controller = make_shared<DBController>(dbms, table_name, db_user_id, db_password);
   }
 
   void push_transaction(nlohmann::json transaction) {
     logger::INFO("Do something");
+  }
+
+  void start() {
+    // TODO: msg 관련 요청 감시 (block, ping, request, etc..)
+
+    // 테스트 시에는 임의로 first_block_test.json의 블록 하나를 저장하는것부터 시작.
+    nlohmann::json first_block_json;
+
+    fs::path config_path = "../first_block_test.json";
+    if (config_path.is_relative())
+      config_path = fs::current_path() / config_path;
+
+    std::ifstream i(config_path.make_preferred().string());
+
+    i >> first_block_json;
+
+    Block first_block;
+    first_block.initialize(first_block_json);
+
+    cout<<first_block.getBlockId()<<endl;
+    cout<<first_block.getUserCerts()[0].cert_content<<endl;
+    // end test code
   }
 };
 
@@ -38,22 +64,22 @@ ChainPlugin::ChainPlugin() : impl(make_unique<ChainPluginImpl>()) {}
 void ChainPlugin::pluginInitialize(const boost::program_options::variables_map &options) {
   logger::INFO("ChainPlugin Initialize");
 
-  if (options.count("genesis-block") > 0) {
-    fs::path config_path = options.at("genesis-block").as<std::string>();
+  if (options.count("world-create") > 0) {
+    fs::path config_path = options.at("world-create").as<std::string>();
 
     if (config_path.is_relative())
       config_path = fs::current_path() / config_path;
 
     if (!fs::exists(config_path)) {
-      logger::ERROR("Can't find a genesis block state file. (path: {})", config_path.string());
-      throw std::invalid_argument("Cannot find a genesis_block.json"s);
+      logger::ERROR("Can't find a world create file. (path: {})", config_path.string());
+      throw std::invalid_argument("Cannot find a world_create.json"s);
     }
 
     std::ifstream i(config_path.make_preferred().string());
 
     i >> impl->genesis_state;
   } else {
-    throw std::invalid_argument("genesis block state file does not exist"s);
+    throw std::invalid_argument("world create file does not exist"s);
   }
 
   if (options.count("dbms")) {
@@ -81,21 +107,26 @@ void ChainPlugin::pluginInitialize(const boost::program_options::variables_map &
   }
 
   auto &transaction_channel = app().getChannel<incoming::channels::transaction::channel_type>();
-  impl->incoming_transaction_subscription = transaction_channel.subscribe([this](nlohmann::json transaction){
-    impl->push_transaction(transaction);
-  });
+  impl->incoming_transaction_subscription =
+      transaction_channel.subscribe([this](nlohmann::json transaction) { impl->push_transaction(transaction); });
 
   impl->initialize();
 }
 
 // clang-format off
 void ChainPlugin::setProgramOptions(options_description &cfg) {
-  cfg.add_options()("genesis-block", boost::program_options::value<string>()->composing(), "the location of a genesis_block.json file")
+  cfg.add_options()("world-create", boost::program_options::value<string>()->composing(), "the location of a world_create.json file")
   ("dbms", boost::program_options::value<string>()->composing(), "DBMS (MYSQL)")("table-name", boost::program_options::value<string>()->composing(), "table name")
   ("database-user", boost::program_options::value<string>()->composing(), "database user id")
   ("database-password", boost::program_options::value<string>()->composing(), "database password");
 }
 // clang-format on
+
+void ChainPlugin::pluginStart() {
+  logger::INFO("ChainPlugin Start");
+
+  impl->start();
+}
 
 ChainPlugin::~ChainPlugin() {
   impl.reset();

@@ -31,6 +31,7 @@ namespace config {
 
 // KNOWLEDGE
 
+        constexpr size_t BP_INTERVAL = 10;
         const std::string DEFAULT_PORT_NUM = "50051";
         const std::string DEFAULT_DB_PATH = "./db";
         const std::string GENESIS_BLOCK_PREV_HASH_B64 = "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=";

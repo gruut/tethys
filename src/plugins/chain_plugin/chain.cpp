@@ -98,7 +98,7 @@ public:
 
       return genesis_state;
     } catch (json::parse_error &e) {
-      logger::ERROR("Failed to parse genesis.json: {}", e.what());
+      logger::ERROR("Failed to parse world_create.json: {}", e.what());
       throw e;
     }
   }

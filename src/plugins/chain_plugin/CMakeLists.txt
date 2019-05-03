@@ -40,4 +40,5 @@ target_include_directories(chain_plugin PUBLIC
         "${SOCI_INCLUDE_DIR}"
         "${CMAKE_CURRENT_SOURCE_DIR}/../../../lib/appbase"
         "${CMAKE_CURRENT_SOURCE_DIR}/../../../lib/log"
+        "${CMAKE_CURRENT_SOURCE_DIR}/../../../lib/leveldb/include"
         )

@@ -63,7 +63,7 @@ public:
     m_world_id = json::get<string>(msg_block["block"], "world").value();
     m_chain_id = json::get<string>(msg_block["block"], "chain").value();
     m_block_height = stoi(json::get<string>(msg_block["block"], "height").value());
-    m_block_prev_id = json::get<string>(msg_block["block"], "pid").value();
+    m_block_prev_id = json::get<string>(msg_block["block"], "previd").value();
     m_block_hash = json::get<string>(msg_block["block"], "hash").value();
 
     setTxaggs(msg_block["tx"]);
@@ -83,7 +83,7 @@ public:
     m_block_prod_info.signer_id = json::get<string>(msg_block["producer"], "id").value();
     m_block_prod_info.signer_sig = json::get<string>(msg_block["producer"], "sig").value();
 
-    m_block_certificate = msg_block["certificate"].dump();
+    m_block_certificate = msg_block["certificate"].dump(); // TODO: 위의 UserCerts를 전부 Stringfy한 값. 수정 필요.
 
     return true;
   }
@@ -107,14 +107,14 @@ public:
 
   bool setTransaction(std::vector<txagg_cbor_b64> &txagg) {
     m_transactions.clear();
-    for (auto &each_txagg : txagg) {
-      nlohmann::json each_txs_json;
-      each_txs_json = nlohmann::json::from_cbor(TypeConverter::decodeBase<64>(each_txagg));
-
-      Transaction each_tx;
-      each_tx.setJson(each_txs_json);
-      m_transactions.emplace_back(each_tx);
-    }
+    //    for (auto &each_txagg : txagg) {
+    //      nlohmann::json each_txs_json;
+    //      each_txs_json = nlohmann::json::from_cbor(TypeConverter::decodeBase<64>(each_txagg));
+    //
+    //      Transaction each_tx;
+    //      each_tx.setJson(each_txs_json);
+    //      m_transactions.emplace_back(each_tx);
+    //    }
     return true;
   }
 
@@ -144,7 +144,14 @@ public:
     for (auto &each_cert : certificates) {
       Certificate tmp;
       tmp.cert_id = json::get<string>(each_cert, "id").value();
-      tmp.cert_content = json::get<string>(each_cert, "cert").value();
+
+      string cert_content = "";
+      nlohmann::json cert = each_cert["cert"];  // 예외처리 필요?
+      for (int i = 1; i < cert.size() - 1; ++i) {
+        cert_content += cert[i].get<string>();
+      }
+      tmp.cert_content = cert_content;
+
       m_user_certs.emplace_back(tmp);
     }
     return true;
@@ -220,6 +227,10 @@ public:
 
   size_t getNumSigners() {
     return m_signers.size();
+  }
+
+  std::vector<Certificate> getUserCerts() {
+    return m_user_certs;
   }
 
   base58_type getBlockProdId() {

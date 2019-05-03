@@ -22,7 +22,7 @@ private:
 
   string m_contract_id;
   base58_type m_receiver_id;
-  int m_fee;    // TODO: 처리 절차에 따라 author과 user로 나눠야 할 수 있음
+  int m_fee;             // TODO: 처리 절차에 따라 author과 user로 나눠야 할 수 있음
   bytes m_tx_input_cbor; // to_cbor 된 상태
 
   base58_type m_tx_user_id;
@@ -41,7 +41,6 @@ public:
 
     m_txid = json::get<string>(tx_json, "txid").value();
     m_tx_time = static_cast<gruut::timestamp_t>(stoll(json::get<string>(tx_json, "time").value()));
-    m_seed = json::get<string>(tx_json, "seed").value();
 
     m_contract_id = json::get<string>(tx_json["body"], "cid").value();
     m_receiver_id = json::get<string>(tx_json["body"], "receiver").value();
@@ -54,7 +53,7 @@ public:
 
     setEndorsers(tx_json["endorser"]);
 
-    // 아래 넷은 tx scope에는 저장되는 사항이지만, json으로 입력되는 내용은 아닌것으로 보임. 검토중.
+    // TODO: 아래 넷은 tx scope에는 저장되는 사항이지만, json으로 입력되는 내용은 아님. 보류.
     //    setTxAggCbor();
     //    setBlockId();
     //    setTxPosition();
@@ -88,10 +87,6 @@ public:
 
   timestamp_t getTxTime() {
     return m_tx_time;
-  }
-
-  base64_type getSeed() {
-    return m_seed;
   }
 
   string getContractId() {

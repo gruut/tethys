@@ -6,6 +6,7 @@
 
 #include "../config/storage_type.hpp"
 #include "../../../../lib/gruut-utils/src/type_converter.hpp"
+#include "../../../../lib/log/include/log.hpp"
 
 #include "../structure/block.hpp"
 #include "block_validator.hpp"
@@ -16,8 +17,8 @@ namespace gruut {
 
 struct UnresolvedBlock {
   Block block;
-  int prev_vector_idx{-1};
-  size_t ssig_sum{0};
+  int32_t prev_vector_idx{-1};
+  int32_t ssig_sum{0};
   MemLedger m_mem_ledger;
 
   UnresolvedBlock() = default;
@@ -25,11 +26,11 @@ struct UnresolvedBlock {
 };
 
 struct BlockPosPool {
-  size_t height{0};
-  size_t vector_idx{0};
+  int32_t height{0};
+  int32_t vector_idx{0};
 
   BlockPosPool() = default;
-  BlockPosPool(size_t height_, size_t vector_idx_) : height(height_), vector_idx(vector_idx_) {}
+  BlockPosPool(int32_t height_, int32_t vector_idx_) : height(height_), vector_idx(vector_idx_) {}
 };
 
 class UnresolvedBlockPool {
@@ -54,7 +55,7 @@ private:
 public:
   UnresolvedBlockPool();
 
-  inline size_t size() {
+  inline int32_t size() {
     return m_block_pool.size();
   }
 

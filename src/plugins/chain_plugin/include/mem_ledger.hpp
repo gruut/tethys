@@ -3,6 +3,7 @@
 
 #include "../config/storage_type.hpp"
 #include "../../../../lib/gruut-utils/src/bytes_builder.hpp"
+#include "../../../../lib/log/include/log.hpp"
 
 #include <list>
 #include <memory>
@@ -57,7 +58,7 @@ private:
 
 public:
   MemLedger() {
-    logger::getLogger("MEML");
+    logger::INFO("MEML");
   }
 
   bool addUserScope(std::string var_name, std::string var_val, std::string var_type, std::string var_owner, timestamp_t up_time,

@@ -86,7 +86,7 @@ public:
 
     std::vector<std::pair<bool, bytes>> siblings;
     for (auto &sibling_b64 : siblings_b64) {
-      siblings.emplace_back(std::make_pair(sibling_b64.first, TypeConverter::decodeBase<64>(sibling_b64.second)));
+      siblings.emplace_back(std::make_pair(sibling_b64.first, TypeConverter::stringToBytes(TypeConverter::decodeBase<64>(sibling_b64.second))));
     }
 
     bytes my_val = TypeConverter::stringToBytes(TypeConverter::decodeBase<64>(my_val_b64));
