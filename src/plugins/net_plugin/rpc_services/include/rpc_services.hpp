@@ -93,8 +93,9 @@ private:
 
 class UserService final : public CallData {
 public:
-  UserService(GruutUserService::AsyncService *service, ServerCompletionQueue *cq, shared_ptr<SignerPoolManager> signer_pool_manager)
-      : m_responder(&m_context), m_signer_pool_manager(move(signer_pool_manager)) {
+  UserService(GruutUserService::AsyncService *service, ServerCompletionQueue *cq, shared_ptr<SignerPoolManager> signer_pool_manager,
+              shared_ptr<RoutingTable> routing_table)
+      : m_responder(&m_context), m_signer_pool_manager(move(signer_pool_manager)), m_routing_table(move(routing_table)) {
     m_service = service;
     m_completion_queue = cq;
     m_receive_status = RpcCallStatus::CREATE;
@@ -108,6 +109,7 @@ private:
   Reply m_reply;
   ServerAsyncResponseWriter<Reply> m_responder;
   shared_ptr<SignerPoolManager> m_signer_pool_manager;
+  shared_ptr<RoutingTable> m_routing_table;
   void proceed() override;
 };
 

@@ -101,7 +101,7 @@ public:
 
     new OpenChannelWithSigner(&user_service, completion_queue.get(), signer_conn_table, signer_pool_manager);
     new KeyExService(&user_service, completion_queue.get(), signer_pool_manager);
-    new UserService(&user_service, completion_queue.get(), signer_pool_manager);
+    new UserService(&user_service, completion_queue.get(), signer_pool_manager, routing_table);
     new MergerService(&merger_service, completion_queue.get(), routing_table, broadcast_check_table, id_mapping_table);
     new FindNode(&kademlia_service, completion_queue.get(), routing_table);
   }
