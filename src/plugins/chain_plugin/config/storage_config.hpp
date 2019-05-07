@@ -35,7 +35,7 @@ namespace config {
         const std::string DEFAULT_PORT_NUM = "50051";
         const std::string DEFAULT_DB_PATH = "./db";
         const std::string GENESIS_BLOCK_PREV_HASH_B64 = "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=";
-        const std::string GENESIS_BLOCK_PREV_ID_B64 = "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=";
+        const std::string GENESIS_BLOCK_PREV_ID_B58 = "11111111111111111111111111111111";
         const std::string DB_SUB_DIR_HEADER = "block_header";
         const std::string DB_SUB_DIR_RAW = "block_raw";
         const std::string DB_SUB_DIR_LATEST = "latest_block_header";
