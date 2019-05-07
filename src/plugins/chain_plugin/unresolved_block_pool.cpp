@@ -61,7 +61,7 @@ unblk_push_result_type UnresolvedBlockPool::push(Block &block, bool is_restore) 
   int prev_queue_idx = -1; // no previous
 
   if (bin_idx > 0) { // if there is previous bin
-    size_t idx = 0;
+    int idx = 0;
     for (auto &each_block : m_block_pool[bin_idx - 1]) {
       if (each_block.block.getBlockId() == block.getPrevBlockId()) {
         prev_queue_idx = static_cast<int>(idx);
@@ -172,7 +172,7 @@ void UnresolvedBlockPool::moveHead(const base64_type &target_block_id_b64, const
     int target_queue_idx = -1;
 
     // new_head를 pool에서 어디에 있는지 찾음
-    for (size_t i = 0; i < m_block_pool[target_bin_idx].size(); ++i) {
+    for (int i = 0; i < m_block_pool[target_bin_idx].size(); ++i) {
       if (target_block_id_b64 == m_block_pool[target_bin_idx][i].block.getBlockId()) {
         target_queue_idx = static_cast<int>(i);
         break;
@@ -394,13 +394,13 @@ bool UnresolvedBlockPool::resolveBlocksStepByStep(Block &block) {
   if (m_block_pool.size() < 2 || m_block_pool[0].empty() || m_block_pool[1].empty())
     return false;
 
-  size_t highest_total_ssig = 0;
+  int highest_total_ssig = 0;
   int resolved_block_idx = -1;
 
-  for (size_t i = 0; i < m_block_pool[0].size(); ++i) {
+  for (int i = 0; i < m_block_pool[0].size(); ++i) {
     if (m_block_pool[0][i].prev_vector_idx == 0 && m_block_pool[0][i].ssig_sum > highest_total_ssig) {
       highest_total_ssig = m_block_pool[0][i].ssig_sum;
-      resolved_block_idx = static_cast<int>(i);
+      resolved_block_idx = i;
     }
   }
 

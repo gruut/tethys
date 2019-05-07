@@ -19,19 +19,19 @@ namespace config {
 
 // SETTING
 
-        constexpr size_t MAX_SIGNER_NUM = 200;
-        constexpr size_t AVAILABLE_INPUT_SIZE = 1000;
-        constexpr size_t MAX_MERKLE_LEAVES = 4096;
-        constexpr size_t MAX_COLLECT_TRANSACTION_SIZE = 4096;
-        constexpr size_t BLOCK_CONFIRM_LEVEL = 3;
-        constexpr size_t MIN_SIGNATURE_COLLECT_SIZE = 1;
-        constexpr size_t MAX_SIGNATURE_COLLECT_SIZE = 20;
-        constexpr size_t MAX_UNICAST_MISSING_BLOCK = 4;
-        constexpr size_t DB_SESSION_POOL_SIZE = 10;
+        constexpr int32_t MAX_SIGNER_NUM = 200;
+        constexpr int32_t AVAILABLE_INPUT_SIZE = 1000;
+        constexpr int32_t MAX_MERKLE_LEAVES = 4096;
+        constexpr int32_t MAX_COLLECT_TRANSACTION_SIZE = 4096;
+        constexpr int32_t BLOCK_CONFIRM_LEVEL = 3;
+        constexpr int32_t MIN_SIGNATURE_COLLECT_SIZE = 1;
+        constexpr int32_t MAX_SIGNATURE_COLLECT_SIZE = 20;
+        constexpr int32_t MAX_UNICAST_MISSING_BLOCK = 4;
+        constexpr int32_t DB_SESSION_POOL_SIZE = 10;
+        constexpr int32_t BP_INTERVAL = 10;
 
 // KNOWLEDGE
 
-        constexpr size_t BP_INTERVAL = 10;
         const std::string DEFAULT_PORT_NUM = "50051";
         const std::string DEFAULT_DB_PATH = "./db";
         const std::string GENESIS_BLOCK_PREV_HASH_B64 = "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=";

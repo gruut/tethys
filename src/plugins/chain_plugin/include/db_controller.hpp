@@ -1,11 +1,11 @@
 #ifndef GRUUT_PUBLIC_MERGER_DB_CONTROLLER_HPP
 #define GRUUT_PUBLIC_MERGER_DB_CONTROLLER_HPP
 
-#include "../config/config.hpp"
+#include "../../../../lib/log/include/log.hpp"
+#include "../config/storage_config.hpp"
 #include "../config/storage_type.hpp"
 #include "mysql/soci-mysql.h"
 #include "soci.h"
-#include "../../../../lib/log/include/log.hpp"
 
 using namespace std;
 

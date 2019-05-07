@@ -22,6 +22,7 @@ private:
   alphanumeric_type m_chain_id;
   block_height_type m_block_height;
   base58_type m_block_prev_id;
+  base64_type m_block_prev_sig; // msg(-1).producer.sig
   base64_type m_block_hash;
 
   std::vector<txagg_cbor_b64> m_txaggs; // Tx의 Json을 CBOR로 처리하고 그 데이터를 b64인코딩한 결과 vector
@@ -43,8 +44,8 @@ private:
   string m_block_certificate;
 
 public:
-  Block(){
-      //  logger::getLogger("BLOC");
+  Block() {
+    logger::INFO("BLOC");
   };
 
   bool operator==(Block &other) const {
@@ -64,6 +65,7 @@ public:
     m_chain_id = json::get<string>(msg_block["block"], "chain").value();
     m_block_height = stoi(json::get<string>(msg_block["block"], "height").value());
     m_block_prev_id = json::get<string>(msg_block["block"], "previd").value();
+    m_block_prev_sig = json::get<string>(msg_block["block"], "link").value();
     m_block_hash = json::get<string>(msg_block["block"], "hash").value();
 
     setTxaggs(msg_block["tx"]);
@@ -107,14 +109,14 @@ public:
 
   bool setTransaction(std::vector<txagg_cbor_b64> &txagg) {
     m_transactions.clear();
-    //    for (auto &each_txagg : txagg) {
-    //      nlohmann::json each_txs_json;
-    //      each_txs_json = nlohmann::json::from_cbor(TypeConverter::decodeBase<64>(each_txagg));
-    //
-    //      Transaction each_tx;
-    //      each_tx.setJson(each_txs_json);
-    //      m_transactions.emplace_back(each_tx);
-    //    }
+    for (auto &each_txagg : txagg) {
+      nlohmann::json each_txs_json;
+      each_txs_json = nlohmann::json::from_cbor(TypeConverter::decodeBase<64>(each_txagg));
+
+      Transaction each_tx;
+      each_tx.setJson(each_txs_json);
+      m_transactions.emplace_back(each_tx);
+    }
     return true;
   }
 
@@ -146,7 +148,7 @@ public:
       tmp.cert_id = json::get<string>(each_cert, "id").value();
 
       string cert_content = "";
-      nlohmann::json cert = each_cert["cert"];  // 예외처리 필요?
+      nlohmann::json cert = each_cert["cert"]; // 예외처리 필요?
       for (int i = 1; i < cert.size() - 1; ++i) {
         cert_content += cert[i].get<string>();
       }
@@ -201,7 +203,7 @@ public:
     return m_transactions;
   }
 
-  size_t getNumTransaction() {
+  int32_t getNumTransaction() {
     return m_transactions.size();
   }
 
@@ -225,7 +227,7 @@ public:
     return m_signers;
   }
 
-  size_t getNumSigners() {
+  int32_t getNumSigners() {
     return m_signers.size();
   }
 

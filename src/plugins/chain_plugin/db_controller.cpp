@@ -7,7 +7,7 @@ namespace gruut {
 DBController::DBController(string_view dbms, string_view table_name, string_view db_user_id, string_view db_password)
     : m_dbms(dbms), m_table_name(table_name), m_db_user_id(db_user_id), m_db_password(db_password),
       m_db_pool(config::DB_SESSION_POOL_SIZE) {
-  for (size_t i = 0; i != config::DB_SESSION_POOL_SIZE; ++i) {
+  for (int i = 0; i != config::DB_SESSION_POOL_SIZE; ++i) {
     soci::session &sql = m_db_pool.at(i);
     sql.open(m_dbms, "service=" + m_table_name + " user=" + m_db_user_id + " password=" + m_db_password);
   }

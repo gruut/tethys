@@ -7,7 +7,7 @@
 #include "../../../../lib/gruut-utils/src/bytes_builder.hpp"
 #include "../../../../lib/gruut-utils/src/sha256.hpp"
 #include "../../../../lib/gruut-utils/src/type_converter.hpp"
-#include "../config/config.hpp"
+#include "../config/storage_config.hpp"
 #include "../config/storage_type.hpp"
 #include "../structure/transaction.hpp"
 
@@ -53,14 +53,14 @@ public:
 
     auto min_addable_size = min(MAX_MERKLE_LEAVES, merkle_contents.size());
 
-    for (size_t i = 0; i < min_addable_size; ++i)
+    for (int i = 0; i < min_addable_size; ++i)
       m_merkle_tree[i] = merkle_contents[i];
 
-    for (size_t i = min_addable_size; i < MAX_MERKLE_LEAVES; ++i)
+    for (int i = min_addable_size; i < MAX_MERKLE_LEAVES; ++i)
       m_merkle_tree[i] = dummy_leaf;
 
-    size_t parent_pos = MAX_MERKLE_LEAVES;
-    for (size_t i = 0; i < MAX_MERKLE_LEAVES * 2 - 3; i += 2) {
+    int parent_pos = MAX_MERKLE_LEAVES;
+    for (int i = 0; i < MAX_MERKLE_LEAVES * 2 - 3; i += 2) {
       m_merkle_tree[parent_pos] = makeParent(m_merkle_tree[i], m_merkle_tree[i + 1]);
       ++parent_pos;
     }
@@ -86,7 +86,8 @@ public:
 
     std::vector<std::pair<bool, bytes>> siblings;
     for (auto &sibling_b64 : siblings_b64) {
-      siblings.emplace_back(std::make_pair(sibling_b64.first, TypeConverter::stringToBytes(TypeConverter::decodeBase<64>(sibling_b64.second))));
+      siblings.emplace_back(
+          std::make_pair(sibling_b64.first, TypeConverter::stringToBytes(TypeConverter::decodeBase<64>(sibling_b64.second))));
     }
 
     bytes my_val = TypeConverter::stringToBytes(TypeConverter::decodeBase<64>(my_val_b64));
@@ -104,7 +105,7 @@ public:
       return false;
 
     hash_t mtree_root;
-    for (size_t i = 0; i < siblings.size(); ++i) {
+    for (int i = 0; i < siblings.size(); ++i) {
       if (i == 0) {
         mtree_root = static_cast<hash_t>(siblings[i].second);
         continue;
