@@ -1,13 +1,13 @@
-#include "include/chain.hpp"
 #include "include/chain_plugin.hpp"
 #include "../../../include/json.hpp"
 #include "../../../include/types/transaction.hpp"
 #include "../../../lib/appbase/include/application.hpp"
+#include "../../../lib/core/include/transaction_pool.hpp"
 #include "../../../lib/gruut-utils/src/bytes_builder.hpp"
 #include "../../../lib/gruut-utils/src/sha256.hpp"
 #include "../../../lib/gruut-utils/src/type_converter.hpp"
 #include "../../../lib/log/include/log.hpp"
-#include "../../../lib/core/include/transaction_pool.hpp"
+#include "include/chain.hpp"
 #include "structure/block.hpp"
 
 namespace gruut {
@@ -45,7 +45,6 @@ public:
     } catch (nlohmann::json::parse_error &e) {
       logger::ERROR("Failed to parse MSG_TX: {}", e.what());
       return {};
-
     }
   }
 };
@@ -102,7 +101,7 @@ public:
   void pushTransaction(const nlohmann::json &transaction_json) {
     TransactionMsgParser parser;
     const auto transaction_message = parser(transaction_json);
-    if(!transaction_message.has_value())
+    if (!transaction_message.has_value())
       return;
 
     TransactionMessageVerifier verfier;
@@ -130,8 +129,10 @@ public:
     Block first_block;
     first_block.initialize(first_block_json);
 
-    cout<<first_block.getBlockId()<<endl;
-    cout<<first_block.getUserCerts()[0].cert_content<<endl;
+    logger::INFO("first block id: " + first_block.getBlockId());
+    logger::INFO("first block 0th cert content: " + first_block.getUserCerts()[0].cert_content);
+    logger::INFO("first block 0th txid: " + first_block.getTransactions()[0].getTxid());
+    logger::INFO("first block 0th cid: " + first_block.getTransactions()[0].getContractId());
     // end test code
   }
 };

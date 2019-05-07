@@ -51,7 +51,7 @@ public:
   void generate(vector<hash_t> &merkle_contents) {
     const bytes dummy_leaf(32, 0); // for SHA-256
 
-    auto min_addable_size = min(MAX_MERKLE_LEAVES, merkle_contents.size());
+    auto min_addable_size = min(static_cast<uint64_t>(MAX_MERKLE_LEAVES), merkle_contents.size());
 
     for (int i = 0; i < min_addable_size; ++i)
       m_merkle_tree[i] = merkle_contents[i];

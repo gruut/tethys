@@ -19,16 +19,16 @@ namespace config {
 
 // SETTING
 
-        constexpr int32_t MAX_SIGNER_NUM = 200;
-        constexpr int32_t AVAILABLE_INPUT_SIZE = 1000;
-        constexpr int32_t MAX_MERKLE_LEAVES = 4096;
-        constexpr int32_t MAX_COLLECT_TRANSACTION_SIZE = 4096;
-        constexpr int32_t BLOCK_CONFIRM_LEVEL = 3;
-        constexpr int32_t MIN_SIGNATURE_COLLECT_SIZE = 1;
-        constexpr int32_t MAX_SIGNATURE_COLLECT_SIZE = 20;
-        constexpr int32_t MAX_UNICAST_MISSING_BLOCK = 4;
-        constexpr int32_t DB_SESSION_POOL_SIZE = 10;
-        constexpr int32_t BP_INTERVAL = 10;
+        constexpr uint32_t MAX_SIGNER_NUM = 200;
+        constexpr uint32_t AVAILABLE_INPUT_SIZE = 1000;
+        constexpr uint32_t MAX_MERKLE_LEAVES = 4096;
+        constexpr uint32_t MAX_COLLECT_TRANSACTION_SIZE = 4096;
+        constexpr uint32_t BLOCK_CONFIRM_LEVEL = 3;
+        constexpr uint32_t MIN_SIGNATURE_COLLECT_SIZE = 1;
+        constexpr uint32_t MAX_SIGNATURE_COLLECT_SIZE = 20;
+        constexpr uint32_t MAX_UNICAST_MISSING_BLOCK = 4;
+        constexpr uint32_t DB_SESSION_POOL_SIZE = 10;
+        constexpr uint32_t BP_INTERVAL = 10;
 
 // KNOWLEDGE
 
