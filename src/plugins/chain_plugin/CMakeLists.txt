@@ -7,11 +7,11 @@ file(GLOB HEADERS
         *.hpp
         include/*.hpp
         config/*.hpp
+        structure/*.hpp
         )
 
 file(GLOB SOURCES
         *.cpp
-        include/*.cpp
         )
 
 add_library(chain_plugin
