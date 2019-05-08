@@ -15,7 +15,6 @@
 #include <vector>
 
 namespace gruut {
-
 class Transaction {
 private:
   base58_type m_txid;
