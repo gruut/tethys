@@ -16,10 +16,6 @@
 
 namespace gruut {
 
-struct TransactionMessage {
-
-};
-
 class Transaction {
 private:
   base58_type m_txid;
@@ -105,6 +101,10 @@ public:
     return m_txid;
   }
 
+  const string &getTxUserPk() const {
+    return m_tx_user_pk;
+  }
+
   const string &getWorld() const {
     return m_world;
   }
@@ -140,7 +140,7 @@ public:
     return m_tx_user_sig;
   }
 
-  vector<Endorser> getEndorsers() const {
+  const vector<Endorser> &getEndorsers() const {
     return m_tx_endorsers;
   }
 };
