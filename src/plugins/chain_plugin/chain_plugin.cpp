@@ -1,6 +1,5 @@
 #include "include/chain_plugin.hpp"
 #include "../../../include/json.hpp"
-#include "../../../include/types/transaction.hpp"
 #include "../../../lib/appbase/include/application.hpp"
 #include "../../../lib/core/include/transaction_pool.hpp"
 #include "../../../lib/gruut-utils/src/bytes_builder.hpp"
@@ -9,6 +8,7 @@
 #include "../../../lib/log/include/log.hpp"
 #include "include/chain.hpp"
 #include "structure/block.hpp"
+#include "structure/transaction.hpp"
 
 namespace gruut {
 
@@ -19,59 +19,44 @@ using namespace core;
 
 class TransactionMsgParser {
 public:
-  optional<TransactionMessage> operator()(const nlohmann::json &transaction_message) {
-    try {
-      TransactionMessage tx_message;
+  optional<Transaction> operator()(const nlohmann::json &transaction_message) {
+    Transaction tx;
 
-      tx_message.txid = transaction_message["/txid"_json_pointer];
-      tx_message.world = transaction_message["/world"_json_pointer];
-      tx_message.chain = transaction_message["/chain"_json_pointer];
-      tx_message.time = transaction_message["/time"_json_pointer];
-
-      tx_message.cid = transaction_message["/body/cid"_json_pointer];
-      tx_message.receiver = transaction_message["/body/receiver"_json_pointer];
-      tx_message.fee = transaction_message["/body/fee"_json_pointer];
-      tx_message.input = nlohmann::json::to_cbor(transaction_message["body"]["input"]);
-
-      tx_message.user_id = transaction_message["/user/id"_json_pointer];
-      tx_message.user_pk = transaction_message["/user/pk"_json_pointer];
-      tx_message.user_sig = transaction_message["/user/sig"_json_pointer];
-
-      tx_message.endorser_id = transaction_message["/endorser/id"_json_pointer];
-      tx_message.endorser_pk = transaction_message["/endorser/pk"_json_pointer];
-      tx_message.endorser_sig = transaction_message["/endorser/sig"_json_pointer];
-
-      return tx_message;
-    } catch (nlohmann::json::parse_error &e) {
-      logger::ERROR("Failed to parse MSG_TX: {}", e.what());
+    bool result = tx.setJson(transaction_message);
+    if(!result)
       return {};
-    }
+
+    return tx;
   }
 };
 
 class TransactionMessageVerifier {
 public:
-  bool operator()(const TransactionMessage &transaction_message) {
+  bool operator()(const Transaction &transaction) {
     BytesBuilder tx_id_builder;
-    tx_id_builder.appendBase<58>(transaction_message.user_id);
-    tx_id_builder.append(transaction_message.world);
-    tx_id_builder.append(transaction_message.chain);
-    tx_id_builder.appendDec(transaction_message.time);
+    tx_id_builder.appendBase<58>(transaction.getUserId());
+    tx_id_builder.append(transaction.getWorld());
+    tx_id_builder.append(transaction.getChain());
+    tx_id_builder.appendDec(transaction.getTxTime());
 
-    transaction_message.receiver.empty() ? tx_id_builder.append("") : tx_id_builder.appendBase<58>(transaction_message.receiver);
+    auto receiver_id = transaction.getReceiverId();
+    receiver_id.empty() ? tx_id_builder.append("") : tx_id_builder.appendBase<58>(receiver_id);
 
-    tx_id_builder.appendDec(transaction_message.fee);
-    tx_id_builder.append(transaction_message.cid);
-    tx_id_builder.append(transaction_message.input);
+    tx_id_builder.appendDec(transaction.getFee());
+    tx_id_builder.append(transaction.getContractId());
+    tx_id_builder.append(transaction.getTxInputCbor());
 
     vector<uint8_t> tx_id = Sha256::hash(tx_id_builder.getBytes());
-    if (transaction_message.txid != TypeConverter::encodeBase<58>(tx_id)) {
+    if (transaction.getTxID() != TypeConverter::encodeBase<58>(tx_id)) {
       return false;
     }
 
     // TODO: SignByUser, SignByEndorser 검증 구현
+
     return true;
   }
+private:
+
 };
 
 class ChainPluginImpl {
@@ -100,15 +85,15 @@ public:
 
   void pushTransaction(const nlohmann::json &transaction_json) {
     TransactionMsgParser parser;
-    const auto transaction_message = parser(transaction_json);
-    if (!transaction_message.has_value())
+    const auto transaction = parser(transaction_json);
+    if (!transaction.has_value())
       return;
 
     TransactionMessageVerifier verfier;
-    auto valid = verfier(transaction_message.value());
+    auto valid = verfier(transaction.value());
 
     if (valid) {
-      transaction_pool->add(transaction_message.value());
+      transaction_pool->add(transaction.value());
     }
   }
 
