@@ -8,6 +8,7 @@
 #include "../../../lib/gruut-utils/src/type_converter.hpp"
 #include "../../../lib/log/include/log.hpp"
 #include "include/chain.hpp"
+#include "include/db_controller.hpp"
 #include "structure/block.hpp"
 
 namespace gruut {
@@ -77,7 +78,7 @@ public:
 class ChainPluginImpl {
 public:
   unique_ptr<Chain> chain;
-  shared_ptr<DBController> rdb_controller;
+  unique_ptr<DBController> rdb_controller;
   unique_ptr<TransactionPool> transaction_pool;
 
   string dbms;
@@ -95,7 +96,7 @@ public:
 
     chain->startup(genesis_state);
 
-    rdb_controller = make_shared<DBController>(dbms, table_name, db_user_id, db_password);
+    rdb_controller = make_unique<DBController>(dbms, table_name, db_user_id, db_password);
   }
 
   void pushTransaction(const nlohmann::json &transaction_json) {
@@ -133,6 +134,8 @@ public:
     logger::INFO("first block 0th cert content: " + first_block.getUserCerts()[0].cert_content);
     logger::INFO("first block 0th txid: " + first_block.getTransactions()[0].getTxid());
     logger::INFO("first block 0th cid: " + first_block.getTransactions()[0].getContractId());
+
+    rdb_controller->insertBlockData(first_block);
     // end test code
   }
 };

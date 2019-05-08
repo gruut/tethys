@@ -4,6 +4,7 @@ class CreateUserAttribute < ActiveRecord::Migration[5.2]
       t.integer :uaidx, primary_key: true
       t.column :uid, 'char(44)', index: { unique: true }
       t.integer :register_day, limit: 8
+      t.string :register_code, limit: 20
       t.integer :gender, limit: 1
       t.string :isc_type, limit: 10
       t.string :isc_code, limit: 10
