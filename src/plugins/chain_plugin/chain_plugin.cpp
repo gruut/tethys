@@ -5,6 +5,7 @@
 #include "../../../lib/gruut-utils/src/bytes_builder.hpp"
 #include "../../../lib/gruut-utils/src/sha256.hpp"
 #include "../../../lib/gruut-utils/src/type_converter.hpp"
+#include "../../../lib/gruut-utils/src/ags.hpp"
 #include "../../../lib/log/include/log.hpp"
 #include "include/chain.hpp"
 #include "structure/block.hpp"
@@ -33,6 +34,20 @@ public:
 class TransactionMessageVerifier {
 public:
   bool operator()(const Transaction &transaction) {
+    if(!verifyID(transaction))
+      return false;
+
+    if(!verifyEndorserSig(transaction))
+      return false;
+
+    if(!verifyUserSig(transaction))
+      return false;
+
+    return true;
+  }
+
+private:
+  bool verifyID(const Transaction &transaction) const {
     BytesBuilder tx_id_builder;
     tx_id_builder.appendBase<58>(transaction.getUserId());
     tx_id_builder.append(transaction.getWorld());
@@ -51,12 +66,33 @@ public:
       return false;
     }
 
-    // TODO: SignByUser, SignByEndorser 검증 구현
-
     return true;
   }
-private:
 
+  bool verifyEndorserSig(const Transaction &transaction) const {
+    AGS ags;
+
+    auto &endorsers = transaction.getEndorsers();
+    bool result = all_of(endorsers.begin(), endorsers.end(), [&ags, &transaction](auto &endorser){
+        return ags.verify(endorser.endorser_pk, transaction.getTxID(), endorser.endorser_signature);
+    });
+
+    return result;
+  }
+
+  bool verifyUserSig(const Transaction &transaction) const {
+    AGS ags;
+
+    auto &endorsers = transaction.getEndorsers();
+    string message = transaction.getTxID();
+    for_each(endorsers.begin(), endorsers.end(), [&message](auto &endorser){
+      message += endorser.endorser_id + endorser.endorser_pk + endorser.endorser_signature;
+    });
+
+    auto user_sig = transaction.getUserSig();
+
+    return ags.verify(transaction.getTxUserPk(), message, user_sig);
+  }
 };
 
 class ChainPluginImpl {
