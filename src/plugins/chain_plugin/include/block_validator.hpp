@@ -154,6 +154,7 @@ bool lateStage(Block &block) {
   block_id_builder.append(block.getChainId());
   block_id_builder.appendDec(block.getHeight());
   block_id_builder.appendBase<58>(block.getPrevBlockId());
+  block_id_builder.appendBase<64>(block.getPrevBlockSig());
 
   hash_t block_id = Sha256::hash(block_id_builder.getBytes());
   if (block.getBlockId() != TypeConverter::encodeBase<58>(block_id)) {
