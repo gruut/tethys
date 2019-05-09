@@ -7,11 +7,12 @@ file(GLOB HEADERS
         *.hpp
         include/*.hpp
         config/*.hpp
+        structure/*.hpp
         )
 
 file(GLOB SOURCES
+        "${CMAKE_CURRENT_SOURCE_DIR}/../../../lib/gruut-utils/src/ags.cpp"
         *.cpp
-        include/*.cpp
         )
 
 add_library(chain_plugin
@@ -30,17 +31,18 @@ endif ()
 set(LIB_PREFIX "/usr/local/lib")
 set(BOTAN_LIB "${LIB_PREFIX}/libbotan-2.a")
 
-target_link_libraries(chain_plugin appbase log core
+target_link_libraries(chain_plugin appbase log
         ${Boost_LIBRARIES}
         ${BOTAN_LIB}
         )
 
-target_include_directories(chain_plugin PUBLIC
+target_include_directories(
+        chain_plugin
+        PUBLIC
         "/usr/local/include/mysql"
         "/usr/include/mysql"
         "${SOCI_INCLUDE_DIR}"
         "${CMAKE_CURRENT_SOURCE_DIR}/../../../lib/appbase"
         "${CMAKE_CURRENT_SOURCE_DIR}/../../../lib/log"
-        "${CMAKE_CURRENT_SOURCE_DIR}/../../../lib/leveldb/include"
-        "${CMAKE_CURRENT_SOURCE_DIR}/../../../lib/core"
+        "${CMAKE_CURRENT_SOURCE_DIR}/../../../lib/gruut-utils/src"
         )

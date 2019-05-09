@@ -1,84 +1,119 @@
-#include "include/chain.hpp"
+#include <shared_mutex>
+#include <map>
+
 #include "include/chain_plugin.hpp"
 #include "../../../include/json.hpp"
-#include "../../../include/types/transaction.hpp"
 #include "../../../lib/appbase/include/application.hpp"
 #include "../../../lib/gruut-utils/src/bytes_builder.hpp"
 #include "../../../lib/gruut-utils/src/sha256.hpp"
 #include "../../../lib/gruut-utils/src/type_converter.hpp"
+#include "../../../lib/gruut-utils/src/ags.hpp"
 #include "../../../lib/log/include/log.hpp"
-#include "../../../lib/core/include/transaction_pool.hpp"
+#include "include/chain.hpp"
+#include "include/db_controller.hpp"
 #include "structure/block.hpp"
+#include "structure/transaction.hpp"
 
 namespace gruut {
 
 namespace fs = boost::filesystem;
 
 using namespace std;
-using namespace core;
 
 class TransactionMsgParser {
 public:
-  optional<TransactionMessage> operator()(const nlohmann::json &transaction_message) {
-    try {
-      TransactionMessage tx_message;
+  optional<Transaction> operator()(const nlohmann::json &transaction_message) {
+    Transaction tx;
 
-      tx_message.txid = transaction_message["/txid"_json_pointer];
-      tx_message.world = transaction_message["/world"_json_pointer];
-      tx_message.chain = transaction_message["/chain"_json_pointer];
-      tx_message.time = transaction_message["/time"_json_pointer];
-
-      tx_message.cid = transaction_message["/body/cid"_json_pointer];
-      tx_message.receiver = transaction_message["/body/receiver"_json_pointer];
-      tx_message.fee = transaction_message["/body/fee"_json_pointer];
-      tx_message.input = nlohmann::json::to_cbor(transaction_message["body"]["input"]);
-
-      tx_message.user_id = transaction_message["/user/id"_json_pointer];
-      tx_message.user_pk = transaction_message["/user/pk"_json_pointer];
-      tx_message.user_sig = transaction_message["/user/sig"_json_pointer];
-
-      tx_message.endorser_id = transaction_message["/endorser/id"_json_pointer];
-      tx_message.endorser_pk = transaction_message["/endorser/pk"_json_pointer];
-      tx_message.endorser_sig = transaction_message["/endorser/sig"_json_pointer];
-
-      return tx_message;
-    } catch (nlohmann::json::parse_error &e) {
-      logger::ERROR("Failed to parse MSG_TX: {}", e.what());
+    bool result = tx.setJson(transaction_message);
+    if(!result)
       return {};
 
-    }
+    return tx;
   }
 };
 
 class TransactionMessageVerifier {
 public:
-  bool operator()(const TransactionMessage &transaction_message) {
+  bool operator()(const Transaction &transaction) {
+    if(!verifyID(transaction))
+      return false;
+
+    if(!verifyEndorserSig(transaction))
+      return false;
+
+    if(!verifyUserSig(transaction))
+      return false;
+
+    return true;
+  }
+
+private:
+  bool verifyID(const Transaction &transaction) const {
     BytesBuilder tx_id_builder;
-    tx_id_builder.appendBase<58>(transaction_message.user_id);
-    tx_id_builder.append(transaction_message.world);
-    tx_id_builder.append(transaction_message.chain);
-    tx_id_builder.appendDec(transaction_message.time);
+    tx_id_builder.appendBase<58>(transaction.getUserId());
+    tx_id_builder.append(transaction.getWorld());
+    tx_id_builder.append(transaction.getChain());
+    tx_id_builder.appendDec(transaction.getTxTime());
 
-    transaction_message.receiver.empty() ? tx_id_builder.append("") : tx_id_builder.appendBase<58>(transaction_message.receiver);
+    auto receiver_id = transaction.getReceiverId();
+    receiver_id.empty() ? tx_id_builder.append("") : tx_id_builder.appendBase<58>(receiver_id);
 
-    tx_id_builder.appendDec(transaction_message.fee);
-    tx_id_builder.append(transaction_message.cid);
-    tx_id_builder.append(transaction_message.input);
+    tx_id_builder.appendDec(transaction.getFee());
+    tx_id_builder.append(transaction.getContractId());
+    tx_id_builder.append(transaction.getTxInputCbor());
 
     vector<uint8_t> tx_id = Sha256::hash(tx_id_builder.getBytes());
-    if (transaction_message.txid != TypeConverter::encodeBase<58>(tx_id)) {
+    if (transaction.getTxID() != TypeConverter::encodeBase<58>(tx_id)) {
       return false;
     }
 
-    // TODO: SignByUser, SignByEndorser 검증 구현
     return true;
   }
+
+  bool verifyEndorserSig(const Transaction &transaction) const {
+    AGS ags;
+
+    auto &endorsers = transaction.getEndorsers();
+    bool result = all_of(endorsers.begin(), endorsers.end(), [&ags, &transaction](const auto &endorser){
+        return ags.verify(endorser.endorser_pk, transaction.getTxID(), endorser.endorser_signature);
+    });
+
+    return result;
+  }
+
+  bool verifyUserSig(const Transaction &transaction) const {
+    AGS ags;
+
+    auto &endorsers = transaction.getEndorsers();
+    string message = transaction.getTxID();
+    for_each(endorsers.begin(), endorsers.end(), [&message](auto &endorser){
+      message += endorser.endorser_id + endorser.endorser_pk + endorser.endorser_signature;
+    });
+
+    auto user_sig = transaction.getUserSig();
+
+    return ags.verify(transaction.getTxUserPk(), message, user_sig);
+  }
+};
+
+class TransactionPool {
+public:
+  void add(const Transaction &tx) {
+    {
+      lock_guard<shared_mutex> writerLock(pool_mutex);
+      tx_pool.try_emplace(tx.getTxID(), tx);
+    }
+  }
+private:
+  std::map<string, Transaction> tx_pool;
+  std::shared_mutex pool_mutex;
 };
 
 class ChainPluginImpl {
 public:
   unique_ptr<Chain> chain;
-  shared_ptr<DBController> rdb_controller;
+  unique_ptr<DBController> rdb_controller;
   unique_ptr<TransactionPool> transaction_pool;
 
   string dbms;
@@ -96,20 +131,20 @@ public:
 
     chain->startup(genesis_state);
 
-    rdb_controller = make_shared<DBController>(dbms, table_name, db_user_id, db_password);
+    rdb_controller = make_unique<DBController>(dbms, table_name, db_user_id, db_password);
   }
 
   void pushTransaction(const nlohmann::json &transaction_json) {
     TransactionMsgParser parser;
-    const auto transaction_message = parser(transaction_json);
-    if(!transaction_message.has_value())
+    const auto transaction = parser(transaction_json);
+    if (!transaction.has_value())
       return;
 
     TransactionMessageVerifier verfier;
-    auto valid = verfier(transaction_message.value());
+    auto valid = verfier(transaction.value());
 
     if (valid) {
-      transaction_pool->add(transaction_message.value());
+      transaction_pool->add(transaction.value());
     }
   }
 
@@ -130,8 +165,12 @@ public:
     Block first_block;
     first_block.initialize(first_block_json);
 
-    cout<<first_block.getBlockId()<<endl;
-    cout<<first_block.getUserCerts()[0].cert_content<<endl;
+    logger::INFO("first block id: " + first_block.getBlockId());
+    logger::INFO("first block 0th cert content: " + first_block.getUserCerts()[0].cert_content);
+    logger::INFO("first block 0th txid: " + first_block.getTransactions()[0].getTxID());
+    logger::INFO("first block 0th cid: " + first_block.getTransactions()[0].getContractId());
+
+    rdb_controller->insertBlockData(first_block);
     // end test code
   }
 };

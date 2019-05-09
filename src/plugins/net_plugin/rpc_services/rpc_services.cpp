@@ -456,7 +456,7 @@ void UserService::proceed() {
     break;
   }
   case RpcCallStatus::PROCESS: {
-    new UserService(m_service, m_completion_queue, m_signer_pool_manager);
+    new UserService(m_service, m_completion_queue, m_signer_pool_manager, m_routing_table);
     Status rpc_status;
     try {
       string packed_msg = m_request.message();
@@ -470,7 +470,7 @@ void UserService::proceed() {
         }
         if (rpc_status.ok()) {
           auto hmac_key = m_signer_pool_manager->getHmacKey(signer_id_b58);
-          if (!hmac_key.has_value())
+          if (hmac_key.has_value())
             rpc_status = verifyHMAC(packed_msg, hmac_key.value());
           else
             rpc_status = Status(StatusCode::UNAUTHENTICATED, "Bad request (cannot find hmac key)");
@@ -478,6 +478,35 @@ void UserService::proceed() {
             MessageHandler msg_handler;
             msg_handler(input_data.value());
             m_reply.set_status(Reply_Status_SUCCESS);
+
+            auto msg_type = input_data.value().type;
+            if (msg_type == MessageType::MSG_TX) {
+              grpc_merger::RequestMsg request;
+
+              OutNetMsg out_msg;
+              out_msg.type = msg_type;
+              out_msg.body = input_data.value().body;
+              auto re_packed_msg = MessagePacker::packMessage<MACAlgorithmType::NONE>(out_msg);
+
+              request.set_message(re_packed_msg);
+              request.set_broadcast(false);
+
+              ClientContext context;
+              std::chrono::time_point deadline = std::chrono::system_clock::now() + GENERAL_SERVICE_TIMEOUT;
+              context.set_deadline(deadline);
+
+              grpc_merger::MsgStatus msg_status;
+
+              for (auto &bucket : *m_routing_table) {
+                if (!bucket.empty()) {
+                  auto nodes = bucket.selectRandomAliveNodes(PARALLELISM_ALPHA);
+                  for (auto &n : nodes) {
+                    auto stub = GruutMergerService::NewStub(n.getChannelPtr());
+                    stub->MergerService(&context, request, &msg_status);
+                  }
+                }
+              }
+            }
           } else
             m_reply.set_status(Reply_Status_INVALID);
         }
