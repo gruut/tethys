@@ -300,6 +300,9 @@ private:
     case MessageType::MSG_TX:
       app().getChannel<incoming::channels::transaction::channel_type>().publish(msg.body);
       return {};
+    case MessageType::MSG_BLOCK:
+      app().getChannel<incoming::channels::block::channel_type>().publish(msg.body);
+      return {};
     case MessageType::MSG_JOIN:
     case MessageType::MSG_RESPONSE_1:
     case MessageType::MSG_SUCCESS:

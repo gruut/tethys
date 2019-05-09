@@ -123,6 +123,7 @@ public:
   nlohmann::json genesis_state;
 
   incoming::channels::transaction::channel_type::Handle incoming_transaction_subscription;
+  incoming::channels::block::channel_type::Handle incoming_block_subscription;
 
   void initialize() {
     chain = make_unique<Chain>();
@@ -145,6 +146,10 @@ public:
     if (valid) {
       transaction_pool->add(transaction.value());
     }
+  }
+
+  void pushBlock(const nlohmann::json &block_json) {
+
   }
 
   void start() {
@@ -221,7 +226,11 @@ void ChainPlugin::pluginInitialize(const boost::program_options::variables_map &
 
   auto &transaction_channel = app().getChannel<incoming::channels::transaction::channel_type>();
   impl->incoming_transaction_subscription =
-      transaction_channel.subscribe([this](nlohmann::json transaction) { impl->pushTransaction(transaction); });
+      transaction_channel.subscribe([this](const nlohmann::json &transaction) { impl->pushTransaction(transaction); });
+
+  auto &block_channel = app().getChannel<incoming::channels::block::channel_type>();
+  impl->incoming_block_subscription =
+      block_channel.subscribe([this](const nlohmann::json &block) { impl->pushBlock(block); });
 
   impl->initialize();
 }

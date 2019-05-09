@@ -12,6 +12,7 @@ namespace appbase::incoming {
 namespace channels {
 using network = ChannelTypeTemplate<struct network_tag, InNetMsg>;
 using transaction = ChannelTypeTemplate<struct transaction_tag, nlohmann::json>;
+using block = ChannelTypeTemplate<struct block_tag, nlohmann::json>;
 }; // namespace channels
 } // namespace appbase::incoming
 
