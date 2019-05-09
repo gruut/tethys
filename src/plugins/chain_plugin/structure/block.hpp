@@ -163,7 +163,7 @@ public:
     return m_block_pub_time;
   }
 
-  string getBlockId() {
+  base58_type getBlockId() {
     return m_block_id;
   }
 
@@ -183,7 +183,7 @@ public:
     return m_block_height;
   }
 
-  string getPrevBlockId() {
+  base58_type getPrevBlockId() {
     return m_block_prev_id;
   }
 
@@ -191,7 +191,7 @@ public:
     return m_block_prev_sig;
   }
 
-  string getBlockHash() {
+  base64_type getBlockHash() {
     return m_block_hash;
   }
 
@@ -211,7 +211,7 @@ public:
     return m_transactions.size();
   }
 
-  string getAggz() {
+  base64_type getAggz() {
     return m_aggz;
   }
 

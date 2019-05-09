@@ -14,23 +14,42 @@ DBController::DBController(string_view dbms, string_view table_name, string_view
   logger::INFO("DB pool initialize");
 }
 
+soci::connection_pool &DBController::pool() {
+  return m_db_pool;
+}
+
 bool DBController::insertBlockData(Block &block) {
   logger::INFO("insert Block Data");
 
   soci::row result;
-  soci::session db_session(m_db_pool);
+  soci::session db_session(DBController::pool());
 
   // clang-format off
+  string block_id = block.getBlockId();
+  string block_hash = block.getBlockHash();
+  string prev_block_id = block.getPrevBlockId();
+  string pre_block_sig = block.getPrevBlockSig();
+  string block_prod_id = block.getBlockProdId();
+  string block_pro_sig = block.getBlockProdSig();
+  string tx_id = block.getTransactions()[0].getTxid();
+  string tx_root = block.getTxRoot();
+  string user_state_root = block.getUserStateRoot();
+  string contract_state_root = block.getContractStateRoot();
+  string sig_root = block.getSgRoot();
+  string aggz = block.getAggz();
+  string block_cert = block.getBlockCert();
+
   soci::statement st = (db_session.prepare << "INSERT INTO blocks (block_id, block_height, block_hash, block_time, block_pub_time, block_prev_id, block_link, producer_id, producer_sig, txs, tx_root, us_state_root, cs_state_root, sg_root, aggz, certificate) VALUES (:block_id, :block_height, :block_hash, :block_time, :block_pub_time, :block_prev_id, :block_link, :producer_id, :producer_sig, :txs, :tx_root, :us_state_root, :cs_state_root, :sg_root, :aggz, :certificate)",
-      soci::use(block.getBlockId(), "block_id"), soci::use(block.getHeight(), "block_height"), soci::use(block.getBlockHash(), "block_hash"),
-      soci::use(block.getBlockTime(), "block_time"), soci::use(block.getBlockPubTime(), "block_pub_time"), soci::use(block.getPrevBlockId(), "block_prev_id"),
-      soci::use(block.getPrevBlockSig(), "block_link"), soci::use(block.getBlockProdId(), "producer_id"),
-      soci::use(block.getBlockProdSig(),"producer_sig"), soci::use(block.getTransactions()[0].getTxid(),"txs"),
-      soci::use(block.getTxRoot(),"tx_root"), soci::use(block.getUserStateRoot(),"us_state_root"),
-      soci::use(block.getContractStateRoot(),"cs_state_root"), soci::use(block.getSgRoot(),"sg_root"), soci::use(block.getAggz(),"aggz"),
-      soci::use(block.getBlockCert(), "certificate"), soci::into(result));
+      soci::use(block_id), soci::use(block.getHeight()), soci::use(block_hash),
+      soci::use(block.getBlockTime()), soci::use(block.getBlockPubTime()), soci::use(prev_block_id),
+      soci::use(pre_block_sig), soci::use(block_prod_id),
+      soci::use(block_pro_sig), soci::use(tx_id),
+      soci::use(tx_root), soci::use(user_state_root),
+      soci::use(contract_state_root), soci::use(sig_root), soci::use(aggz),
+      soci::use(block_cert), soci::into(result));
   // clang-format on
   st.execute(true);
+
   return true;
 }
 
