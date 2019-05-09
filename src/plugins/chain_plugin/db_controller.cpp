@@ -14,28 +14,8 @@ DBController::DBController(string_view dbms, string_view table_name, string_view
   logger::INFO("DB pool initialize");
 }
 
-int DBController::performQuery(const string &query) {
-  try {
-    soci::session db_session(m_db_pool);
-    soci::row result;
-    soci::statement st = (db_session.prepare << query, soci::into(result));
-    st.execute(true);
-
-    logger::INFO("query: " + query);
-  } catch (soci::mysql_soci_error const &e) {
-    logger::ERROR("error in performQuery() function: {}", e.what());
-    logger::ERROR("MySQL error: {}", e.what());
-  } catch (exception const &e) {
-    logger::ERROR("Some other error: {}", e.what());
-  }
-
-  return 0;
-}
-
 bool DBController::insertBlockData(Block &block) {
-  logger::INFO("insert Block Data!");
-
-  //  performQuery("SELECT * FROM blocks");
+  logger::INFO("insert Block Data");
 
   soci::row result;
   soci::session db_session(m_db_pool);
