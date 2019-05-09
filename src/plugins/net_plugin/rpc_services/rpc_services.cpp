@@ -141,11 +141,11 @@ private:
   MsgEntryType getEntryType(const string &key) {
     if (key == "time" || key == "btime")
       return MsgEntryType::TIMESTAMP;
-    else if (key == "pid" || key == "txid" || key == "receiver" || key == "id" || key == "user" || key == "merger")
+    else if (key == "previd" || key == "txid" || key == "receiver" || key == "id" || key == "user" || key == "merger")
       return MsgEntryType::BASE58_256;
     else if (key == "aggz" || key == "block" || key == "proof" || key == "output")
       return MsgEntryType::BASE64;
-    else if (key == "txroot" || key == "usroot" || key == "csroot" || key == "sgroot" || key == "hash")
+    else if (key == "txroot" || key == "usroot" || key == "csroot" || key == "sgroot" || key == "hash" || key == "link")
       return MsgEntryType::BASE64_256;
     else if (key == "sig")
       return MsgEntryType::BASE64_SIG;
@@ -153,8 +153,6 @@ private:
       return MsgEntryType::DECIMAL;
     else if (key == "world" || key == "chain")
       return MsgEntryType::ALPHA_64;
-    else if (key == "cert")
-      return MsgEntryType::PEM;
     else if (key == "pk")
       return MsgEntryType::PEM_PK;
     else if (key == "x" || key == "y")
