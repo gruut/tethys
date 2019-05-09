@@ -1,7 +1,9 @@
+#include <shared_mutex>
+#include <map>
+
 #include "include/chain_plugin.hpp"
 #include "../../../include/json.hpp"
 #include "../../../lib/appbase/include/application.hpp"
-#include "../../../lib/core/include/transaction_pool.hpp"
 #include "../../../lib/gruut-utils/src/bytes_builder.hpp"
 #include "../../../lib/gruut-utils/src/sha256.hpp"
 #include "../../../lib/gruut-utils/src/type_converter.hpp"
@@ -16,7 +18,6 @@ namespace gruut {
 namespace fs = boost::filesystem;
 
 using namespace std;
-using namespace core;
 
 class TransactionMsgParser {
 public:
@@ -73,7 +74,7 @@ private:
     AGS ags;
 
     auto &endorsers = transaction.getEndorsers();
-    bool result = all_of(endorsers.begin(), endorsers.end(), [&ags, &transaction](auto &endorser){
+    bool result = all_of(endorsers.begin(), endorsers.end(), [&ags, &transaction](const auto &endorser){
         return ags.verify(endorser.endorser_pk, transaction.getTxID(), endorser.endorser_signature);
     });
 
@@ -93,6 +94,19 @@ private:
 
     return ags.verify(transaction.getTxUserPk(), message, user_sig);
   }
+};
+
+class TransactionPool {
+public:
+  void add(const Transaction &tx) {
+    {
+      lock_guard<shared_mutex> writerLock(pool_mutex);
+      tx_pool.try_emplace(tx.getTxID(), tx);
+    }
+  }
+private:
+  std::map<string, Transaction> tx_pool;
+  std::shared_mutex pool_mutex;
 };
 
 class ChainPluginImpl {
@@ -152,7 +166,7 @@ public:
 
     logger::INFO("first block id: " + first_block.getBlockId());
     logger::INFO("first block 0th cert content: " + first_block.getUserCerts()[0].cert_content);
-    logger::INFO("first block 0th txid: " + first_block.getTransactions()[0].getTxid());
+    logger::INFO("first block 0th txid: " + first_block.getTransactions()[0].getTxID());
     logger::INFO("first block 0th cid: " + first_block.getTransactions()[0].getContractId());
     // end test code
   }
