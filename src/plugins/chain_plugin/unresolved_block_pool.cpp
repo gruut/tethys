@@ -5,7 +5,7 @@
 namespace gruut {
 
 UnresolvedBlockPool::UnresolvedBlockPool() {
-  logger::INFO("URBP");
+  logger::INFO("Unresolved block pool is created");
   m_block_pool.clear();
 }
 
