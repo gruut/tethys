@@ -163,7 +163,7 @@ public:
     return m_block_pub_time;
   }
 
-  string getBlockId() {
+  base58_type getBlockId() {
     return m_block_id;
   }
 
@@ -183,11 +183,15 @@ public:
     return m_block_height;
   }
 
-  string getPrevBlockId() {
+  base58_type getPrevBlockId() {
     return m_block_prev_id;
   }
 
-  string getBlockHash() {
+  base64_type getPrevBlockSig() {
+    return m_block_prev_sig;
+  }
+
+  base64_type getBlockHash() {
     return m_block_hash;
   }
 
@@ -205,6 +209,10 @@ public:
 
   int32_t getNumTransaction() {
     return m_transactions.size();
+  }
+
+  base64_type getAggz() {
+    return m_aggz;
   }
 
   base64_type getTxRoot() {
@@ -241,6 +249,10 @@ public:
 
   base64_type getBlockProdSig() {
     return m_block_prod_info.signer_sig;
+  }
+
+  string getBlockCert() {
+    return m_block_certificate;
   }
 };
 } // namespace gruut

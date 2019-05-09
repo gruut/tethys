@@ -8,6 +8,7 @@ class CreateBlock < ActiveRecord::Migration[5.2]
       t.integer :block_time, limit: 8
       t.integer :block_pub_time, limit: 8
       t.column :block_prev_id, 'char(44)'
+      t.column :block_link, 'char(44)'
       t.column :producer_id, 'char(44)'
       t.string :producer_sig, limit: 100
       t.mediumtext :txs
