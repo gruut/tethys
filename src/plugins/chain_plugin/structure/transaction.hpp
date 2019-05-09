@@ -2,6 +2,7 @@
 #define GRUUT_PUBLIC_MERGER_TRANSACTION_HPP
 
 #include "../../../../lib/json/include/json.hpp"
+#include "../../../../lib/log/include/log.hpp"
 
 #include "../../../../lib/gruut-utils/src/bytes_builder.hpp"
 #include "../../../../lib/gruut-utils/src/sha256.hpp"

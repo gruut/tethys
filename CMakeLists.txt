@@ -26,14 +26,13 @@ add_subdirectory(src/plugins)
 target_link_libraries(gruut
         appbase
         log
-        core
         net_plugin
         block_producer_plugin
         chain_plugin
         )
 
 target_include_directories(gruut
-        PRIVATE
+        PUBLIC
         "${CMAKE_INSTALL_PREFIX}/include"
         )
 
