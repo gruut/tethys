@@ -159,7 +159,10 @@ static SchemaMap schema_map = {{MessageType::MSG_PING,
         "height":{
           "type": "string"
         },
-        "pid":{
+        "previd":{
+          "type": "string"
+        },
+        "link":{
           "type": "string"
         },
         "hash":{
@@ -172,7 +175,8 @@ static SchemaMap schema_map = {{MessageType::MSG_PING,
         "world",
         "chain",
         "height",
-        "pid",
+        "previd",
+        "link",
         "hash"
       ]
     },
@@ -234,13 +238,16 @@ static SchemaMap schema_map = {{MessageType::MSG_PING,
           "id": {
             "type": "string"
           },
-          "pk": {
-            "type": "string"
+          "cert": {
+           "type": "array",
+           "items": {
+             "type": "string"
+           }
           }
         },
         "required": [
           "id",
-          "pk"
+          "cert"
         ]
       }
     },
@@ -350,7 +357,10 @@ static SchemaMap schema_map = {{MessageType::MSG_PING,
         "height":{
           "type": "string"
         },
-        "pid":{
+        "previd":{
+          "type": "string"
+        },
+        "link":{
           "type": "string"
         },
         "hash":{
@@ -363,7 +373,8 @@ static SchemaMap schema_map = {{MessageType::MSG_PING,
         "world",
         "chain",
         "height",
-        "pid",
+        "previd",
+        "link",
         "hash"
       ]
     },
@@ -412,7 +423,10 @@ static SchemaMap schema_map = {{MessageType::MSG_PING,
           "type": "string"
         },
         "cert": {
-          "type": "string"
+         "type": "array",
+         "items": {
+           "type": "string"
+         }
         },
         "sig": {
           "type": "string"
