@@ -1,21 +1,20 @@
 #ifndef GRUUT_PUBLIC_MERGER_STORAGE_MANAGER_HPP
 #define GRUUT_PUBLIC_MERGER_STORAGE_MANAGER_HPP
 
-#include "storage.hpp" // 변경 필요. 현 구현되어있는 storage와 새로 구현하는 storage 를 잘 끼워맞춰야 한다...
-
+#include "kv_store.hpp"
 #include "mem_ledger.hpp"
 
 namespace gruut {
 //
 //class StorageManager : public TemplateSingleton<StorageManager> {
 //private:
-//  Storage *m_storage;
+//  KVStore *m_storage;
 //  mem_ledger_t m_mem_ledger;
 //
 //public:
 //  StorageManager() {
 //    logger::getLogger("LAYS");
-//    m_storage = Storage::getInstance();
+//    m_storage = KVStore::getInstance();
 //  }
 //
 //  bool saveLedger(mem_ledger_t &mem_ledger, const std::string &prefix = "") {
