@@ -20,7 +20,7 @@ struct LocalChainState {
 
   // creator
   string creator_id;
-  vector<string> creator_pk;
+  vector<string> creator_cert;
   string creator_sig;
 };
 
@@ -49,8 +49,8 @@ struct GenesisState {
 
   // creator
   string creator_id;
-  vector<string> cert;
-  string sig;
+  vector<string> creator_cert;
+  string creator_sig;
 };
 
 class ChainImpl {
@@ -89,10 +89,16 @@ public:
       genesis_state.authority_cert = state["authority"]["cert"].get<vector<string>>();
 
       genesis_state.creator_id = state["/creator/id"_json_pointer];
-      genesis_state.cert = state["creator"]["cert"].get<vector<string>>();
-      genesis_state.sig = state["/creator/sig"_json_pointer];
+      genesis_state.local_chain_state.creator_id = state["/creator/id"_json_pointer];
+      genesis_state.creator_cert = state["creator"]["cert"].get<vector<string>>();
+      genesis_state.local_chain_state.creator_cert = state["creator"]["cert"].get<vector<string>>();
+      genesis_state.creator_sig = state["/creator/sig"_json_pointer];
+      genesis_state.local_chain_state.creator_sig = state["/creator/sig"_json_pointer];
 
       assert(genesis_state.world_id == genesis_state.local_chain_state.world_id);
+      assert(genesis_state.creator_id == genesis_state.local_chain_state.creator_id);
+      assert(genesis_state.creator_cert == genesis_state.local_chain_state.creator_cert);
+      assert(genesis_state.creator_sig == genesis_state.local_chain_state.creator_sig);
 
       return genesis_state;
     } catch (json::parse_error &e) {
