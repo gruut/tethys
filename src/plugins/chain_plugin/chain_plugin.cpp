@@ -101,10 +101,29 @@ class TransactionPool {
 public:
   void add(const Transaction &tx) {
     {
-      lock_guard<shared_mutex> writerLock(pool_mutex);
+      unique_lock<shared_mutex> writerLock(pool_mutex);
       tx_pool.try_emplace(tx.getTxId(), tx);
     }
   }
+
+  vector<Transaction> fetchAll() {
+    {
+      shared_lock<shared_mutex> readerLock(pool_mutex);
+      
+      vector<Transaction> v;
+      v.reserve(tx_pool.size());
+
+      std::transform( 
+        tx_pool.begin(), 
+        tx_pool.end(),
+        std::back_inserter(v),
+        [](auto &kv){ return kv.second;} 
+      );
+
+      return v;
+    }
+  }
+
 private:
   std::map<string, Transaction> tx_pool;
   std::shared_mutex pool_mutex;
@@ -151,6 +170,10 @@ public:
 
   void pushBlock(const nlohmann::json &block_json) {
 
+  }
+
+  vector<Transaction> getTransactions() {
+    return transaction_pool->fetchAll();
   }
 
   void start() {
@@ -246,6 +269,11 @@ void ChainPlugin::setProgramOptions(options_description &cfg) {
   ("database-password", boost::program_options::value<string>()->composing(), "database password");
 }
 // clang-format on
+
+void ChainPlugin::asyncFetchTransactionsFromPool() {
+  auto transactions = impl->getTransactions();
+  app().getChannel<incoming::channels::transaction_pool::channel_type>().publish(transactions);
+}
 
 void ChainPlugin::pluginStart() {
   logger::INFO("ChainPlugin Start");
