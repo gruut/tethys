@@ -31,7 +31,7 @@ bool DBController::insertBlockData(Block &block) {
   string pre_block_sig = block.getPrevBlockSig();
   string block_prod_id = block.getBlockProdId();
   string block_pro_sig = block.getBlockProdSig();
-  string tx_id = block.getTransactions()[0].getTxid();
+  string tx_id = block.getTransactions()[0].getTxID();
   string tx_root = block.getTxRoot();
   string user_state_root = block.getUserStateRoot();
   string contract_state_root = block.getContractStateRoot();
