@@ -140,6 +140,8 @@ public:
   string db_user_id;
   string db_password;
 
+  string first_block_path;
+
   nlohmann::json genesis_state;
 
   incoming::channels::transaction::channel_type::Handle incoming_transaction_subscription;
@@ -182,7 +184,7 @@ public:
     // 테스트 시에는 임의로 first_block_test.json의 블록 하나를 저장하는것부터 시작.
     nlohmann::json first_block_json;
 
-    fs::path config_path = "../first_block_test.json";
+    fs::path config_path = first_block_path;
     if (config_path.is_relative())
       config_path = fs::current_path() / config_path;
 
@@ -250,6 +252,12 @@ void ChainPlugin::pluginInitialize(const boost::program_options::variables_map &
     throw std::invalid_argument("the input of database's password is empty"s);
   }
 
+  if (options.count("first-block-path")) {
+    impl->first_block_path = options.at("first-block-path").as<string>();
+  } else {
+    throw std::invalid_argument("the input of first block path is empty"s);
+  }
+
   auto &transaction_channel = app().getChannel<incoming::channels::transaction::channel_type>();
   impl->incoming_transaction_subscription =
       transaction_channel.subscribe([this](const nlohmann::json &transaction) { impl->pushTransaction(transaction); });
@@ -266,7 +274,8 @@ void ChainPlugin::setProgramOptions(options_description &cfg) {
   cfg.add_options()("world-create", boost::program_options::value<string>()->composing(), "the location of a world_create.json file")
   ("dbms", boost::program_options::value<string>()->composing(), "DBMS (MYSQL)")("table-name", boost::program_options::value<string>()->composing(), "table name")
   ("database-user", boost::program_options::value<string>()->composing(), "database user id")
-  ("database-password", boost::program_options::value<string>()->composing(), "database password");
+  ("database-password", boost::program_options::value<string>()->composing(), "database password")
+  ("first-block-path", boost::program_options::value<string>()->composing(), "first block json path");
 }
 // clang-format on
 
