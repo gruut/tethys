@@ -30,6 +30,8 @@ public:
 
   void setProgramOptions(options_description &cfg) override;
 
+  void asyncFetchTransactionsFromPool();
+
 private:
   std::unique_ptr<class ChainPluginImpl> impl;
 };
