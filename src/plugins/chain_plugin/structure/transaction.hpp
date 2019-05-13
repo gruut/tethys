@@ -97,7 +97,7 @@ public:
     return true;
   }
 
-  base58_type getTxID() const {
+  base58_type getTxId() const {
     return m_txid;
   }
 

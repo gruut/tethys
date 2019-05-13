@@ -39,7 +39,7 @@ bool verifyTransaction(Transaction &tx, string world, string chain) {
   tx_id_builder.append(TypeConverter::bytesToString(tx.getTxInputCbor()));
 
   hash_t tx_id = Sha256::hash(tx_id_builder.getBytes());
-  if (tx.getTxID() != TypeConverter::encodeBase<58>(tx_id)) {
+  if (tx.getTxId() != TypeConverter::encodeBase<58>(tx_id)) {
     return false;
   }
 
