@@ -465,7 +465,7 @@ void UnresolvedBlockPool::setupStateTree() // RDB에 있는 모든 노드를 불
 // ------------------------------------------------------------------
 //
 //// block 을 한줄씩 읽으며 데이터와 머클트리 갱신, m_current_layer 갱신
-//void KVStore::parseBlockToLayer(Block block) {
+//void KvController::parseBlockToLayer(Block block) {
 //  int res;
 //  Value value;
 //  cout << "parseBlockToLayer function..." << endl;
@@ -481,7 +481,7 @@ void UnresolvedBlockPool::setupStateTree() // RDB에 있는 모든 노드를 불
 //    } else if (transaction["command"] == "del") {
 //      res = delCommand(transaction);
 //    } else {
-//      cout << "[ERROR] KVStore::parseBlockToLayer - can't analyze transaction - " << transaction << endl;
+//      cout << "[ERROR] KvController::parseBlockToLayer - can't analyze transaction - " << transaction << endl;
 //      continue;
 //    }
 //
@@ -497,7 +497,7 @@ void UnresolvedBlockPool::setupStateTree() // RDB에 있는 모든 노드를 불
 //  //            m_current_layer.transaction;
 //}
 //
-//int KVStore::addCommand(json transaction, Value &val) {
+//int KvController::addCommand(json transaction, Value &val) {
 //  int status = SUCCESS;
 //  string block_id = transaction["block_id"];
 //  string to_user_id = transaction["to_user_id"];
@@ -513,7 +513,7 @@ void UnresolvedBlockPool::setupStateTree() // RDB에 있는 모든 노드를 불
 //  test_data modified_data;
 //
 //  if (depth == NO_DATA) {
-//    cout << "[ERROR] KVStore::addCommand() - Can't find data" << endl;
+//    cout << "[ERROR] KvController::addCommand() - Can't find data" << endl;
 //    status = DATA_NOT_EXIST;
 //  } else {
 //    if (depth == DB_DATA) {
@@ -564,7 +564,7 @@ void UnresolvedBlockPool::setupStateTree() // RDB에 있는 모든 노드를 불
 //  return status;
 //}
 //
-//int KVStore::sendCommand(json transaction) {
+//int KvController::sendCommand(json transaction) {
 //  int status = SUCCESS;
 //  string block_id = transaction["block_id"];
 //  string to_user_id = transaction["to_user_id"];
@@ -577,7 +577,7 @@ void UnresolvedBlockPool::setupStateTree() // RDB에 있는 모든 노드를 불
 //
 //  // send 명령어로 - 값 전송이 올 수 있나??
 //  if (value < 0) {
-//    cout << "[ERROR] KVStore::sendCommand() - Value is under zero" << endl;
+//    cout << "[ERROR] KvController::sendCommand() - Value is under zero" << endl;
 //    return COIN_VALUE;
 //  }
 //
@@ -591,10 +591,10 @@ void UnresolvedBlockPool::setupStateTree() // RDB에 있는 모든 노드를 불
 //  int from_depth = checkLayer(from_key);
 //
 //  if (to_depth == NO_DATA) {
-//    cout << "[ERROR] KVStore::sendCommand() - Can't find to_user data" << endl;
+//    cout << "[ERROR] KvController::sendCommand() - Can't find to_user data" << endl;
 //    status = DATA_NOT_EXIST;
 //  } else if (from_depth == NO_DATA) {
-//    cout << "[ERROR] KVStore::sendCommand() - Can't find from_user data" << endl;
+//    cout << "[ERROR] KvController::sendCommand() - Can't find from_user data" << endl;
 //    status = DATA_NOT_EXIST;
 //  } else {
 //
@@ -629,7 +629,7 @@ void UnresolvedBlockPool::setupStateTree() // RDB에 있는 모든 노드를 불
 //  return status;
 //}
 //
-//int KVStore::newCommand(json transaction) {
+//int KvController::newCommand(json transaction) {
 //  int status = SUCCESS;
 //  string block_id = transaction["block_id"];
 //  string user_id = transaction["user_id"];
@@ -638,7 +638,7 @@ void UnresolvedBlockPool::setupStateTree() // RDB에 있는 모든 노드를 불
 //  string value = transaction["var_value"];
 //
 //  if (var_type == "coin" && stoi(value) < 0) {
-//    cout << "[ERROR] KVStore::newCommand() - Coin type can't minus value" << endl;
+//    cout << "[ERROR] KvController::newCommand() - Coin type can't minus value" << endl;
 //    status = COIN_VALUE;
 //  } else {
 //    Key key(block_id, user_id, var_type, var_name);
@@ -660,7 +660,7 @@ void UnresolvedBlockPool::setupStateTree() // RDB에 있는 모든 노드를 불
 //      m_current_layer.m_temporary_data.insert(make_pair(key, val));
 //      cout << key << ", " << val << endl;
 //    } else {
-//      cout << "[ERROR] KVStore::newCommand() - Data already exist" << endl;
+//      cout << "[ERROR] KvController::newCommand() - Data already exist" << endl;
 //      status = DATA_DUPLICATE;
 //    }
 //  }
@@ -668,7 +668,7 @@ void UnresolvedBlockPool::setupStateTree() // RDB에 있는 모든 노드를 불
 //  return status;
 //}
 //
-//int KVStore::delCommand(json transaction) {
+//int KvController::delCommand(json transaction) {
 //  int status = SUCCESS;
 //  string block_id = transaction["block_id"];
 //  string user_id = transaction["user_id"];
@@ -683,7 +683,7 @@ void UnresolvedBlockPool::setupStateTree() // RDB에 있는 모든 노드를 불
 //  int depth = checkLayer(key);
 //
 //  if (depth == NO_DATA) {
-//    cout << "[ERROR] KVStore::delCommand() - Can't find data" << endl;
+//    cout << "[ERROR] KvController::delCommand() - Can't find data" << endl;
 //    status = DATA_NOT_EXIST;
 //    return status;
 //  } else if (depth == DB_DATA) {
@@ -711,7 +711,7 @@ void UnresolvedBlockPool::setupStateTree() // RDB에 있는 모든 노드를 불
 //
 //// 현재 레이어부터 시작해서, 윗 레이어부터 살펴보며 데이터가 존재하면 존재하는 레이어 층을 반환함.
 //// 레이어에 없으면 마지막으로 DB를 살펴본 뒤, 존재하면 -1, 존재하지 않으면 -2 반환함.
-//int KVStore::checkLayer(Key key) {
+//int KvController::checkLayer(Key key) {
 //  int depth = _D_CUR_LAYER;
 //  map<Key, Value>::iterator it;
 //
@@ -748,7 +748,7 @@ void UnresolvedBlockPool::setupStateTree() // RDB에 있는 모든 노드를 불
 //  return depth;
 //}
 //
-//void KVStore::testBackward() {
+//void KvController::testBackward() {
 //  cout << "--------------- test Backward called -----------------" << endl;
 //  Layer back_layer = popBackLayer();
 //

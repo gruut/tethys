@@ -1,69 +1,20 @@
 #include "include/chain.hpp"
-#include "../../../lib/log/include/log.hpp"
-#include <utility>
 
 namespace gruut {
-
-using namespace nlohmann;
-
-struct LocalChainState {
-  // chain
-  string chain_id;
-  string world_id;
-  string chain_created_time;
-
-  // policy
-  bool allow_custom_contract;
-  bool allow_oracle;
-  bool allow_tag;
-  bool allow_heavy_contract;
-
-  // creator
-  string creator_id;
-  vector<string> creator_cert;
-  string creator_sig;
-};
-
-struct GenesisState {
-  // world
-  string world_id;
-  string world_created_time;
-
-  // key_currency
-  string keyc_name;
-  string initial_amount;
-
-  // mining_policy
-  bool allow_mining;
-  void *rule = nullptr;
-
-  // user_policy
-  bool allow_anonymous_user;
-  string join_fee;
-
-  LocalChainState local_chain_state;
-
-  // authority
-  string authority_id;
-  vector<string> authority_cert;
-
-  // creator
-  string creator_id;
-  vector<string> creator_cert;
-  string creator_sig;
-};
 
 class ChainImpl {
 public:
   ChainImpl(Chain &self) : self(self) {}
 
-  void init(json genesis_state) {
-    GenesisState genesis = unmarshalGenesisState(genesis_state);
+  void init(nlohmann::json genesis_state) {
+    world_type genesis = unmarshalGenesisState(genesis_state);
+
+    // genesis가 여기 있으므로, world에 관한 정보를 KV를 넣는 코드가 여기에 있어야 할 것이다.
   }
 
-  GenesisState unmarshalGenesisState(json state) {
+  world_type unmarshalGenesisState(nlohmann::json state) {
     try {
-      GenesisState genesis_state;
+      world_type genesis_state;
 
       genesis_state.world_id = state["/world/id"_json_pointer];
       genesis_state.world_created_time = state["/world/after"_json_pointer];
@@ -101,7 +52,7 @@ public:
       assert(genesis_state.creator_sig == genesis_state.local_chain_state.creator_sig);
 
       return genesis_state;
-    } catch (json::parse_error &e) {
+    } catch (nlohmann::json::parse_error &e) {
       logger::ERROR("Failed to parse world_create.json: {}", e.what());
       throw e;
     }

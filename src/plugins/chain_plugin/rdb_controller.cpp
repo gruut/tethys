@@ -4,7 +4,7 @@ using namespace std;
 
 namespace gruut {
 
-DBController::DBController(string_view dbms, string_view table_name, string_view db_user_id, string_view db_password)
+RdbController::RdbController(string_view dbms, string_view table_name, string_view db_user_id, string_view db_password)
     : m_dbms(dbms), m_table_name(table_name), m_db_user_id(db_user_id), m_db_password(db_password),
       m_db_pool(config::DB_SESSION_POOL_SIZE) {
   for (int i = 0; i != config::DB_SESSION_POOL_SIZE; ++i) {
@@ -14,15 +14,15 @@ DBController::DBController(string_view dbms, string_view table_name, string_view
   logger::INFO("DB pool initialize");
 }
 
-soci::connection_pool &DBController::pool() {
+soci::connection_pool &RdbController::pool() {
   return m_db_pool;
 }
 
-bool DBController::insertBlockData(Block &block) {
+bool RdbController::insertBlockData(Block &block) {
   logger::INFO("insert Block Data");
 
   soci::row result;
-  soci::session db_session(DBController::pool());
+  soci::session db_session(RdbController::pool());
 
   // clang-format off
   string block_id = block.getBlockId();
@@ -31,7 +31,7 @@ bool DBController::insertBlockData(Block &block) {
   string pre_block_sig = block.getPrevBlockSig();
   string block_prod_id = block.getBlockProdId();
   string block_pro_sig = block.getBlockProdSig();
-  string tx_id = block.getTransactions()[0].getTxid();
+  string tx_id = block.getTransactions()[0].getTxID();
   string tx_root = block.getTxRoot();
   string user_state_root = block.getUserStateRoot();
   string contract_state_root = block.getContractStateRoot();
@@ -53,7 +53,7 @@ bool DBController::insertBlockData(Block &block) {
   return true;
 }
 
-// bool DBController::updateData(const string &userId, const string &varType, const string &varName, const string &varValue) {
+// bool RdbController::updateData(const string &userId, const string &varType, const string &varName, const string &varValue) {
 //  if (checkUserIdVarTypeVarName(&userId, &varType, &varName) == 0) {
 //    string query = "UPDATE ledger SET var_value='" + varValue + "' WHERE user_id='" + userId + "' AND var_type='" + varType +
 //                   "' AND var_name='" + varName + "'";
@@ -70,7 +70,7 @@ bool DBController::insertBlockData(Block &block) {
 //  }
 //}
 //
-// bool DBController::deleteData(const string &userId, const string &varType, const string &varName) {
+// bool RdbController::deleteData(const string &userId, const string &varType, const string &varName) {
 //  if (checkUserIdVarTypeVarName(&userId, &varType, &varName) == 0) {
 //    string query = "DELETE FROM ledger WHERE user_id='" + userId + "' AND var_type='" + varType + "' AND var_name='" + varName + "'";
 //    if (performQuery(query) == 0) {

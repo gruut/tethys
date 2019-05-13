@@ -8,13 +8,13 @@ namespace gruut {
 //
 //class StorageManager : public TemplateSingleton<StorageManager> {
 //private:
-//  KVStore *m_storage;
+//  KvController *m_storage;
 //  mem_ledger_t m_mem_ledger;
 //
 //public:
 //  StorageManager() {
 //    logger::getLogger("LAYS");
-//    m_storage = KVStore::getInstance();
+//    m_storage = KvController::getInstance();
 //  }
 //
 //  bool saveLedger(mem_ledger_t &mem_ledger, const std::string &prefix = "") {

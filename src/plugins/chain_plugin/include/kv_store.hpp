@@ -2,6 +2,8 @@
 #define GRUUT_PUBLIC_MERGER_KV_STORE_HPP
 
 #include "../../../../lib/json/include/json.hpp"
+#include "../../../../lib/log/include/log.hpp"
+#include "../config/storage_config.hpp"
 #include "../config/storage_type.hpp"
 
 #include <boost/filesystem/operations.hpp>
@@ -10,17 +12,14 @@
 #include <leveldb/options.h>
 #include <leveldb/write_batch.h>
 
-#include <cmath>
-#include <deque>
 #include <iostream>
-#include <map>
 
 using namespace std;
 typedef unsigned int uint;
 
 namespace gruut {
 
-class KVStore {
+class KvController {
 private:
   string m_db_path;
 
@@ -37,10 +36,8 @@ private:
   leveldb::WriteBatch m_batch_backup;
 
 public:
-  KVStore();
-  ~KVStore();
-
-  bool empty();
+  KvController();
+  ~KvController();
 
   void saveBackup(const std::string &key, const std::string &value);
   std::string readBackup(const std::string &key);
@@ -50,7 +47,6 @@ public:
 
 private:
   bool errorOnCritical(const leveldb::Status &status);
-  void readConfig();
   void destroyDB();
 };
 } // namespace gruut

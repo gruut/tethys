@@ -19,8 +19,8 @@ namespace gruut {
 class Transaction {
 private:
   base58_type m_txid;
-  string m_world;
-  string m_chain;
+  alphanumeric_type m_world;
+  alphanumeric_type m_chain;
   timestamp_t m_tx_time;
 
   string m_contract_id;
@@ -58,7 +58,7 @@ public:
       m_tx_user_pk = json::get<string>(tx_json["user"], "pk").value();
       m_tx_user_sig = json::get<string>(tx_json["user"], "sig").value();
 
-      if(!setEndorsers(tx_json["endorser"])) {
+      if (!setEndorsers(tx_json["endorser"])) {
         return false;
       }
 
@@ -68,10 +68,10 @@ public:
       //    setTxPosition();
       //    setTxOutput();
       return true;
-    } catch(nlohmann::json::parse_error &e) {
+    } catch (nlohmann::json::parse_error &e) {
       logger::ERROR("Failed to parse transaction json: {}", e.what());
       return false;
-    } catch(...) {
+    } catch (...) {
       logger::ERROR("Unexpected error at `Transaction#setJson`");
       return false;
     }
@@ -105,14 +105,15 @@ public:
     return m_tx_user_pk;
   }
 
-  const string &getWorld() const {
+  const alphanumeric_type &getWorld() const {
     return m_world;
   }
-  const string &getChain() const {
+
+  const alphanumeric_type &getChain() const {
     return m_chain;
   }
 
-    timestamp_t getTxTime() const {
+  timestamp_t getTxTime() const {
     return m_tx_time;
   }
 
