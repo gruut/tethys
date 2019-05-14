@@ -5,6 +5,7 @@
 #include "../../../../lib/log/include/log.hpp"
 #include "../config/storage_config.hpp"
 #include "../config/storage_type.hpp"
+#include "unresolved_block_pool.hpp"
 
 #include <boost/filesystem/operations.hpp>
 #include <leveldb/cache.h>
@@ -40,7 +41,7 @@ public:
 
   bool saveWorld(world_type &world_info);
   bool saveChain(local_chain_type &chain_info);
-  bool saveBackup();
+  bool saveBackup(UnresolvedBlock &block_info);
 
   string getValueByKey(DataType what, const string &base_keys);
 
@@ -57,7 +58,6 @@ private:
   void commitBatchAll();
   void rollbackBatchAll();
   void clearBatchAll();
-
 
   string parseCertContent(std::vector<string> &cert);
 };

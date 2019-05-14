@@ -1,7 +1,5 @@
 #include "include/unresolved_block_pool.hpp"
 
-#include <time.h>
-
 namespace gruut {
 
 UnresolvedBlockPool::UnresolvedBlockPool() {
@@ -465,7 +463,7 @@ void UnresolvedBlockPool::setupStateTree() // RDB에 있는 모든 노드를 불
 // ------------------------------------------------------------------
 //
 //// block 을 한줄씩 읽으며 데이터와 머클트리 갱신, m_current_layer 갱신
-//void KvController::parseBlockToLayer(Block block) {
+// void KvController::parseBlockToLayer(Block block) {
 //  int res;
 //  Value value;
 //  cout << "parseBlockToLayer function..." << endl;
@@ -497,7 +495,7 @@ void UnresolvedBlockPool::setupStateTree() // RDB에 있는 모든 노드를 불
 //  //            m_current_layer.transaction;
 //}
 //
-//int KvController::addCommand(json transaction, Value &val) {
+// int KvController::addCommand(json transaction, Value &val) {
 //  int status = SUCCESS;
 //  string block_id = transaction["block_id"];
 //  string to_user_id = transaction["to_user_id"];
@@ -564,7 +562,7 @@ void UnresolvedBlockPool::setupStateTree() // RDB에 있는 모든 노드를 불
 //  return status;
 //}
 //
-//int KvController::sendCommand(json transaction) {
+// int KvController::sendCommand(json transaction) {
 //  int status = SUCCESS;
 //  string block_id = transaction["block_id"];
 //  string to_user_id = transaction["to_user_id"];
@@ -629,7 +627,7 @@ void UnresolvedBlockPool::setupStateTree() // RDB에 있는 모든 노드를 불
 //  return status;
 //}
 //
-//int KvController::newCommand(json transaction) {
+// int KvController::newCommand(json transaction) {
 //  int status = SUCCESS;
 //  string block_id = transaction["block_id"];
 //  string user_id = transaction["user_id"];
@@ -668,7 +666,7 @@ void UnresolvedBlockPool::setupStateTree() // RDB에 있는 모든 노드를 불
 //  return status;
 //}
 //
-//int KvController::delCommand(json transaction) {
+// int KvController::delCommand(json transaction) {
 //  int status = SUCCESS;
 //  string block_id = transaction["block_id"];
 //  string user_id = transaction["user_id"];
@@ -711,7 +709,7 @@ void UnresolvedBlockPool::setupStateTree() // RDB에 있는 모든 노드를 불
 //
 //// 현재 레이어부터 시작해서, 윗 레이어부터 살펴보며 데이터가 존재하면 존재하는 레이어 층을 반환함.
 //// 레이어에 없으면 마지막으로 DB를 살펴본 뒤, 존재하면 -1, 존재하지 않으면 -2 반환함.
-//int KvController::checkLayer(Key key) {
+// int KvController::checkLayer(Key key) {
 //  int depth = _D_CUR_LAYER;
 //  map<Key, Value>::iterator it;
 //
@@ -748,7 +746,7 @@ void UnresolvedBlockPool::setupStateTree() // RDB에 있는 모든 노드를 불
 //  return depth;
 //}
 //
-//void KvController::testBackward() {
+// void KvController::testBackward() {
 //  cout << "--------------- test Backward called -----------------" << endl;
 //  Layer back_layer = popBackLayer();
 //

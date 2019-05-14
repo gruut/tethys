@@ -9,11 +9,11 @@ public:
   void init(nlohmann::json genesis_state) {
     world_type genesis = unmarshalGenesisState(genesis_state);
 
-    self.kv_controller->saveWorld(genesis);
-    self.kv_controller->saveChain(genesis.local_chain_state);
+    self.saveWorld(genesis);
+    self.saveChain(genesis.local_chain_state);
 
     string tmp_key_test = genesis.world_id + "_cpk";
-    string test_value = self.kv_controller->getValueByKey(DataType::WORLD, tmp_key_test);
+    string test_value = self.getValueByKey(DataType::WORLD, tmp_key_test);
 
     logger::INFO("KV levelDB test... " + test_value);
   }
@@ -75,6 +75,22 @@ Chain::Chain(string_view dbms, string_view table_name, string_view db_user_id, s
 
 void Chain::insertBlockData(gruut::Block &first_block) {
   rdb_controller->insertBlockData(first_block);
+}
+
+void Chain::saveWorld(world_type &world_info){
+  kv_controller->saveWorld(world_info);
+}
+
+void Chain::saveChain(local_chain_type &chain_info){
+  kv_controller->saveChain(chain_info);
+}
+
+void Chain::saveBackup(UnresolvedBlock &block_info){
+  kv_controller->saveBackup(block_info);
+}
+
+string Chain::getValueByKey(DataType what, const string &base_keys){
+  return kv_controller->getValueByKey(what, base_keys);
 }
 
 void Chain::startup(nlohmann::json &genesis_state) {

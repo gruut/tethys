@@ -111,7 +111,7 @@ bool KvController::saveChain(local_chain_type &chain_info) {
   return true;
 }
 
-bool KvController::saveBackup() {
+bool KvController::saveBackup(UnresolvedBlock &block_info) {
 
   commitBatchAll();
 
