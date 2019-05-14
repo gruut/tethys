@@ -1,0 +1,43 @@
+syntax = "proto3";
+
+package grpc_admin;
+
+service GruutAdminService {
+    rpc Setup (ReqSetup) returns (ResSetup) {}
+    rpc Start (ResStart) returns (ResStart) {}
+    rpc Stop (ReqStop) returns (ResStop) {}
+    rpc CheckStatus (ReqStatus) returns (ResStatus) {}
+}
+
+//TODO : 각 메시지별  내부 스펙들은 변경 될 수 있음.
+message ReqSetup {
+    string password = 1;
+}
+
+message ResSetup {
+    bool success = 1;
+}
+
+message ReqStart {
+
+}
+
+message ResStart {
+    bool success = 1;
+}
+
+message ReqStop {
+
+}
+
+message ResStop {
+    bool success = 1;
+}
+
+message ReqStatus {
+
+}
+
+message ResStatus {
+    bool alive = 1;
+}
