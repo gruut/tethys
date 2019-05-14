@@ -134,11 +134,10 @@ public:
   incoming::channels::block::channel_type::Handle incoming_block_subscription;
 
   void initialize() {
-    chain = make_unique<Chain>();
+    chain = make_unique<Chain>(dbms, table_name, db_user_id, db_password);
     transaction_pool = make_unique<TransactionPool>();
 
     chain->startup(genesis_state);
-    chain->rdb_controller = make_unique<RdbController>(dbms, table_name, db_user_id, db_password);
   }
 
   void pushTransaction(const nlohmann::json &transaction_json) {

@@ -68,8 +68,9 @@ public:
   Chain &self;
 };
 
-Chain::Chain() {
+Chain::Chain(string_view dbms, string_view table_name, string_view db_user_id, string_view db_password) {
   impl = make_unique<ChainImpl>(*this);
+  rdb_controller = make_unique<RdbController>(dbms, table_name, db_user_id, db_password);
 }
 
 void Chain::startup(nlohmann::json &genesis_state) {

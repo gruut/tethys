@@ -19,7 +19,7 @@ public:
   unique_ptr<RdbController> rdb_controller;
   unique_ptr<KvController> kv_controller;
 
-  Chain();
+  Chain(string_view dbms, string_view table_name, string_view db_user_id, string_view db_password);
   ~Chain();
 
   Chain(const Chain &) = delete;

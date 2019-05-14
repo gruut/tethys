@@ -27,7 +27,7 @@ endif (LEVELDB_FOUND)
 
 find_package(Mysql)
 if (MYSQL_FOUND)
-    target_link_libraries(chain_plugin ${MYSQL_LIBRARIES} ${MYSQL_EMBEDDED_LIBRARIES})
+    target_link_libraries(chain_plugin ${MYSQL_LIBRARIES})
 else (MYSQL_FOUND)
     message(WARNING "MYSQL NOT FOUND")
 endif (MYSQL_FOUND)
