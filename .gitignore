@@ -64,3 +64,6 @@ config.yml
 
 # History
 .history
+
+# Key-Value store
+/leveldb

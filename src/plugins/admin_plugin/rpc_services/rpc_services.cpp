@@ -37,9 +37,10 @@ void AdminService<ReqStatus, ResStatus>::proceed() {
     responder.Finish(res, Status::OK, this);
   } break;
 
+
   default: { delete this; } break;
   }
 }
-
+  
 } // namespace admin_plugin
 } // namespace gruut

@@ -1,10 +1,10 @@
-#include "include/db_controller.hpp"
+#include "include/rdb_controller.hpp"
 
 using namespace std;
 
 namespace gruut {
 
-DBController::DBController(string_view dbms, string_view table_name, string_view db_user_id, string_view db_password)
+RdbController::RdbController(string_view dbms, string_view table_name, string_view db_user_id, string_view db_password)
     : m_dbms(dbms), m_table_name(table_name), m_db_user_id(db_user_id), m_db_password(db_password),
       m_db_pool(config::DB_SESSION_POOL_SIZE) {
   for (int i = 0; i != config::DB_SESSION_POOL_SIZE; ++i) {
@@ -14,17 +14,18 @@ DBController::DBController(string_view dbms, string_view table_name, string_view
   logger::INFO("DB pool initialize");
 }
 
-soci::connection_pool &DBController::pool() {
+soci::connection_pool &RdbController::pool() {
   return m_db_pool;
 }
 
-bool DBController::insertBlockData(Block &block) {
+bool RdbController::insertBlockData(Block &block) {
   logger::INFO("insert Block Data");
 
   soci::row result;
-  soci::session db_session(DBController::pool());
+  soci::session db_session(RdbController::pool());
 
-  // clang-format off
+  try {
+    // clang-format off
   string block_id = block.getBlockId();
   string block_hash = block.getBlockHash();
   string prev_block_id = block.getPrevBlockId();
@@ -47,13 +48,19 @@ bool DBController::insertBlockData(Block &block) {
       soci::use(tx_root), soci::use(user_state_root),
       soci::use(contract_state_root), soci::use(sig_root), soci::use(aggz),
       soci::use(block_cert), soci::into(result));
-  // clang-format on
-  st.execute(true);
-
+    // clang-format on
+    st.execute(true);
+  } catch (soci::mysql_soci_error const &e) {
+    logger::ERROR("MySQL error: {}", e.what());
+    return false;
+  } catch (...) {
+    logger::ERROR("Unexpected error at `insertBlockData`");
+    return false;
+  }
   return true;
 }
 
-// bool DBController::updateData(const string &userId, const string &varType, const string &varName, const string &varValue) {
+// bool RdbController::updateData(const string &userId, const string &varType, const string &varName, const string &varValue) {
 //  if (checkUserIdVarTypeVarName(&userId, &varType, &varName) == 0) {
 //    string query = "UPDATE ledger SET var_value='" + varValue + "' WHERE user_id='" + userId + "' AND var_type='" + varType +
 //                   "' AND var_name='" + varName + "'";
@@ -70,7 +77,7 @@ bool DBController::insertBlockData(Block &block) {
 //  }
 //}
 //
-// bool DBController::deleteData(const string &userId, const string &varType, const string &varName) {
+// bool RdbController::deleteData(const string &userId, const string &varType, const string &varName) {
 //  if (checkUserIdVarTypeVarName(&userId, &varType, &varName) == 0) {
 //    string query = "DELETE FROM ledger WHERE user_id='" + userId + "' AND var_type='" + varType + "' AND var_name='" + varName + "'";
 //    if (performQuery(query) == 0) {

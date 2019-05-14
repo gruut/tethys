@@ -1,18 +1,4 @@
-#include <shared_mutex>
-#include <map>
-
 #include "include/chain_plugin.hpp"
-#include "../../../include/json.hpp"
-#include "../../../lib/appbase/include/application.hpp"
-#include "../../../lib/gruut-utils/src/bytes_builder.hpp"
-#include "../../../lib/gruut-utils/src/sha256.hpp"
-#include "../../../lib/gruut-utils/src/type_converter.hpp"
-#include "../../../lib/gruut-utils/src/ags.hpp"
-#include "../../../lib/log/include/log.hpp"
-#include "include/chain.hpp"
-#include "include/db_controller.hpp"
-#include "structure/block.hpp"
-#include "structure/transaction.hpp"
 
 namespace gruut {
 
@@ -102,6 +88,7 @@ public:
   void add(const Transaction &tx) {
     {
       unique_lock<shared_mutex> writerLock(pool_mutex);
+      
       tx_pool.try_emplace(tx.getTxId(), tx);
     }
   }
@@ -132,7 +119,6 @@ private:
 class ChainPluginImpl {
 public:
   unique_ptr<Chain> chain;
-  unique_ptr<DBController> rdb_controller;
   unique_ptr<TransactionPool> transaction_pool;
 
   string dbms;
@@ -148,12 +134,10 @@ public:
   incoming::channels::block::channel_type::Handle incoming_block_subscription;
 
   void initialize() {
-    chain = make_unique<Chain>();
+    chain = make_unique<Chain>(dbms, table_name, db_user_id, db_password);
     transaction_pool = make_unique<TransactionPool>();
 
     chain->startup(genesis_state);
-
-    rdb_controller = make_unique<DBController>(dbms, table_name, db_user_id, db_password);
   }
 
   void pushTransaction(const nlohmann::json &transaction_json) {
@@ -200,7 +184,7 @@ public:
     logger::INFO("first block 0th txid: " + first_block.getTransactions()[0].getTxId());
     logger::INFO("first block 0th cid: " + first_block.getTransactions()[0].getContractId());
 
-    rdb_controller->insertBlockData(first_block);
+    chain->insertBlockData(first_block);
     // end test code
   }
 };

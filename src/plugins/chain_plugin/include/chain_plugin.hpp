@@ -1,13 +1,24 @@
 #pragma once
 
+#include "../../../../include/json.hpp"
+#include "../../../../lib/appbase/include/application.hpp"
+#include "../../../../lib/gruut-utils/src/ags.hpp"
+#include "../../../../lib/gruut-utils/src/bytes_builder.hpp"
+#include "../../../../lib/gruut-utils/src/sha256.hpp"
+#include "../../../../lib/gruut-utils/src/type_converter.hpp"
+#include "../../../../lib/log/include/log.hpp"
+#include "../../channel_interface/include/channel_interface.hpp"
+#include "../structure/block.hpp"
+#include "../structure/transaction.hpp"
+#include "chain.hpp"
+#include "plugin.hpp"
+
 #include <boost/filesystem.hpp>
 #include <boost/program_options/options_description.hpp>
 #include <boost/program_options/variables_map.hpp>
 
-#include "../../../../lib/log/include/log.hpp"
-#include "../../channel_interface/include/channel_interface.hpp"
-#include "plugin.hpp"
-#include "db_controller.hpp"
+#include <map>
+#include <shared_mutex>
 
 using namespace appbase;
 

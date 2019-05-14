@@ -33,17 +33,13 @@ namespace config {
 // KNOWLEDGE
 
         const std::string DEFAULT_PORT_NUM = "50051";
-        const std::string DEFAULT_DB_PATH = "./db";
         const std::string GENESIS_BLOCK_PREV_HASH_B64 = "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=";
         const std::string GENESIS_BLOCK_PREV_ID_B58 = "11111111111111111111111111111111";
-        const std::string DB_SUB_DIR_HEADER = "block_header";
-        const std::string DB_SUB_DIR_RAW = "block_raw";
-        const std::string DB_SUB_DIR_LATEST = "latest_block_header";
-        const std::string DB_SUB_DIR_TRANSACTION = "transaction";
-        const std::string DB_SUB_DIR_IDHEIGHT = "blockid_height";
-        const std::string DB_SUB_DIR_LEDGER = "ledger";
-        const std::string DB_SUB_DIR_BACKUP = "backup";
-        const std::string DB_SUB_DIR_MERGER_INFO = "merger_info";
+
+        const std::string DEFAULT_KV_PATH = "./leveldb";
+        const std::string KV_SUB_DIR_WORLD = "world";
+        const std::string KV_SUB_DIR_CHAIN = "chain";
+        const std::string KV_SUB_DIR_BACKUP = "backup";
 
 // clang-format on
 

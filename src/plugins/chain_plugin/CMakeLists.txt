@@ -9,24 +9,35 @@ file(GLOB HEADERS
         config/*.hpp
         structure/*.hpp
         )
-
 file(GLOB SOURCES
         "${CMAKE_CURRENT_SOURCE_DIR}/../../../lib/gruut-utils/src/ags.cpp"
         *.cpp
         )
-
 add_library(chain_plugin
         ${HEADERS}
         ${SOURCES}
         )
 
 find_package(Boost REQUIRED COMPONENTS system filesystem)
+
+find_package(LevelDB)
+if (LEVELDB_FOUND)
+    target_link_libraries(chain_plugin ${LevelDB_LIBRARY})
+endif (LEVELDB_FOUND)
+
+find_package(Mysql)
+if (MYSQL_FOUND)
+    target_link_libraries(chain_plugin ${MYSQL_LIBRARIES})
+else (MYSQL_FOUND)
+    message(WARNING "MYSQL NOT FOUND")
+endif (MYSQL_FOUND)
+
 find_package(Soci)
 if (SOCI_FOUND)
     target_link_libraries(chain_plugin ${SOCI_LIBRARY} ${SOCI_mysql_PLUGIN})
-else ()
+else (SOCI_FOUND)
     message(WARNING "SOCI NOT FOUND")
-endif ()
+endif (SOCI_FOUND)
 
 set(LIB_PREFIX "/usr/local/lib")
 set(BOTAN_LIB "${LIB_PREFIX}/libbotan-2.a")
