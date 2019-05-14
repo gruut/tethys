@@ -50,7 +50,7 @@ private:
     tx_id_builder.append(transaction.getTxInputCbor());
 
     vector<uint8_t> tx_id = Sha256::hash(tx_id_builder.getBytes());
-    if (transaction.getTxID() != TypeConverter::encodeBase<58>(tx_id)) {
+    if (transaction.getTxId() != TypeConverter::encodeBase<58>(tx_id)) {
       return false;
     }
 
@@ -62,7 +62,7 @@ private:
 
     auto &endorsers = transaction.getEndorsers();
     bool result = all_of(endorsers.begin(), endorsers.end(), [&ags, &transaction](const auto &endorser){
-        return ags.verify(endorser.endorser_pk, transaction.getTxID(), endorser.endorser_signature);
+        return ags.verify(endorser.endorser_pk, transaction.getTxId(), endorser.endorser_signature);
     });
 
     return result;
@@ -72,7 +72,7 @@ private:
     AGS ags;
 
     auto &endorsers = transaction.getEndorsers();
-    string message = transaction.getTxID();
+    string message = transaction.getTxId();
     for_each(endorsers.begin(), endorsers.end(), [&message](auto &endorser){
       message += endorser.endorser_id + endorser.endorser_pk + endorser.endorser_signature;
     });
@@ -88,7 +88,7 @@ public:
   void add(const Transaction &tx) {
     {
       lock_guard<shared_mutex> writerLock(pool_mutex);
-      tx_pool.try_emplace(tx.getTxID(), tx);
+      tx_pool.try_emplace(tx.getTxId(), tx);
     }
   }
 private:
@@ -151,7 +151,7 @@ public:
 
     logger::INFO("first block id: " + first_block.getBlockId());
     logger::INFO("first block 0th cert content: " + first_block.getUserCerts()[0].cert_content);
-    logger::INFO("first block 0th txid: " + first_block.getTransactions()[0].getTxID());
+    logger::INFO("first block 0th txid: " + first_block.getTransactions()[0].getTxId());
     logger::INFO("first block 0th cid: " + first_block.getTransactions()[0].getContractId());
 
     chain->rdb_controller->insertBlockData(first_block);

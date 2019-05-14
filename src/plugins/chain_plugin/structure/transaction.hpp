@@ -43,10 +43,8 @@ public:
   bool setJson(const nlohmann::json &tx_json) {
     try {
       m_txid = json::get<string>(tx_json, "txid").value();
-
-      m_world = tx_json["/world"_json_pointer];
-      m_chain = tx_json["/chain"_json_pointer];
-
+      //    m_world = tx_json["/world"_json_pointer];
+      //    m_chain = tx_json["/chain"_json_pointer];
       m_tx_time = static_cast<gruut::timestamp_t>(stoll(json::get<string>(tx_json, "time").value()));
 
       m_contract_id = json::get<string>(tx_json["body"], "cid").value();
@@ -62,7 +60,7 @@ public:
         return false;
       }
 
-      // TODO: 아래 넷은 tx scope에는 저장되는 사항이지만, json으로 입력되는 내용은 아님. 보류.
+      // TODO: 아래는 tx scope에는 저장되는 사항이지만, json으로 입력되는 내용은 아님. 보류.
       //    setTxAggCbor();
       //    setBlockId();
       //    setTxPosition();
@@ -97,7 +95,7 @@ public:
     return true;
   }
 
-  base58_type getTxID() const {
+  base58_type getTxId() const {
     return m_txid;
   }
 

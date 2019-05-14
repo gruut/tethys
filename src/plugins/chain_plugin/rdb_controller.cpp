@@ -24,14 +24,15 @@ bool RdbController::insertBlockData(Block &block) {
   soci::row result;
   soci::session db_session(RdbController::pool());
 
-  // clang-format off
+  try {
+    // clang-format off
   string block_id = block.getBlockId();
   string block_hash = block.getBlockHash();
   string prev_block_id = block.getPrevBlockId();
   string pre_block_sig = block.getPrevBlockSig();
   string block_prod_id = block.getBlockProdId();
   string block_pro_sig = block.getBlockProdSig();
-  string tx_id = block.getTransactions()[0].getTxID();
+  string tx_id = block.getTransactions()[0].getTxId();
   string tx_root = block.getTxRoot();
   string user_state_root = block.getUserStateRoot();
   string contract_state_root = block.getContractStateRoot();
@@ -47,9 +48,15 @@ bool RdbController::insertBlockData(Block &block) {
       soci::use(tx_root), soci::use(user_state_root),
       soci::use(contract_state_root), soci::use(sig_root), soci::use(aggz),
       soci::use(block_cert), soci::into(result));
-  // clang-format on
-  st.execute(true);
-
+    // clang-format on
+    st.execute(true);
+  } catch (soci::mysql_soci_error const &e) {
+    logger::ERROR("MySQL error: {}", e.what());
+    return false;
+  } catch (...) {
+    logger::ERROR("Unexpected error at `insertBlockData`");
+    return false;
+  }
   return true;
 }
 

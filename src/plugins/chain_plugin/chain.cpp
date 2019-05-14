@@ -8,8 +8,15 @@ public:
 
   void init(nlohmann::json genesis_state) {
     world_type genesis = unmarshalGenesisState(genesis_state);
+    self.kv_controller = make_unique<KvController>();
 
-    // genesis가 여기 있으므로, world에 관한 정보를 KV를 넣는 코드가 여기에 있어야 할 것이다.
+    self.kv_controller->saveWorld(genesis);
+    self.kv_controller->saveChain(genesis.local_chain_state);
+
+    string tmp_key_test = genesis.world_id + "_cpk";
+    string test_value = self.kv_controller->getValueByKey(DataType::WORLD, tmp_key_test);
+
+    logger::INFO("KV levelDB test... " + test_value);
   }
 
   world_type unmarshalGenesisState(nlohmann::json state) {

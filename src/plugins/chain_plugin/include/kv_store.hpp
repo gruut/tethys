@@ -15,7 +15,6 @@
 #include <iostream>
 
 using namespace std;
-typedef unsigned int uint;
 
 namespace gruut {
 
@@ -39,16 +38,28 @@ public:
   KvController();
   ~KvController();
 
-  void saveBackup(const std::string &key, const std::string &value);
+  bool saveWorld(world_type &world_info);
+  bool saveChain(local_chain_type &chain_info);
+  bool saveBackup();
+
+  string getValueByKey(DataType what, const string &base_keys);
+
   std::string readBackup(const std::string &key);
   void flushBackup();
   void clearBackup();
   void delBackup(const std::string &block_id_b64);
 
+  void destroyDB();
+
 private:
   bool errorOnCritical(const leveldb::Status &status);
-  void destroyDB();
+  bool addBatch(DataType what, const string &base_key, const string &value);
+  void commitBatchAll();
+  void rollbackBatchAll();
+  void clearBatchAll();
+
+
+  string parseCertContent(std::vector<string> &cert);
 };
 } // namespace gruut
-
 #endif

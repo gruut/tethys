@@ -7,7 +7,7 @@
 namespace gruut {
 
 enum class LedgerType : bool { USERSCOPE = true, CONTRACTSCOPE = false };
-enum class DBType : int { BLOCK_HEADER, BLOCK_HEIGHT, BLOCK_RAW, BLOCK_LATEST, TRANSACTION, LEDGER, BLOCK_BACKUP };
+enum class DataType : int { WORLD, CHAIN, BACKUP };
 
 
 using string = std::string;
@@ -27,8 +27,8 @@ using txagg_cbor_b64 = std::string;
 
 using local_chain_type = struct LocalChainState {
   // chain
-  string chain_id;
-  string world_id;
+  alphanumeric_type chain_id;
+  alphanumeric_type world_id;
   string chain_created_time;
 
   // policy
@@ -38,14 +38,14 @@ using local_chain_type = struct LocalChainState {
   bool allow_heavy_contract;
 
   // creator
-  string creator_id;
+  base58_type creator_id;
   std::vector<string> creator_cert;
   string creator_sig;
 };
 
 using world_type = struct WorldState {
   // world
-  string world_id;
+  alphanumeric_type world_id;
   string world_created_time;
 
   // key_currency
@@ -54,7 +54,7 @@ using world_type = struct WorldState {
 
   // mining_policy
   bool allow_mining;
-  void *rule = nullptr;
+  string rule;
 
   // user_policy
   bool allow_anonymous_user;
@@ -67,13 +67,13 @@ using world_type = struct WorldState {
   std::vector<string> authority_cert;
 
   // creator
-  string creator_id;
+  base58_type creator_id;
   std::vector<string> creator_cert;
   string creator_sig;
 };
 
 using proof_type = struct _proof_type {
-  std::string block_id_b58;
+  base58_type block_id;
   std::vector<std::pair<bool, std::string>> siblings;
 };
 
