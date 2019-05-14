@@ -64,7 +64,7 @@ private:
     tx_id_builder.append(transaction.getTxInputCbor());
 
     vector<uint8_t> tx_id = Sha256::hash(tx_id_builder.getBytes());
-    if (transaction.getTxID() != TypeConverter::encodeBase<58>(tx_id)) {
+    if (transaction.getTxId() != TypeConverter::encodeBase<58>(tx_id)) {
       return false;
     }
 
@@ -76,7 +76,7 @@ private:
 
     auto &endorsers = transaction.getEndorsers();
     bool result = all_of(endorsers.begin(), endorsers.end(), [&ags, &transaction](const auto &endorser){
-        return ags.verify(endorser.endorser_pk, transaction.getTxID(), endorser.endorser_signature);
+        return ags.verify(endorser.endorser_pk, transaction.getTxId(), endorser.endorser_signature);
     });
 
     return result;
@@ -86,7 +86,7 @@ private:
     AGS ags;
 
     auto &endorsers = transaction.getEndorsers();
-    string message = transaction.getTxID();
+    string message = transaction.getTxId();
     for_each(endorsers.begin(), endorsers.end(), [&message](auto &endorser){
       message += endorser.endorser_id + endorser.endorser_pk + endorser.endorser_signature;
     });
@@ -101,10 +101,29 @@ class TransactionPool {
 public:
   void add(const Transaction &tx) {
     {
-      lock_guard<shared_mutex> writerLock(pool_mutex);
-      tx_pool.try_emplace(tx.getTxID(), tx);
+      unique_lock<shared_mutex> writerLock(pool_mutex);
+      tx_pool.try_emplace(tx.getTxId(), tx);
     }
   }
+
+  vector<Transaction> fetchAll() {
+    {
+      shared_lock<shared_mutex> readerLock(pool_mutex);
+      
+      vector<Transaction> v;
+      v.reserve(tx_pool.size());
+
+      std::transform( 
+        tx_pool.begin(), 
+        tx_pool.end(),
+        std::back_inserter(v),
+        [](auto &kv){ return kv.second;} 
+      );
+
+      return v;
+    }
+  }
+
 private:
   std::map<string, Transaction> tx_pool;
   std::shared_mutex pool_mutex;
@@ -121,9 +140,12 @@ public:
   string db_user_id;
   string db_password;
 
+  string first_block_path;
+
   nlohmann::json genesis_state;
 
   incoming::channels::transaction::channel_type::Handle incoming_transaction_subscription;
+  incoming::channels::block::channel_type::Handle incoming_block_subscription;
 
   void initialize() {
     chain = make_unique<Chain>();
@@ -148,13 +170,21 @@ public:
     }
   }
 
+  void pushBlock(const nlohmann::json &block_json) {
+
+  }
+
+  vector<Transaction> getTransactions() {
+    return transaction_pool->fetchAll();
+  }
+
   void start() {
     // TODO: msg 관련 요청 감시 (block, ping, request, etc..)
 
     // 테스트 시에는 임의로 first_block_test.json의 블록 하나를 저장하는것부터 시작.
     nlohmann::json first_block_json;
 
-    fs::path config_path = "../first_block_test.json";
+    fs::path config_path = first_block_path;
     if (config_path.is_relative())
       config_path = fs::current_path() / config_path;
 
@@ -167,7 +197,7 @@ public:
 
     logger::INFO("first block id: " + first_block.getBlockId());
     logger::INFO("first block 0th cert content: " + first_block.getUserCerts()[0].cert_content);
-    logger::INFO("first block 0th txid: " + first_block.getTransactions()[0].getTxID());
+    logger::INFO("first block 0th txid: " + first_block.getTransactions()[0].getTxId());
     logger::INFO("first block 0th cid: " + first_block.getTransactions()[0].getContractId());
 
     rdb_controller->insertBlockData(first_block);
@@ -222,9 +252,19 @@ void ChainPlugin::pluginInitialize(const boost::program_options::variables_map &
     throw std::invalid_argument("the input of database's password is empty"s);
   }
 
+  if (options.count("first-block-path")) {
+    impl->first_block_path = options.at("first-block-path").as<string>();
+  } else {
+    throw std::invalid_argument("the input of first block path is empty"s);
+  }
+
   auto &transaction_channel = app().getChannel<incoming::channels::transaction::channel_type>();
   impl->incoming_transaction_subscription =
-      transaction_channel.subscribe([this](nlohmann::json transaction) { impl->pushTransaction(transaction); });
+      transaction_channel.subscribe([this](const nlohmann::json &transaction) { impl->pushTransaction(transaction); });
+
+  auto &block_channel = app().getChannel<incoming::channels::block::channel_type>();
+  impl->incoming_block_subscription =
+      block_channel.subscribe([this](const nlohmann::json &block) { impl->pushBlock(block); });
 
   impl->initialize();
 }
@@ -234,9 +274,15 @@ void ChainPlugin::setProgramOptions(options_description &cfg) {
   cfg.add_options()("world-create", boost::program_options::value<string>()->composing(), "the location of a world_create.json file")
   ("dbms", boost::program_options::value<string>()->composing(), "DBMS (MYSQL)")("table-name", boost::program_options::value<string>()->composing(), "table name")
   ("database-user", boost::program_options::value<string>()->composing(), "database user id")
-  ("database-password", boost::program_options::value<string>()->composing(), "database password");
+  ("database-password", boost::program_options::value<string>()->composing(), "database password")
+  ("first-block-path", boost::program_options::value<string>()->composing(), "first block json path");
 }
 // clang-format on
+
+void ChainPlugin::asyncFetchTransactionsFromPool() {
+  auto transactions = impl->getTransactions();
+  app().getChannel<incoming::channels::transaction_pool::channel_type>().publish(transactions);
+}
 
 void ChainPlugin::pluginStart() {
   logger::INFO("ChainPlugin Start");
