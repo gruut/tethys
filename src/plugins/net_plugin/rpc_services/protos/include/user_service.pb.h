@@ -71,7 +71,7 @@ template<> ::grpc_user::Request* Arena::CreateMaybeMessage<::grpc_user::Request>
 namespace grpc_user {
 
 enum Reply_Status {
-  Reply_Status_UNKOWN = 0,
+  Reply_Status_UNKNOWN = 0,
   Reply_Status_SUCCESS = 1,
   Reply_Status_INVALID = 2,
   Reply_Status_INTERNAL = 3,
@@ -84,7 +84,7 @@ enum Reply_Status {
   Reply_Status_Reply_Status_INT_MAX_SENTINEL_DO_NOT_USE_ = ::google::protobuf::kint32max
 };
 bool Reply_Status_IsValid(int value);
-const Reply_Status Reply_Status_Status_MIN = Reply_Status_UNKOWN;
+const Reply_Status Reply_Status_Status_MIN = Reply_Status_UNKNOWN;
 const Reply_Status Reply_Status_Status_MAX = Reply_Status_ECDH_INVALID_PK;
 const int Reply_Status_Status_ARRAYSIZE = Reply_Status_Status_MAX + 1;
 
@@ -519,8 +519,8 @@ class Reply : public ::google::protobuf::Message /* @@protoc_insertion_point(cla
   // nested types ----------------------------------------------------
 
   typedef Reply_Status Status;
-  static const Status UNKOWN =
-    Reply_Status_UNKOWN;
+  static const Status UNKNOWN =
+    Reply_Status_UNKNOWN;
   static const Status SUCCESS =
     Reply_Status_SUCCESS;
   static const Status INVALID =

@@ -172,23 +172,23 @@ void AddDescriptorsImpl() {
   static const char descriptor[] GOOGLE_PROTOBUF_ATTRIBUTE_SECTION_VARIABLE(protodesc_cold) = {
       "\n\022user_service.proto\022\tgrpc_user\"\032\n\010Ident"
       "ity\022\016\n\006sender\030\001 \001(\014\"\032\n\007Message\022\017\n\007messag"
-      "e\030\001 \001(\014\"\032\n\007Request\022\017\n\007message\030\001 \001(\014\"\360\001\n\005"
+      "e\030\001 \001(\014\"\032\n\007Request\022\017\n\007message\030\001 \001(\014\"\361\001\n\005"
       "Reply\022\'\n\006status\030\001 \001(\0162\027.grpc_user.Reply."
-      "Status\022\017\n\007message\030\002 \001(\014\"\254\001\n\006Status\022\n\n\006UN"
-      "KOWN\020\000\022\013\n\007SUCCESS\020\001\022\013\n\007INVALID\020\002\022\014\n\010INTE"
-      "RNAL\020\003\022\027\n\023ECDH_ILLEGAL_ACCESS\020\025\022\030\n\024ECDH_"
-      "MAX_SIGNER_POOL\020\026\022\020\n\014ECDH_TIMEOUT\020\027\022\024\n\020E"
-      "CDH_INVALID_SIG\020\030\022\023\n\017ECDH_INVALID_PK\020\0312\277"
-      "\001\n\020GruutUserService\022<\n\013OpenChannel\022\023.grp"
-      "c_user.Identity\032\022.grpc_user.Message\"\000(\0010"
-      "\001\0226\n\014KeyExService\022\022.grpc_user.Request\032\020."
-      "grpc_user.Reply\"\000\0225\n\013UserService\022\022.grpc_"
-      "user.Request\032\020.grpc_user.Reply\"\000B-\n\033com."
-      "gruutnetworks.gruutuserB\014GruutNetworkP\001b"
-      "\006proto3"
+      "Status\022\017\n\007message\030\002 \001(\014\"\255\001\n\006Status\022\013\n\007UN"
+      "KNOWN\020\000\022\013\n\007SUCCESS\020\001\022\013\n\007INVALID\020\002\022\014\n\010INT"
+      "ERNAL\020\003\022\027\n\023ECDH_ILLEGAL_ACCESS\020\025\022\030\n\024ECDH"
+      "_MAX_SIGNER_POOL\020\026\022\020\n\014ECDH_TIMEOUT\020\027\022\024\n\020"
+      "ECDH_INVALID_SIG\020\030\022\023\n\017ECDH_INVALID_PK\020\0312"
+      "\277\001\n\020GruutUserService\022<\n\013OpenChannel\022\023.gr"
+      "pc_user.Identity\032\022.grpc_user.Message\"\000(\001"
+      "0\001\0226\n\014KeyExService\022\022.grpc_user.Request\032\020"
+      ".grpc_user.Reply\"\000\0225\n\013UserService\022\022.grpc"
+      "_user.Request\032\020.grpc_user.Reply\"\000B-\n\033com"
+      ".gruutnetworks.gruutuserB\014GruutNetworkP\001"
+      "b\006proto3"
   };
   ::google::protobuf::DescriptorPool::InternalAddGeneratedFile(
-      descriptor, 607);
+      descriptor, 608);
   ::google::protobuf::MessageFactory::InternalRegisterGeneratedFile(
     "user_service.proto", &protobuf_RegisterTypes);
 }
@@ -227,7 +227,7 @@ bool Reply_Status_IsValid(int value) {
 }
 
 #if !defined(_MSC_VER) || _MSC_VER >= 1900
-const Reply_Status Reply::UNKOWN;
+const Reply_Status Reply::UNKNOWN;
 const Reply_Status Reply::SUCCESS;
 const Reply_Status Reply::INVALID;
 const Reply_Status Reply::INTERNAL;
