@@ -8,7 +8,6 @@ public:
 
   void init(nlohmann::json genesis_state) {
     world_type genesis = unmarshalGenesisState(genesis_state);
-    self.kv_controller = make_unique<KvController>();
 
     self.kv_controller->saveWorld(genesis);
     self.kv_controller->saveChain(genesis.local_chain_state);
@@ -71,6 +70,11 @@ public:
 Chain::Chain(string_view dbms, string_view table_name, string_view db_user_id, string_view db_password) {
   impl = make_unique<ChainImpl>(*this);
   rdb_controller = make_unique<RdbController>(dbms, table_name, db_user_id, db_password);
+  kv_controller = make_unique<KvController>();
+}
+
+void Chain::insertBlockData(gruut::Block &first_block) {
+  rdb_controller->insertBlockData(first_block);
 }
 
 void Chain::startup(nlohmann::json &genesis_state) {

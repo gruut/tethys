@@ -3,6 +3,7 @@
 #include "../../../../include/json.hpp"
 #include "../../../../lib/log/include/log.hpp"
 #include "../config/storage_type.hpp"
+#include "../structure/block.hpp"
 #include "kv_store.hpp"
 #include "rdb_controller.hpp"
 
@@ -28,6 +29,7 @@ public:
 
   void startup(nlohmann::json &genesis_state);
 
+  void insertBlockData(Block &first_block);
 private:
   unique_ptr<class ChainImpl> impl;
 };

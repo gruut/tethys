@@ -184,7 +184,7 @@ public:
     logger::INFO("first block 0th txid: " + first_block.getTransactions()[0].getTxId());
     logger::INFO("first block 0th cid: " + first_block.getTransactions()[0].getContractId());
 
-    chain->rdb_controller->insertBlockData(first_block);
+    chain->insertBlockData(first_block);
     // end test code
   }
 };
