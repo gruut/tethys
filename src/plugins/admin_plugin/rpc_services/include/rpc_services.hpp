@@ -37,7 +37,7 @@ public:
       : CallService(admin_service, cq), responder(&context) {
     proceed();
   }
-  void proceed() override {}
+  void proceed() override;
 
 private:
   Request req;
