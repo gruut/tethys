@@ -19,8 +19,8 @@ namespace gruut {
 class Transaction {
 private:
   base58_type m_txid;
-  string m_world;
-  string m_chain;
+  alphanumeric_type m_world;
+  alphanumeric_type m_chain;
   timestamp_t m_tx_time;
 
   string m_contract_id;
@@ -43,10 +43,8 @@ public:
   bool setJson(const nlohmann::json &tx_json) {
     try {
       m_txid = json::get<string>(tx_json, "txid").value();
-
-      m_world = tx_json["/world"_json_pointer];
-      m_chain = tx_json["/chain"_json_pointer];
-
+      //    m_world = tx_json["/world"_json_pointer];
+      //    m_chain = tx_json["/chain"_json_pointer];
       m_tx_time = static_cast<gruut::timestamp_t>(stoll(json::get<string>(tx_json, "time").value()));
 
       m_contract_id = json::get<string>(tx_json["body"], "cid").value();
@@ -58,20 +56,20 @@ public:
       m_tx_user_pk = json::get<string>(tx_json["user"], "pk").value();
       m_tx_user_sig = json::get<string>(tx_json["user"], "sig").value();
 
-      if(!setEndorsers(tx_json["endorser"])) {
+      if (!setEndorsers(tx_json["endorser"])) {
         return false;
       }
 
-      // TODO: 아래 넷은 tx scope에는 저장되는 사항이지만, json으로 입력되는 내용은 아님. 보류.
+      // TODO: 아래는 tx scope에는 저장되는 사항이지만, json으로 입력되는 내용은 아님. 보류.
       //    setTxAggCbor();
       //    setBlockId();
       //    setTxPosition();
       //    setTxOutput();
       return true;
-    } catch(nlohmann::json::parse_error &e) {
+    } catch (nlohmann::json::parse_error &e) {
       logger::ERROR("Failed to parse transaction json: {}", e.what());
       return false;
-    } catch(...) {
+    } catch (...) {
       logger::ERROR("Unexpected error at `Transaction#setJson`");
       return false;
     }
@@ -105,14 +103,15 @@ public:
     return m_tx_user_pk;
   }
 
-  const string &getWorld() const {
+  const alphanumeric_type &getWorld() const {
     return m_world;
   }
-  const string &getChain() const {
+
+  const alphanumeric_type &getChain() const {
     return m_chain;
   }
 
-    timestamp_t getTxTime() const {
+  timestamp_t getTxTime() const {
     return m_tx_time;
   }
 

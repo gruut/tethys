@@ -12,7 +12,7 @@ using namespace std;
 
 namespace gruut {
 
-class DBController {
+class RdbController {
 private:
   string m_dbms;
   string m_table_name;
@@ -21,7 +21,7 @@ private:
   soci::connection_pool m_db_pool;
 
 public:
-  DBController(string_view dbms, string_view table_name, string_view db_user_id, string_view db_password);
+  RdbController(string_view dbms, string_view table_name, string_view db_user_id, string_view db_password);
   soci::connection_pool &pool();
   bool insertBlockData(Block &block);
   bool updateData(const string &userId, const string &varType, const string &varName, const string &varValue);

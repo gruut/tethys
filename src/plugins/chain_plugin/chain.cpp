@@ -1,69 +1,26 @@
 #include "include/chain.hpp"
-#include "../../../lib/log/include/log.hpp"
-#include <utility>
 
 namespace gruut {
-
-using namespace nlohmann;
-
-struct LocalChainState {
-  // chain
-  string chain_id;
-  string world_id;
-  string chain_created_time;
-
-  // policy
-  bool allow_custom_contract;
-  bool allow_oracle;
-  bool allow_tag;
-  bool allow_heavy_contract;
-
-  // creator
-  string creator_id;
-  vector<string> creator_pk;
-  string creator_sig;
-};
-
-struct GenesisState {
-  // world
-  string world_id;
-  string world_created_time;
-
-  // key_currency
-  string keyc_name;
-  string initial_amount;
-
-  // mining_policy
-  bool allow_mining;
-  void *rule = nullptr;
-
-  // user_policy
-  bool allow_anonymous_user;
-  string join_fee;
-
-  LocalChainState local_chain_state;
-
-  // authority
-  string authority_id;
-  vector<string> authority_cert;
-
-  // creator
-  string creator_id;
-  vector<string> cert;
-  string sig;
-};
 
 class ChainImpl {
 public:
   ChainImpl(Chain &self) : self(self) {}
 
-  void init(json genesis_state) {
-    GenesisState genesis = unmarshalGenesisState(genesis_state);
+  void init(nlohmann::json genesis_state) {
+    world_type genesis = unmarshalGenesisState(genesis_state);
+
+    self.saveWorld(genesis);
+    self.saveChain(genesis.local_chain_state);
+
+    string tmp_key_test = genesis.world_id + "_cpk";
+    string test_value = self.getValueByKey(DataType::WORLD, tmp_key_test);
+
+    logger::INFO("KV levelDB test... " + test_value);
   }
 
-  GenesisState unmarshalGenesisState(json state) {
+  world_type unmarshalGenesisState(nlohmann::json state) {
     try {
-      GenesisState genesis_state;
+      world_type genesis_state;
 
       genesis_state.world_id = state["/world/id"_json_pointer];
       genesis_state.world_created_time = state["/world/after"_json_pointer];
@@ -85,24 +42,23 @@ public:
       genesis_state.local_chain_state.allow_tag = state["/eden/policy/allow_tag"_json_pointer];
       genesis_state.local_chain_state.allow_heavy_contract = state["/eden/policy/allow_heavy_contract"_json_pointer];
 
-      genesis_state.local_chain_state.creator_id = state["/eden/creator/id"_json_pointer];
-      genesis_state.local_chain_state.creator_pk = state["eden"]["creator"]["pk"].get<vector<string>>();
-      genesis_state.local_chain_state.creator_sig = state["/eden/creator/sig"_json_pointer];
-
       genesis_state.authority_id = state["/authority/id"_json_pointer];
       genesis_state.authority_cert = state["authority"]["cert"].get<vector<string>>();
 
       genesis_state.creator_id = state["/creator/id"_json_pointer];
-      genesis_state.cert = state["creator"]["cert"].get<vector<string>>();
-      genesis_state.sig = state["/creator/sig"_json_pointer];
+      genesis_state.local_chain_state.creator_id = state["/creator/id"_json_pointer];
+      genesis_state.creator_cert = state["creator"]["cert"].get<vector<string>>();
+      genesis_state.local_chain_state.creator_cert = state["creator"]["cert"].get<vector<string>>();
+      genesis_state.creator_sig = state["/creator/sig"_json_pointer];
+      genesis_state.local_chain_state.creator_sig = state["/creator/sig"_json_pointer];
 
       assert(genesis_state.world_id == genesis_state.local_chain_state.world_id);
       assert(genesis_state.creator_id == genesis_state.local_chain_state.creator_id);
-      assert(genesis_state.cert == genesis_state.local_chain_state.creator_pk);
-      assert(genesis_state.sig == genesis_state.local_chain_state.creator_sig);
+      assert(genesis_state.creator_cert == genesis_state.local_chain_state.creator_cert);
+      assert(genesis_state.creator_sig == genesis_state.local_chain_state.creator_sig);
 
       return genesis_state;
-    } catch (json::parse_error &e) {
+    } catch (nlohmann::json::parse_error &e) {
       logger::ERROR("Failed to parse world_create.json: {}", e.what());
       throw e;
     }
@@ -111,8 +67,30 @@ public:
   Chain &self;
 };
 
-Chain::Chain() {
+Chain::Chain(string_view dbms, string_view table_name, string_view db_user_id, string_view db_password) {
   impl = make_unique<ChainImpl>(*this);
+  rdb_controller = make_unique<RdbController>(dbms, table_name, db_user_id, db_password);
+  kv_controller = make_unique<KvController>();
+}
+
+void Chain::insertBlockData(gruut::Block &first_block) {
+  rdb_controller->insertBlockData(first_block);
+}
+
+void Chain::saveWorld(world_type &world_info){
+  kv_controller->saveWorld(world_info);
+}
+
+void Chain::saveChain(local_chain_type &chain_info){
+  kv_controller->saveChain(chain_info);
+}
+
+void Chain::saveBackup(UnresolvedBlock &block_info){
+  kv_controller->saveBackup(block_info);
+}
+
+string Chain::getValueByKey(DataType what, const string &base_keys){
+  return kv_controller->getValueByKey(what, base_keys);
 }
 
 void Chain::startup(nlohmann::json &genesis_state) {

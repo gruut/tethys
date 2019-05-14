@@ -30,8 +30,6 @@ void AdminService<ReqStatus, ResStatus>::proceed(){
 
 }
 
-}
-
 
 } // namespace admin_plugin
 } // namespace gruut
