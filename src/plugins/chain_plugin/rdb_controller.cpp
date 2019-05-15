@@ -60,36 +60,76 @@ bool RdbController::insertBlockData(Block &block) {
   return true;
 }
 
-// bool RdbController::updateData(const string &userId, const string &varType, const string &varName, const string &varValue) {
-//  if (checkUserIdVarTypeVarName(&userId, &varType, &varName) == 0) {
-//    string query = "UPDATE ledger SET var_value='" + varValue + "' WHERE user_id='" + userId + "' AND var_type='" + varType +
-//                   "' AND var_name='" + varName + "'";
-//    if (performQuery(query) == 0) {
-//      logger::INFO("updateVarValue() function was processed!!!");
-//      return 0;
-//    } else {
-//      logger::INFO("updateVarValue() function was not processed!!!");
-//      return 1;
-//    }
-//  } else {
-//    logger::INFO("updateVarValue() function was not processed!!!");
-//    return 1;
-//  }
-//}
-//
-// bool RdbController::deleteData(const string &userId, const string &varType, const string &varName) {
-//  if (checkUserIdVarTypeVarName(&userId, &varType, &varName) == 0) {
-//    string query = "DELETE FROM ledger WHERE user_id='" + userId + "' AND var_type='" + varType + "' AND var_name='" + varName + "'";
-//    if (performQuery(query) == 0) {
-//      logger::INFO("deleteData() function was processed!!!");
-//      return 0;
-//    } else {
-//      logger::INFO("deleteData() function was not processed!!!");
-//      return 1;
-//    }
-//  } else {
-//    logger::INFO("deleteData() function was not processed!!!");
-//    return 1;
-//  }
-//}
+vector<Block> RdbController::getBlocks(const string &condition) {
+  try {
+    soci::session db_session(RdbController::pool());
+    soci::rowset<soci::row> rs = (db_session.prepare << "select * from blocks where " + condition);
+
+    vector<Block> blocks;
+    blocks.reserve(distance(rs.begin(), rs.end()));
+    for (auto it = rs.begin(); it != rs.end(); ++it) {
+      soci::row const &row = *it;
+      Block block;
+
+      block.setBlockId(row.get<base58_type>("block_id"));
+      block.setHeight(row.get<block_height_type>("block_height"));
+      block.setBlockHash(row.get<base64_type>("block_hash"));
+      block.setBlockTime(row.get<timestamp_t>("block_time"));
+      block.setBlockPubTime(row.get<timestamp_t>("block_pub_time"));
+      block.setBlockPrevId(row.get<base58_type>("block_prev_id"));
+      block.setBlockPrevSig(row.get<base64_type>("block_link"));
+      block.setProducerId(row.get<base58_type>("producer_id"));
+      block.setProducerSig(row.get<base64_type>("producer_sig"));
+      // TODO: TxID
+      block.setTxRoot(row.get<string>("tx_root"));
+      block.setUsStateRoot(row.get<string>("us_state_root"));
+      block.setCsStateRoot(row.get<string>("cs_state_root"));
+      block.setSgRoot(row.get<string>("sg_root"));
+      block.setAggz(row.get<string>("aggz"));
+
+      nlohmann::json certificates = nlohmann::json(row.get<string>("certificate"));
+      block.setUserCerts(certificates);
+
+      blocks.push_back(block);
+    }
+
+    return blocks;
+  } catch (const std::exception &e) {
+    logger::ERROR("Failed to get blocks: {}", e.what());
+    return vector<Block>();
+  }
 }
+
+  // bool RdbController::updateData(const string &userId, const string &varType, const string &varName, const string &varValue) {
+  //  if (checkUserIdVarTypeVarName(&userId, &varType, &varName) == 0) {
+  //    string query = "UPDATE ledger SET var_value='" + varValue + "' WHERE user_id='" + userId + "' AND var_type='" + varType +
+  //                   "' AND var_name='" + varName + "'";
+  //    if (performQuery(query) == 0) {
+  //      logger::INFO("updateVarValue() function was processed!!!");
+  //      return 0;
+  //    } else {
+  //      logger::INFO("updateVarValue() function was not processed!!!");
+  //      return 1;
+  //    }
+  //  } else {
+  //    logger::INFO("updateVarValue() function was not processed!!!");
+  //    return 1;
+  //  }
+  //}
+  //
+  // bool RdbController::deleteData(const string &userId, const string &varType, const string &varName) {
+  //  if (checkUserIdVarTypeVarName(&userId, &varType, &varName) == 0) {
+  //    string query = "DELETE FROM ledger WHERE user_id='" + userId + "' AND var_type='" + varType + "' AND var_name='" + varName + "'";
+  //    if (performQuery(query) == 0) {
+  //      logger::INFO("deleteData() function was processed!!!");
+  //      return 0;
+  //    } else {
+  //      logger::INFO("deleteData() function was not processed!!!");
+  //      return 1;
+  //    }
+  //  } else {
+  //    logger::INFO("deleteData() function was not processed!!!");
+  //    return 1;
+  //  }
+  //}
+} // namespace gruut
