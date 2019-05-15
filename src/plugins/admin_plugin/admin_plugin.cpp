@@ -2,7 +2,6 @@
 #include "../../lib/json/include/json.hpp"
 #include "rpc_services/include/rpc_services.hpp"
 
-#include <atomic>
 #include <boost/asio/steady_timer.hpp>
 
 namespace gruut {
@@ -13,12 +12,15 @@ const auto ADMIN_REQ_CHECK_PERIOD = std::chrono::milliseconds(100);
 
 class AdminPluginImpl {
 public:
+  std::shared_ptr<MergerStatus> merger_status;
+
   GruutAdminService::AsyncService admin_service;
 
   unique_ptr<Server> admin_server;
   unique_ptr<ServerCompletionQueue> completion_queue;
 
   string admin_address;
+  string setup_port;
 
   unique_ptr<boost::asio::steady_timer> admin_req_check_timer;
 
@@ -33,14 +35,15 @@ public:
     initializeAdminServer();
     registerService();
 
+    merger_status = make_shared<MergerStatus>();
     admin_req_check_timer = make_unique<boost::asio::steady_timer>(app().getIoContext());
   }
 
   void registerService() {
-    new AdminService<ReqSetup, ResSetup>(&admin_service, completion_queue.get());
-    new AdminService<ReqStart, ResStart>(&admin_service, completion_queue.get());
-    new AdminService<ReqStop, ResStop>(&admin_service, completion_queue.get());
-    new AdminService<ReqStatus, ResStatus>(&admin_service, completion_queue.get());
+    new AdminService<ReqSetup, ResSetup>(&admin_service, completion_queue.get(), merger_status, setup_port);
+    new AdminService<ReqStart, ResStart>(&admin_service, completion_queue.get(), merger_status);
+    new AdminService<ReqStop, ResStop>(&admin_service, completion_queue.get(), merger_status);
+    new AdminService<ReqStatus, ResStatus>(&admin_service, completion_queue.get(), merger_status);
   }
 
   void start() {
@@ -86,6 +89,7 @@ AdminPlugin::AdminPlugin() : impl(new AdminPluginImpl()) {}
 
 void AdminPlugin::setProgramOptions(po::options_description &cfg) {
   cfg.add_options()("admin-address", po::value<string>()->composing());
+  cfg.add_options()("setup-port", po::value<string>()->composing());
 }
 
 void AdminPlugin::pluginInitialize(const variables_map &options) {
@@ -95,6 +99,11 @@ void AdminPlugin::pluginInitialize(const variables_map &options) {
     auto admin_address = options["admin-address"].as<string>();
 
     impl->admin_address = admin_address;
+  }
+  if (options.count("setup-port")) {
+    auto setup_port = options["setup-port"].as<string>();
+
+    impl->setup_port = setup_port;
   }
 
   // TODO : need to define internal channel to communicate with other plugins
