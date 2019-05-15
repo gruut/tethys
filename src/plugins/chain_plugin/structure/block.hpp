@@ -45,7 +45,6 @@ private:
 
 public:
   Block() {
-    logger::INFO("Block class created");
   };
 
   bool operator==(Block &other) const {

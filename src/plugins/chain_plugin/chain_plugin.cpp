@@ -152,7 +152,7 @@ public:
   }
 
   void pushBlock(const nlohmann::json &block_json) {
-    logger::INFO("pushBlock() Called");
+    logger::INFO("chain_plugin - pushBlock() Called");
 
     // TODO: 입력되는 블록 관련 메세지가 BONE이나 PING일 경우의 처리 추가 필요
     // TODO: block 구조체 형태로 입력되는게 맞을지 재고려
@@ -160,7 +160,24 @@ public:
     Block input_block;
     input_block.initialize(block_json);
 
-    unresolved_block_pool->push(input_block);
+    ubp_push_result_type push_result = unresolved_block_pool->push(input_block);
+    if (push_result.height == 0) {
+      logger::ERROR("Block input fail: height 0");
+      return;
+    }
+    if (push_result.duplicated) {
+      logger::ERROR("Block input fail: duplicated");
+      return;
+    }
+
+    UnresolvedBlock resolved_block;
+    bool resolve_result = unresolved_block_pool->resolveBlock(input_block, resolved_block);
+
+    if (resolve_result) {
+      chain->insertBlockData(resolved_block.block);
+    }
+
+    return;
   }
 
   vector<Transaction> getTransactions() {
@@ -171,7 +188,10 @@ public:
     // TODO: msg 관련 요청 감시 (block, ping, request, etc..)
 
     { // test code start
-      // 테스트 시에는 임의로 block_input_test.json의 블록 하나를 저장하는것부터 시작.
+      // 테스트 시에는 임의로 block_input_test.json의 블록들을 저장하는것부터 시작.
+      unresolved_block_pool->setPool("11111111111111111111111111111111", 0, 0,
+                                     "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=", "11111111111111111111111111111111");
+
       nlohmann::json input_block_json;
 
       fs::path config_path = block_input_path;
@@ -187,17 +207,32 @@ public:
 
       for (int i = 0; i < 5; ++i) {
         blocks[i].initialize(input_block_json[i]);
-        unresolved_block_pool->push(blocks[i]);
+
+        ubp_push_result_type push_result = unresolved_block_pool->push(blocks[i]);
+        if (push_result.height == 0) {
+          logger::ERROR("Block input fail: height 0");
+          return;
+        }
+        if (push_result.duplicated) {
+          logger::ERROR("Block input fail: duplicated");
+          return;
+        }
+
+        UnresolvedBlock resolved_block;
+        bool resolve_result = unresolved_block_pool->resolveBlock(blocks[i], resolved_block);
+        if (resolve_result) {
+          chain->insertBlockData(resolved_block.block);
+        }
       }
     } // test code end
+
+    { // test code start
+      // 단순 입력 테스트. 실제로는 push해서 들어가야 한다.
+      //    chain->insertBlockData(blocks[0]);
       //    logger::INFO("first block id: " + first_block.getBlockId());
       //    logger::INFO("first block 0th cert content: " + first_block.getUserCerts()[0].cert_content);
       //    logger::INFO("first block 0th txid: " + first_block.getTransactions()[0].getTxId());
       //    logger::INFO("first block 0th cid: " + first_block.getTransactions()[0].getContractId());
-
-    { // test code start
-      // 단순 입력 테스트. 실제로는 push해서 들어가야 한다.
-//      chain->insertBlockData(blocks[0]);
     } // test code end
   }
 };

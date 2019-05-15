@@ -73,9 +73,9 @@ public:
                const base64_type &prev_block_id);
 
   bool prepareBins(block_height_type t_height);
-  unblk_push_result_type push(Block &block, bool is_restore = false);
+  ubp_push_result_type push(Block &block, bool is_restore = false);
 
-  bool resolveBlock(Block &block);
+  bool resolveBlock(Block &block, UnresolvedBlock &resolved_result);
 
   void restorePool();
   void setupStateTree();
@@ -95,7 +95,6 @@ public:
   void invalidateCaches();
 
 private:
-  bool resolveBlocksStepByStep(Block &block);
   void updateTotalNumSSig();
 
   void backupPool();
