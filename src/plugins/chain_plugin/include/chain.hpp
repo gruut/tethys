@@ -11,6 +11,7 @@
 #include <boost/program_options/variables_map.hpp>
 #include <memory>
 #include <utility>
+#include <vector>
 
 namespace gruut {
 
@@ -34,6 +35,7 @@ public:
   void saveWorld(world_type &world_info);
   void saveChain(local_chain_type &chain_info);
   void saveBackup(UnresolvedBlock &block_info);
+  vector<Block> getBlocksByHeight(int from, int to);
   string getValueByKey(DataType what, const string &base_keys);
 
 private:

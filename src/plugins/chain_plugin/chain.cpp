@@ -77,6 +77,14 @@ void Chain::insertBlockData(gruut::Block &first_block) {
   rdb_controller->insertBlockData(first_block);
 }
 
+vector<Block> Chain::getBlocksByHeight(int from, int to) {
+  if (from > to) {
+    return vector<Block>();
+  }
+
+  vector<Block> blocks = rdb_controller->getBlocks("block_height BETWEEN ? AND ?");
+}
+
 void Chain::saveWorld(world_type &world_info){
   kv_controller->saveWorld(world_info);
 }

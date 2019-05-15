@@ -8,6 +8,8 @@
 #include "mysql/soci-mysql.h"
 #include "soci.h"
 
+#include <vector>
+
 using namespace std;
 
 namespace gruut {
@@ -26,6 +28,7 @@ public:
   bool insertBlockData(Block &block);
   bool updateData(const string &userId, const string &varType, const string &varName, const string &varValue);
   bool deleteData(const string &userId, const string &varType, const string &varName);
+  vector<Block> getBlocks(const string &condition);
 };
 } // namespace gruut
 #endif
