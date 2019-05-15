@@ -73,26 +73,6 @@ Chain::Chain(string_view dbms, string_view table_name, string_view db_user_id, s
   kv_controller = make_unique<KvController>();
 }
 
-void Chain::insertBlockData(gruut::Block &first_block) {
-  rdb_controller->insertBlockData(first_block);
-}
-
-void Chain::saveWorld(world_type &world_info){
-  kv_controller->saveWorld(world_info);
-}
-
-void Chain::saveChain(local_chain_type &chain_info){
-  kv_controller->saveChain(chain_info);
-}
-
-void Chain::saveBackup(UnresolvedBlock &block_info){
-  kv_controller->saveBackup(block_info);
-}
-
-string Chain::getValueByKey(DataType what, const string &base_keys){
-  return kv_controller->getValueByKey(what, base_keys);
-}
-
 void Chain::startup(nlohmann::json &genesis_state) {
   impl->init(genesis_state);
 }
@@ -100,4 +80,27 @@ void Chain::startup(nlohmann::json &genesis_state) {
 Chain::~Chain() {
   impl.reset();
 }
+
+// RDB functions
+void Chain::insertBlockData(gruut::Block &block_info) {
+  rdb_controller->insertBlockData(block_info);
+}
+
+// KV functions
+void Chain::saveWorld(world_type &world_info) {
+  kv_controller->saveWorld(world_info);
+}
+
+void Chain::saveChain(local_chain_type &chain_info) {
+  kv_controller->saveChain(chain_info);
+}
+
+void Chain::saveBackup(UnresolvedBlock &block_info) {
+  kv_controller->saveBackup(block_info);
+}
+
+string Chain::getValueByKey(DataType what, const string &base_keys) {
+  return kv_controller->getValueByKey(what, base_keys);
+}
+
 } // namespace gruut

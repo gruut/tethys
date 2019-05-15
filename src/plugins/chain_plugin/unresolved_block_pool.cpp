@@ -802,7 +802,7 @@ void UnresolvedBlockPool::setupStateTree() // RDB에 있는 모든 노드를 불
 
 // 추후 구현
 void UnresolvedBlockPool::invalidateCaches() {}
-void backupPool() {}
+void UnresolvedBlockPool::backupPool() {}
 nlohmann::json UnresolvedBlockPool::readBackupIds() {}
 
 } // namespace gruut

@@ -12,7 +12,7 @@ public:
     Transaction tx;
 
     bool result = tx.setJson(transaction_message);
-    if(!result)
+    if (!result)
       return {};
 
     return tx;
@@ -22,13 +22,13 @@ public:
 class TransactionMessageVerifier {
 public:
   bool operator()(const Transaction &transaction) {
-    if(!verifyID(transaction))
+    if (!verifyID(transaction))
       return false;
 
-    if(!verifyEndorserSig(transaction))
+    if (!verifyEndorserSig(transaction))
       return false;
 
-    if(!verifyUserSig(transaction))
+    if (!verifyUserSig(transaction))
       return false;
 
     return true;
@@ -61,8 +61,8 @@ private:
     AGS ags;
 
     auto &endorsers = transaction.getEndorsers();
-    bool result = all_of(endorsers.begin(), endorsers.end(), [&ags, &transaction](const auto &endorser){
-        return ags.verify(endorser.endorser_pk, transaction.getTxId(), endorser.endorser_signature);
+    bool result = all_of(endorsers.begin(), endorsers.end(), [&ags, &transaction](const auto &endorser) {
+      return ags.verify(endorser.endorser_pk, transaction.getTxId(), endorser.endorser_signature);
     });
 
     return result;
@@ -73,9 +73,8 @@ private:
 
     auto &endorsers = transaction.getEndorsers();
     string message = transaction.getTxId();
-    for_each(endorsers.begin(), endorsers.end(), [&message](auto &endorser){
-      message += endorser.endorser_id + endorser.endorser_pk + endorser.endorser_signature;
-    });
+    for_each(endorsers.begin(), endorsers.end(),
+             [&message](auto &endorser) { message += endorser.endorser_id + endorser.endorser_pk + endorser.endorser_signature; });
 
     auto user_sig = transaction.getUserSig();
 
@@ -88,7 +87,7 @@ public:
   void add(const Transaction &tx) {
     {
       unique_lock<shared_mutex> writerLock(pool_mutex);
-      
+
       tx_pool.try_emplace(tx.getTxId(), tx);
     }
   }
@@ -96,16 +95,11 @@ public:
   vector<Transaction> fetchAll() {
     {
       shared_lock<shared_mutex> readerLock(pool_mutex);
-      
+
       vector<Transaction> v;
       v.reserve(tx_pool.size());
 
-      std::transform( 
-        tx_pool.begin(), 
-        tx_pool.end(),
-        std::back_inserter(v),
-        [](auto &kv){ return kv.second;} 
-      );
+      std::transform(tx_pool.begin(), tx_pool.end(), std::back_inserter(v), [](auto &kv) { return kv.second; });
 
       return v;
     }
@@ -120,13 +114,14 @@ class ChainPluginImpl {
 public:
   unique_ptr<Chain> chain;
   unique_ptr<TransactionPool> transaction_pool;
+  unique_ptr<UnresolvedBlockPool> unresolved_block_pool;
 
   string dbms;
   string table_name;
   string db_user_id;
   string db_password;
 
-  string first_block_path;
+  string block_input_path;
 
   nlohmann::json genesis_state;
 
@@ -136,11 +131,13 @@ public:
   void initialize() {
     chain = make_unique<Chain>(dbms, table_name, db_user_id, db_password);
     transaction_pool = make_unique<TransactionPool>();
+    unresolved_block_pool = make_unique<UnresolvedBlockPool>();
 
     chain->startup(genesis_state);
   }
 
   void pushTransaction(const nlohmann::json &transaction_json) {
+    logger::INFO("pushTransaction() Called");
     TransactionMsgParser parser;
     const auto transaction = parser(transaction_json);
     if (!transaction.has_value())
@@ -155,7 +152,15 @@ public:
   }
 
   void pushBlock(const nlohmann::json &block_json) {
+    logger::INFO("pushBlock() Called");
 
+    // TODO: 입력되는 블록 관련 메세지가 BONE이나 PING일 경우의 처리 추가 필요
+    // TODO: block 구조체 형태로 입력되는게 맞을지 재고려
+
+    Block input_block;
+    input_block.initialize(block_json);
+
+    unresolved_block_pool->push(input_block);
   }
 
   vector<Transaction> getTransactions() {
@@ -165,27 +170,35 @@ public:
   void start() {
     // TODO: msg 관련 요청 감시 (block, ping, request, etc..)
 
-    // 테스트 시에는 임의로 first_block_test.json의 블록 하나를 저장하는것부터 시작.
-    nlohmann::json first_block_json;
+    { // test code start
+      // 테스트 시에는 임의로 block_input_test.json의 블록 하나를 저장하는것부터 시작.
+      nlohmann::json input_block_json;
 
-    fs::path config_path = first_block_path;
-    if (config_path.is_relative())
-      config_path = fs::current_path() / config_path;
+      fs::path config_path = block_input_path;
+      if (config_path.is_relative())
+        config_path = fs::current_path() / config_path;
 
-    std::ifstream i(config_path.make_preferred().string());
+      std::ifstream i(config_path.make_preferred().string());
 
-    i >> first_block_json;
+      i >> input_block_json;
 
-    Block first_block;
-    first_block.initialize(first_block_json);
+      std::vector<Block> blocks;
+      blocks.resize(5);
 
-    logger::INFO("first block id: " + first_block.getBlockId());
-    logger::INFO("first block 0th cert content: " + first_block.getUserCerts()[0].cert_content);
-    logger::INFO("first block 0th txid: " + first_block.getTransactions()[0].getTxId());
-    logger::INFO("first block 0th cid: " + first_block.getTransactions()[0].getContractId());
+      for (int i = 0; i < 5; ++i) {
+        blocks[i].initialize(input_block_json[i]);
+        unresolved_block_pool->push(blocks[i]);
+      }
+    } // test code end
+      //    logger::INFO("first block id: " + first_block.getBlockId());
+      //    logger::INFO("first block 0th cert content: " + first_block.getUserCerts()[0].cert_content);
+      //    logger::INFO("first block 0th txid: " + first_block.getTransactions()[0].getTxId());
+      //    logger::INFO("first block 0th cid: " + first_block.getTransactions()[0].getContractId());
 
-    chain->insertBlockData(first_block);
-    // end test code
+    { // test code start
+      // 단순 입력 테스트. 실제로는 push해서 들어가야 한다.
+//      chain->insertBlockData(blocks[0]);
+    } // test code end
   }
 };
 
@@ -236,10 +249,10 @@ void ChainPlugin::pluginInitialize(const boost::program_options::variables_map &
     throw std::invalid_argument("the input of database's password is empty"s);
   }
 
-  if (options.count("first-block-path")) {
-    impl->first_block_path = options.at("first-block-path").as<string>();
+  if (options.count("block-input-path")) {
+    impl->block_input_path = options.at("block-input-path").as<string>();
   } else {
-    throw std::invalid_argument("the input of first block path is empty"s);
+    throw std::invalid_argument("the input of block input path is empty"s);
   }
 
   auto &transaction_channel = app().getChannel<incoming::channels::transaction::channel_type>();
@@ -247,8 +260,7 @@ void ChainPlugin::pluginInitialize(const boost::program_options::variables_map &
       transaction_channel.subscribe([this](const nlohmann::json &transaction) { impl->pushTransaction(transaction); });
 
   auto &block_channel = app().getChannel<incoming::channels::block::channel_type>();
-  impl->incoming_block_subscription =
-      block_channel.subscribe([this](const nlohmann::json &block) { impl->pushBlock(block); });
+  impl->incoming_block_subscription = block_channel.subscribe([this](const nlohmann::json &block) { impl->pushBlock(block); });
 
   impl->initialize();
 }
@@ -259,7 +271,7 @@ void ChainPlugin::setProgramOptions(options_description &cfg) {
   ("dbms", boost::program_options::value<string>()->composing(), "DBMS (MYSQL)")("table-name", boost::program_options::value<string>()->composing(), "table name")
   ("database-user", boost::program_options::value<string>()->composing(), "database user id")
   ("database-password", boost::program_options::value<string>()->composing(), "database password")
-  ("first-block-path", boost::program_options::value<string>()->composing(), "first block json path");
+  ("block-input-path", boost::program_options::value<string>()->composing(), "block input json path");
 }
 // clang-format on
 

@@ -28,7 +28,7 @@ public:
   void startup(nlohmann::json &genesis_state);
 
   // RDB functions
-  void insertBlockData(Block &first_block);
+  void insertBlockData(Block &block_info);
 
   // KV functions
   void saveWorld(world_type &world_info);

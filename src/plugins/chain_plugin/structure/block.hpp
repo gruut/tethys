@@ -45,14 +45,14 @@ private:
 
 public:
   Block() {
-    logger::INFO("BLOC");
+    logger::INFO("Block class created");
   };
 
   bool operator==(Block &other) const {
     return (m_block_height == other.getHeight() && m_block_hash == other.getBlockHash());
   }
 
-  bool initialize(nlohmann::json &msg_block) {
+  bool initialize(const nlohmann::json &msg_block) {
 
     if (msg_block.empty())
       return false;
@@ -69,7 +69,7 @@ public:
     m_block_hash = json::get<string>(msg_block["block"], "hash").value();
 
     setTxaggs(msg_block["tx"]);
-    setTransaction(m_txaggs); // txagg에서 트랜잭션 정보를 뽑아낸다
+    setTransaction(m_txaggs); // txagg에서 트랜잭션 정보를 추출
 
     m_aggz = json::get<string>(msg_block, "aggz").value();
 
@@ -85,17 +85,17 @@ public:
     m_block_prod_info.signer_id = json::get<string>(msg_block["producer"], "id").value();
     m_block_prod_info.signer_sig = json::get<string>(msg_block["producer"], "sig").value();
 
-    m_block_certificate = msg_block["certificate"].dump(); // TODO: 위의 UserCerts를 전부 Stringfy한 값. 수정 필요.
+    m_block_certificate = msg_block["certificate"].dump(); // TODO: 위의 UserCerts를 전부 Stringfy한 값. 확인 필요
 
     return true;
   }
 
-  bool setTxaggs(std::vector<txagg_cbor_b64> &txaggs) {
+  bool setTxaggs(const std::vector<txagg_cbor_b64> &txaggs) {
     m_txaggs = txaggs;
     return true;
   }
 
-  bool setTxaggs(nlohmann::json &txs_json) {
+  bool setTxaggs(const nlohmann::json &txs_json) {
     if (!txs_json.is_array()) {
       return false;
     }
@@ -120,28 +120,25 @@ public:
     return true;
   }
 
-  bool setSigners(std::vector<Signature> &signers) {
+  bool setSigners(const std::vector<Signature> &signers) {
     if (signers.empty())
       return false;
     m_signers = signers;
     return true;
   }
 
-  bool setSigners(nlohmann::json &signers) {
+  bool setSigners(const nlohmann::json &signers) {
     if (!signers.is_array())
       return false;
 
     m_signers.clear();
     for (auto &each_signer : signers) {
-      Signature tmp;
-      tmp.signer_id = json::get<string>(each_signer, "id").value();
-      tmp.signer_sig = json::get<string>(each_signer, "sig").value();
-      m_signers.emplace_back(tmp);
+      m_signers.emplace_back(json::get<string>(each_signer, "id").value(), json::get<string>(each_signer, "sig").value());
     }
     return true;
   }
 
-  bool setUserCerts(nlohmann::json &certificates) {
+  bool setUserCerts(const nlohmann::json &certificates) {
     m_user_certs.clear();
     for (auto &each_cert : certificates) {
       Certificate tmp;
