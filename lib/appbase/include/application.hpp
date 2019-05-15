@@ -73,7 +73,6 @@ public:
       return *plug_itr->second.get();
     } else {
       registerPlugin<Plugin>();
-
       return *app_plugins_map[ns_removed_name];
     }
   }
@@ -81,6 +80,8 @@ public:
   auto &getIoContext() {
     return *io_context_ptr;
   }
+
+  AbstractPlugin* getPlugin(const string &name) const;
 
   static Application &instance();
 
@@ -114,7 +115,6 @@ private:
   unordered_map<string, shared_ptr<AbstractPlugin>> app_plugins_map;
   unordered_map<std::type_index, shared_ptr<AbstractChannel>> channels;
 
-  vector<shared_ptr<AbstractPlugin>> initialized_plugins;
   unique_ptr<ProgramOptions> program_options;
 
   bool parseProgramOptions(int argc, char **argv);

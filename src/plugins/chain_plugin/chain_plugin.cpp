@@ -268,6 +268,10 @@ void ChainPlugin::asyncFetchTransactionsFromPool() {
   app().getChannel<incoming::channels::transaction_pool::channel_type>().publish(transactions);
 }
 
+Chain& ChainPlugin::chain() {
+  return *(impl->chain);
+}
+
 void ChainPlugin::pluginStart() {
   logger::INFO("ChainPlugin Start");
 

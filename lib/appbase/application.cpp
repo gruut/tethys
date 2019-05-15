@@ -85,15 +85,18 @@ void Application::initializePlugins() {
   for_each(begin(plugin_names), end(plugin_names), [this](const string &plugin_name) {
     auto it = app_plugins_map.find(plugin_name);
     if (it != app_plugins_map.end()) {
-      it->second->initialize(program_options->options_map);
-      initialized_plugins.push_back(it->second);
+      if (it->second->getState() == AbstractPlugin::plugin_state::registered) {
+        it->second->initialize(program_options->options_map);
+      }
     }
   });
 }
 
 void Application::start() {
-  for (auto &running_plugin : initialized_plugins) {
-    running_plugin->start();
+  for (auto &[_, plugin_ptr] : app_plugins_map) {
+    if(plugin_ptr->getState() == AbstractPlugin::plugin_state::initialized) {
+      plugin_ptr->start();
+    }
   }
 
   shared_ptr<boost::asio::signal_set> sigint_set(new boost::asio::signal_set(*io_context_ptr, SIGINT));
@@ -129,8 +132,20 @@ void Application::quit() {
 void Application::shutdown() {
   logger::INFO("Application Shutdown");
 
-  initialized_plugins.clear();
+  app_plugins_map.clear();
   io_context_ptr->reset();
+}
+
+AbstractPlugin* Application::getPlugin(const string &name) const {
+  auto itr = app_plugins_map.find(name);
+  if (itr == app_plugins_map.end())
+    throw(std::runtime_error("unable to find plugin: " + name));
+
+  if(itr->second->getState() == AbstractPlugin::plugin_state::initialized) {
+    return itr->second.get();
+  } else {
+    throw(std::runtime_error("The plugin had been registered, but not initialized: " + name));
+  }
 }
 
 Application &app() {

@@ -43,6 +43,7 @@ public:
 
   void asyncFetchTransactionsFromPool();
 
+  Chain& chain();
 private:
   std::unique_ptr<class ChainPluginImpl> impl;
 };
