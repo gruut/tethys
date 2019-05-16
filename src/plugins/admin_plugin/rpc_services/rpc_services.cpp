@@ -25,24 +25,21 @@ Status SetupService::UserService(ServerContext *context, const Request *request,
   return Status::OK;
 }
 
-optional<nlohmann::json> AdminService<ReqSetup, ResSetup>::runSetup() {
+unique_ptr<Server> AdminService<ReqSetup, ResSetup>::initSetup(shared_ptr<SetupService> setup_service) {
   string setup_serv_addr("0.0.0.0:" + port);
-  SetupService setup_service;
 
   ServerBuilder setup_serv_builder;
   setup_serv_builder.AddListeningPort(setup_serv_addr, grpc::InsecureServerCredentials());
-  setup_serv_builder.RegisterService(&setup_service);
+  setup_serv_builder.RegisterService(setup_service.get());
 
-  unique_ptr<Server> setup_server(setup_serv_builder.BuildAndStart());
+  return setup_serv_builder.BuildAndStart();
+}
 
-  auto &promise_user_key = setup_service.getUserKeyPromise();
+optional<nlohmann::json> AdminService<ReqSetup, ResSetup>::runSetup(shared_ptr<SetupService> setup_service) {
+  auto &promise_user_key = setup_service->getUserKeyPromise();
   auto user_key_info = promise_user_key.get_future();
 
   user_key_info.wait(); // waiting for user key info
-
-  if (setup_server != nullptr)
-    setup_server->Shutdown();
-  setup_server.reset();
 
   if (user_key_info.get().has_value()) {
     return user_key_info.get().value();
@@ -66,9 +63,11 @@ void AdminService<ReqSetup, ResSetup>::proceed() {
     // TODO :  get encrypted sk & cert from `Storage`
 
     if (!has_key) { // no key info in storage
-      auto user_key_info = runSetup();
+      shared_ptr<SetupService> setup_service = make_shared<SetupService>();
+      unique_ptr<Server> setup_server = initSetup(setup_service);
+      auto user_key_info = runSetup(setup_service);
 
-      if (!user_key_info.has_value()) {
+      if (user_key_info.has_value()) {
         auto enc_sk_pem = json::get<string>(user_key_info.value(), "enc_sk");
         auto cert = json::get<string>(user_key_info.value(), "cert");
         if (!enc_sk_pem.has_value() || !cert.has_value())
@@ -80,6 +79,10 @@ void AdminService<ReqSetup, ResSetup>::proceed() {
           res.set_success(true);
         }
       }
+      if (setup_server != nullptr)
+        setup_server->Shutdown();
+      setup_server.reset();
+      setup_service.reset();
     }
     receive_status = AdminRpcCallStatus::FINISH;
     responder.Finish(res, Status::OK, this);

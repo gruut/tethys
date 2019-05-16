@@ -83,7 +83,8 @@ private:
   ReqSetup req;
   ResSetup res;
   ServerAsyncResponseWriter<ResSetup> responder;
-  optional<nlohmann::json> runSetup();
+  optional<nlohmann::json> runSetup(shared_ptr<SetupService> setup_service);
+  unique_ptr<Server> initSetup(shared_ptr<SetupService> setup_service);
 };
 
 } // namespace admin_plugin
