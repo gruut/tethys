@@ -18,8 +18,7 @@ public:
   unique_ptr<Server> admin_server;
   unique_ptr<ServerCompletionQueue> completion_queue;
 
-  string admin_port;
-  string admin_ip;
+  string admin_address;
 
   unique_ptr<boost::asio::steady_timer> admin_req_check_timer;
 
@@ -51,7 +50,7 @@ public:
   void initializeAdminServer() {
     ServerBuilder builder;
     // TODO : secure channel may be used.
-    builder.AddListeningPort(admin_ip + ":" + admin_port, grpc::InsecureServerCredentials());
+    builder.AddListeningPort(admin_address, grpc::InsecureServerCredentials());
     builder.RegisterService(&admin_service);
 
     completion_queue = builder.AddCompletionQueue();
@@ -86,23 +85,16 @@ public:
 AdminPlugin::AdminPlugin() : impl(new AdminPluginImpl()) {}
 
 void AdminPlugin::setProgramOptions(po::options_description &cfg) {
-  cfg.add_options()("admin-port", po::value<string>()->composing());
-  cfg.add_options()("admin-ip", po::value<string>()->composing());
+  cfg.add_options()("admin-address", po::value<string>()->composing());
 }
 
 void AdminPlugin::pluginInitialize(const variables_map &options) {
   logger::INFO("AdminPlugin Initialize");
 
-  if (options.count("admin-port")) {
-    auto port = options["admin-port"].as<string>();
+  if (options.count("admin-address")) {
+    auto admin_address = options["admin-address"].as<string>();
 
-    impl->admin_port = port;
-  }
-
-  if (options.count("admin-ip")) {
-    auto ip = options["admin-ip"].as<string>();
-
-    impl->admin_ip = ip;
+    impl->admin_address = admin_address;
   }
 
   // TODO : need to define internal channel to communicate with other plugins

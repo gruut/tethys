@@ -21,6 +21,8 @@ private:
   alphanumeric_type m_world_id;
   alphanumeric_type m_chain_id;
   block_height_type m_block_height;
+
+private:
   base58_type m_block_prev_id;
   base64_type m_block_prev_sig; // msg(-1).producer.sig
   base64_type m_block_hash;
@@ -42,8 +44,7 @@ private:
   string m_block_certificate;
 
 public:
-  Block() {
-  };
+  Block() = default;
 
   bool operator==(Block &other) const {
     return (m_block_height == other.getHeight() && m_block_hash == other.getBlockHash());
@@ -85,7 +86,59 @@ public:
     return true;
   }
 
-  bool setTxaggs(const std::vector<txagg_cbor_b64> &txaggs) {
+  void setBlockId(const base58_type &blockId) {
+    m_block_id = blockId;
+  }
+
+  void setHeight(block_height_type blockHeight) {
+    m_block_height = blockHeight;
+  }
+
+  void setBlockHash(const base64_type &blockHash) {
+    m_block_hash = blockHash;
+  }
+
+  void setBlockTime(timestamp_t blockTime) {
+    m_block_time = blockTime;
+  }
+
+  void setBlockPubTime(timestamp_t blockPubTime) {
+    m_block_pub_time = blockPubTime;
+  }
+
+  void setBlockPrevId(const base58_type &blockPrevId) {
+    m_block_prev_id = blockPrevId;
+  }
+
+  void setBlockPrevSig(const base64_type &blockPrevSig) {
+    m_block_prev_sig = blockPrevSig;
+  }
+
+  void setProducerId(const base58_type &blockProdId) {
+    m_block_prod_info.signer_id = blockProdId;
+  }
+
+  void setProducerSig(const base64_type &blockProdSig) {
+    m_block_prod_info.signer_sig = blockProdSig;
+  }
+
+  void setTxRoot(const base64_type &txRoot) {
+    m_tx_root = txRoot;
+  }
+
+  void setUsStateRoot(const base64_type &usStateRoot) {
+    m_us_state_root = usStateRoot;
+  }
+
+  void setCsStateRoot(const base64_type &csStateRoot) {
+    m_cs_state_root = csStateRoot;
+  }
+
+  void setSgRoot(const base64_type &sgRoot) {
+    m_sg_root = sgRoot;
+  }
+
+  bool setTxaggs(std::vector<txagg_cbor_b64> &txaggs) {
     m_txaggs = txaggs;
     return true;
   }
