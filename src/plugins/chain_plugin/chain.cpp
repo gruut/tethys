@@ -91,7 +91,17 @@ vector<Block> Chain::getBlocksByHeight(int from, int to) {
     return vector<Block>();
   }
 
-  vector<Block> blocks = rdb_controller->getBlocks("block_height BETWEEN ? AND ?");
+  stringstream ss;
+  ss << "block_height BETWEEN " << from << " AND " << to;
+
+  vector<Block> blocks = rdb_controller->getBlocks(ss.str());
+}
+
+block_height_type Chain::getLatestResolvedHeight() {
+  string condition = "ORDER BY block_height DESC LIMIT 1";
+  Block block = rdb_controller->getBlock(condition);
+
+  return block.getHeight();
 }
 
 // KV functions

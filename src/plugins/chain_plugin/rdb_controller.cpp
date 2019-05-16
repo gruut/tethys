@@ -68,26 +68,7 @@ vector<Block> RdbController::getBlocks(const string &condition) {
     blocks.reserve(distance(rs.begin(), rs.end()));
     for (auto it = rs.begin(); it != rs.end(); ++it) {
       soci::row const &row = *it;
-      Block block;
-
-      block.setBlockId(row.get<base58_type>("block_id"));
-      block.setHeight(row.get<block_height_type>("block_height"));
-      block.setBlockHash(row.get<base64_type>("block_hash"));
-      block.setBlockTime(row.get<timestamp_t>("block_time"));
-      block.setBlockPubTime(row.get<timestamp_t>("block_pub_time"));
-      block.setBlockPrevId(row.get<base58_type>("block_prev_id"));
-      block.setBlockPrevSig(row.get<base64_type>("block_link"));
-      block.setProducerId(row.get<base58_type>("producer_id"));
-      block.setProducerSig(row.get<base64_type>("producer_sig"));
-      // TODO: TxID
-      block.setTxRoot(row.get<string>("tx_root"));
-      block.setUsStateRoot(row.get<string>("us_state_root"));
-      block.setCsStateRoot(row.get<string>("cs_state_root"));
-      block.setSgRoot(row.get<string>("sg_root"));
-      block.setAggz(row.get<string>("aggz"));
-
-      nlohmann::json certificates = nlohmann::json(row.get<string>("certificate"));
-      block.setUserCerts(certificates);
+      Block block = rowToBlock(row);
 
       blocks.push_back(block);
     }
@@ -95,11 +76,52 @@ vector<Block> RdbController::getBlocks(const string &condition) {
     return blocks;
   } catch (const std::exception &e) {
     logger::ERROR("Failed to get blocks: {}", e.what());
-    return vector<Block>();
+
+    throw e;
   }
 }
+Block RdbController::getBlock(const string &condition) {
+  try {
+    soci::session db_session(RdbController::pool());
 
-  // bool RdbController::updateData(const string &userId, const string &varType, const string &varName, const string &varValue) {
+    soci::row r;
+
+    db_session << "select * from blocks " + condition, into(r);
+    auto block = rowToBlock(r);
+
+    return block;
+  } catch (const std::exception &e) {
+    logger::ERROR("Failed to get blocks: {}", e.what());
+
+    throw e;
+  }
+}
+Block RdbController::rowToBlock(const soci::row &r) {
+  Block block;
+
+  block.setBlockId(r.get<base58_type>("block_id"));
+  block.setHeight(r.get<block_height_type>("block_height"));
+  block.setBlockHash(r.get<base64_type>("block_hash"));
+  block.setBlockTime(r.get<timestamp_t>("block_time"));
+  block.setBlockPubTime(r.get<timestamp_t>("block_pub_time"));
+  block.setBlockPrevId(r.get<base58_type>("block_prev_id"));
+  block.setBlockPrevSig(r.get<base64_type>("block_link"));
+  block.setProducerId(r.get<base58_type>("producer_id"));
+  block.setProducerSig(r.get<base64_type>("producer_sig"));
+  // TODO: TxID
+  block.setTxRoot(r.get<string>("tx_root"));
+  block.setUsStateRoot(r.get<string>("us_state_root"));
+  block.setCsStateRoot(r.get<string>("cs_state_root"));
+  block.setSgRoot(r.get<string>("sg_root"));
+  block.setAggz(r.get<string>("aggz"));
+
+  nlohmann::json certificates = nlohmann::json(r.get<string>("certificate"));
+  block.setUserCerts(certificates);
+
+  return block;
+}
+
+// bool RdbController::updateData(const string &userId, const string &varType, const string &varName, const string &varValue) {
   //  if (checkUserIdVarTypeVarName(&userId, &varType, &varName) == 0) {
   //    string query = "UPDATE ledger SET var_value='" + varValue + "' WHERE user_id='" + userId + "' AND var_type='" + varType +
   //                   "' AND var_name='" + varName + "'";

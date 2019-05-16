@@ -36,6 +36,7 @@ public:
   void saveChain(local_chain_type &chain_info);
   void saveBackup(UnresolvedBlock &block_info);
   vector<Block> getBlocksByHeight(int from, int to);
+  block_height_type getLatestResolvedHeight();
   string getValueByKey(DataType what, const string &base_keys);
 
 private:
