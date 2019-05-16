@@ -44,7 +44,7 @@ bool verifyTransaction(Transaction &tx, string world, string chain) {
 
   vector<Endorser> endorsers = tx.getEndorsers();
   for (auto &each_end : endorsers) {
-//    if (each_end.endorser_signature != SignByEndorser(tx_id)) { // TODO: SignByEndorser가 확정되면 변경해야 함
+//    if (each_end.endorser_sig != SignByEndorser(tx_id)) { // TODO: SignByEndorser가 확정되면 변경해야 함
 //      return false;
 //    }
   }
@@ -54,7 +54,7 @@ bool verifyTransaction(Transaction &tx, string world, string chain) {
   for (auto &each_end : endorsers) {
     user_sig_builder.appendBase<58>(each_end.endorser_id);
     user_sig_builder.append(each_end.endorser_pk);
-    user_sig_builder.appendBase<64>(each_end.endorser_signature);
+    user_sig_builder.appendBase<64>(each_end.endorser_sig);
   }
 //  base64_type user_sig = SignByUser(user_sig_builder.getBytes()); // TODO: SignByUser가 확정되면 변경해야 함
 //  if (tx.getUserSig() != user_sig) {

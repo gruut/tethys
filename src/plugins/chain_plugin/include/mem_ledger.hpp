@@ -54,16 +54,16 @@ struct LedgerRecord {
 class MemLedger {
 private:
   std::list<LedgerRecord> m_ledger;
-  std::mutex m_active_mutex;
+//  std::mutex m_active_mutex;
 
 public:
   MemLedger() {
-    logger::INFO("MEML");
+    logger::INFO("New MemLedger Created");
   }
 
   bool addUserScope(std::string var_name, std::string var_val, std::string var_type, std::string var_owner, timestamp_t up_time,
                     block_height_type up_block, std::string tag) {
-    std::lock_guard<std::mutex> lock(m_active_mutex);
+//    std::lock_guard<std::mutex> lock(m_active_mutex);
 
     // TODO: 현 위치에서 RDB까지 체크하면서 값의 갱신 결과 계산
 
@@ -74,7 +74,7 @@ public:
 
   bool addContractScope(std::string var_name, std::string var_val, std::string var_type, std::string var_owner, timestamp_t up_time,
                         std::string var_info) {
-    std::lock_guard<std::mutex> lock(m_active_mutex);
+//    std::lock_guard<std::mutex> lock(m_active_mutex);
     m_ledger.emplace_back(var_name, var_val, var_type, var_owner, up_time, var_info);
 
     return true;

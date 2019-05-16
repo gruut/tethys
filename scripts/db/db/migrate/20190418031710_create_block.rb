@@ -16,7 +16,6 @@ class CreateBlock < ActiveRecord::Migration[5.2]
       t.column :us_state_root, 'char(44)'
       t.column :cs_state_root, 'char(44)'
       t.column :sg_root, 'char(44)'
-      t.string :aggz, limit: 50
       t.mediumtext :certificate
     end
   end

@@ -37,16 +37,15 @@ bool RdbController::insertBlockData(Block &block) {
   string user_state_root = block.getUserStateRoot();
   string contract_state_root = block.getContractStateRoot();
   string sig_root = block.getSgRoot();
-  string aggz = block.getAggz();
   string block_cert = block.getBlockCert();
 
-  soci::statement st = (db_session.prepare << "INSERT INTO blocks (block_id, block_height, block_hash, block_time, block_pub_time, block_prev_id, block_link, producer_id, producer_sig, txs, tx_root, us_state_root, cs_state_root, sg_root, aggz, certificate) VALUES (:block_id, :block_height, :block_hash, :block_time, :block_pub_time, :block_prev_id, :block_link, :producer_id, :producer_sig, :txs, :tx_root, :us_state_root, :cs_state_root, :sg_root, :aggz, :certificate)",
+  soci::statement st = (db_session.prepare << "INSERT INTO blocks (block_id, block_height, block_hash, block_time, block_pub_time, block_prev_id, block_link, producer_id, producer_sig, txs, tx_root, us_state_root, cs_state_root, sg_root, certificate) VALUES (:block_id, :block_height, :block_hash, :block_time, :block_pub_time, :block_prev_id, :block_link, :producer_id, :producer_sig, :txs, :tx_root, :us_state_root, :cs_state_root, :sg_root, :certificate)",
       soci::use(block_id), soci::use(block.getHeight()), soci::use(block_hash),
       soci::use(block.getBlockTime()), soci::use(block.getBlockPubTime()), soci::use(prev_block_id),
       soci::use(pre_block_sig), soci::use(block_prod_id),
       soci::use(block_pro_sig), soci::use(tx_id),
       soci::use(tx_root), soci::use(user_state_root),
-      soci::use(contract_state_root), soci::use(sig_root), soci::use(aggz),
+      soci::use(contract_state_root), soci::use(sig_root),
       soci::use(block_cert), soci::into(result));
     // clang-format on
     st.execute(true);

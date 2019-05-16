@@ -9,7 +9,6 @@ namespace gruut {
 enum class LedgerType : bool { USERSCOPE = true, CONTRACTSCOPE = false };
 enum class DataType : int { WORLD, CHAIN, BACKUP };
 
-
 using string = std::string;
 using bytes = std::vector<uint8_t>;
 using hash_t = std::vector<uint8_t>;
@@ -23,7 +22,6 @@ using alphanumeric_type = std::string;
 using base58_type = std::string;
 using base64_type = std::string;
 using txagg_cbor_b64 = std::string;
-
 
 using local_chain_type = struct LocalChainState {
   // chain
@@ -77,7 +75,7 @@ using proof_type = struct _proof_type {
   std::vector<std::pair<bool, std::string>> siblings;
 };
 
-using unblk_push_result_type = struct _unblk_push_result_type {
+using ubp_push_result_type = struct _ubp_push_result_type {
   bool linked;
   bool duplicated;
   block_height_type height;

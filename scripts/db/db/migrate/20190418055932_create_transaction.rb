@@ -11,7 +11,6 @@ class CreateTransaction < ActiveRecord::Migration[5.2]
       t.text :tx_user_pk
       t.column :tx_receiver, 'char(44)'
       t.mediumtext :tx_input
-      t.string :tx_user_sig, limit: 100
       t.mediumtext :tx_agg_cbor
       t.column :block_id, 'char(44)'
       t.integer :tx_pos

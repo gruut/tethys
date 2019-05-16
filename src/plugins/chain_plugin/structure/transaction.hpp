@@ -31,6 +31,8 @@ private:
   base58_type m_tx_user_id;
   string m_tx_user_pk;
   base64_type m_tx_user_sig;
+  base64_type m_tx_user_agga;
+  base64_type m_tx_user_aggz;
 
   vector<Endorser> m_tx_endorsers;
 
@@ -43,8 +45,8 @@ public:
   bool setJson(const nlohmann::json &tx_json) {
     try {
       m_txid = json::get<string>(tx_json, "txid").value();
-      //    m_world = tx_json["/world"_json_pointer];
-      //    m_chain = tx_json["/chain"_json_pointer];
+      //      m_world = tx_json["/world"_json_pointer];
+      //      m_chain = tx_json["/chain"_json_pointer];
       m_tx_time = static_cast<gruut::timestamp_t>(stoll(json::get<string>(tx_json, "time").value()));
 
       m_contract_id = json::get<string>(tx_json["body"], "cid").value();
@@ -54,7 +56,12 @@ public:
 
       m_tx_user_id = json::get<string>(tx_json["user"], "id").value();
       m_tx_user_pk = json::get<string>(tx_json["user"], "pk").value();
-      m_tx_user_sig = json::get<string>(tx_json["user"], "sig").value();
+      if (json::get<string>(tx_json["user"], "sig").has_value())
+        m_tx_user_sig = json::get<string>(tx_json["user"], "sig").value();
+      else {
+        m_tx_user_agga = json::get<string>(tx_json["user"], "a").value();
+        m_tx_user_aggz = json::get<string>(tx_json["user"], "z").value();
+      }
 
       if (!setEndorsers(tx_json["endorser"])) {
         return false;
@@ -85,12 +92,12 @@ public:
 
     m_tx_endorsers.clear();
     for (auto &each_endorser : endorser_array) {
-      Endorser endors;
-
-      endors.endorser_id = json::get<string>(each_endorser, "id").value();
-      endors.endorser_pk = json::get<string>(each_endorser, "pk").value();
-      endors.endorser_signature = json::get<string>(each_endorser, "sig").value();
-      m_tx_endorsers.push_back(endors);
+      if (json::get<string>(each_endorser, "sig").has_value())
+        m_tx_endorsers.emplace_back(json::get<string>(each_endorser, "id").value(), json::get<string>(each_endorser, "pk").value(),
+                                    json::get<string>(each_endorser, "sig").value());
+      else
+        m_tx_endorsers.emplace_back(json::get<string>(each_endorser, "id").value(), json::get<string>(each_endorser, "pk").value(),
+                                    json::get<string>(each_endorser, "a").value(), json::get<string>(each_endorser, "z").value());
     }
     return true;
   }
@@ -137,6 +144,14 @@ public:
 
   base64_type getUserSig() const {
     return m_tx_user_sig;
+  }
+
+  base64_type getUserAgga() const {
+    return m_tx_user_agga;
+  }
+
+  base64_type getUserAggz() const {
+    return m_tx_user_aggz;
   }
 
   const vector<Endorser> &getEndorsers() const {

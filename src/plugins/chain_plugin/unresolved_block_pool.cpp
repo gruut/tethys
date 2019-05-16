@@ -35,8 +35,9 @@ bool UnresolvedBlockPool::prepareBins(block_height_type t_height) {
   return true;
 }
 
-unblk_push_result_type UnresolvedBlockPool::push(Block &block, bool is_restore) {
-  unblk_push_result_type ret_val; // 해당 return 구조는 추후 변경 가능성 있음
+ubp_push_result_type UnresolvedBlockPool::push(Block &block, bool is_restore) {
+  logger::INFO("Unresolved block pool: push called");
+  ubp_push_result_type ret_val; // 해당 return 구조는 추후 변경 가능성 있음
   ret_val.height = 0;
   ret_val.linked = false;
   ret_val.duplicated = false;
@@ -44,6 +45,7 @@ unblk_push_result_type UnresolvedBlockPool::push(Block &block, bool is_restore) 
   std::lock_guard<std::recursive_mutex> guard(m_push_mutex);
 
   block_height_type block_height = block.getHeight();
+
   int bin_idx = static_cast<int>(block_height - m_latest_confirmed_height) - 1; // e.g., 0 = 2 - 1 - 1
   if (!prepareBins(block_height))
     return ret_val;
@@ -71,14 +73,14 @@ unblk_push_result_type UnresolvedBlockPool::push(Block &block, bool is_restore) 
     if (block.getPrevBlockId() == m_latest_confirmed_id) {
       prev_queue_idx = 0;
     } else {
-      // drop block -- this is not linkable block!
+      logger::ERROR("drop block -- this is not linkable block!");
       return ret_val;
     }
   }
 
   int queue_idx = m_block_pool[bin_idx].size();
 
-  // m_block_pool[bin_idx].emplace_back(block, prev_queue_idx); // pool에 블록 추가
+  m_block_pool[bin_idx].emplace_back(block, prev_queue_idx); // pool에 블록 추가
 
   ret_val.height = block_height;
 
@@ -372,70 +374,72 @@ bool UnresolvedBlockPool::queryRunContract(UnresolvedBlock &UR_block, nlohmann::
   return true;
 }
 
-bool UnresolvedBlockPool::resolveBlock(Block &block) {
-  if (!lateStage(block)) {
-    return false;
-  }
+bool UnresolvedBlockPool::resolveBlock(Block &block, UnresolvedBlock &resolved_result) {
+//  if (!lateStage(block)) {
+//    return false;
+//  }
 
   if (block.getHeight() - m_latest_confirmed_height > config::BLOCK_CONFIRM_LEVEL) {
-    if (!resolveBlocksStepByStep(block)) {
+    updateTotalNumSSig();
+
+    if (m_block_pool.size() < 2 || m_block_pool[0].empty() || m_block_pool[1].empty()) {
       return false;
     }
-  }
 
-  return true;
-}
+    int highest_total_ssig = 0;
+    int resolved_block_idx = -1;
 
-bool UnresolvedBlockPool::resolveBlocksStepByStep(Block &block) {
-  updateTotalNumSSig();
-
-  if (m_block_pool.size() < 2 || m_block_pool[0].empty() || m_block_pool[1].empty())
-    return false;
-
-  int highest_total_ssig = 0;
-  int resolved_block_idx = -1;
-
-  for (int i = 0; i < m_block_pool[0].size(); ++i) {
-    if (m_block_pool[0][i].prev_vector_idx == 0 && m_block_pool[0][i].ssig_sum > highest_total_ssig) {
-      highest_total_ssig = m_block_pool[0][i].ssig_sum;
-      resolved_block_idx = i;
+    for (int i = 0; i < m_block_pool[0].size(); ++i) {
+      if (m_block_pool[0][i].prev_vector_idx == 0 && m_block_pool[0][i].ssig_sum > highest_total_ssig) {
+        highest_total_ssig = m_block_pool[0][i].ssig_sum;
+        resolved_block_idx = i;
+      }
     }
-  }
 
-  if (resolved_block_idx < 0 || highest_total_ssig < config::MIN_SIGNATURE_COLLECT_SIZE)
-    return false;
-
-  bool is_after = false;
-  for (auto &each_block : m_block_pool[1]) {
-    if (each_block.prev_vector_idx == resolved_block_idx) { // some block links this block
-      is_after = true;
-      break;
+    if (resolved_block_idx < 0 || highest_total_ssig < config::MIN_SIGNATURE_COLLECT_SIZE) {
+      return false;
     }
-  }
 
-  if (!is_after)
-    return false;
-
-  m_latest_confirmed_prev_id = m_latest_confirmed_id;
-
-  m_latest_confirmed_id = m_block_pool[0][resolved_block_idx].block.getBlockId();
-  m_latest_confirmed_hash = m_block_pool[0][resolved_block_idx].block.getBlockHash();
-  m_latest_confirmed_height = m_block_pool[0][resolved_block_idx].block.getHeight();
-
-  m_block_pool.pop_front();
-
-  if (m_block_pool.empty())
-    return false;
-
-  for (auto &each_block : m_block_pool[0]) {
-    if (each_block.block.getPrevBlockId() == m_latest_confirmed_id) {
-      each_block.prev_vector_idx = 0;
-    } else {
-      // this block is unlinkable => to be deleted
-      each_block.prev_vector_idx = -1;
+    bool is_after = false;
+    for (auto &each_block : m_block_pool[1]) {
+      if (each_block.prev_vector_idx == resolved_block_idx) { // some block links this block
+        is_after = true;
+        break;
+      }
     }
+
+    if (!is_after) {
+      return false;
+    }
+
+    m_latest_confirmed_prev_id = m_latest_confirmed_id;
+
+    m_latest_confirmed_id = m_block_pool[0][resolved_block_idx].block.getBlockId();
+    m_latest_confirmed_hash = m_block_pool[0][resolved_block_idx].block.getBlockHash();
+    m_latest_confirmed_height = m_block_pool[0][resolved_block_idx].block.getHeight();
+
+    UnresolvedBlock resolved_block = m_block_pool[0][resolved_block_idx];
+
+    m_block_pool.pop_front();
+
+    if (m_block_pool.empty()) {
+      resolved_result = resolved_block;
+      return true;
+    }
+
+    for (auto &each_block : m_block_pool[0]) {
+      if (each_block.block.getPrevBlockId() == m_latest_confirmed_id) {
+        each_block.prev_vector_idx = 0;
+      } else {
+        // this block is unlinkable => to be deleted
+        each_block.prev_vector_idx = -1;
+      }
+    }
+    resolved_result = resolved_block;
+    return true;
+  } else {
+    return false;
   }
-  return true;
 }
 
 void UnresolvedBlockPool::updateTotalNumSSig() {
@@ -802,7 +806,7 @@ void UnresolvedBlockPool::setupStateTree() // RDB에 있는 모든 노드를 불
 
 // 추후 구현
 void UnresolvedBlockPool::invalidateCaches() {}
-void backupPool() {}
+void UnresolvedBlockPool::backupPool() {}
 nlohmann::json UnresolvedBlockPool::readBackupIds() {}
 
 } // namespace gruut
