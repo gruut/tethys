@@ -1,5 +1,6 @@
 #include "include/block_producer_plugin.hpp"
 #include "../../../lib/appbase/include/application.hpp"
+#include "../chain_plugin/include/chain_plugin.hpp"
 #include <boost/asio/steady_timer.hpp>
 
 namespace gruut {
@@ -48,7 +49,11 @@ private:
   }
 
   float calculateDistanceBetweenMergers() {
-    
+    // TODO: a number of producers.
+    const int producersCount = 10;
+    auto& chain = dynamic_cast<ChainPlugin*>(app().getPlugin("ChainPlugin"))->chain();
+
+    return 0.0;
   }
 
 
