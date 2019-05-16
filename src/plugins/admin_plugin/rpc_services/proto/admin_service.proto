@@ -4,7 +4,7 @@ package grpc_admin;
 
 service GruutAdminService {
     rpc Setup (ReqSetup) returns (ResSetup) {}
-    rpc Start (ResStart) returns (ResStart) {}
+    rpc Start (ReqStart) returns (ResStart) {}
     rpc Stop (ReqStop) returns (ResStop) {}
     rpc CheckStatus (ReqStatus) returns (ResStatus) {}
 }
