@@ -95,6 +95,7 @@ vector<Block> Chain::getBlocksByHeight(int from, int to) {
   ss << "block_height BETWEEN " << from << " AND " << to;
 
   vector<Block> blocks = rdb_controller->getBlocks(ss.str());
+  return blocks;
 }
 
 block_height_type Chain::getLatestResolvedHeight() {
