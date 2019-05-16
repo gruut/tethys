@@ -62,7 +62,7 @@ private:
 
     auto &endorsers = transaction.getEndorsers();
     bool result = all_of(endorsers.begin(), endorsers.end(), [&ags, &transaction](const auto &endorser) {
-      return ags.verify(endorser.endorser_pk, transaction.getTxId(), endorser.endorser_signature);
+      return ags.verify(endorser.endorser_pk, transaction.getTxId(), endorser.endorser_sig);
     });
 
     return result;
@@ -74,7 +74,7 @@ private:
     auto &endorsers = transaction.getEndorsers();
     string message = transaction.getTxId();
     for_each(endorsers.begin(), endorsers.end(),
-             [&message](auto &endorser) { message += endorser.endorser_id + endorser.endorser_pk + endorser.endorser_signature; });
+             [&message](auto &endorser) { message += endorser.endorser_id + endorser.endorser_pk + endorser.endorser_sig; });
 
     auto user_sig = transaction.getUserSig();
 

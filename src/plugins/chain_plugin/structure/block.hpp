@@ -28,8 +28,6 @@ private:
   std::vector<txagg_cbor_b64> m_txaggs; // Tx의 Json을 CBOR로 처리하고 그 데이터를 b64인코딩한 결과 vector
   std::vector<Transaction> m_transactions; // RDB 블록/트랜잭션 정보에 넣어야하기 때문에 유지. tx_root 계산할 때에도 사용
 
-  base64_type m_aggz; // aggregate signature 에 필요함
-
   vector<hash_t> m_tx_merkle_tree;
   base64_type m_tx_root;
   base64_type m_us_state_root;
@@ -69,8 +67,6 @@ public:
 
     setTxaggs(msg_block["tx"]);
     setTransaction(m_txaggs); // txagg에서 트랜잭션 정보를 추출
-
-    m_aggz = json::get<string>(msg_block, "aggz").value();
 
     m_tx_root = json::get<string>(msg_block["state"], "txroot").value();
     m_us_state_root = json::get<string>(msg_block["state"], "usroot").value();
@@ -205,10 +201,6 @@ public:
 
   int32_t getNumTransaction() {
     return m_transactions.size();
-  }
-
-  base64_type getAggz() {
-    return m_aggz;
   }
 
   base64_type getTxRoot() {
