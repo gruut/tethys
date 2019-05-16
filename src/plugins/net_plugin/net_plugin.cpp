@@ -13,6 +13,7 @@
 #include "../../../lib/gruut-utils/src/time_util.hpp"
 #include "../../../lib/gruut-utils/src/type_converter.hpp"
 
+#include <atomic>
 #include <boost/asio/steady_timer.hpp>
 #include <exception>
 #include <future>
@@ -54,6 +55,9 @@ public:
   unique_ptr<boost::asio::steady_timer> net_message_check_timer;
 
   outgoing::channels::network::channel_type::Handle out_channel_subscription;
+  incoming::channels::net_control::channel_type::Handle net_control_channel_subscription;
+
+  atomic<bool> user_setup_flag{false};
 
   ~NetPluginImpl() {
     if (server != nullptr)
@@ -108,7 +112,6 @@ public:
 
   void start() {
     monitorCompletionQueue();
-    getPeersFromTracker();
     startConnectionMonitors();
   }
 
@@ -359,6 +362,27 @@ public:
     }
   }
 
+  void controlNet(NetControlType &control_type) {
+    switch (control_type) {
+    case NetControlType::SETUP: {
+      if(!user_setup_flag) {
+        user_setup_flag = true;
+        getPeersFromTracker();
+        //TODO : do something more
+      }
+      break;
+    }
+    case NetControlType::START: {
+      // TODO : do something
+      break;
+    }
+    case NetControlType::STOP: {
+      // TODO : do something
+      break;
+    }
+    }
+  }
+
   bool checkMergerMsgType(MessageType msg_type) {
     return (msg_type == MessageType::MSG_TX || msg_type == MessageType::MSG_BONE || msg_type == MessageType::MSG_BLOCK);
   }
@@ -392,6 +416,9 @@ void NetPlugin::pluginInitialize(const variables_map &options) {
 
   auto &out_channel = app().getChannel<outgoing::channels::network::channel_type>();
   impl->out_channel_subscription = out_channel.subscribe([this](auto data) { impl->sendMessage(data); });
+
+  auto &net_control_channel = app().getChannel<incoming::channels::net_control::channel_type>();
+  impl->net_control_channel_subscription = net_control_channel.subscribe([this](auto data) { impl->controlNet(data); });
 
   impl->initialize();
 }
