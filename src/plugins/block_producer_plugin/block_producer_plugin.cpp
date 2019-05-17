@@ -69,6 +69,8 @@ private:
     }
 
     bitset<256> id_bits = getOptimalMergerId(blocks, producersCount);
+    bitset<256> my_id(app().getId());
+    int dist = getHammingDistance(id_bits, my_id);
 
     return 0.0;
   }
@@ -105,6 +107,12 @@ private:
 
   float calculateDistanceBetweenSigners() {
 
+  }
+
+  int getHammingDistance(bitset<256> &optimal_merger_id, bitset<256> &my_id) {
+    auto result = optimal_merger_id ^ my_id;
+
+    return result.count();
   }
 
   unique_ptr<boost::asio::steady_timer> timer;
