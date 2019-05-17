@@ -49,13 +49,45 @@ private:
   }
 
   float calculateDistanceBetweenMergers() {
-    // TODO: a number of producers.
-    const int producersCount = 10;
+    // TODO: fixed numbers of producers.
+    int producersCount = 10;
     auto& chain = dynamic_cast<ChainPlugin*>(app().getPlugin("ChainPlugin"))->chain();
+
+    auto latestHeight = chain.getLatestResolvedHeight();
+
+    // TODO: Optimal Merger를 계산하는데 최신 생성자의 ID만 있으면 되므로, from은 필요가 없음
+    // 논의 후 제거
+    // https://thevaulters.atlassian.net/wiki/spaces/SGN/pages/90832930/PoP+in+Public+Network
+    //    int from = latestHeight - producersCount + 1;
+    //    if (from <= 0)
+    //      from = 1;
+
+    vector<Block> blocks = chain.getBlocksByHeight(latestHeight, latestHeight);
+
+    if (blocks.size() != producersCount) {
+      producersCount = blocks.size();
+    }
+
+    base58_type opitmal_merger_id = getOptimalMergerId(blocks.at(0), producersCount);
 
     return 0.0;
   }
 
+  base58_type getOptimalMergerId(Block latest_block, const int producersCount) {
+    base58_type block_prod_id = latest_block.getBlockProdId();
+    vector<uint8_t> block_prod_id_bytes = TypeConverter::stringToBytes(TypeConverter::decodeBase<58>(block_prod_id));
+
+    vector<uint8_t> optimal_merger_id_bytes;
+
+    for_each(block_prod_id_bytes.begin(), block_prod_id_bytes.end(), [&](uint8_t val){
+      bitset<8> byte(val);
+
+      bitset<8> flipped_byte = byte.flip();
+      optimal_merger_id_bytes.push_back(flipped_byte.to_ulong());
+    });
+
+    return TypeConverter::encodeBase<58>(optimal_merger_id_bytes);
+  }
 
   float calculateDistanceBetweenSigners() {
 
