@@ -148,6 +148,14 @@ AbstractPlugin* Application::getPlugin(const string &name) const {
   }
 }
 
+void Application::setId(string_view _id){
+  id = _id;
+}
+
+const string &Application::getId() const {
+  return id;
+}
+
 Application &app() {
   return Application::instance();
 }
