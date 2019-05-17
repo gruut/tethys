@@ -77,6 +77,9 @@ public:
     }
   }
 
+  void setId(string_view _id);
+  const string &getId() const;
+
   auto &getIoContext() {
     return *io_context_ptr;
   }
@@ -117,6 +120,9 @@ private:
 
   unique_ptr<ProgramOptions> program_options;
 
+  string id;
+
+private:
   bool parseProgramOptions(int argc, char **argv);
 
   void initializePlugins();
