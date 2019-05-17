@@ -56,6 +56,12 @@ void AdminService<ReqSetup, ResSetup>::proceed() {
     break;
   }
   case AdminRpcCallStatus::PROCESS: {
+    if(merger_status->user_setup){
+      res.set_success(true);
+      receive_status = AdminRpcCallStatus::FINISH;
+      responder.Finish(res, Status::OK, this);
+      break;
+    }
     new AdminService<ReqSetup, ResSetup>(service, completion_queue, merger_status, port);
     auto pass = req.password();
     bool has_key = false;
@@ -75,6 +81,8 @@ void AdminService<ReqSetup, ResSetup>::proceed() {
         else {
           // TODO : 1. get decrypted sk using password
           //        2. send  sk & cert to `Storage`
+          auto control_command = NetControlType::SETUP;
+          app().getChannel<incoming::channels::net_control::channel_type>().publish(control_command);
           merger_status->user_setup = true;
           res.set_success(true);
         }

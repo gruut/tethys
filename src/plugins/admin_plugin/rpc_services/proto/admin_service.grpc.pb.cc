@@ -2,8 +2,8 @@
 // If you make any local change, they will be lost.
 // source: admin_service.proto
 
-#include "include/admin_service.grpc.pb.h"
 #include "include/admin_service.pb.h"
+#include "include/admin_service.grpc.pb.h"
 
 #include <grpcpp/impl/codegen/async_stream.h>
 #include <grpcpp/impl/codegen/async_unary_call.h>
@@ -47,15 +47,15 @@ GruutAdminService::Stub::Stub(const std::shared_ptr< ::grpc::ChannelInterface>& 
   return ::grpc::internal::ClientAsyncResponseReaderFactory< ::grpc_admin::ResSetup>::Create(channel_.get(), cq, rpcmethod_Setup_, context, request, false);
 }
 
-::grpc::Status GruutAdminService::Stub::Start(::grpc::ClientContext* context, const ::grpc_admin::ResStart& request, ::grpc_admin::ResStart* response) {
+::grpc::Status GruutAdminService::Stub::Start(::grpc::ClientContext* context, const ::grpc_admin::ReqStart& request, ::grpc_admin::ResStart* response) {
   return ::grpc::internal::BlockingUnaryCall(channel_.get(), rpcmethod_Start_, context, request, response);
 }
 
-::grpc::ClientAsyncResponseReader< ::grpc_admin::ResStart>* GruutAdminService::Stub::AsyncStartRaw(::grpc::ClientContext* context, const ::grpc_admin::ResStart& request, ::grpc::CompletionQueue* cq) {
+::grpc::ClientAsyncResponseReader< ::grpc_admin::ResStart>* GruutAdminService::Stub::AsyncStartRaw(::grpc::ClientContext* context, const ::grpc_admin::ReqStart& request, ::grpc::CompletionQueue* cq) {
   return ::grpc::internal::ClientAsyncResponseReaderFactory< ::grpc_admin::ResStart>::Create(channel_.get(), cq, rpcmethod_Start_, context, request, true);
 }
 
-::grpc::ClientAsyncResponseReader< ::grpc_admin::ResStart>* GruutAdminService::Stub::PrepareAsyncStartRaw(::grpc::ClientContext* context, const ::grpc_admin::ResStart& request, ::grpc::CompletionQueue* cq) {
+::grpc::ClientAsyncResponseReader< ::grpc_admin::ResStart>* GruutAdminService::Stub::PrepareAsyncStartRaw(::grpc::ClientContext* context, const ::grpc_admin::ReqStart& request, ::grpc::CompletionQueue* cq) {
   return ::grpc::internal::ClientAsyncResponseReaderFactory< ::grpc_admin::ResStart>::Create(channel_.get(), cq, rpcmethod_Start_, context, request, false);
 }
 
@@ -92,7 +92,7 @@ GruutAdminService::Service::Service() {
   AddMethod(new ::grpc::internal::RpcServiceMethod(
       GruutAdminService_method_names[1],
       ::grpc::internal::RpcMethod::NORMAL_RPC,
-      new ::grpc::internal::RpcMethodHandler< GruutAdminService::Service, ::grpc_admin::ResStart, ::grpc_admin::ResStart>(
+      new ::grpc::internal::RpcMethodHandler< GruutAdminService::Service, ::grpc_admin::ReqStart, ::grpc_admin::ResStart>(
           std::mem_fn(&GruutAdminService::Service::Start), this)));
   AddMethod(new ::grpc::internal::RpcServiceMethod(
       GruutAdminService_method_names[2],
@@ -116,7 +116,7 @@ GruutAdminService::Service::~Service() {
   return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
 }
 
-::grpc::Status GruutAdminService::Service::Start(::grpc::ServerContext* context, const ::grpc_admin::ResStart* request, ::grpc_admin::ResStart* response) {
+::grpc::Status GruutAdminService::Service::Start(::grpc::ServerContext* context, const ::grpc_admin::ReqStart* request, ::grpc_admin::ResStart* response) {
   (void) context;
   (void) request;
   (void) response;
