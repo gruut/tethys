@@ -11,6 +11,7 @@ using namespace std;
 
 namespace appbase::incoming {
 namespace channels {
+using net_control = ChannelTypeTemplate<struct net_control_tag, NetControlType>;
 using network = ChannelTypeTemplate<struct network_tag, InNetMsg>;
 using transaction = ChannelTypeTemplate<struct transaction_tag, nlohmann::json>;
 using block = ChannelTypeTemplate<struct block_tag, nlohmann::json>;

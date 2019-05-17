@@ -41,11 +41,11 @@ class GruutAdminService final {
     std::unique_ptr< ::grpc::ClientAsyncResponseReaderInterface< ::grpc_admin::ResSetup>> PrepareAsyncSetup(::grpc::ClientContext* context, const ::grpc_admin::ReqSetup& request, ::grpc::CompletionQueue* cq) {
       return std::unique_ptr< ::grpc::ClientAsyncResponseReaderInterface< ::grpc_admin::ResSetup>>(PrepareAsyncSetupRaw(context, request, cq));
     }
-    virtual ::grpc::Status Start(::grpc::ClientContext* context, const ::grpc_admin::ResStart& request, ::grpc_admin::ResStart* response) = 0;
-    std::unique_ptr< ::grpc::ClientAsyncResponseReaderInterface< ::grpc_admin::ResStart>> AsyncStart(::grpc::ClientContext* context, const ::grpc_admin::ResStart& request, ::grpc::CompletionQueue* cq) {
+    virtual ::grpc::Status Start(::grpc::ClientContext* context, const ::grpc_admin::ReqStart& request, ::grpc_admin::ResStart* response) = 0;
+    std::unique_ptr< ::grpc::ClientAsyncResponseReaderInterface< ::grpc_admin::ResStart>> AsyncStart(::grpc::ClientContext* context, const ::grpc_admin::ReqStart& request, ::grpc::CompletionQueue* cq) {
       return std::unique_ptr< ::grpc::ClientAsyncResponseReaderInterface< ::grpc_admin::ResStart>>(AsyncStartRaw(context, request, cq));
     }
-    std::unique_ptr< ::grpc::ClientAsyncResponseReaderInterface< ::grpc_admin::ResStart>> PrepareAsyncStart(::grpc::ClientContext* context, const ::grpc_admin::ResStart& request, ::grpc::CompletionQueue* cq) {
+    std::unique_ptr< ::grpc::ClientAsyncResponseReaderInterface< ::grpc_admin::ResStart>> PrepareAsyncStart(::grpc::ClientContext* context, const ::grpc_admin::ReqStart& request, ::grpc::CompletionQueue* cq) {
       return std::unique_ptr< ::grpc::ClientAsyncResponseReaderInterface< ::grpc_admin::ResStart>>(PrepareAsyncStartRaw(context, request, cq));
     }
     virtual ::grpc::Status Stop(::grpc::ClientContext* context, const ::grpc_admin::ReqStop& request, ::grpc_admin::ResStop* response) = 0;
@@ -65,8 +65,8 @@ class GruutAdminService final {
   private:
     virtual ::grpc::ClientAsyncResponseReaderInterface< ::grpc_admin::ResSetup>* AsyncSetupRaw(::grpc::ClientContext* context, const ::grpc_admin::ReqSetup& request, ::grpc::CompletionQueue* cq) = 0;
     virtual ::grpc::ClientAsyncResponseReaderInterface< ::grpc_admin::ResSetup>* PrepareAsyncSetupRaw(::grpc::ClientContext* context, const ::grpc_admin::ReqSetup& request, ::grpc::CompletionQueue* cq) = 0;
-    virtual ::grpc::ClientAsyncResponseReaderInterface< ::grpc_admin::ResStart>* AsyncStartRaw(::grpc::ClientContext* context, const ::grpc_admin::ResStart& request, ::grpc::CompletionQueue* cq) = 0;
-    virtual ::grpc::ClientAsyncResponseReaderInterface< ::grpc_admin::ResStart>* PrepareAsyncStartRaw(::grpc::ClientContext* context, const ::grpc_admin::ResStart& request, ::grpc::CompletionQueue* cq) = 0;
+    virtual ::grpc::ClientAsyncResponseReaderInterface< ::grpc_admin::ResStart>* AsyncStartRaw(::grpc::ClientContext* context, const ::grpc_admin::ReqStart& request, ::grpc::CompletionQueue* cq) = 0;
+    virtual ::grpc::ClientAsyncResponseReaderInterface< ::grpc_admin::ResStart>* PrepareAsyncStartRaw(::grpc::ClientContext* context, const ::grpc_admin::ReqStart& request, ::grpc::CompletionQueue* cq) = 0;
     virtual ::grpc::ClientAsyncResponseReaderInterface< ::grpc_admin::ResStop>* AsyncStopRaw(::grpc::ClientContext* context, const ::grpc_admin::ReqStop& request, ::grpc::CompletionQueue* cq) = 0;
     virtual ::grpc::ClientAsyncResponseReaderInterface< ::grpc_admin::ResStop>* PrepareAsyncStopRaw(::grpc::ClientContext* context, const ::grpc_admin::ReqStop& request, ::grpc::CompletionQueue* cq) = 0;
     virtual ::grpc::ClientAsyncResponseReaderInterface< ::grpc_admin::ResStatus>* AsyncCheckStatusRaw(::grpc::ClientContext* context, const ::grpc_admin::ReqStatus& request, ::grpc::CompletionQueue* cq) = 0;
@@ -82,11 +82,11 @@ class GruutAdminService final {
     std::unique_ptr< ::grpc::ClientAsyncResponseReader< ::grpc_admin::ResSetup>> PrepareAsyncSetup(::grpc::ClientContext* context, const ::grpc_admin::ReqSetup& request, ::grpc::CompletionQueue* cq) {
       return std::unique_ptr< ::grpc::ClientAsyncResponseReader< ::grpc_admin::ResSetup>>(PrepareAsyncSetupRaw(context, request, cq));
     }
-    ::grpc::Status Start(::grpc::ClientContext* context, const ::grpc_admin::ResStart& request, ::grpc_admin::ResStart* response) override;
-    std::unique_ptr< ::grpc::ClientAsyncResponseReader< ::grpc_admin::ResStart>> AsyncStart(::grpc::ClientContext* context, const ::grpc_admin::ResStart& request, ::grpc::CompletionQueue* cq) {
+    ::grpc::Status Start(::grpc::ClientContext* context, const ::grpc_admin::ReqStart& request, ::grpc_admin::ResStart* response) override;
+    std::unique_ptr< ::grpc::ClientAsyncResponseReader< ::grpc_admin::ResStart>> AsyncStart(::grpc::ClientContext* context, const ::grpc_admin::ReqStart& request, ::grpc::CompletionQueue* cq) {
       return std::unique_ptr< ::grpc::ClientAsyncResponseReader< ::grpc_admin::ResStart>>(AsyncStartRaw(context, request, cq));
     }
-    std::unique_ptr< ::grpc::ClientAsyncResponseReader< ::grpc_admin::ResStart>> PrepareAsyncStart(::grpc::ClientContext* context, const ::grpc_admin::ResStart& request, ::grpc::CompletionQueue* cq) {
+    std::unique_ptr< ::grpc::ClientAsyncResponseReader< ::grpc_admin::ResStart>> PrepareAsyncStart(::grpc::ClientContext* context, const ::grpc_admin::ReqStart& request, ::grpc::CompletionQueue* cq) {
       return std::unique_ptr< ::grpc::ClientAsyncResponseReader< ::grpc_admin::ResStart>>(PrepareAsyncStartRaw(context, request, cq));
     }
     ::grpc::Status Stop(::grpc::ClientContext* context, const ::grpc_admin::ReqStop& request, ::grpc_admin::ResStop* response) override;
@@ -108,8 +108,8 @@ class GruutAdminService final {
     std::shared_ptr< ::grpc::ChannelInterface> channel_;
     ::grpc::ClientAsyncResponseReader< ::grpc_admin::ResSetup>* AsyncSetupRaw(::grpc::ClientContext* context, const ::grpc_admin::ReqSetup& request, ::grpc::CompletionQueue* cq) override;
     ::grpc::ClientAsyncResponseReader< ::grpc_admin::ResSetup>* PrepareAsyncSetupRaw(::grpc::ClientContext* context, const ::grpc_admin::ReqSetup& request, ::grpc::CompletionQueue* cq) override;
-    ::grpc::ClientAsyncResponseReader< ::grpc_admin::ResStart>* AsyncStartRaw(::grpc::ClientContext* context, const ::grpc_admin::ResStart& request, ::grpc::CompletionQueue* cq) override;
-    ::grpc::ClientAsyncResponseReader< ::grpc_admin::ResStart>* PrepareAsyncStartRaw(::grpc::ClientContext* context, const ::grpc_admin::ResStart& request, ::grpc::CompletionQueue* cq) override;
+    ::grpc::ClientAsyncResponseReader< ::grpc_admin::ResStart>* AsyncStartRaw(::grpc::ClientContext* context, const ::grpc_admin::ReqStart& request, ::grpc::CompletionQueue* cq) override;
+    ::grpc::ClientAsyncResponseReader< ::grpc_admin::ResStart>* PrepareAsyncStartRaw(::grpc::ClientContext* context, const ::grpc_admin::ReqStart& request, ::grpc::CompletionQueue* cq) override;
     ::grpc::ClientAsyncResponseReader< ::grpc_admin::ResStop>* AsyncStopRaw(::grpc::ClientContext* context, const ::grpc_admin::ReqStop& request, ::grpc::CompletionQueue* cq) override;
     ::grpc::ClientAsyncResponseReader< ::grpc_admin::ResStop>* PrepareAsyncStopRaw(::grpc::ClientContext* context, const ::grpc_admin::ReqStop& request, ::grpc::CompletionQueue* cq) override;
     ::grpc::ClientAsyncResponseReader< ::grpc_admin::ResStatus>* AsyncCheckStatusRaw(::grpc::ClientContext* context, const ::grpc_admin::ReqStatus& request, ::grpc::CompletionQueue* cq) override;
@@ -126,7 +126,7 @@ class GruutAdminService final {
     Service();
     virtual ~Service();
     virtual ::grpc::Status Setup(::grpc::ServerContext* context, const ::grpc_admin::ReqSetup* request, ::grpc_admin::ResSetup* response);
-    virtual ::grpc::Status Start(::grpc::ServerContext* context, const ::grpc_admin::ResStart* request, ::grpc_admin::ResStart* response);
+    virtual ::grpc::Status Start(::grpc::ServerContext* context, const ::grpc_admin::ReqStart* request, ::grpc_admin::ResStart* response);
     virtual ::grpc::Status Stop(::grpc::ServerContext* context, const ::grpc_admin::ReqStop* request, ::grpc_admin::ResStop* response);
     virtual ::grpc::Status CheckStatus(::grpc::ServerContext* context, const ::grpc_admin::ReqStatus* request, ::grpc_admin::ResStatus* response);
   };
@@ -162,11 +162,11 @@ class GruutAdminService final {
       BaseClassMustBeDerivedFromService(this);
     }
     // disable synchronous version of this method
-    ::grpc::Status Start(::grpc::ServerContext* context, const ::grpc_admin::ResStart* request, ::grpc_admin::ResStart* response) override {
+    ::grpc::Status Start(::grpc::ServerContext* context, const ::grpc_admin::ReqStart* request, ::grpc_admin::ResStart* response) override {
       abort();
       return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
     }
-    void RequestStart(::grpc::ServerContext* context, ::grpc_admin::ResStart* request, ::grpc::ServerAsyncResponseWriter< ::grpc_admin::ResStart>* response, ::grpc::CompletionQueue* new_call_cq, ::grpc::ServerCompletionQueue* notification_cq, void *tag) {
+    void RequestStart(::grpc::ServerContext* context, ::grpc_admin::ReqStart* request, ::grpc::ServerAsyncResponseWriter< ::grpc_admin::ResStart>* response, ::grpc::CompletionQueue* new_call_cq, ::grpc::ServerCompletionQueue* notification_cq, void *tag) {
       ::grpc::Service::RequestAsyncUnary(1, context, request, response, new_call_cq, notification_cq, tag);
     }
   };
@@ -240,7 +240,7 @@ class GruutAdminService final {
       BaseClassMustBeDerivedFromService(this);
     }
     // disable synchronous version of this method
-    ::grpc::Status Start(::grpc::ServerContext* context, const ::grpc_admin::ResStart* request, ::grpc_admin::ResStart* response) override {
+    ::grpc::Status Start(::grpc::ServerContext* context, const ::grpc_admin::ReqStart* request, ::grpc_admin::ResStart* response) override {
       abort();
       return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
     }
@@ -311,7 +311,7 @@ class GruutAdminService final {
       BaseClassMustBeDerivedFromService(this);
     }
     // disable synchronous version of this method
-    ::grpc::Status Start(::grpc::ServerContext* context, const ::grpc_admin::ResStart* request, ::grpc_admin::ResStart* response) override {
+    ::grpc::Status Start(::grpc::ServerContext* context, const ::grpc_admin::ReqStart* request, ::grpc_admin::ResStart* response) override {
       abort();
       return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
     }
@@ -386,18 +386,18 @@ class GruutAdminService final {
    public:
     WithStreamedUnaryMethod_Start() {
       ::grpc::Service::MarkMethodStreamed(1,
-        new ::grpc::internal::StreamedUnaryHandler< ::grpc_admin::ResStart, ::grpc_admin::ResStart>(std::bind(&WithStreamedUnaryMethod_Start<BaseClass>::StreamedStart, this, std::placeholders::_1, std::placeholders::_2)));
+        new ::grpc::internal::StreamedUnaryHandler< ::grpc_admin::ReqStart, ::grpc_admin::ResStart>(std::bind(&WithStreamedUnaryMethod_Start<BaseClass>::StreamedStart, this, std::placeholders::_1, std::placeholders::_2)));
     }
     ~WithStreamedUnaryMethod_Start() override {
       BaseClassMustBeDerivedFromService(this);
     }
     // disable regular version of this method
-    ::grpc::Status Start(::grpc::ServerContext* context, const ::grpc_admin::ResStart* request, ::grpc_admin::ResStart* response) override {
+    ::grpc::Status Start(::grpc::ServerContext* context, const ::grpc_admin::ReqStart* request, ::grpc_admin::ResStart* response) override {
       abort();
       return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
     }
     // replace default version of method with streamed unary
-    virtual ::grpc::Status StreamedStart(::grpc::ServerContext* context, ::grpc::ServerUnaryStreamer< ::grpc_admin::ResStart,::grpc_admin::ResStart>* server_unary_streamer) = 0;
+    virtual ::grpc::Status StreamedStart(::grpc::ServerContext* context, ::grpc::ServerUnaryStreamer< ::grpc_admin::ReqStart,::grpc_admin::ResStart>* server_unary_streamer) = 0;
   };
   template <class BaseClass>
   class WithStreamedUnaryMethod_Stop : public BaseClass {
