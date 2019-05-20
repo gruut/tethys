@@ -38,7 +38,7 @@ public:
   void saveSelfInfo(self_info_type &self_info);
   vector<Block> getBlocksByHeight(int from, int to);
   block_height_type getLatestResolvedHeight();
-  string getValueByKey(DataType what, const string &base_keys);
+  string getValueByKey(string what, const string &base_keys);
 
 private:
   unique_ptr<class ChainImpl> impl;

@@ -5,7 +5,6 @@
 #include "../config/storage_config.hpp"
 #include "../config/storage_type.hpp"
 #include "../structure/block.hpp"
-#include "mysql/soci-mysql.h"
 #include "soci.h"
 
 #include <vector>

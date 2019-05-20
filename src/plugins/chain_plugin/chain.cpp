@@ -122,7 +122,7 @@ void Chain::saveSelfInfo(self_info_type &self_info) {
   kv_controller->saveSelfInfo(self_info);
 }
 
-string Chain::getValueByKey(DataType what, const string &base_keys) {
+string Chain::getValueByKey(string what, const string &base_keys) {
   return kv_controller->getValueByKey(what, base_keys);
 }
 

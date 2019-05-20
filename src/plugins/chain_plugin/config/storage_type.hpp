@@ -4,10 +4,17 @@
 #include <string>
 #include <vector>
 
+using namespace std;
+
 namespace gruut {
 
 enum class LedgerType : bool { USERSCOPE = true, CONTRACTSCOPE = false };
-enum class DataType : int { WORLD, CHAIN, BACKUP, SELF_INFO };
+struct DataType {
+  inline static const string WORLD = "world";
+  inline static const string CHAIN = "chain";
+  inline static const string BACKUP = "backup";
+  inline static const string SELF_INFO = "self_info";
+};
 
 using string = std::string;
 using bytes = std::vector<uint8_t>;

@@ -37,13 +37,19 @@ namespace config {
         const std::string GENESIS_BLOCK_PREV_ID_B58 = "11111111111111111111111111111111";
 
         const std::string DEFAULT_KV_PATH = "./leveldb";
-        const std::string KV_SUB_DIR_WORLD = "world";
-        const std::string KV_SUB_DIR_CHAIN = "chain";
-        const std::string KV_SUB_DIR_BACKUP = "backup";
-        const std::string KV_SUB_DIR_SELF_INFO = "self-info";
 
+        static vector<string> keyValueDBNames() {
+          vector<string> names;
+
+          names.emplace_back(DataType::WORLD);
+          names.emplace_back(DataType::CHAIN);
+          names.emplace_back(DataType::BACKUP);
+          names.emplace_back(DataType::SELF_INFO);
+
+          return names;
+        }
+}
 // clang-format on
 
-} // namespace config
 } // namespace gruut
 #endif
