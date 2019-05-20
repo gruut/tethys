@@ -143,7 +143,7 @@ private:
       return MsgEntryType::TIMESTAMP;
     else if (key == "previd" || key == "txid" || key == "receiver" || key == "id" || key == "user" || key == "merger")
       return MsgEntryType::BASE58_256;
-    else if (key == "aggz" || key == "block" || key == "proof" || key == "output")
+    else if (key == "block" || key == "proof" || key == "output")
       return MsgEntryType::BASE64;
     else if (key == "txroot" || key == "usroot" || key == "csroot" || key == "sgroot" || key == "hash" || key == "link")
       return MsgEntryType::BASE64_256;

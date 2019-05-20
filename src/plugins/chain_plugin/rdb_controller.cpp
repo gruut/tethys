@@ -113,7 +113,6 @@ Block RdbController::rowToBlock(const soci::row &r) {
   block.setUsStateRoot(r.get<string>("us_state_root"));
   block.setCsStateRoot(r.get<string>("cs_state_root"));
   block.setSgRoot(r.get<string>("sg_root"));
-  block.setAggz(r.get<string>("aggz"));
 
   nlohmann::json certificates = nlohmann::json(r.get<string>("certificate"));
   block.setUserCerts(certificates);
