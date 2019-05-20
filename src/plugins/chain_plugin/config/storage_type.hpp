@@ -7,7 +7,7 @@
 namespace gruut {
 
 enum class LedgerType : bool { USERSCOPE = true, CONTRACTSCOPE = false };
-enum class DataType : int { WORLD, CHAIN, BACKUP };
+enum class DataType : int { WORLD, CHAIN, BACKUP, SELF_INFO };
 
 using string = std::string;
 using bytes = std::vector<uint8_t>;
@@ -79,6 +79,12 @@ using ubp_push_result_type = struct _ubp_push_result_type {
   bool linked;
   bool duplicated;
   block_height_type height;
+};
+
+using self_info_type = struct SelfInfo {
+  string enc_sk;
+  string cert;
+  // TODO : may need more info
 };
 
 } // namespace gruut

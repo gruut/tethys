@@ -35,6 +35,7 @@ public:
   void saveWorld(world_type &world_info);
   void saveChain(local_chain_type &chain_info);
   void saveBackup(UnresolvedBlock &block_info);
+  void saveSelfInfo(self_info_type &self_info);
   vector<Block> getBlocksByHeight(int from, int to);
   block_height_type getLatestResolvedHeight();
   string getValueByKey(DataType what, const string &base_keys);
