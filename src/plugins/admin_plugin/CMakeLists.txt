@@ -26,6 +26,9 @@ target_link_libraries(admin_plugin
         json
         ${Boost_LIBRARIES}
         ${Protobuf_LIBRARIES}
+
+        ${GRPC_GRPC++_LIBRARY}
+        ${GRPC_LIBRARY}
         ${GRPC_GRPC++_REFLECTION_LIBRARY}
         )
 
