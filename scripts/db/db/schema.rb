@@ -19,14 +19,14 @@ ActiveRecord::Schema.define(version: 2019_04_18_071722) do
     t.bigint "block_time"
     t.bigint "block_pub_time"
     t.string "block_prev_id", limit: 44
+    t.string "block_link", limit: 44
     t.string "producer_id", limit: 44
     t.string "producer_sig", limit: 100
     t.text "txs", limit: 16777215
     t.string "tx_root", limit: 44
     t.string "us_state_root", limit: 44
-    t.string "sc_state_root", limit: 44
+    t.string "cs_state_root", limit: 44
     t.string "sg_root", limit: 44
-    t.string "aggz", limit: 50
     t.text "certificate", limit: 16777215
     t.index ["block_id"], name: "index_blocks_on_block_id", unique: true
   end
@@ -38,7 +38,7 @@ ActiveRecord::Schema.define(version: 2019_04_18_071722) do
     t.integer "var_type", limit: 1
     t.text "var_info"
     t.bigint "up_time"
-    t.string "pid", limit: 43
+    t.string "pid", limit: 44
     t.index ["contract_id"], name: "index_contract_scope_on_contract_id", unique: true
     t.index ["pid"], name: "index_contract_scope_on_pid", unique: true
   end
@@ -56,25 +56,24 @@ ActiveRecord::Schema.define(version: 2019_04_18_071722) do
   end
 
   create_table "endorsers", primary_key: "edidx", id: :integer, options: "ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci", force: :cascade do |t|
-    t.integer "tsids", null: false
+    t.integer "tsidx", null: false
     t.string "end_id", limit: 44
     t.text "end_pk"
     t.string "end_sig", limit: 100
-    t.index ["tsids"], name: "index_endorsers_on_tsids"
+    t.index ["tsidx"], name: "index_endorsers_on_tsidx"
   end
 
-  create_table "signatures", primary_key: "ssidx", id: :integer, options: "ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci", force: :cascade do |t|
+  create_table "support_signatures", primary_key: "ssidx", id: :integer, options: "ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci", force: :cascade do |t|
     t.integer "bsidx", null: false
     t.string "ss_id", limit: 44
     t.string "ss_sig", limit: 100
     t.integer "ss_pos"
-    t.index ["bsidx"], name: "index_signatures_on_bsidx"
+    t.index ["bsidx"], name: "index_support_signatures_on_bsidx"
   end
 
   create_table "transactions", primary_key: "tsidx", id: :integer, options: "ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci", force: :cascade do |t|
     t.string "tx_id", limit: 44
     t.bigint "tx_time"
-    t.string "tx_seed", limit: 22
     t.string "tx_contract_id"
     t.integer "tx_fee_author"
     t.integer "tx_fee_user"
@@ -82,7 +81,6 @@ ActiveRecord::Schema.define(version: 2019_04_18_071722) do
     t.text "tx_user_pk"
     t.string "tx_receiver", limit: 44
     t.text "tx_input", limit: 16777215
-    t.string "tx_user_sig", limit: 100
     t.text "tx_agg_cbor", limit: 16777215
     t.string "block_id", limit: 44
     t.integer "tx_pos"
@@ -93,6 +91,7 @@ ActiveRecord::Schema.define(version: 2019_04_18_071722) do
   create_table "user_attributes", primary_key: "uaidx", id: :integer, options: "ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci", force: :cascade do |t|
     t.string "uid", limit: 44
     t.bigint "register_day"
+    t.string "register_code", limit: 20
     t.integer "gender", limit: 1
     t.string "isc_type", limit: 10
     t.string "isc_code", limit: 10
@@ -111,15 +110,15 @@ ActiveRecord::Schema.define(version: 2019_04_18_071722) do
     t.index ["sn"], name: "index_user_certificates_on_sn", unique: true
   end
 
-  create_table "users", primary_key: "usidx", id: :integer, options: "ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci", force: :cascade do |t|
+  create_table "user_scope", primary_key: "usidx", id: :integer, options: "ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci", force: :cascade do |t|
     t.string "var_name"
     t.text "var_value"
     t.integer "var_type", limit: 1
     t.string "var_owner", limit: 44
     t.bigint "up_time"
     t.integer "up_block"
-    t.text "condition", limit: 16777215
-    t.string "pid", limit: 43
+    t.text "tag", limit: 16777215
+    t.string "pid", limit: 44
   end
 
 end

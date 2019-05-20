@@ -102,8 +102,8 @@ Block RdbController::rowToBlock(const soci::row &r) {
   block.setBlockId(r.get<base58_type>("block_id"));
   block.setHeight(r.get<block_height_type>("block_height"));
   block.setBlockHash(r.get<base64_type>("block_hash"));
-  block.setBlockTime(r.get<timestamp_t>("block_time"));
-  block.setBlockPubTime(r.get<timestamp_t>("block_pub_time"));
+  block.setBlockTime(r.get<long long>("block_time"));
+  block.setBlockPubTime(r.get<long long>("block_pub_time"));
   block.setBlockPrevId(r.get<base58_type>("block_prev_id"));
   block.setBlockPrevSig(r.get<base64_type>("block_link"));
   block.setProducerId(r.get<base58_type>("producer_id"));
