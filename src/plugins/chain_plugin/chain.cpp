@@ -118,6 +118,10 @@ void Chain::saveBackup(UnresolvedBlock &block_info) {
   kv_controller->saveBackup(block_info);
 }
 
+void Chain::saveSelfInfo(self_info_type &self_info) {
+  kv_controller->saveSelfInfo(self_info);
+}
+
 string Chain::getValueByKey(DataType what, const string &base_keys) {
   return kv_controller->getValueByKey(what, base_keys);
 }
