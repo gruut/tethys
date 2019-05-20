@@ -95,7 +95,18 @@ vector<Block> Chain::getBlocksByHeight(int from, int to) {
     return vector<Block>();
   }
 
-  vector<Block> blocks = rdb_controller->getBlocks("block_height BETWEEN ? AND ?");
+  stringstream ss;
+  ss << "block_height BETWEEN " << from << " AND " << to;
+
+  vector<Block> blocks = rdb_controller->getBlocks(ss.str());
+  return blocks;
+}
+
+block_height_type Chain::getLatestResolvedHeight() {
+  string condition = "ORDER BY block_height DESC LIMIT 1";
+  Block block = rdb_controller->getBlock(condition);
+
+  return block.getHeight();
 }
 
 string Chain::getUserCert(const base58_type &user_id) {
@@ -113,6 +124,10 @@ void Chain::saveChain(local_chain_type &chain_info) {
 
 void Chain::saveBackup(UnresolvedBlock &block_info) {
   kv_controller->saveBackup(block_info);
+}
+
+void Chain::saveSelfInfo(self_info_type &self_info) {
+  kv_controller->saveSelfInfo(self_info);
 }
 
 string Chain::getValueByKey(DataType what, const string &base_keys) {

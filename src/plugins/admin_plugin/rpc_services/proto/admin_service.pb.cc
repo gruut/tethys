@@ -284,7 +284,7 @@ void AddDescriptorsImpl() {
       "uccess\030\001 \001(\010\"\013\n\tReqStatus\"\032\n\tResStatus\022\r"
       "\n\005alive\030\001 \001(\0102\364\001\n\021GruutAdminService\0225\n\005S"
       "etup\022\024.grpc_admin.ReqSetup\032\024.grpc_admin."
-      "ResSetup\"\000\0225\n\005Start\022\024.grpc_admin.ResStar"
+      "ResSetup\"\000\0225\n\005Start\022\024.grpc_admin.ReqStar"
       "t\032\024.grpc_admin.ResStart\"\000\0222\n\004Stop\022\023.grpc"
       "_admin.ReqStop\032\023.grpc_admin.ResStop\"\000\022=\n"
       "\013CheckStatus\022\025.grpc_admin.ReqStatus\032\025.gr"

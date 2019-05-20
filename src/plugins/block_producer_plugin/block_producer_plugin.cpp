@@ -49,16 +49,71 @@ private:
   }
 
   float calculateDistanceBetweenMergers() {
-    // TODO: a number of producers.
-    const int producersCount = 10;
+    // TODO: fixed numbers of producers.
+    int producersCount = 10;
     auto& chain = dynamic_cast<ChainPlugin*>(app().getPlugin("ChainPlugin"))->chain();
+
+    auto latestHeight = chain.getLatestResolvedHeight();
+
+    int from = latestHeight - producersCount + 1;
+    if (from <= 0)
+      from = 1;
+
+    vector<Block> blocks = chain.getBlocksByHeight(from, latestHeight);
+    sort(blocks.begin(), blocks.end(), [](auto &left, auto &right) {
+        return left.getHeight() > right.getHeight();
+    });
+
+    if (blocks.size() != producersCount) {
+      producersCount = blocks.size();
+    }
+
+    bitset<256> id_bits = getOptimalMergerId(blocks, producersCount);
+
+    bitset<256> my_id(app().getId());
+    int dist = getHammingDistance(id_bits, my_id);
 
     return 0.0;
   }
 
+  bitset<256> getOptimalMergerId(vector<Block> blocks, const int producers_count) {
+    bitset<256> optimal_merger_id;
+
+    vector<bitset<256>> block_producer_ids;
+
+    for (int producer_index = 0; producer_index < producers_count; ++producer_index) {
+      base58_type block_prod_id = blocks.at(producer_index).getBlockProdId();
+
+      block_producer_ids.emplace_back(bitset<256>(TypeConverter::decodeBase<58>(block_prod_id)));
+    }
+
+    for (int bit_position = 0; bit_position < 256; ++bit_position) {
+      double count_0 = 0;
+      double count_1 = 0;
+
+      for (int producer_index = 0; producer_index < producers_count; ++producer_index) {
+        auto bit(block_producer_ids.at(producer_index)[bit_position]);
+        if (bit == 0) {
+          count_0 += pow(1.414, static_cast<double>(producers_count - bit_position));
+        } else {
+          count_1 += pow(1.414, static_cast<double>(producers_count - bit_position));
+        }
+
+        optimal_merger_id[bit_position] = count_0 > count_1 ? 1 : 0;
+      }
+    }
+
+    return optimal_merger_id;
+  }
 
   float calculateDistanceBetweenSigners() {
 
+  }
+
+  int getHammingDistance(bitset<256> &optimal_merger_id, bitset<256> &my_id) {
+    auto result = optimal_merger_id ^ my_id;
+
+    return result.count();
   }
 
   unique_ptr<boost::asio::steady_timer> timer;

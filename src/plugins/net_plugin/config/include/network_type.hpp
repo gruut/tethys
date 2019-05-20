@@ -6,6 +6,13 @@
 
 namespace gruut {
 namespace net_plugin {
+
+enum class NetControlType : int{
+  SETUP,
+  START,
+  STOP
+};
+
 struct IpEndpoint {
   std::string address;
   std::string port;

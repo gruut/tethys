@@ -7,7 +7,7 @@
 namespace gruut {
 
 enum class LedgerType : bool { USERSCOPE = true, CONTRACTSCOPE = false };
-enum class DataType : int { WORLD, CHAIN, BACKUP };
+enum class DataType : int { WORLD, CHAIN, BACKUP, SELF_INFO };
 
 using string = std::string;
 using bytes = std::vector<uint8_t>;
@@ -88,13 +88,18 @@ using block_info_type = struct _block_info_type {
   base64_type tx_output;
 
   _block_info_type() = default;
-  _block_info_type(base64_type tx_agg_cbor_, base58_type block_id_)
-      : tx_agg_cbor(tx_agg_cbor_), block_id(block_id_) {
+  _block_info_type(base64_type tx_agg_cbor_, base58_type block_id_) : tx_agg_cbor(tx_agg_cbor_), block_id(block_id_) {
     tx_pos = -1;
     tx_output = "";
   }
   _block_info_type(base64_type tx_agg_cbor_, base58_type block_id_, int tx_pos_, base64_type tx_output_)
       : tx_agg_cbor(tx_agg_cbor_), block_id(block_id_), tx_pos(tx_pos_), tx_output(tx_output_) {}
+};
+
+using self_info_type = struct SelfInfo {
+  string enc_sk;
+  string cert;
+  // TODO : may need more info
 };
 
 } // namespace gruut

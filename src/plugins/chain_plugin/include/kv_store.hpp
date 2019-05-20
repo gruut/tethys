@@ -30,10 +30,12 @@ private:
   leveldb::DB *m_kv_world;
   leveldb::DB *m_kv_chain;
   leveldb::DB *m_kv_backup;
+  leveldb::DB *m_kv_self_info;
 
   leveldb::WriteBatch m_batch_world;
   leveldb::WriteBatch m_batch_chain;
   leveldb::WriteBatch m_batch_backup;
+  leveldb::WriteBatch m_batch_self_info;
 
 public:
   KvController();
@@ -42,6 +44,7 @@ public:
   bool saveWorld(world_type &world_info);
   bool saveChain(local_chain_type &chain_info);
   bool saveBackup(UnresolvedBlock &block_info);
+  bool saveSelfInfo(self_info_type &self_info);
 
   string getValueByKey(DataType what, const string &base_keys);
 

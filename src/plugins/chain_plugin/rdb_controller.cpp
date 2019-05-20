@@ -60,13 +60,13 @@ bool RdbController::insertBlockData(Block &block) {
 }
 
 bool RdbController::insertTransactionData(gruut::Block &block) {
-    logger::INFO("insert Transaction Data");
+  logger::INFO("insert Transaction Data");
 
-    soci::row result;
-    soci::session db_session(RdbController::pool());
-    for(auto &each_transaction : block.getTransactions())
+  soci::row result;
+  soci::session db_session(RdbController::pool());
+  for (auto &each_transaction : block.getTransactions())
     try {
-        // clang-format off
+      // clang-format off
         string tx_id = each_transaction.getTxId();
         string tx_contract_id = each_transaction.getContractId();
         string tx_user = each_transaction.getUserId();
@@ -83,16 +83,16 @@ bool RdbController::insertTransactionData(gruut::Block &block) {
                 soci::use(tx_input), soci::use(tx_agg_cbor),
                 soci::use(tx_block_id), soci::use(each_transaction.getTxPos()),
                 soci::into(result));
-        // clang-format on
-        st.execute(true);
+      // clang-format on
+      st.execute(true);
     } catch (soci::mysql_soci_error const &e) {
-        logger::ERROR("MySQL error: {}", e.what());
-        return false;
+      logger::ERROR("MySQL error: {}", e.what());
+      return false;
     } catch (...) {
-        logger::ERROR("Unexpected error at `insertBlockData`");
-        return false;
+      logger::ERROR("Unexpected error at `insertBlockData`");
+      return false;
     }
-    return true;
+  return true;
 }
 
 vector<Block> RdbController::getBlocks(const string &condition) {
@@ -104,34 +104,55 @@ vector<Block> RdbController::getBlocks(const string &condition) {
     blocks.reserve(distance(rs.begin(), rs.end()));
     for (auto it = rs.begin(); it != rs.end(); ++it) {
       soci::row const &row = *it;
-      Block block;
-
-      block.setBlockId(row.get<base58_type>("block_id"));
-      block.setHeight(row.get<block_height_type>("block_height"));
-      block.setBlockHash(row.get<base64_type>("block_hash"));
-      block.setBlockTime(row.get<timestamp_t>("block_time"));
-      block.setBlockPubTime(row.get<timestamp_t>("block_pub_time"));
-      block.setBlockPrevId(row.get<base58_type>("block_prev_id"));
-      block.setBlockPrevSig(row.get<base64_type>("block_link"));
-      block.setProducerId(row.get<base58_type>("producer_id"));
-      block.setProducerSig(row.get<base64_type>("producer_sig"));
-      // TODO: TxIDs
-      block.setTxRoot(row.get<string>("tx_root"));
-      block.setUsStateRoot(row.get<string>("us_state_root"));
-      block.setCsStateRoot(row.get<string>("cs_state_root"));
-      block.setSgRoot(row.get<string>("sg_root"));
-
-      nlohmann::json certificates = nlohmann::json(row.get<string>("certificate"));
-      block.setUserCerts(certificates);
-
+      Block block = rowToBlock(row);
       blocks.push_back(block);
     }
 
     return blocks;
   } catch (const std::exception &e) {
     logger::ERROR("Failed to get blocks: {}", e.what());
-    return vector<Block>();
+
+    throw e;
   }
+}
+Block RdbController::getBlock(const string &condition) {
+  try {
+    soci::session db_session(RdbController::pool());
+
+    soci::row r;
+
+    db_session << "select * from blocks " + condition, into(r);
+    auto block = rowToBlock(r);
+
+    return block;
+  } catch (const std::exception &e) {
+    logger::ERROR("Failed to get blocks: {}", e.what());
+
+    throw e;
+  }
+}
+Block RdbController::rowToBlock(const soci::row &r) {
+  Block block;
+
+  block.setBlockId(r.get<base58_type>("block_id"));
+  block.setHeight(r.get<block_height_type>("block_height"));
+  block.setBlockHash(r.get<base64_type>("block_hash"));
+  block.setBlockTime(r.get<long long>("block_time"));
+  block.setBlockPubTime(r.get<long long>("block_pub_time"));
+  block.setBlockPrevId(r.get<base58_type>("block_prev_id"));
+  block.setBlockPrevSig(r.get<base64_type>("block_link"));
+  block.setProducerId(r.get<base58_type>("producer_id"));
+  block.setProducerSig(r.get<base64_type>("producer_sig"));
+  // TODO: TxID
+  block.setTxRoot(r.get<string>("tx_root"));
+  block.setUsStateRoot(r.get<string>("us_state_root"));
+  block.setCsStateRoot(r.get<string>("cs_state_root"));
+  block.setSgRoot(r.get<string>("sg_root"));
+
+  nlohmann::json certificates = nlohmann::json(r.get<string>("certificate"));
+  block.setUserCerts(certificates);
+
+  return block;
 }
 
 string RdbController::getUserCert(const base58_type &user_id) {
@@ -180,4 +201,5 @@ string RdbController::getUserCert(const base58_type &user_id) {
 //    return 1;
 //  }
 //}
+
 } // namespace gruut

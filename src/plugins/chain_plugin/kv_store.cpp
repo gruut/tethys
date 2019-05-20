@@ -14,16 +14,19 @@ KvController::KvController() {
   errorOnCritical(leveldb::DB::Open(m_options, m_db_path + "/" + config::KV_SUB_DIR_WORLD, &m_kv_world));
   errorOnCritical(leveldb::DB::Open(m_options, m_db_path + "/" + config::KV_SUB_DIR_CHAIN, &m_kv_chain));
   errorOnCritical(leveldb::DB::Open(m_options, m_db_path + "/" + config::KV_SUB_DIR_BACKUP, &m_kv_backup));
+  errorOnCritical(leveldb::DB::Open(m_options, m_db_path + "/" + config::KV_SUB_DIR_SELF_INFO, &m_kv_self_info));
 }
 
 KvController::~KvController() {
   delete m_kv_world;
   delete m_kv_chain;
   delete m_kv_backup;
+  delete m_kv_self_info;
 
   m_kv_world = nullptr;
   m_kv_chain = nullptr;
   m_kv_backup = nullptr;
+  m_kv_self_info = nullptr;
 }
 
 bool KvController::errorOnCritical(const leveldb::Status &status) {
@@ -118,6 +121,15 @@ bool KvController::saveBackup(UnresolvedBlock &block_info) {
   return true;
 }
 
+bool KvController::saveSelfInfo(self_info_type &self_info) {
+  addBatch(DataType::SELF_INFO, "self_enc_sk", self_info.enc_sk);
+  addBatch(DataType::SELF_INFO, "self_cert", self_info.cert);
+
+  commitBatchAll();
+
+  return true;
+}
+
 bool KvController::addBatch(DataType what, const string &base_key, const string &value) {
   string key = base_key;
   switch (what) {
@@ -130,6 +142,8 @@ bool KvController::addBatch(DataType what, const string &base_key, const string 
   case DataType::BACKUP:
     m_batch_backup.Put(key, value);
     break;
+  case DataType::SELF_INFO:
+    m_batch_self_info.Put(key, value);
   default:
     break;
   }
@@ -140,6 +154,7 @@ void KvController::commitBatchAll() {
   m_kv_world->Write(m_write_options, &m_batch_world);
   m_kv_chain->Write(m_write_options, &m_batch_chain);
   m_kv_backup->Write(m_write_options, &m_batch_backup);
+  m_kv_self_info->Write(m_write_options, &m_batch_self_info);
 
   clearBatchAll();
 }
@@ -152,6 +167,7 @@ void KvController::clearBatchAll() {
   m_batch_world.Clear();
   m_batch_chain.Clear();
   m_batch_backup.Clear();
+  m_batch_self_info.Clear();
 }
 
 string KvController::getValueByKey(DataType what, const string &base_keys) {
@@ -169,6 +185,8 @@ string KvController::getValueByKey(DataType what, const string &base_keys) {
   case DataType::BACKUP:
     status = m_kv_backup->Get(m_read_options, key, &value);
     break;
+  case DataType::SELF_INFO:
+    status = m_kv_self_info->Get(m_read_options, key, &value);
   default:
     break;
   }
@@ -182,6 +200,7 @@ void KvController::destroyDB() {
   boost::filesystem::remove_all(m_db_path + "/" + config::KV_SUB_DIR_WORLD);
   boost::filesystem::remove_all(m_db_path + "/" + config::KV_SUB_DIR_CHAIN);
   boost::filesystem::remove_all(m_db_path + "/" + config::KV_SUB_DIR_BACKUP);
+  boost::filesystem::remove_all(m_db_path + "/" + config::KV_SUB_DIR_SELF_INFO);
 }
 
 string KvController::parseCertContent(std::vector<string> &cert) {

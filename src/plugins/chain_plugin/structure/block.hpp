@@ -186,7 +186,13 @@ public:
     m_user_certs.clear();
     for (auto &each_cert : certificates) {
       Certificate tmp;
-      tmp.cert_id = json::get<string>(each_cert, "id").value();
+
+      auto id = json::get<string>(each_cert, "id");
+      if(!id.has_value()) {
+        continue;
+      }
+
+      tmp.cert_id = id.value();
 
       string cert_content = "";
       nlohmann::json cert = each_cert["cert"]; // 예외처리 필요?

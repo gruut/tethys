@@ -40,6 +40,7 @@ namespace config {
         const std::string KV_SUB_DIR_WORLD = "world";
         const std::string KV_SUB_DIR_CHAIN = "chain";
         const std::string KV_SUB_DIR_BACKUP = "backup";
+        const std::string KV_SUB_DIR_SELF_INFO = "self-info";
 
 // clang-format on
 

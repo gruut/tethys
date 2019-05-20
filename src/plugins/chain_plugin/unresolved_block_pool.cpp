@@ -99,8 +99,6 @@ ubp_push_result_type UnresolvedBlockPool::push(Block &block, bool is_restore) {
 
   invalidateCaches(); // 캐시 관련 함수. 추후 고려.
 
-  m_push_mutex.unlock();
-
   return ret_val;
 }
 

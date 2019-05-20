@@ -186,9 +186,6 @@ static SchemaMap schema_map = {{MessageType::MSG_PING,
         "type": "string"
       }
     },
-	"aggz": {
-		"type": "string"
-	},
     "state":{
       "type": "object",
       "properties":{
@@ -232,7 +229,7 @@ static SchemaMap schema_map = {{MessageType::MSG_PING,
     },
     "certificate":{
       "type": "array",
-      "itmes": {
+      "items": {
         "type": "object",
         "properties": {
           "id": {
@@ -271,7 +268,6 @@ static SchemaMap schema_map = {{MessageType::MSG_PING,
     "btime",
     "block",
     "tx",
-    "aggz",
     "state",
     "signer",
     "certificate",
