@@ -3,6 +3,7 @@
 #include "../../../lib/appbase/include/application.hpp"
 #include "../../../lib/gruut-utils/src/ecdsa.hpp"
 #include "../../../plugins/net_plugin/include/message_parser.hpp"
+#include "../../chain_plugin/include/chain_plugin.hpp"
 #include <exception>
 
 namespace gruut {
@@ -47,6 +48,18 @@ optional<nlohmann::json> AdminService<ReqSetup, ResSetup>::runSetup(shared_ptr<S
   return {};
 }
 
+bool AdminService<ReqSetup, ResSetup>::checkPassword(const string &enc_sk_pem, const string &pass){
+  try {
+    Botan::DataSource_Memory sk_datasource(enc_sk_pem);
+    Botan::PKCS8::load_key(sk_datasource, pass);
+    return true;
+  }
+  catch(Botan::Exception &exception){
+    logger::ERROR("[SETUP] Error on private key password");
+    return false;
+  }
+}
+
 // TODO : handle admin request
 void AdminService<ReqSetup, ResSetup>::proceed() {
   switch (receive_status) {
@@ -56,19 +69,27 @@ void AdminService<ReqSetup, ResSetup>::proceed() {
     break;
   }
   case AdminRpcCallStatus::PROCESS: {
+    new AdminService<ReqSetup, ResSetup>(service, completion_queue, merger_status, port);
     if(merger_status->user_setup){
       res.set_success(true);
       receive_status = AdminRpcCallStatus::FINISH;
       responder.Finish(res, Status::OK, this);
+      logger::INFO("It's already setup");
       break;
     }
-    new AdminService<ReqSetup, ResSetup>(service, completion_queue, merger_status, port);
     auto pass = req.password();
-    bool has_key = false;
+    auto& chain = dynamic_cast<ChainPlugin*>(app().getPlugin("ChainPlugin"))->chain();
+    auto self_sk = chain.getValueByKey(DataType::SELF_INFO, "self_enc_sk");
+    auto self_cert = chain.getValueByKey(DataType::SELF_INFO, "self_cert");
 
-    // TODO :  get encrypted sk & cert from `Storage`
-
-    if (!has_key) { // no key info in storage
+    if(!self_sk.empty() && !self_cert.empty()){
+      if(checkPassword(self_sk, pass)) {
+        merger_status->user_setup = true;
+        //TODO : send password to other plugin (chain , net ...);
+      }
+      break;
+    }
+    else { // no key info in storage
       shared_ptr<SetupService> setup_service = make_shared<SetupService>();
       unique_ptr<Server> setup_server = initSetup(setup_service);
       auto user_key_info = runSetup(setup_service);
@@ -78,9 +99,14 @@ void AdminService<ReqSetup, ResSetup>::proceed() {
         auto cert = json::get<string>(user_key_info.value(), "cert");
         if (!enc_sk_pem.has_value() || !cert.has_value())
           res.set_success(false);
+        else if(!checkPassword(enc_sk_pem.value(), pass))
+          res.set_success(false);
         else {
-          // TODO : 1. get decrypted sk using password
-          //        2. send  sk & cert to `Storage`
+          SelfInfo self_info;
+          self_info.enc_sk = enc_sk_pem.value();
+          self_info.cert = cert.value();
+          chain.saveSelfInfo(self_info);
+          // TODO : send password to other plugin (chain , net ...);
           auto control_command = NetControlType::SETUP;
           app().getChannel<incoming::channels::net_control::channel_type>().publish(control_command);
           merger_status->user_setup = true;
@@ -91,10 +117,11 @@ void AdminService<ReqSetup, ResSetup>::proceed() {
         setup_server->Shutdown();
       setup_server.reset();
       setup_service.reset();
+
+      receive_status = AdminRpcCallStatus::FINISH;
+      responder.Finish(res, Status::OK, this);
+      break;
     }
-    receive_status = AdminRpcCallStatus::FINISH;
-    responder.Finish(res, Status::OK, this);
-    break;
   }
   default:
     delete this;

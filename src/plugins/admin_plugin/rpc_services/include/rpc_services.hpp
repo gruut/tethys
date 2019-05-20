@@ -85,6 +85,7 @@ private:
   ServerAsyncResponseWriter<ResSetup> responder;
   optional<nlohmann::json> runSetup(shared_ptr<SetupService> setup_service);
   unique_ptr<Server> initSetup(shared_ptr<SetupService> setup_service);
+  bool checkPassword(const string &enc_sk_pem, const string &pass);
 };
 
 } // namespace admin_plugin
