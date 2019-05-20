@@ -35,6 +35,9 @@ target_link_libraries(net_plugin
         ${LZ4_LIB}
         ${Boost_LIBRARIES}
         ${Protobuf_LIBRARIES}
+
+        ${GRPC_GRPC++_LIBRARY}
+        ${GRPC_LIBRARY}
         ${GRPC_GRPC++_REFLECTION_LIBRARY}
         )
 
