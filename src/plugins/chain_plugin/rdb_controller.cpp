@@ -59,6 +59,42 @@ bool RdbController::insertBlockData(Block &block) {
   return true;
 }
 
+bool RdbController::insertTransactionData(gruut::Block &block) {
+    logger::INFO("insert Transaction Data");
+
+    soci::row result;
+    soci::session db_session(RdbController::pool());
+    for(auto &each_transaction : block.getTransactions())
+    try {
+        // clang-format off
+        string tx_id = each_transaction.getTxId();
+        string tx_contract_id = each_transaction.getContractId();
+        string tx_user = each_transaction.getUserId();
+        string tx_user_pk = each_transaction.getTxUserPk();
+        string tx_receiver = each_transaction.getReceiverId();
+        string tx_input = TypeConverter::bytesToString(each_transaction.getTxInputCbor());
+        string tx_agg_cbor = each_transaction.getTxAggCbor();
+        string tx_block_id = block.getBlockId();
+
+        soci::statement st = (db_session.prepare << "INSERT INTO transactions (tx_id, tx_time, tx_contract_id, tx_fee_author, tx_fee_user, tx_user, tx_user_pk, tx_receiver, tx_input, tx_agg_cbor, block_id, tx_pos) VALUES (:tx_id, :tx_time, :tx_contract_id, :tx_fee_author, :tx_fee_user, :tx_user, :tx_user_pk, :tx_receiver, :tx_input, :tx_agg_cbor, :block_id, :tx_pos)",
+                soci::use(tx_id), soci::use(each_transaction.getTxTime()), soci::use(tx_contract_id),
+                soci::use(each_transaction.getFee()), soci::use(each_transaction.getFee()), soci::use(tx_user),
+                soci::use(tx_user_pk), soci::use(tx_receiver),
+                soci::use(tx_input), soci::use(tx_agg_cbor),
+                soci::use(tx_block_id), soci::use(each_transaction.getTxPos()),
+                soci::into(result));
+        // clang-format on
+        st.execute(true);
+    } catch (soci::mysql_soci_error const &e) {
+        logger::ERROR("MySQL error: {}", e.what());
+        return false;
+    } catch (...) {
+        logger::ERROR("Unexpected error at `insertBlockData`");
+        return false;
+    }
+    return true;
+}
+
 vector<Block> RdbController::getBlocks(const string &condition) {
   try {
     soci::session db_session(RdbController::pool());
@@ -79,12 +115,11 @@ vector<Block> RdbController::getBlocks(const string &condition) {
       block.setBlockPrevSig(row.get<base64_type>("block_link"));
       block.setProducerId(row.get<base58_type>("producer_id"));
       block.setProducerSig(row.get<base64_type>("producer_sig"));
-      // TODO: TxID
+      // TODO: TxIDs
       block.setTxRoot(row.get<string>("tx_root"));
       block.setUsStateRoot(row.get<string>("us_state_root"));
       block.setCsStateRoot(row.get<string>("cs_state_root"));
       block.setSgRoot(row.get<string>("sg_root"));
-      block.setAggz(row.get<string>("aggz"));
 
       nlohmann::json certificates = nlohmann::json(row.get<string>("certificate"));
       block.setUserCerts(certificates);
@@ -99,36 +134,50 @@ vector<Block> RdbController::getBlocks(const string &condition) {
   }
 }
 
-  // bool RdbController::updateData(const string &userId, const string &varType, const string &varName, const string &varValue) {
-  //  if (checkUserIdVarTypeVarName(&userId, &varType, &varName) == 0) {
-  //    string query = "UPDATE ledger SET var_value='" + varValue + "' WHERE user_id='" + userId + "' AND var_type='" + varType +
-  //                   "' AND var_name='" + varName + "'";
-  //    if (performQuery(query) == 0) {
-  //      logger::INFO("updateVarValue() function was processed!!!");
-  //      return 0;
-  //    } else {
-  //      logger::INFO("updateVarValue() function was not processed!!!");
-  //      return 1;
-  //    }
-  //  } else {
-  //    logger::INFO("updateVarValue() function was not processed!!!");
-  //    return 1;
-  //  }
-  //}
-  //
-  // bool RdbController::deleteData(const string &userId, const string &varType, const string &varName) {
-  //  if (checkUserIdVarTypeVarName(&userId, &varType, &varName) == 0) {
-  //    string query = "DELETE FROM ledger WHERE user_id='" + userId + "' AND var_type='" + varType + "' AND var_name='" + varName + "'";
-  //    if (performQuery(query) == 0) {
-  //      logger::INFO("deleteData() function was processed!!!");
-  //      return 0;
-  //    } else {
-  //      logger::INFO("deleteData() function was not processed!!!");
-  //      return 1;
-  //    }
-  //  } else {
-  //    logger::INFO("deleteData() function was not processed!!!");
-  //    return 1;
-  //  }
-  //}
+string RdbController::getUserCert(const base58_type &user_id) {
+  try {
+    string user_cert = {};
+    soci::session db_session(RdbController::pool());
+    soci::statement st = (db_session.prepare << "select x509 from user_certificates where uid = " + user_id, soci::into(user_cert));
+    st.execute(true);
+
+    return user_cert;
+  } catch (const std::exception &e) {
+    logger::ERROR("Failed to get user_cert: {}", e.what());
+    return string();
+  }
+}
+
+// bool RdbController::updateData(const string &userId, const string &varType, const string &varName, const string &varValue) {
+//  if (checkUserIdVarTypeVarName(&userId, &varType, &varName) == 0) {
+//    string query = "UPDATE ledger SET var_value='" + varValue + "' WHERE user_id='" + userId + "' AND var_type='" + varType +
+//                   "' AND var_name='" + varName + "'";
+//    if (performQuery(query) == 0) {
+//      logger::INFO("updateVarValue() function was processed!!!");
+//      return 0;
+//    } else {
+//      logger::INFO("updateVarValue() function was not processed!!!");
+//      return 1;
+//    }
+//  } else {
+//    logger::INFO("updateVarValue() function was not processed!!!");
+//    return 1;
+//  }
+//}
+//
+// bool RdbController::deleteData(const string &userId, const string &varType, const string &varName) {
+//  if (checkUserIdVarTypeVarName(&userId, &varType, &varName) == 0) {
+//    string query = "DELETE FROM ledger WHERE user_id='" + userId + "' AND var_type='" + varType + "' AND var_name='" + varName + "'";
+//    if (performQuery(query) == 0) {
+//      logger::INFO("deleteData() function was processed!!!");
+//      return 0;
+//    } else {
+//      logger::INFO("deleteData() function was not processed!!!");
+//      return 1;
+//    }
+//  } else {
+//    logger::INFO("deleteData() function was not processed!!!");
+//    return 1;
+//  }
+//}
 } // namespace gruut

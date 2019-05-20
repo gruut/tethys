@@ -11,7 +11,7 @@ public:
   optional<Transaction> operator()(const nlohmann::json &transaction_message) {
     Transaction tx;
 
-    bool result = tx.setJson(transaction_message);
+    bool result = tx.inputMsgTx(transaction_message); // msg_tx 처리. block에서의 txagg_cbor_b64를 처리하는것과는 다름
     if (!result)
       return {};
 
@@ -22,6 +22,22 @@ public:
 class TransactionMessageVerifier {
 public:
   bool operator()(const Transaction &transaction) {
+    if (!verifyID(transaction))
+      return false;
+
+    if (!verifyEndorserSig(transaction))
+      return false;
+
+    if (!verifyUserSig(transaction))
+      return false;
+
+    return true;
+  }
+
+  bool operator()(Transaction &transaction, const string &world, const string &chain) {
+    transaction.setWorld(world);
+    transaction.setChain(chain);
+
     if (!verifyID(transaction))
       return false;
 
@@ -160,6 +176,10 @@ public:
     Block input_block;
     input_block.initialize(block_json);
 
+    if (!earlyStage(input_block)) {
+      return;
+    }
+
     ubp_push_result_type push_result = unresolved_block_pool->push(input_block);
     if (push_result.height == 0) {
       logger::ERROR("Block input fail: height 0");
@@ -172,9 +192,9 @@ public:
 
     UnresolvedBlock resolved_block;
     bool resolve_result = unresolved_block_pool->resolveBlock(input_block, resolved_block);
-
     if (resolve_result) {
       chain->insertBlockData(resolved_block.block);
+      chain->insertTransactionData(resolved_block.block);
     }
 
     return;
@@ -203,9 +223,9 @@ public:
       i >> input_block_json;
 
       std::vector<Block> blocks;
-      blocks.resize(5);
+      blocks.resize(10);
 
-      for (int i = 0; i < 5; ++i) {
+      for (int i = 0; i < 8; ++i) {
         blocks[i].initialize(input_block_json[i]);
 
         ubp_push_result_type push_result = unresolved_block_pool->push(blocks[i]);
@@ -222,6 +242,7 @@ public:
         bool resolve_result = unresolved_block_pool->resolveBlock(blocks[i], resolved_block);
         if (resolve_result) {
           chain->insertBlockData(resolved_block.block);
+          chain->insertTransactionData(resolved_block.block);
         }
       }
     } // test code end
@@ -235,6 +256,156 @@ public:
       //    logger::INFO("first block 0th cid: " + first_block.getTransactions()[0].getContractId());
     } // test code end
   }
+
+  // block verify 코드. chain의 접근권한이 필요함. 정리 필요.
+  bool earlyStage(Block &block) {
+    if (!verifyBlock(block))
+      return false;
+
+    vector<Transaction> transactions = block.getTransactions();
+    for (auto &each_transaction : transactions) {
+      TransactionMessageVerifier tx_verifier;
+      if (!tx_verifier(each_transaction, block.getWorldId(), block.getChainId()))
+        return false;
+    }
+
+    return true;
+  }
+
+  bool lateStage(Block &block) {
+    if (!verifyBlockID(block))
+      return false;
+
+    if (!verifySSigs(block))
+      return false;
+
+    return true;
+  }
+
+  bool verifyBlock(const Block &block) {
+
+    // TODO: SSig의 퀄리티, 수 검증 추가
+    // TODO: block time validation 추가
+
+    if (!verifyBlockID(block))
+      return false;
+
+    vector<hash_t> tx_merkle_tree = makeStaticMerkleTree(block.getTxaggs());
+    if (block.getTxRoot() != TypeConverter::encodeBase<64>(tx_merkle_tree.back())) {
+      return false;
+    }
+
+    if (!verifyBlockHash(block))
+      return false;
+
+    vector<Signature> signers = block.getSigners();
+    vector<string> signer_id_sigs;
+    signer_id_sigs.clear();
+    for (auto &each_signer : signers) {
+      string id_sig = each_signer.signer_id + each_signer.signer_sig; // need bytebuilder?
+      signer_id_sigs.emplace_back(id_sig);
+    }
+    vector<hash_t> sg_merkle_tree = makeStaticMerkleTree(signer_id_sigs);
+    if (block.getSgRoot() != TypeConverter::encodeBase<64>(sg_merkle_tree.back())) {
+      return false;
+    }
+
+    // TODO: us_state_root 검증 추가
+    // TODO: cs_state_root 검증 추가
+
+    verifyProducerSig(block);
+
+    return true;
+  }
+
+  bool verifyBlockID(const Block &block) const {
+    BytesBuilder block_id_builder;
+    block_id_builder.appendBase<58>(block.getBlockProdId());
+    block_id_builder.appendDec(block.getBlockTime());
+    block_id_builder.append(block.getWorldId());
+    block_id_builder.append(block.getChainId());
+    block_id_builder.appendDec(block.getHeight());
+    block_id_builder.appendBase<58>(block.getPrevBlockId());
+
+    hash_t block_id = Sha256::hash(block_id_builder.getBytes());
+    if (block.getBlockId() != TypeConverter::encodeBase<58>(block_id)) {
+      return false;
+    }
+
+    return true;
+  }
+
+  bool verifyBlockHash(const Block &block) const {
+    BytesBuilder block_hash_builder;
+    block_hash_builder.appendBase<58>(block.getBlockId());
+    block_hash_builder.appendBase<64>(block.getTxRoot());
+    block_hash_builder.appendBase<64>(block.getUserStateRoot());
+    block_hash_builder.appendBase<64>(block.getContractStateRoot());
+
+    hash_t block_hash = Sha256::hash(block_hash_builder.getBytes());
+    if (block.getBlockHash() != TypeConverter::encodeBase<64>(block_hash)) {
+      return false;
+    }
+    return true;
+  }
+
+  bool verifyProducerSig(const Block &block) const {
+    BytesBuilder prod_sig_builder;
+    prod_sig_builder.appendDec(block.getBlockPubTime());
+    prod_sig_builder.appendBase<64>(block.getBlockHash());
+    prod_sig_builder.appendDec(block.getNumTransaction()); // 32bit? 64bit?
+    prod_sig_builder.appendDec(block.getNumSigners());     // 32bit? 64bit?
+    prod_sig_builder.appendBase<64>(block.getSgRoot());
+
+    string message = TypeConverter::bytesToString(prod_sig_builder.getBytes());
+    string producer_cert = chain->getUserCert(block.getBlockProdId());
+    AGS ags;
+    return ags.verifyPEM(producer_cert, message, block.getBlockProdSig());
+  }
+
+  std::vector<hash_t> makeStaticMerkleTree(const std::vector<string> &material) {
+
+    std::vector<hash_t> merkle_tree_vector;
+    std::vector<hash_t> sha256_material;
+
+    // 입력으로 들어오는 material 벡터는 해시만 하면 되도록 처리된 상태로 전달되어야 합니다
+    for (auto &each_element : material) {
+      sha256_material.emplace_back(Sha256::hash(each_element));
+    }
+
+    StaticMerkleTree merkle_tree;
+    merkle_tree.generate(sha256_material);
+    merkle_tree_vector = merkle_tree.getStaticMerkleTree();
+
+    return merkle_tree_vector;
+  }
+
+  bool calcStateRoot() {
+    // user scope, contract scope의 root를 구할 때 쓰이는 동적 머클 트리
+    return true;
+  }
+
+  bool verifySSigs(const Block &block) const {
+    BytesBuilder signer_sig_builder;
+    signer_sig_builder.appendBase<58>(block.getBlockId());
+    signer_sig_builder.appendBase<64>(block.getTxRoot());
+    signer_sig_builder.appendBase<64>(block.getUserStateRoot());
+    signer_sig_builder.appendBase<64>(block.getContractStateRoot());
+
+    hash_t block_info_hash = Sha256::hash(signer_sig_builder.getBytes());
+    string message = TypeConverter::bytesToString(block_info_hash);
+    vector<Signature> signers = block.getSigners();
+
+    AGS ags;
+    for (auto &each_signer : signers) {
+      string signer_cert = chain->getUserCert(each_signer.signer_id);
+      if (!ags.verifyPEM(signer_cert, message, each_signer.signer_sig))
+        return false;
+    }
+
+    return true;
+  }
+  // block verify part end
 };
 
 ChainPlugin::ChainPlugin() : impl(make_unique<ChainPluginImpl>()) {}
@@ -315,7 +486,7 @@ void ChainPlugin::asyncFetchTransactionsFromPool() {
   app().getChannel<incoming::channels::transaction_pool::channel_type>().publish(transactions);
 }
 
-Chain& ChainPlugin::chain() {
+Chain &ChainPlugin::chain() {
   return *(impl->chain);
 }
 

@@ -42,11 +42,54 @@ private:
   base64_type m_tx_output;
 
 public:
-  bool setJson(const nlohmann::json &tx_json) {
+  bool inputMsgTx(const nlohmann::json &msg_tx_json) {
+    try {
+      m_txid = msg_tx_json["/txid"_json_pointer];
+      m_world = msg_tx_json["/world"_json_pointer];
+      m_chain = msg_tx_json["/chain"_json_pointer];
+      m_tx_time = static_cast<gruut::timestamp_t>(stoll(json::get<string>(msg_tx_json, "time").value()));
+
+      m_contract_id = msg_tx_json["body/cid"_json_pointer];
+      m_receiver_id = msg_tx_json["body/receiver"_json_pointer];
+      m_fee = stoi(json::get<string>(msg_tx_json["body"], "fee").value());
+      setTxInputCbor(msg_tx_json["body"]["input"]);
+
+      m_tx_user_id = msg_tx_json["user/id"_json_pointer];
+      m_tx_user_pk = msg_tx_json["user/pk"_json_pointer];
+      m_tx_user_sig = msg_tx_json["user/sig"_json_pointer];
+
+      if (!setEndorsers(msg_tx_json["endorser"])) {
+        return false;
+      }
+      return true;
+    } catch (nlohmann::json::parse_error &e) {
+      logger::ERROR("Failed to parse transaction json: {}", e.what());
+      return false;
+    } catch (...) {
+      logger::ERROR("Unexpected error at `Transaction#inputMsgTxAgg`");
+      return false;
+    }
+  }
+
+  bool inputMsgTxAgg(const nlohmann::json &tx_json, const block_info_type &block_info) {
+    inputMsgTxAgg(tx_json);
+
+    base64_type tmp_tx_agg_cbor = block_info.tx_agg_cbor;
+    base58_type tmp_block_id = block_info.block_id;
+
+    m_tx_agg_cbor = tmp_tx_agg_cbor;
+    m_block_id = tmp_block_id;
+
+    // TODO: 아래는 tx scope에는 저장되는 사항이지만, json으로 입력되는 내용은 아님. 보류.
+    //    setTxPosition();
+    //    setTxOutput(); - 이건 state tree를 설정할 때 받아서 넣을 수 있음. cbor형태의 query.result
+
+    return true;
+  }
+
+  bool inputMsgTxAgg(const nlohmann::json &tx_json) {
     try {
       m_txid = json::get<string>(tx_json, "txid").value();
-      //      m_world = tx_json["/world"_json_pointer];
-      //      m_chain = tx_json["/chain"_json_pointer];
       m_tx_time = static_cast<gruut::timestamp_t>(stoll(json::get<string>(tx_json, "time").value()));
 
       m_contract_id = json::get<string>(tx_json["body"], "cid").value();
@@ -56,28 +99,18 @@ public:
 
       m_tx_user_id = json::get<string>(tx_json["user"], "id").value();
       m_tx_user_pk = json::get<string>(tx_json["user"], "pk").value();
-      if (json::get<string>(tx_json["user"], "sig").has_value())
-        m_tx_user_sig = json::get<string>(tx_json["user"], "sig").value();
-      else {
-        m_tx_user_agga = json::get<string>(tx_json["user"], "a").value();
-        m_tx_user_aggz = json::get<string>(tx_json["user"], "z").value();
-      }
+      m_tx_user_agga = json::get<string>(tx_json["user"], "a").value();
+      m_tx_user_aggz = json::get<string>(tx_json["user"], "z").value();
 
       if (!setEndorsers(tx_json["endorser"])) {
         return false;
       }
-
-      // TODO: 아래는 tx scope에는 저장되는 사항이지만, json으로 입력되는 내용은 아님. 보류.
-      //    setTxAggCbor();
-      //    setBlockId();
-      //    setTxPosition();
-      //    setTxOutput();
       return true;
     } catch (nlohmann::json::parse_error &e) {
       logger::ERROR("Failed to parse transaction json: {}", e.what());
       return false;
     } catch (...) {
-      logger::ERROR("Unexpected error at `Transaction#setJson`");
+      logger::ERROR("Unexpected error at `Transaction#inputMsgTxAgg`");
       return false;
     }
   }
@@ -100,6 +133,14 @@ public:
                                     json::get<string>(each_endorser, "a").value(), json::get<string>(each_endorser, "z").value());
     }
     return true;
+  }
+
+  void setWorld(const string &world) {
+    m_world = world;
+  }
+
+  void setChain(const string &chain) {
+    m_chain = chain;
   }
 
   base58_type getTxId() const {
@@ -156,6 +197,14 @@ public:
 
   const vector<Endorser> &getEndorsers() const {
     return m_tx_endorsers;
+  }
+
+  base64_type getTxAggCbor() const {
+    return m_tx_agg_cbor;
+  }
+
+  int getTxPos() const {
+    return m_tx_pos;
   }
 };
 } // namespace gruut

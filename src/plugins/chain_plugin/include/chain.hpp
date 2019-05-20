@@ -30,6 +30,8 @@ public:
 
   // RDB functions
   void insertBlockData(Block &block_info);
+  void insertTransactionData(Block &block_info);
+  string getUserCert(const base58_type &user_id);
 
   // KV functions
   void saveWorld(world_type &world_info);

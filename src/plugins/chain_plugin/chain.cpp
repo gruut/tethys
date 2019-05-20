@@ -86,12 +86,20 @@ void Chain::insertBlockData(gruut::Block &block_info) {
   rdb_controller->insertBlockData(block_info);
 }
 
+void Chain::insertTransactionData(gruut::Block &block_info) {
+  rdb_controller->insertTransactionData(block_info);
+}
+
 vector<Block> Chain::getBlocksByHeight(int from, int to) {
   if (from > to) {
     return vector<Block>();
   }
 
   vector<Block> blocks = rdb_controller->getBlocks("block_height BETWEEN ? AND ?");
+}
+
+string Chain::getUserCert(const base58_type &user_id) {
+  return rdb_controller->getUserCert(user_id);
 }
 
 // KV functions

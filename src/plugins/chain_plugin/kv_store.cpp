@@ -186,8 +186,9 @@ void KvController::destroyDB() {
 
 string KvController::parseCertContent(std::vector<string> &cert) {
   string cert_content = "";
-  for (int i = 1; i < cert.size() - 1; ++i) {
+  for (int i = 0; i < cert.size(); ++i) {
     cert_content += cert[i];
+    cert_content += "\n";
   }
   return cert_content;
 }

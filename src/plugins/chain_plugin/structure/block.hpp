@@ -138,11 +138,6 @@ public:
     m_sg_root = sgRoot;
   }
 
-  bool setTxaggs(std::vector<txagg_cbor_b64> &txaggs) {
-    m_txaggs = txaggs;
-    return true;
-  }
-
   bool setTxaggs(const nlohmann::json &txs_json) {
     if (!txs_json.is_array()) {
       return false;
@@ -162,7 +157,8 @@ public:
       each_txs_json = nlohmann::json::from_cbor(TypeConverter::decodeBase<64>(each_txagg));
 
       Transaction each_tx;
-      each_tx.setJson(each_txs_json);
+      block_info_type block_info(each_txagg, getBlockId());
+      each_tx.inputMsgTxAgg(each_txs_json, block_info);
       m_transactions.emplace_back(each_tx);
     }
     return true;
@@ -194,8 +190,9 @@ public:
 
       string cert_content = "";
       nlohmann::json cert = each_cert["cert"]; // 예외처리 필요?
-      for (int i = 1; i < cert.size() - 1; ++i) {
+      for (int i = 0; i < cert.size(); ++i) {
         cert_content += cert[i].get<string>();
+        cert_content += "\n";
       }
       tmp.cert_content = cert_content;
 
@@ -204,43 +201,43 @@ public:
     return true;
   }
 
-  timestamp_t getBlockPubTime() {
+  timestamp_t getBlockPubTime() const {
     return m_block_pub_time;
   }
 
-  base58_type getBlockId() {
+  base58_type getBlockId() const {
     return m_block_id;
   }
 
-  timestamp_t getBlockTime() {
+  timestamp_t getBlockTime() const {
     return m_block_time;
   }
 
-  alphanumeric_type getWorldId() {
+  alphanumeric_type getWorldId() const {
     return m_world_id;
   }
 
-  alphanumeric_type getChainId() {
+  alphanumeric_type getChainId() const {
     return m_chain_id;
   }
 
-  block_height_type getHeight() {
+  block_height_type getHeight() const {
     return m_block_height;
   }
 
-  base58_type getPrevBlockId() {
+  base58_type getPrevBlockId() const {
     return m_block_prev_id;
   }
 
-  base64_type getPrevBlockSig() {
+  base64_type getPrevBlockSig() const {
     return m_block_prev_sig;
   }
 
-  base64_type getBlockHash() {
+  base64_type getBlockHash() const {
     return m_block_hash;
   }
 
-  std::vector<txagg_cbor_b64> getTxaggs() {
+  std::vector<txagg_cbor_b64> getTxaggs() const {
     std::vector<txagg_cbor_b64> ret_txaggs;
     for (auto &each_tx : m_txaggs) {
       ret_txaggs.emplace_back(each_tx);
@@ -248,51 +245,51 @@ public:
     return ret_txaggs;
   }
 
-  std::vector<Transaction> getTransactions() {
+  std::vector<Transaction> getTransactions() const {
     return m_transactions;
   }
 
-  int32_t getNumTransaction() {
+  int32_t getNumTransaction() const {
     return m_transactions.size();
   }
 
-  base64_type getTxRoot() {
+  base64_type getTxRoot() const {
     return m_tx_root;
   }
 
-  base64_type getUserStateRoot() {
+  base64_type getUserStateRoot() const {
     return m_us_state_root;
   }
 
-  base64_type getContractStateRoot() {
+  base64_type getContractStateRoot() const {
     return m_cs_state_root;
   }
 
-  base64_type getSgRoot() {
+  base64_type getSgRoot() const {
     return m_sg_root;
   }
 
-  std::vector<Signature> getSigners() {
+  std::vector<Signature> getSigners() const {
     return m_signers;
   }
 
-  int32_t getNumSigners() {
+  int32_t getNumSigners() const {
     return m_signers.size();
   }
 
-  std::vector<Certificate> getUserCerts() {
+  std::vector<Certificate> getUserCerts() const {
     return m_user_certs;
   }
 
-  base58_type getBlockProdId() {
+  base58_type getBlockProdId() const {
     return m_block_prod_info.signer_id;
   }
 
-  base64_type getBlockProdSig() {
+  base64_type getBlockProdSig() const {
     return m_block_prod_info.signer_sig;
   }
 
-  string getBlockCert() {
+  string getBlockCert() const {
     return m_block_certificate;
   }
 };
