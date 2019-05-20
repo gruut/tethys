@@ -48,13 +48,12 @@ optional<nlohmann::json> AdminService<ReqSetup, ResSetup>::runSetup(shared_ptr<S
   return {};
 }
 
-bool AdminService<ReqSetup, ResSetup>::checkPassword(const string &enc_sk_pem, const string &pass){
+bool AdminService<ReqSetup, ResSetup>::checkPassword(const string &enc_sk_pem, const string &pass) {
   try {
     Botan::DataSource_Memory sk_datasource(enc_sk_pem);
     Botan::PKCS8::load_key(sk_datasource, pass);
     return true;
-  }
-  catch(Botan::Exception &exception){
+  } catch (Botan::Exception &exception) {
     logger::ERROR("[SETUP] Error on private key password");
     return false;
   }
@@ -70,7 +69,7 @@ void AdminService<ReqSetup, ResSetup>::proceed() {
   }
   case AdminRpcCallStatus::PROCESS: {
     new AdminService<ReqSetup, ResSetup>(service, completion_queue, merger_status, port);
-    if(merger_status->user_setup){
+    if (merger_status->user_setup) {
       res.set_success(true);
       receive_status = AdminRpcCallStatus::FINISH;
       responder.Finish(res, Status::OK, this);
@@ -78,18 +77,17 @@ void AdminService<ReqSetup, ResSetup>::proceed() {
       break;
     }
     auto pass = req.password();
-    auto& chain = dynamic_cast<ChainPlugin*>(app().getPlugin("ChainPlugin"))->chain();
+    auto &chain = dynamic_cast<ChainPlugin *>(app().getPlugin("ChainPlugin"))->chain();
     auto self_sk = chain.getValueByKey(DataType::SELF_INFO, "self_enc_sk");
     auto self_cert = chain.getValueByKey(DataType::SELF_INFO, "self_cert");
 
-    if(!self_sk.empty() && !self_cert.empty()){
-      if(checkPassword(self_sk, pass)) {
+    if (!self_sk.empty() && !self_cert.empty()) {
+      if (checkPassword(self_sk, pass)) {
         merger_status->user_setup = true;
-        //TODO : send password to other plugin (chain , net ...);
+        // TODO : send password to other plugin (chain , net ...);
       }
       break;
-    }
-    else { // no key info in storage
+    } else { // no key info in storage
       shared_ptr<SetupService> setup_service = make_shared<SetupService>();
       unique_ptr<Server> setup_server = initSetup(setup_service);
       auto user_key_info = runSetup(setup_service);
@@ -99,7 +97,7 @@ void AdminService<ReqSetup, ResSetup>::proceed() {
         auto cert = json::get<string>(user_key_info.value(), "cert");
         if (!enc_sk_pem.has_value() || !cert.has_value())
           res.set_success(false);
-        else if(!checkPassword(enc_sk_pem.value(), pass))
+        else if (!checkPassword(enc_sk_pem.value(), pass))
           res.set_success(false);
         else {
           SelfInfo self_info;

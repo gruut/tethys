@@ -20,10 +20,14 @@ add_library(admin_plugin
         ${HEADERS}
         ${SOURCES})
 
+set(LIB_PREFIX "/usr/local/lib")
+set(BOTAN_LIB "${LIB_PREFIX}/libbotan-2.a")
+
 target_link_libraries(admin_plugin
         appbase
         log
         json
+        ${BOTAN_LIB}
         ${Boost_LIBRARIES}
         ${Protobuf_LIBRARIES}
 
