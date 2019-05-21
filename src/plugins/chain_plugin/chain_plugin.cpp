@@ -200,6 +200,68 @@ public:
     return;
   }
 
+  void processTxResult(nlohmann::json &result) {
+    // 파싱한 결과로 unresolved_block에 저장될 ledger에 대한 정보를 만들고 처리
+
+    base58_type block_id = json::get<string>(result["block"], "id").value();
+    block_height_type block_height = static_cast<block_height_type>(stoi(json::get<string>(result["block"], "height").value()));
+    UnresolvedBlock update_UR_block = unresolved_block_pool->findBlock(block_id, block_height);
+
+    if (update_UR_block.block.getBlockId() != unresolved_block_pool->getCurrentHeadId()) {
+      unresolved_block_pool->moveHead(update_UR_block.block.getPrevBlockId(), update_UR_block.block.getHeight() - 1);
+    }
+
+    nlohmann::json results_json = result["results"];
+    for (auto &each_result : results_json) {
+      result_query_info_type result_info;
+      result_info.tx_id = json::get<string>(each_result, "txid").value();
+      result_info.status = json::get<bool>(each_result, "status").value();
+      result_info.info = json::get<string>(each_result, "info").value();
+      result_info.author = json::get<string>(each_result["authority"], "author").value();
+      result_info.user = json::get<string>(each_result["authority"], "user").value();
+      result_info.receiver = json::get<string>(each_result["authority"], "receiver").value();
+      result_info.self = json::get<string>(each_result["authority"], "self").value();
+
+      nlohmann::json friends_json = each_result["friend"];
+      for (auto &each_friend : friends_json) {
+        result_info.friends.emplace_back(each_friend.get<string>());
+      }
+      result_info.fee_author = stoi(json::get<string>(each_result["fee"], "author").value());
+      result_info.fee_user = stoi(json::get<string>(each_result["fee"], "user").value());
+
+      /// 따지고 보면, 이 위의 정보들은 모두 이 아래의 queries 를 처리하기 위한 사전 정보에 불과하다.
+      nlohmann::json queries_json = each_result["queries"];
+      for (auto &each_query : queries_json) {
+        string type = json::get<string>(each_query, "type").value();
+        nlohmann::json option = each_query["option"];
+        if (type == "user.join") {
+          chain->queryUserJoin(update_UR_block, option, result_info);
+        } else if (type == "user.cert") {
+          chain->queryUserCert(update_UR_block, option, result_info);
+        } else if (type == "v.incinerate") {
+          chain->queryIncinerate(update_UR_block, option, result_info);
+        } else if (type == "v.create") {
+          chain->queryCreate(update_UR_block, option, result_info);
+        } else if (type == "v.transfer") {
+          chain->queryTransfer(update_UR_block, option, result_info);
+        } else if (type == "scope.user") {
+          chain->queryUserScope(update_UR_block, option, result_info);
+        } else if (type == "scope.contract") {
+          chain->queryContractScope(update_UR_block, option, result_info);
+        } else if (type == "run.query") {
+          chain->queryRunQuery(update_UR_block, option, result_info);
+        } else if (type == "run.contract") {
+          chain->queryRunContract(update_UR_block, option, result_info);
+        } else {
+          logger::ERROR("URBP, Something error in query process");
+        }
+      }
+    }
+
+    //  calcStateRoot(usroot);  // TODO: 추후 구현
+    //  calcStateRoot(csroot);  // TODO: 추후 구현
+  }
+
   vector<Transaction> getTransactions() {
     return transaction_pool->fetchAll();
   }
@@ -467,6 +529,10 @@ void ChainPlugin::pluginInitialize(const boost::program_options::variables_map &
 
   auto &block_channel = app().getChannel<incoming::channels::block::channel_type>();
   impl->incoming_block_subscription = block_channel.subscribe([this](const nlohmann::json &block) { impl->pushBlock(block); });
+
+  // TODO: result channel 개설
+  auto &SCE_result_channel = app().getChannel<incoming::channels::SCE_result::channel_type>();
+  impl->incoming_block_subscription = block_channel.subscribe([this](const nlohmann::json &result) { impl->processTxResult(result); });
 
   impl->initialize();
 }

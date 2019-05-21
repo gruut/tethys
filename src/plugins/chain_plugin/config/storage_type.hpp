@@ -21,6 +21,7 @@ using block_height_type = int32_t;
 using alphanumeric_type = std::string;
 using base58_type = std::string;
 using base64_type = std::string;
+using contract_id_type = std::string; // 사용자 정의 식별자::사용자 아이디::로컬체인 이름::월드 이름
 using txagg_cbor_b64 = std::string;
 
 using local_chain_type = struct LocalChainState {
@@ -94,6 +95,21 @@ using block_info_type = struct _block_info_type {
   }
   _block_info_type(base64_type tx_agg_cbor_, base58_type block_id_, int tx_pos_, base64_type tx_output_)
       : tx_agg_cbor(tx_agg_cbor_), block_id(block_id_), tx_pos(tx_pos_), tx_output(tx_output_) {}
+};
+
+using result_query_info_type = struct _result_query_info_type {
+  base58_type tx_id;
+  bool status;
+  string info;
+  base58_type author;
+  base58_type user;
+  base58_type receiver;
+  contract_id_type self;
+  std::vector<contract_id_type> friends;
+  int fee_author;
+  int fee_user;
+
+  _result_query_info_type() = default;
 };
 
 using self_info_type = struct SelfInfo {

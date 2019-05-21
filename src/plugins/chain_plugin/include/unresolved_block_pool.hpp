@@ -68,28 +68,46 @@ public:
     m_block_pool.clear();
   }
 
+  base58_type getLatestConfirmedId() {
+    return m_latest_confirmed_id;
+  }
+
+  block_height_type getLatestConfirmedHeight() {
+    return m_latest_confirmed_height;
+  }
+
+  timestamp_t getLatestConfiremdTime() {
+    return m_latest_confirmed_time;
+  }
+
+  base64_type getLatestConfiremdHash() {
+    return m_latest_confirmed_hash;
+  }
+
+  base58_type getLatestConfiremdPrevId() {
+    return m_latest_confirmed_prev_id;
+  }
+
+  base58_type getCurrentHeadId() {
+    return m_head_id;
+  }
+
+  block_height_type getCurrentHeadHeight() {
+    return m_head_height;
+  }
+
   void setPool(const base64_type &last_block_id, block_height_type last_height, timestamp_t last_time, const base64_type &last_hash,
                const base64_type &prev_block_id);
 
   bool prepareBins(block_height_type t_height);
   ubp_push_result_type push(Block &block, bool is_restore = false);
-
   bool resolveBlock(Block &block, UnresolvedBlock &resolved_result);
 
   void restorePool();
   void setupStateTree();
 
-  void processTxResult(UnresolvedBlock &new_UR_block, nlohmann::json &result);
+  UnresolvedBlock findBlock(const base58_type &block_id, const block_height_type block_height);
   void moveHead(const std::string &block_id_b64, const block_height_type target_block_height);
-  bool queryUserJoin(UnresolvedBlock &UR_block, nlohmann::json &option);
-  bool queryUserCert(UnresolvedBlock &UR_block, nlohmann::json &option);
-  bool queryIncinerate(UnresolvedBlock &UR_lock, nlohmann::json &option);
-  bool queryCreate(UnresolvedBlock &UR_block, nlohmann::json &option);
-  bool queryTransfer(UnresolvedBlock &UR_block, nlohmann::json &option);
-  bool queryUserScope(UnresolvedBlock &UR_block, nlohmann::json &option);
-  bool queryContractScope(UnresolvedBlock &UR_block, nlohmann::json &option);
-  bool queryRunQuery(UnresolvedBlock &UR_block, nlohmann::json &option);
-  bool queryRunContract(UnresolvedBlock &UR_block, nlohmann::json &option);
 
   void invalidateCaches();
 

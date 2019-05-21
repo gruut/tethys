@@ -2,8 +2,8 @@
 
 #include "../../../../lib/appbase/include/channel.hpp"
 #include "../../../include/json.hpp"
-#include "../../net_plugin/config/include/message.hpp"
 #include "../../chain_plugin/structure/transaction.hpp"
+#include "../../net_plugin/config/include/message.hpp"
 #include <vector>
 
 using namespace gruut::net_plugin;
@@ -15,7 +15,7 @@ using net_control = ChannelTypeTemplate<struct net_control_tag, NetControlType>;
 using network = ChannelTypeTemplate<struct network_tag, InNetMsg>;
 using transaction = ChannelTypeTemplate<struct transaction_tag, nlohmann::json>;
 using block = ChannelTypeTemplate<struct block_tag, nlohmann::json>;
-
+using SCE_result = ChannelTypeTemplate<struct SCE_result_tag, nlohmann::json>;
 using transaction_pool = ChannelTypeTemplate<struct tx_pool_tag, vector<gruut::Transaction>>;
 }; // namespace channels
 } // namespace appbase::incoming
