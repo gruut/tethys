@@ -11,22 +11,22 @@ KvController::KvController() {
 
   m_db_path = config::DEFAULT_KV_PATH;
   boost::filesystem::create_directories(m_db_path);
-  errorOnCritical(leveldb::DB::Open(m_options, m_db_path + "/" + config::KV_SUB_DIR_WORLD, &m_kv_world));
-  errorOnCritical(leveldb::DB::Open(m_options, m_db_path + "/" + config::KV_SUB_DIR_CHAIN, &m_kv_chain));
-  errorOnCritical(leveldb::DB::Open(m_options, m_db_path + "/" + config::KV_SUB_DIR_BACKUP, &m_kv_backup));
-  errorOnCritical(leveldb::DB::Open(m_options, m_db_path + "/" + config::KV_SUB_DIR_SELF_INFO, &m_kv_self_info));
+
+  auto dir_names = config::keyValueDBNames();
+  for (auto &dir_name : dir_names) {
+    leveldb::DB* db;
+    errorOnCritical(leveldb::DB::Open(m_options, m_db_path + "/" + dir_name, &db));
+    db_map[dir_name] = db;
+
+    write_batch_map[dir_name] = leveldb::WriteBatch();
+  }
 }
 
 KvController::~KvController() {
-  delete m_kv_world;
-  delete m_kv_chain;
-  delete m_kv_backup;
-  delete m_kv_self_info;
-
-  m_kv_world = nullptr;
-  m_kv_chain = nullptr;
-  m_kv_backup = nullptr;
-  m_kv_self_info = nullptr;
+  for(auto &[_, db_ptr] : db_map) {
+    delete db_ptr;
+    db_ptr = nullptr;
+  }
 }
 
 bool KvController::errorOnCritical(const leveldb::Status &status) {
@@ -130,31 +130,15 @@ bool KvController::saveSelfInfo(self_info_type &self_info) {
   return true;
 }
 
-bool KvController::addBatch(DataType what, const string &base_key, const string &value) {
-  string key = base_key;
-  switch (what) {
-  case DataType::WORLD:
-    m_batch_world.Put(key, value);
-    break;
-  case DataType::CHAIN:
-    m_batch_chain.Put(key, value);
-    break;
-  case DataType::BACKUP:
-    m_batch_backup.Put(key, value);
-    break;
-  case DataType::SELF_INFO:
-    m_batch_self_info.Put(key, value);
-  default:
-    break;
-  }
+bool KvController::addBatch(string what, const string &key, const string &value) {
+  write_batch_map[what].Put(key, value);
   return true;
 }
 
 void KvController::commitBatchAll() {
-  m_kv_world->Write(m_write_options, &m_batch_world);
-  m_kv_chain->Write(m_write_options, &m_batch_chain);
-  m_kv_backup->Write(m_write_options, &m_batch_backup);
-  m_kv_self_info->Write(m_write_options, &m_batch_self_info);
+  for(auto &[name, db_ptr] : db_map) {
+    db_ptr->Write(m_write_options, &write_batch_map[name]);
+  }
 
   clearBatchAll();
 }
@@ -164,32 +148,16 @@ void KvController::rollbackBatchAll() {
 }
 
 void KvController::clearBatchAll() {
-  m_batch_world.Clear();
-  m_batch_chain.Clear();
-  m_batch_backup.Clear();
-  m_batch_self_info.Clear();
+  for(auto &[_, write_batch] : write_batch_map) {
+    write_batch.Clear();
+  }
 }
 
-string KvController::getValueByKey(DataType what, const string &base_keys) {
-  std::string key = base_keys;
-  std::string value;
+string KvController::getValueByKey(string what, const string &key) {
+  string value;
   leveldb::Status status;
 
-  switch (what) {
-  case DataType::WORLD:
-    status = m_kv_world->Get(m_read_options, key, &value);
-    break;
-  case DataType::CHAIN:
-    status = m_kv_chain->Get(m_read_options, key, &value);
-    break;
-  case DataType::BACKUP:
-    status = m_kv_backup->Get(m_read_options, key, &value);
-    break;
-  case DataType::SELF_INFO:
-    status = m_kv_self_info->Get(m_read_options, key, &value);
-  default:
-    break;
-  }
+  status = db_map[what]->Get(m_read_options, key, &value);
 
   if (!status.ok())
     value = "";
@@ -197,10 +165,9 @@ string KvController::getValueByKey(DataType what, const string &base_keys) {
 }
 
 void KvController::destroyDB() {
-  boost::filesystem::remove_all(m_db_path + "/" + config::KV_SUB_DIR_WORLD);
-  boost::filesystem::remove_all(m_db_path + "/" + config::KV_SUB_DIR_CHAIN);
-  boost::filesystem::remove_all(m_db_path + "/" + config::KV_SUB_DIR_BACKUP);
-  boost::filesystem::remove_all(m_db_path + "/" + config::KV_SUB_DIR_SELF_INFO);
+  for (auto &[db_name, _] : db_map) {
+    boost::filesystem::remove_all(m_db_path + "/" + db_name);
+  }
 }
 
 string KvController::parseCertContent(std::vector<string> &cert) {

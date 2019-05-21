@@ -1,4 +1,5 @@
 #include "include/rdb_controller.hpp"
+#include "mysql/soci-mysql.h"
 
 using namespace std;
 
