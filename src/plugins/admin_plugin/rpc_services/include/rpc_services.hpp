@@ -17,8 +17,10 @@ using namespace grpc_user;
 using namespace grpc_admin;
 
 struct MergerStatus {
-  atomic<bool> user_setup{false};
-  atomic<bool> is_running{false};
+  atomic<bool> user_setup;
+  atomic<bool> is_running;
+
+  MergerStatus() : user_setup(false), is_running(true) {}
 };
 
 class SetupService final : public GruutUserService::Service {
@@ -86,6 +88,7 @@ private:
   optional<nlohmann::json> runSetup(shared_ptr<SetupService> setup_service);
   unique_ptr<Server> initSetup(shared_ptr<SetupService> setup_service);
   bool checkPassword(const string &enc_sk_pem, const string &pass);
+  void sendKeyInfoToNet(const string &cert, const string &enc_sk_pem, const string &pass);
 };
 
 } // namespace admin_plugin

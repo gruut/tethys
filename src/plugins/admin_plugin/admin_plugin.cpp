@@ -34,12 +34,12 @@ public:
   void initialize() {
     initializeAdminServer();
     registerService();
-
-    merger_status = make_shared<MergerStatus>();
     admin_req_check_timer = make_unique<boost::asio::steady_timer>(app().getIoContext());
   }
 
   void registerService() {
+    merger_status = make_shared<MergerStatus>();
+
     new AdminService<ReqSetup, ResSetup>(&admin_service, completion_queue.get(), merger_status, setup_port);
     new AdminService<ReqStart, ResStart>(&admin_service, completion_queue.get(), merger_status);
     new AdminService<ReqStop, ResStop>(&admin_service, completion_queue.get(), merger_status);

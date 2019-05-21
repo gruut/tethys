@@ -59,6 +59,18 @@ bool AdminService<ReqSetup, ResSetup>::checkPassword(const string &enc_sk_pem, c
   }
 }
 
+void AdminService<ReqSetup, ResSetup>::sendKeyInfoToNet(const string &cert, const string &enc_sk_pem, const string &pass) {
+  nlohmann::json control_command;
+  int control_type = static_cast<int>(NetControlType::SETUP);
+
+  control_command["type"] = control_type;
+  control_command["enc_sk"] = enc_sk_pem;
+  control_command["cert"] = cert;
+  control_command["pass"] = pass;
+
+  app().getChannel<incoming::channels::net_control::channel_type>().publish(control_command);
+}
+
 // TODO : handle admin request
 void AdminService<ReqSetup, ResSetup>::proceed() {
   switch (receive_status) {
@@ -84,7 +96,7 @@ void AdminService<ReqSetup, ResSetup>::proceed() {
     if (!self_sk.empty() && !self_cert.empty()) {
       if (checkPassword(self_sk, pass)) {
         merger_status->user_setup = true;
-        // TODO : send password to other plugin (chain , net ...);
+        sendKeyInfoToNet(self_cert, self_sk, pass);
       }
       break;
     } else { // no key info in storage
@@ -97,6 +109,8 @@ void AdminService<ReqSetup, ResSetup>::proceed() {
         auto cert = json::get<string>(user_key_info.value(), "cert");
         if (!enc_sk_pem.has_value() || !cert.has_value())
           res.set_success(false);
+        else if (enc_sk_pem.value().empty() || cert.value().empty())
+          res.set_success(false);
         else if (!checkPassword(enc_sk_pem.value(), pass))
           res.set_success(false);
         else {
@@ -104,9 +118,7 @@ void AdminService<ReqSetup, ResSetup>::proceed() {
           self_info.enc_sk = enc_sk_pem.value();
           self_info.cert = cert.value();
           chain.saveSelfInfo(self_info);
-          // TODO : send password to other plugin (chain , net ...);
-          auto control_command = NetControlType::SETUP;
-          app().getChannel<incoming::channels::net_control::channel_type>().publish(control_command);
+          sendKeyInfoToNet(cert.value(), enc_sk_pem.value(), pass);
           merger_status->user_setup = true;
           res.set_success(true);
         }
