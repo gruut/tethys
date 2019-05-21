@@ -11,7 +11,6 @@
 #include "../config/storage_type.hpp"
 
 #include "../structure/block.hpp"
-#include "block_validator.hpp"
 #include "mem_ledger.hpp"
 #include "state_merkle_tree.hpp"
 

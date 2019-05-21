@@ -86,6 +86,10 @@ void Chain::insertBlockData(gruut::Block &block_info) {
   rdb_controller->insertBlockData(block_info);
 }
 
+void Chain::insertTransactionData(gruut::Block &block_info) {
+  rdb_controller->insertTransactionData(block_info);
+}
+
 vector<Block> Chain::getBlocksByHeight(int from, int to) {
   if (from > to) {
     return vector<Block>();
@@ -103,6 +107,10 @@ block_height_type Chain::getLatestResolvedHeight() {
   Block block = rdb_controller->getBlock(condition);
 
   return block.getHeight();
+}
+
+string Chain::getUserCert(const base58_type &user_id) {
+  return rdb_controller->getUserCert(user_id);
 }
 
 // KV functions

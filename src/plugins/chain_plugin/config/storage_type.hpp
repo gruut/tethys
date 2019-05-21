@@ -88,6 +88,21 @@ using ubp_push_result_type = struct _ubp_push_result_type {
   block_height_type height;
 };
 
+using block_info_type = struct _block_info_type {
+  base64_type tx_agg_cbor;
+  base58_type block_id;
+  int tx_pos; // static_merkle_tree에서의 idx
+  base64_type tx_output;
+
+  _block_info_type() = default;
+  _block_info_type(base64_type tx_agg_cbor_, base58_type block_id_) : tx_agg_cbor(tx_agg_cbor_), block_id(block_id_) {
+    tx_pos = -1;
+    tx_output = "";
+  }
+  _block_info_type(base64_type tx_agg_cbor_, base58_type block_id_, int tx_pos_, base64_type tx_output_)
+      : tx_agg_cbor(tx_agg_cbor_), block_id(block_id_), tx_pos(tx_pos_), tx_output(tx_output_) {}
+};
+
 using self_info_type = struct SelfInfo {
   string enc_sk;
   string cert;

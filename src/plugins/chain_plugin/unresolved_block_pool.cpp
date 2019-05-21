@@ -418,6 +418,9 @@ bool UnresolvedBlockPool::resolveBlock(Block &block, UnresolvedBlock &resolved_r
 
     UnresolvedBlock resolved_block = m_block_pool[0][resolved_block_idx];
 
+    // TODO: pop되기 전에 반복문을 사용하면 선택받지 못한 block branch를 전부 지울 수 있을 것.
+    //  그런데 그 후에 만약 해당 블록에 연결된 블록이 들어와서 지웠던 블록을 다시 요청하는 경우가 생길 수 있는것은 아닐지 고려.
+
     m_block_pool.pop_front();
 
     if (m_block_pool.empty()) {
