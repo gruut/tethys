@@ -157,9 +157,8 @@ public:
       auto sn = json::get<string>(msg.body, "sn").value();
       auto mn = temp_signer_pool[msg.sender_id].merger_nonce;
       auto curr_time = TimeUtil::now();
-      // TODO : get sk, sk_pass, cert
-      string my_sk, my_pass, my_cert;
-      auto sig = signMessage(curr_time, mn, sn, dhx, dhy, my_sk, my_pass);
+
+      auto sig = signMessage(curr_time, mn, sn, dhx, dhy, my_enc_sk, my_pass);
       auto msg_response2 = MessageBuilder::build<MessageType::MSG_RESPONSE_2>(curr_time, recv_id_b58, dhx, dhy, my_cert, sig);
 
       return msg_response2;
@@ -198,13 +197,27 @@ public:
   }
 
   optional<vector<uint8_t>> getTempHmacKey(const string &b58_signer_id) {
-    if(temp_signer_pool.count(b58_signer_id) > 0){
+    if (temp_signer_pool.count(b58_signer_id) > 0) {
       return temp_signer_pool[b58_signer_id].shared_sk;
     }
     return {};
   }
 
+  void setSelfKeyInfo(nlohmann::json &key_info) {
+    auto enc_sk = json::get<string>(key_info, "enc_sk");
+    auto cert = json::get<string>(key_info, "cert");
+    auto pass = json::get<string>(key_info, "pass");
+
+    my_enc_sk = enc_sk.value();
+    my_cert = cert.value();
+    my_pass = pass.value();
+  }
+
 private:
+  string my_enc_sk;
+  string my_cert;
+  string my_pass;
+
   bool isJoinable() {
     return signer_pool.full();
   }

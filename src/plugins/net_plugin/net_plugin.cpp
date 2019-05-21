@@ -365,11 +365,15 @@ public:
     }
   }
 
-  void controlNet(NetControlType &control_type) {
+  void controlNet(nlohmann::json &control_info) {
+    int control_type_int = json::get<int>(control_info, "type").value();
+    NetControlType control_type = static_cast<NetControlType>(control_type_int);
+
     switch (control_type) {
     case NetControlType::SETUP: {
       if(!user_setup_flag) {
         user_setup_flag = true;
+        signer_pool_manager->setSelfKeyInfo(control_info);
         getPeersFromTracker();
         //TODO : do something more
       }

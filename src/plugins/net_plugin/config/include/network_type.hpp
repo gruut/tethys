@@ -8,9 +8,9 @@ namespace gruut {
 namespace net_plugin {
 
 enum class NetControlType : int{
-  SETUP,
-  START,
-  STOP
+  SETUP = 1,
+  START = 2,
+  STOP = 3
 };
 
 struct IpEndpoint {
