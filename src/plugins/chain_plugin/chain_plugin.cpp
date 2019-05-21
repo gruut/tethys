@@ -225,7 +225,8 @@ public:
       std::vector<Block> blocks;
       blocks.resize(10);
 
-      for (int i = 0; i < 8; ++i) {
+      const int input_block_num = 8;
+      for (int i = 0; i < input_block_num; ++i) {
         blocks[i].initialize(input_block_json[i]);
 
         ubp_push_result_type push_result = unresolved_block_pool->push(blocks[i]);
@@ -262,7 +263,7 @@ public:
     if (!verifyBlock(block))
       return false;
 
-    vector<Transaction> transactions = block.getTransactions();
+    vector<Transaction> &transactions = block.getTransactions();
     for (auto &each_transaction : transactions) {
       TransactionMessageVerifier tx_verifier;
       if (!tx_verifier(each_transaction, block.getWorldId(), block.getChainId()))

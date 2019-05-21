@@ -251,7 +251,7 @@ public:
     return ret_txaggs;
   }
 
-  std::vector<Transaction> getTransactions() const {
+  std::vector<Transaction> &getTransactions() {
     return m_transactions;
   }
 
