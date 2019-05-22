@@ -53,14 +53,14 @@ public:
 
   void shutdown();
 
-  template <typename ChannelType>
+  template <typename Channel>
   auto &getChannel() {
-    auto key = type_index(typeid(ChannelType));
+    auto key = type_index(typeid(Channel));
 
-    auto [channel_it, _] = channels.try_emplace(key, std::make_shared<ChannelType>(io_context_ptr));
+    auto [channel_it, _] = channels.try_emplace(key, std::make_shared<typename Channel::channel_type>(io_context_ptr));
 
     auto channel_ptr = channel_it->second.get();
-    return *dynamic_cast<ChannelType *>(channel_ptr);
+    return *dynamic_cast<typename Channel::channel_type *>(channel_ptr);
   }
 
   template <typename Plugin>

@@ -68,7 +68,7 @@ void AdminService<ReqSetup, ResSetup>::sendKeyInfoToNet(const string &cert, cons
   control_command["cert"] = cert;
   control_command["pass"] = pass;
 
-  app().getChannel<incoming::channels::net_control::channel_type>().publish(control_command);
+  app().getChannel<incoming::channels::net_control>().publish(control_command);
 }
 
 // TODO : handle admin request
@@ -97,8 +97,8 @@ void AdminService<ReqSetup, ResSetup>::proceed() {
       if (checkPassword(self_sk, pass)) {
         merger_status->user_setup = true;
         sendKeyInfoToNet(self_cert, self_sk, pass);
+        res.set_success(true);
       }
-      break;
     } else { // no key info in storage
       shared_ptr<SetupService> setup_service = make_shared<SetupService>();
       unique_ptr<Server> setup_server = initSetup(setup_service);
@@ -127,11 +127,10 @@ void AdminService<ReqSetup, ResSetup>::proceed() {
         setup_server->Shutdown();
       setup_server.reset();
       setup_service.reset();
-
-      receive_status = AdminRpcCallStatus::FINISH;
-      responder.Finish(res, Status::OK, this);
-      break;
     }
+    receive_status = AdminRpcCallStatus::FINISH;
+    responder.Finish(res, Status::OK, this);
+    break;
   }
   default:
     delete this;

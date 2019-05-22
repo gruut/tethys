@@ -462,11 +462,11 @@ void ChainPlugin::pluginInitialize(const boost::program_options::variables_map &
     throw std::invalid_argument("the input of block input path is empty"s);
   }
 
-  auto &transaction_channel = app().getChannel<incoming::channels::transaction::channel_type>();
+  auto &transaction_channel = app().getChannel<incoming::channels::transaction>();
   impl->incoming_transaction_subscription =
       transaction_channel.subscribe([this](const nlohmann::json &transaction) { impl->pushTransaction(transaction); });
 
-  auto &block_channel = app().getChannel<incoming::channels::block::channel_type>();
+  auto &block_channel = app().getChannel<incoming::channels::block>();
   impl->incoming_block_subscription = block_channel.subscribe([this](const nlohmann::json &block) { impl->pushBlock(block); });
 
   impl->initialize();
@@ -484,7 +484,7 @@ void ChainPlugin::setProgramOptions(options_description &cfg) {
 
 void ChainPlugin::asyncFetchTransactionsFromPool() {
   auto transactions = impl->getTransactions();
-  app().getChannel<incoming::channels::transaction_pool::channel_type>().publish(transactions);
+  app().getChannel<incoming::channels::transaction_pool>().publish(transactions);
 }
 
 Chain &ChainPlugin::chain() {

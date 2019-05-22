@@ -211,10 +211,10 @@ private:
 
     switch (msg.type) {
     case MessageType::MSG_TX:
-      app().getChannel<incoming::channels::transaction::channel_type>().publish(msg.body);
+      app().getChannel<incoming::channels::transaction>().publish(msg.body);
       return {};
     case MessageType::MSG_BLOCK:
-      app().getChannel<incoming::channels::block::channel_type>().publish(msg.body);
+      app().getChannel<incoming::channels::block>().publish(msg.body);
       return {};
     case MessageType::MSG_JOIN:
     case MessageType::MSG_RESPONSE_1:

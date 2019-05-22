@@ -371,11 +371,11 @@ public:
 
     switch (control_type) {
     case NetControlType::SETUP: {
-      if(!user_setup_flag) {
+      if (!user_setup_flag) {
         user_setup_flag = true;
         signer_pool_manager->setSelfKeyInfo(control_info);
         getPeersFromTracker();
-        //TODO : do something more
+        // TODO : do something more
       }
       break;
     }
@@ -421,10 +421,10 @@ void NetPlugin::pluginInitialize(const variables_map &options) {
     impl->tracker_address = tracker_address;
   }
 
-  auto &out_channel = app().getChannel<outgoing::channels::network::channel_type>();
+  auto &out_channel = app().getChannel<outgoing::channels::network>();
   impl->out_channel_subscription = out_channel.subscribe([this](auto data) { impl->sendMessage(data); });
 
-  auto &net_control_channel = app().getChannel<incoming::channels::net_control::channel_type>();
+  auto &net_control_channel = app().getChannel<incoming::channels::net_control>();
   impl->net_control_channel_subscription = net_control_channel.subscribe([this](auto data) { impl->controlNet(data); });
 
   impl->initialize();
