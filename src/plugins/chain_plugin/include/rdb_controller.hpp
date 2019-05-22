@@ -7,6 +7,7 @@
 #include "../structure/block.hpp"
 #include "mysql/soci-mysql.h"
 #include "soci.h"
+#include "unresolved_block_pool.hpp"
 
 #include <vector>
 
@@ -29,11 +30,24 @@ public:
   soci::connection_pool &pool();
   bool insertBlockData(Block &block);
   bool insertTransactionData(Block &block);
-  bool updateData(const string &userId, const string &varType, const string &varName, const string &varValue);
-  bool deleteData(const string &userId, const string &varType, const string &varName);
+
   vector<Block> getBlocks(const string &condition);
   Block getBlock(const string &condition);
   string getUserCert(const base58_type &user_id);
+
+  bool queryUserJoin(UnresolvedBlock &UR_block, nlohmann::json &option, result_query_info_type &result_info);
+  bool queryUserCert(UnresolvedBlock &UR_block, nlohmann::json &option, result_query_info_type &result_info);
+  bool queryContractNew(UnresolvedBlock &UR_block, nlohmann::json &option, result_query_info_type &result_info);
+  bool queryContractDisable(UnresolvedBlock &UR_block, nlohmann::json &option, result_query_info_type &result_info);
+  bool queryIncinerate(UnresolvedBlock &UR_block, nlohmann::json &option, result_query_info_type &result_info);
+  bool queryCreate(UnresolvedBlock &UR_block, nlohmann::json &option, result_query_info_type &result_info);
+  bool queryTransfer(UnresolvedBlock &UR_block, nlohmann::json &option, result_query_info_type &result_info);
+  bool queryUserScope(UnresolvedBlock &UR_block, nlohmann::json &option, result_query_info_type &result_info);
+  bool queryContractScope(UnresolvedBlock &UR_block, nlohmann::json &option, result_query_info_type &result_info);
+  bool queryTradeItem(UnresolvedBlock &UR_block, nlohmann::json &option, result_query_info_type &result_info);
+  bool queryTradeVal(UnresolvedBlock &UR_block, nlohmann::json &option, result_query_info_type &result_info);
+  bool queryRunQuery(UnresolvedBlock &UR_block, nlohmann::json &option, result_query_info_type &result_info);
+  bool queryRunContract(UnresolvedBlock &UR_block, nlohmann::json &option, result_query_info_type &result_info);
 };
 } // namespace gruut
 #endif

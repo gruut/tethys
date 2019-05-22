@@ -143,6 +143,7 @@ public:
 
   incoming::channels::transaction::channel_type::Handle incoming_transaction_subscription;
   incoming::channels::block::channel_type::Handle incoming_block_subscription;
+  incoming::channels::SCE_result::channel_type::Handle incoming_result_subscription;
 
   void initialize() {
     chain = make_unique<Chain>(dbms, table_name, db_user_id, db_password);
@@ -200,7 +201,7 @@ public:
     return;
   }
 
-  void processTxResult(nlohmann::json &result) {
+  void processTxResult(const nlohmann::json &result) {
     // 파싱한 결과로 unresolved_block에 저장될 ledger에 대한 정보를 만들고 처리
 
     base58_type block_id = json::get<string>(result["block"], "id").value();
@@ -214,6 +215,8 @@ public:
     nlohmann::json results_json = result["results"];
     for (auto &each_result : results_json) {
       result_query_info_type result_info;
+      result_info.block_id = block_id;
+      result_info.block_height = block_height;
       result_info.tx_id = json::get<string>(each_result, "txid").value();
       result_info.status = json::get<bool>(each_result, "status").value();
       result_info.info = json::get<string>(each_result, "info").value();
@@ -229,7 +232,6 @@ public:
       result_info.fee_author = stoi(json::get<string>(each_result["fee"], "author").value());
       result_info.fee_user = stoi(json::get<string>(each_result["fee"], "user").value());
 
-      /// 따지고 보면, 이 위의 정보들은 모두 이 아래의 queries 를 처리하기 위한 사전 정보에 불과하다.
       nlohmann::json queries_json = each_result["queries"];
       for (auto &each_query : queries_json) {
         string type = json::get<string>(each_query, "type").value();
@@ -238,6 +240,10 @@ public:
           chain->queryUserJoin(update_UR_block, option, result_info);
         } else if (type == "user.cert") {
           chain->queryUserCert(update_UR_block, option, result_info);
+        } else if (type == "contract.new") {
+          chain->queryContractNew(update_UR_block, option, result_info);
+        } else if (type == "contract.disable") {
+          chain->queryContractDisable(update_UR_block, option, result_info);
         } else if (type == "v.incinerate") {
           chain->queryIncinerate(update_UR_block, option, result_info);
         } else if (type == "v.create") {
@@ -248,6 +254,10 @@ public:
           chain->queryUserScope(update_UR_block, option, result_info);
         } else if (type == "scope.contract") {
           chain->queryContractScope(update_UR_block, option, result_info);
+        } else if (type == "trade.item") {
+          chain->queryTradeItem(update_UR_block, option, result_info);
+        } else if (type == "trade.v") {
+          chain->queryTradeVal(update_UR_block, option, result_info);
         } else if (type == "run.query") {
           chain->queryRunQuery(update_UR_block, option, result_info);
         } else if (type == "run.contract") {
@@ -530,9 +540,8 @@ void ChainPlugin::pluginInitialize(const boost::program_options::variables_map &
   auto &block_channel = app().getChannel<incoming::channels::block::channel_type>();
   impl->incoming_block_subscription = block_channel.subscribe([this](const nlohmann::json &block) { impl->pushBlock(block); });
 
-  // TODO: result channel 개설
   auto &SCE_result_channel = app().getChannel<incoming::channels::SCE_result::channel_type>();
-  impl->incoming_block_subscription = block_channel.subscribe([this](const nlohmann::json &result) { impl->processTxResult(result); });
+  impl->incoming_result_subscription = SCE_result_channel.subscribe([this](const nlohmann::json &result) { impl->processTxResult(result); });
 
   impl->initialize();
 }

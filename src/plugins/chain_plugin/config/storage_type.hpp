@@ -98,6 +98,8 @@ using block_info_type = struct _block_info_type {
 };
 
 using result_query_info_type = struct _result_query_info_type {
+  base58_type block_id;
+  block_height_type block_height;
   base58_type tx_id;
   bool status;
   string info;

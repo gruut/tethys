@@ -114,133 +114,55 @@ string Chain::getUserCert(const base58_type &user_id) {
 }
 
 bool Chain::queryUserJoin(UnresolvedBlock &UR_block, nlohmann::json &option, result_query_info_type &result_info) {
-  base58_type uid = json::get<string>(option, "uid").value();
-  string gender = json::get<string>(option, "gender").value();
-  int age = stoi(json::get<string>(option, "age").value());
-  string isc_type = json::get<string>(option, "isc_type").value();
-  string isc_code = json::get<string>(option, "isc_code").value();
-  string location = json::get<string>(option, "location").value();
-
-  // TODO: 2.1.2. User Attributes 테이블에 추가하는 코드 작성
-  return true;
+  return rdb_controller->queryUserJoin(UR_block, option, result_info);
 }
 
 bool Chain::queryUserCert(UnresolvedBlock &UR_block, nlohmann::json &option, result_query_info_type &result_info) {
-  base58_type uid = json::get<string>(option, "uid").value();
-  timestamp_t notbefore = static_cast<uint64_t>(stoll(json::get<string>(option, "notbefore").value()));
-  timestamp_t notafter = static_cast<uint64_t>(stoll(json::get<string>(option, "notafter").value()));
-  string sn = json::get<string>(option, "sn").value();
-  string x509 = json::get<string>(option, "x509").value();
-
-  // TODO: 2.1.1. User Certificates 테이블에 추가하는 코드 작성
-  return true;
+  return rdb_controller->queryUserCert(UR_block, option, result_info);
 }
 
 bool Chain::queryContractNew(UnresolvedBlock &UR_block, nlohmann::json &option, result_query_info_type &result_info) {
-  contract_id_type cid = json::get<string>(option, "cid").value();
-  timestamp_t after = static_cast<uint64_t>(stoll(json::get<string>(option, "after").value()));
-  timestamp_t before = static_cast<uint64_t>(stoll(json::get<string>(option, "before").value()));
-  base58_type author = json::get<string>(option, "author").value();
-  contract_id_type friend_id = json::get<string>(option, "friend").value();
-  string contract_xml = json::get<string>(option, "contract").value();
-  string desc = json::get<string>(option, "desc").value();
-  string sigma = json::get<string>(option, "sigma").value();
-
-  // TODO: db에 접근하여 contract 갱신. friend 추가할 때 자신을 friend로 추가한 contract를 찾아서 추가해야함을 주의
-  return true;
+  return rdb_controller->queryContractNew(UR_block, option, result_info);
 }
 
 bool Chain::queryContractDisable(UnresolvedBlock &UR_block, nlohmann::json &option, result_query_info_type &result_info) {
-  contract_id_type cid = json::get<string>(option, "cid").value();
-
-  // TODO: db에 접근하여 contract 갱신
-  return true;
+  return rdb_controller->queryContractDisable(UR_block, option, result_info);
 }
 
 bool Chain::queryIncinerate(UnresolvedBlock &UR_block, nlohmann::json &option, result_query_info_type &result_info) {
-  int amount = stoi(json::get<string>(option, "amount").value());
-  string pid = json::get<string>(option, "pid").value();
-
-  // TODO: m_mem_ledger 사용하여 갱신값 계산
-  return true;
+  return rdb_controller->queryIncinerate(UR_block, option, result_info);
 }
 
 bool Chain::queryCreate(UnresolvedBlock &UR_block, nlohmann::json &option, result_query_info_type &result_info) {
-  int amount = stoi(json::get<string>(option, "amount").value());
-  string name = json::get<string>(option, "name").value();
-  string type = json::get<string>(option, "type").value();
-  string tag = json::get<string>(option, "tag").value();
-
-  // TODO: m_mem_ledger 사용하여 갱신값 계산
-  return true;
+  return rdb_controller->queryCreate(UR_block, option, result_info);
 }
 
 bool Chain::queryTransfer(UnresolvedBlock &UR_block, nlohmann::json &option, result_query_info_type &result_info) {
-  base58_type from = json::get<string>(option, "from").value();
-  base58_type to = json::get<string>(option, "to").value();
-  int amount = stoi(json::get<string>(option, "amount").value());
-  string unit = json::get<string>(option, "unit").value();
-  string pid = json::get<string>(option, "pid").value();
-  string tag = json::get<string>(option, "tag").value();
-
-  // TODO: m_mem_ledger 사용하여 갱신값 계산
-  //    from과 to가 user/contract 따라 처리될 수 있도록 구현 필요
-  return true;
+  return rdb_controller->queryTransfer(UR_block, option, result_info);
 }
 
 bool Chain::queryUserScope(UnresolvedBlock &UR_block, nlohmann::json &option, result_query_info_type &result_info) {
-  string name = json::get<string>(option, "name").value();
-  string value = json::get<string>(option, "value").value();
-  base58_type uid = json::get<string>(option, "uid").value();
-  string pid = json::get<string>(option, "pid").value();
-  string tag = json::get<string>(option, "tag").value();
-
-  // TODO: m_mem_ledger 사용하여 갱신값 계산
-  return true;
+  return rdb_controller->queryUserScope(UR_block, option, result_info);
 }
 
 bool Chain::queryContractScope(UnresolvedBlock &UR_block, nlohmann::json &option, result_query_info_type &result_info) {
-  string name = json::get<string>(option, "name").value();
-  string value = json::get<string>(option, "value").value();
-  contract_id_type cid = json::get<string>(option, "cid").value();
-  string pid = json::get<string>(option, "pid").value();
-
-  // TODO: m_mem_ledger 사용하여 갱신값 계산
-  return true;
+  return rdb_controller->queryContractScope(UR_block, option, result_info);
 }
 
 bool Chain::queryTradeItem(UnresolvedBlock &UR_block, nlohmann::json &option, result_query_info_type &result_info) {
-  nlohmann::json costs = option["costs"];
-  nlohmann::json units = option["units"];
-  base58_type author = json::get<string>(option, "author").value();
-  base58_type user = json::get<string>(option, "user").value();
-  string pid = json::get<string>(option, "pid").value();
-
-  // TODO: 처리 절차 구현할 것
-  return true;
+  return rdb_controller->queryTradeItem(UR_block, option, result_info);
 }
 
 bool Chain::queryTradeVal(UnresolvedBlock &UR_block, nlohmann::json &option, result_query_info_type &result_info) {
-  // TODO: TBA (19.05.21 현재 문서에 관련 사항 미기재)
-  return true;
+  return rdb_controller->queryTradeVal(UR_block, option, result_info);
 }
 
 bool Chain::queryRunQuery(UnresolvedBlock &UR_block, nlohmann::json &option, result_query_info_type &result_info) {
-  string type = json::get<string>(option, "type").value();
-  nlohmann::json query = option["query"];
-  timestamp_t after = static_cast<uint64_t>(stoll(json::get<string>(option, "after").value()));
-
-  // TODO: Scheduler에게 지연 처리 요청 전송
-  return true;
+  return rdb_controller->queryRunQuery(UR_block, option, result_info);
 }
 
 bool Chain::queryRunContract(UnresolvedBlock &UR_block, nlohmann::json &option, result_query_info_type &result_info) {
-  contract_id_type cid = json::get<string>(option, "cid").value();
-  string input = json::get<string>(option, "input").value();
-  timestamp_t after = static_cast<uint64_t>(stoll(json::get<string>(option, "after").value()));
-
-  // TODO: authority.user를 현재 user로 대체하여 Scheduler에게 요청 전송
-  return true;
+  return rdb_controller->queryRunContract(UR_block, option, result_info);
 }
 
 // KV functions
