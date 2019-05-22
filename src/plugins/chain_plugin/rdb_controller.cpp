@@ -99,10 +99,10 @@ bool RdbController::insertTransactionData(gruut::Block &block) {
 vector<Block> RdbController::getBlocks(const string &condition) {
   try {
     soci::session db_session(RdbController::pool());
-    soci::rowset<soci::row> rs = (db_session.prepare << "select * from blocks where " + condition);
 
+    soci::rowset<> rs(db_session.prepare << "select * from blocks where " + condition);
     vector<Block> blocks;
-    blocks.reserve(distance(rs.begin(), rs.end()));
+
     for (auto it = rs.begin(); it != rs.end(); ++it) {
       soci::row const &row = *it;
       Block block = rowToBlock(row);
