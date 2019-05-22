@@ -39,11 +39,11 @@ unique_ptr<Server> AdminService<ReqSetup, ResSetup>::initSetup(shared_ptr<SetupS
 optional<nlohmann::json> AdminService<ReqSetup, ResSetup>::runSetup(shared_ptr<SetupService> setup_service) {
   auto &promise_user_key = setup_service->getUserKeyPromise();
   auto user_key_info = promise_user_key.get_future();
-
   user_key_info.wait(); // waiting for user key info
 
-  if (user_key_info.get().has_value()) {
-    return user_key_info.get().value();
+  auto sk_cert = user_key_info.get();
+  if (sk_cert.has_value()) {
+    return sk_cert.value();
   }
   return {};
 }
@@ -98,22 +98,26 @@ void AdminService<ReqSetup, ResSetup>::proceed() {
         merger_status->user_setup = true;
         sendKeyInfoToNet(self_cert, self_sk, pass);
         res.set_success(true);
+        logger::INFO("[SETUP] Success");
       }
     } else { // no key info in storage
       shared_ptr<SetupService> setup_service = make_shared<SetupService>();
       unique_ptr<Server> setup_server = initSetup(setup_service);
+      logger::INFO("[SETUP] Waiting for user key info");
       auto user_key_info = runSetup(setup_service);
 
       if (user_key_info.has_value()) {
         auto enc_sk_pem = json::get<string>(user_key_info.value(), "enc_sk");
         auto cert = json::get<string>(user_key_info.value(), "cert");
-        if (!enc_sk_pem.has_value() || !cert.has_value())
+        if (!enc_sk_pem.has_value() || !cert.has_value()) {
+          logger::ERROR("[SETUP] Cannot find (cert / sk)");
           res.set_success(false);
-        else if (enc_sk_pem.value().empty() || cert.value().empty())
+        } else if (enc_sk_pem.value().empty() || cert.value().empty()) {
+          logger::ERROR("[SETUP] (cert / sk) is empty");
           res.set_success(false);
-        else if (!checkPassword(enc_sk_pem.value(), pass))
+        } else if (!checkPassword(enc_sk_pem.value(), pass)) {
           res.set_success(false);
-        else {
+        } else {
           SelfInfo self_info;
           self_info.enc_sk = enc_sk_pem.value();
           self_info.cert = cert.value();
@@ -121,7 +125,10 @@ void AdminService<ReqSetup, ResSetup>::proceed() {
           sendKeyInfoToNet(cert.value(), enc_sk_pem.value(), pass);
           merger_status->user_setup = true;
           res.set_success(true);
+          logger::INFO("[SETUP] Success");
         }
+      } else{
+        logger::ERROR("[SETUP] Fail");
       }
       if (setup_server != nullptr)
         setup_server->Shutdown();
