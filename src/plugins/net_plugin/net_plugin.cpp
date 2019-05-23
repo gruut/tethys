@@ -397,6 +397,10 @@ public:
   bool checkUserMsgType(MessageType msg_type) {
     return (msg_type == MessageType::MSG_REQ_SSIG || msg_type == MessageType::MSG_RES_TX_CHECK || msg_type == MessageType::MSG_RESULT);
   }
+
+  shared_ptr<SignerPoolManager> getSignerPoolManager() const {
+    return signer_pool_manager;
+  }
 };
 
 NetPlugin::NetPlugin() : impl(new NetPluginImpl()) {}
@@ -434,6 +438,10 @@ void NetPlugin::pluginStart() {
   logger::INFO("NetPlugin Start");
 
   impl->start();
+}
+
+shared_ptr<SignerPoolManager> NetPlugin::getSignerPoolManager() {
+  return impl->getSignerPoolManager();
 }
 
 NetPlugin::~NetPlugin() {

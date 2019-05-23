@@ -83,6 +83,27 @@ public:
     }
   }
 
+  vector<Signer> getSigners(unsigned long size) {
+    {
+      shared_lock<shared_mutex> guard(pool_mutex);
+
+      int signers_count = std::min(size, signer_pool.size());
+
+      vector<Signer> signers;
+      signers.reserve(signers_count);
+      for (auto &[key, value] : signer_pool) {
+          if (signers_count == 0) {
+            break;
+          }
+
+          signers.push_back(value);
+          --signers_count;
+      }
+
+      return signers;
+    }
+  }
+
   bool full() {
     {
       shared_lock<shared_mutex> guard(pool_mutex);
@@ -182,6 +203,10 @@ public:
       throw ErrorMsgType::UNKNOWN;
     }
     }
+  }
+
+  vector<Signer> getSigners(int size) {
+    return signer_pool.getSigners(size);
   }
 
   void removeSigner(const string &b58_signer_id) {
