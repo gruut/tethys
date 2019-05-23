@@ -74,9 +74,6 @@ public:
 
     connection_check_timer = make_unique<boost::asio::steady_timer>(app().getIoContext());
     net_message_check_timer = make_unique<boost::asio::steady_timer>(app().getIoContext());
-
-    // TODO: GA로부터 ID 받아올 때까지 임시로 ID 지정
-    app().setId(MY_ID_BASE58);
   }
 
   void initializeRoutingTable() {

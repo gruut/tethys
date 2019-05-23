@@ -71,6 +71,18 @@ void AdminService<ReqSetup, ResSetup>::sendKeyInfoToNet(const string &cert, cons
   app().getChannel<incoming::channels::net_control>().publish(control_command);
 }
 
+optional<string> AdminService<ReqSetup, ResSetup>::getIdFromCert(const string &cert_pem) {
+  try {
+    Botan::DataSource_Memory cert_datasource(cert_pem);
+    Botan::X509_Certificate cert(cert_datasource);
+    auto common_name = cert.subject_info("X520.CommonName");
+    return common_name[0];
+  } catch (Botan::Exception &exception) {
+    logger::ERROR("[SETUP] Wrong Certificate {}", exception.what());
+    return {};
+  }
+}
+
 // TODO : handle admin request
 void AdminService<ReqSetup, ResSetup>::proceed() {
   switch (receive_status) {
@@ -85,7 +97,7 @@ void AdminService<ReqSetup, ResSetup>::proceed() {
       res.set_success(true);
       receive_status = AdminRpcCallStatus::FINISH;
       responder.Finish(res, Status::OK, this);
-      logger::INFO("It's already setup");
+      logger::INFO("[SETUP] It's already setup");
       break;
     }
     auto pass = req.password();
@@ -95,8 +107,8 @@ void AdminService<ReqSetup, ResSetup>::proceed() {
 
     if (!self_sk.empty() && !self_cert.empty()) {
       if (checkPassword(self_sk, pass)) {
-        merger_status->user_setup = true;
         sendKeyInfoToNet(self_cert, self_sk, pass);
+        merger_status->user_setup = true;
         res.set_success(true);
         logger::INFO("[SETUP] Success");
       }
@@ -118,16 +130,25 @@ void AdminService<ReqSetup, ResSetup>::proceed() {
         } else if (!checkPassword(enc_sk_pem.value(), pass)) {
           res.set_success(false);
         } else {
-          SelfInfo self_info;
-          self_info.enc_sk = enc_sk_pem.value();
-          self_info.cert = cert.value();
-          chain.saveSelfInfo(self_info);
-          sendKeyInfoToNet(cert.value(), enc_sk_pem.value(), pass);
-          merger_status->user_setup = true;
-          res.set_success(true);
-          logger::INFO("[SETUP] Success");
+          optional<string> my_id_b58;
+          my_id_b58 = getIdFromCert(cert.value());
+          if (my_id_b58.has_value()) {
+            auto my_id = TypeConverter::decodeBase<58>(my_id_b58.value());
+            SelfInfo self_info;
+            self_info.enc_sk = enc_sk_pem.value();
+            self_info.cert = cert.value();
+            self_info.id = my_id;
+            chain.saveSelfInfo(self_info);
+            app().setId(my_id);
+            sendKeyInfoToNet(cert.value(), enc_sk_pem.value(), pass);
+            merger_status->user_setup = true;
+            res.set_success(true);
+            logger::INFO("[SETUP] Success");
+          } else {
+            res.set_success(false);
+          }
         }
-      } else{
+      } else {
         logger::ERROR("[SETUP] Fail");
       }
       if (setup_server != nullptr)

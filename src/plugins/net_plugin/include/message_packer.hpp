@@ -51,7 +51,9 @@ private:
     serialized_header.insert(serialized_header.end(), begin(total_length), end(total_length));
     serialized_header.insert(serialized_header.end(), begin(WORLD_ID), end(WORLD_ID));
     serialized_header.insert(serialized_header.end(), begin(LOCAL_CHAIN_ID), end(LOCAL_CHAIN_ID));
-    serialized_header.insert(serialized_header.end(), begin(MY_ID), end(MY_ID));
+
+    auto &my_id = app().getId();
+    serialized_header.insert(serialized_header.end(), my_id.begin(), my_id.end());
     return serialized_header;
   }
 };

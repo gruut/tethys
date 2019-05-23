@@ -1,5 +1,6 @@
 #pragma once
 
+#include "../../../../lib/appbase/include/application.hpp"
 #include "../../../../lib/gruut-utils/src/hmac_key_maker.hpp"
 #include "../../../../lib/gruut-utils/src/time_util.hpp"
 #include "../../../../lib/json/include/json.hpp"
@@ -13,6 +14,7 @@
 
 using namespace grpc;
 using namespace std;
+using namespace appbase;
 
 namespace gruut {
 namespace net_plugin {
@@ -26,7 +28,7 @@ public:
 
     msg_body["time"] = TimeUtil::now();
     msg_body["user"] = b58_recv_id;
-    msg_body["merger"] = MY_ID_BASE58;
+    msg_body["merger"] = TypeConverter::encodeBase<58>(app().getId());
     msg_body["mn"] = merger_nonce;
 
     msg_challenge.type = MessageType::MSG_CHALLENGE;
@@ -37,14 +39,15 @@ public:
   }
 
   template <MessageType T, typename = enable_if_t<T == MessageType::MSG_RESPONSE_2>>
-  static auto build(const string &timestamp, const string &b58_recv_id, const string &dhx, const string &dhy, const string &cert, const string &sig) {
+  static auto build(const string &timestamp, const string &b58_recv_id, const string &dhx, const string &dhy, const string &cert,
+                    const string &sig) {
     OutNetMsg msg_response2;
     nlohmann::json msg_body;
 
     msg_body["time"] = timestamp;
     msg_body["dh"]["x"] = dhx;
     msg_body["dh"]["y"] = dhy;
-    msg_body["merger"]["id"] = MY_ID_BASE58;
+    msg_body["merger"]["id"] = TypeConverter::encodeBase<58>(app().getId());
     msg_body["merger"]["cert"] = cert;
     msg_body["merger"]["sig"] = sig;
 

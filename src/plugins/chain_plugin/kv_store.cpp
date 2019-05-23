@@ -14,7 +14,7 @@ KvController::KvController() {
 
   auto dir_names = config::keyValueDBNames();
   for (auto &dir_name : dir_names) {
-    leveldb::DB* db;
+    leveldb::DB *db;
     errorOnCritical(leveldb::DB::Open(m_options, m_db_path + "/" + dir_name, &db));
     db_map[dir_name] = db;
 
@@ -23,7 +23,7 @@ KvController::KvController() {
 }
 
 KvController::~KvController() {
-  for(auto &[_, db_ptr] : db_map) {
+  for (auto &[_, db_ptr] : db_map) {
     delete db_ptr;
     db_ptr = nullptr;
   }
@@ -124,6 +124,7 @@ bool KvController::saveBackup(UnresolvedBlock &block_info) {
 bool KvController::saveSelfInfo(self_info_type &self_info) {
   addBatch(DataType::SELF_INFO, "self_enc_sk", self_info.enc_sk);
   addBatch(DataType::SELF_INFO, "self_cert", self_info.cert);
+  addBatch(DataType::SELF_INFO, "self_id", self_info.id);
 
   commitBatchAll();
 
@@ -136,7 +137,7 @@ bool KvController::addBatch(string what, const string &key, const string &value)
 }
 
 void KvController::commitBatchAll() {
-  for(auto &[name, db_ptr] : db_map) {
+  for (auto &[name, db_ptr] : db_map) {
     db_ptr->Write(m_write_options, &write_batch_map[name]);
   }
 
@@ -148,7 +149,7 @@ void KvController::rollbackBatchAll() {
 }
 
 void KvController::clearBatchAll() {
-  for(auto &[_, write_batch] : write_batch_map) {
+  for (auto &[_, write_batch] : write_batch_map) {
     write_batch.Clear();
   }
 }
