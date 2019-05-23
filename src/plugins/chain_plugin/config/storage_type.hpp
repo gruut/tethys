@@ -106,6 +106,7 @@ using block_info_type = struct _block_info_type {
 using self_info_type = struct SelfInfo {
   string enc_sk;
   string cert;
+  string id;
   // TODO : may need more info
 };
 

@@ -6,6 +6,7 @@
 #include <future>
 #include <grpc/support/log.h>
 #include <grpcpp/grpcpp.h>
+#include <optional>
 
 #include "../../../channel_interface/include/channel_interface.hpp"
 
@@ -89,6 +90,7 @@ private:
   unique_ptr<Server> initSetup(shared_ptr<SetupService> setup_service);
   bool checkPassword(const string &enc_sk_pem, const string &pass);
   void sendKeyInfoToNet(const string &cert, const string &enc_sk_pem, const string &pass);
+  optional<string> getIdFromCert(const string &cert_pem);
 };
 
 } // namespace admin_plugin

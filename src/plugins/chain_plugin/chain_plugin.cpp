@@ -150,6 +150,10 @@ public:
     unresolved_block_pool = make_unique<UnresolvedBlockPool>();
 
     chain->startup(genesis_state);
+
+    auto self_id = chain->getValueByKey(DataType::SELF_INFO, "self_id");
+    if (!self_id.empty())
+      app().setId(self_id);
   }
 
   void pushTransaction(const nlohmann::json &transaction_json) {
