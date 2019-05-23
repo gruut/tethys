@@ -5,6 +5,7 @@
 #include <memory>
 
 #include "../../channel_interface/include/channel_interface.hpp"
+#include "../include/signer_pool_manager.hpp"
 #include "application.hpp"
 #include "plugin.hpp"
 
@@ -32,6 +33,7 @@ public:
 
   void setProgramOptions(options_description &cfg) override;
 
+  shared_ptr<SignerPoolManager> getSignerPoolManager();
 private:
   std::unique_ptr<class NetPluginImpl> impl;
 };

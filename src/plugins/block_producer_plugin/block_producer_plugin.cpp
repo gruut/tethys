@@ -7,6 +7,8 @@ namespace gruut {
 
 using namespace std;
 
+constexpr int SIGNERS_SIZE = 100;
+
 class BlockProducerPluginImpl {
 public:
   void initialize() {
@@ -70,10 +72,20 @@ private:
 
     bitset<256> id_bits = getOptimalMergerId(blocks, producersCount);
 
-    bitset<256> my_id(app().getId());
+    auto my_id = idToBitSet(app().getId());
     float dist = getHammingDistance(id_bits, my_id);
 
     return dist;
+  }
+
+  bitset<256> idToBitSet(string_view id) {
+    string bits_str;
+
+    for (int i = 0; i < id.size(); ++i) {
+      bits_str += bitset<8>(id[i]).to_string();
+    }
+
+    return bitset<256>(bits_str);
   }
 
   bitset<256> getOptimalMergerId(vector<Block> blocks, const int producers_count) {
@@ -119,7 +131,14 @@ private:
   }
 
   float calculateDistanceBetweenSigners() {
+    const int signers_size = SIGNERS_SIZE;
 
+    auto signer_pool_manager_ptr = dynamic_cast<NetPlugin*>(app().getPlugin("NetPlugin"))->getSignerPoolManager();
+
+    vector<Signer> signers = signer_pool_manager_ptr->getSigners(signers_size);
+    // do something
+
+    return 0.0;
   }
 
   int getHammingDistance(bitset<256> &optimal_merger_id, bitset<256> &my_id) {
