@@ -71,7 +71,7 @@ private:
     bitset<256> id_bits = getOptimalMergerId(blocks, producersCount);
 
     bitset<256> my_id(app().getId());
-    int dist = getHammingDistance(id_bits, my_id);
+    float dist = getHammingDistance(id_bits, my_id);
 
     return dist;
   }
