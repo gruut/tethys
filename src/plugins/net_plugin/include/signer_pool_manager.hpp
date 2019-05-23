@@ -14,7 +14,7 @@
 
 #include <algorithm>
 #include <atomic>
-#include <mutex>
+#include <shared_mutex>
 #include <optional>
 #include <random>
 #include <string>
@@ -56,14 +56,14 @@ public:
     new_signer.hmac_key = hmac_key;
 
     {
-      lock_guard<std::mutex> guard(pool_mutex);
+      unique_lock<shared_mutex> guard(pool_mutex);
       signer_pool[b58_user_id] = new_signer;
     }
   }
 
   bool eraseSigner(const string &b58_user_id) {
     {
-      lock_guard<std::mutex> guard(pool_mutex);
+      unique_lock<shared_mutex> guard(pool_mutex);
 
       if (signer_pool.count(b58_user_id) > 0) {
         signer_pool.erase(b58_user_id);
@@ -75,7 +75,7 @@ public:
 
   optional<vector<uint8_t>> getHmacKey(const string &b58_user_id) {
     {
-      lock_guard<std::mutex> guard(pool_mutex);
+      shared_lock<shared_mutex> guard(pool_mutex);
 
       if (signer_pool.count(b58_user_id) > 0)
         return signer_pool[b58_user_id].hmac_key;
@@ -85,7 +85,7 @@ public:
 
   bool full() {
     {
-      lock_guard<std::mutex> guard(pool_mutex);
+      shared_lock<shared_mutex> guard(pool_mutex);
 
       return MAX_SIGNER >= signer_pool.size();
     }
@@ -93,7 +93,7 @@ public:
 
 private:
   unordered_map<string, Signer> signer_pool;
-  std::mutex pool_mutex;
+  shared_mutex pool_mutex;
 };
 
 class SignerPoolManager {
