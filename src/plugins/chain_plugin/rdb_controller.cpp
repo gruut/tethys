@@ -60,7 +60,7 @@ bool RdbController::insertBlockData(Block &block) {
   return true;
 }
 
-bool RdbController::insertTransactionData(gruut::Block &block) {
+bool RdbController::insertTransactionData(Block &block) {
   logger::INFO("insert Transaction Data");
 
   soci::row result;
@@ -78,12 +78,12 @@ bool RdbController::insertTransactionData(gruut::Block &block) {
         string tx_block_id = block.getBlockId();
 
         soci::statement st = (db_session.prepare << "INSERT INTO transactions (tx_id, tx_time, tx_contract_id, tx_fee_author, tx_fee_user, tx_user, tx_user_pk, tx_receiver, tx_input, tx_agg_cbor, block_id, tx_pos) VALUES (:tx_id, :tx_time, :tx_contract_id, :tx_fee_author, :tx_fee_user, :tx_user, :tx_user_pk, :tx_receiver, :tx_input, :tx_agg_cbor, :block_id, :tx_pos)",
-                soci::use(tx_id), soci::use(each_transaction.getTxTime()), soci::use(tx_contract_id),
-                soci::use(each_transaction.getFee()), soci::use(each_transaction.getFee()), soci::use(tx_user),
-                soci::use(tx_user_pk), soci::use(tx_receiver),
-                soci::use(tx_input), soci::use(tx_agg_cbor),
-                soci::use(tx_block_id), soci::use(each_transaction.getTxPos()),
-                soci::into(result));
+            soci::use(tx_id), soci::use(each_transaction.getTxTime()), soci::use(tx_contract_id),
+            soci::use(each_transaction.getFee()), soci::use(each_transaction.getFee()), soci::use(tx_user),
+            soci::use(tx_user_pk), soci::use(tx_receiver),
+            soci::use(tx_input), soci::use(tx_agg_cbor),
+            soci::use(tx_block_id), soci::use(each_transaction.getTxPos()),
+            soci::into(result));
       // clang-format on
       st.execute(true);
     } catch (soci::mysql_soci_error const &e) {
@@ -116,10 +116,10 @@ vector<Block> RdbController::getBlocks(const string &condition) {
     throw e;
   }
 }
+
 Block RdbController::getBlock(const string &condition) {
   try {
     soci::session db_session(RdbController::pool());
-
     soci::row r;
 
     db_session << "select * from blocks " + condition, into(r);
@@ -132,6 +132,7 @@ Block RdbController::getBlock(const string &condition) {
     throw e;
   }
 }
+
 Block RdbController::rowToBlock(const soci::row &r) {
   Block block;
 
@@ -171,7 +172,7 @@ string RdbController::getUserCert(const base58_type &user_id) {
 }
 
 bool RdbController::queryUserJoin(UnresolvedBlock &UR_block, nlohmann::json &option, result_query_info_type &result_info) {
-  // TODO: UserJoin는 즉시 추가? resovle 대기?
+  /// unresolved block pool과 관계 없이 즉시 적용
   try {
     base58_type uid = result_info.user;
     timestamp_t register_day = static_cast<gruut::timestamp_t>(stoll(json::get<string>(option, "register_day").value()));
@@ -186,7 +187,7 @@ bool RdbController::queryUserJoin(UnresolvedBlock &UR_block, nlohmann::json &opt
 
     // TODO: signature by Gruut Authority 정확히 구현
     AGS ags;
-    // auto sigma = ags.sign(GruutAuthority_secret_key, msg);
+    /// auto sigma = ags.sign(GruutAuthority_secret_key, msg);
     string sigma = "TODO: signature by Gruut Authority";
 
     // clang-format off
@@ -211,7 +212,7 @@ bool RdbController::queryUserJoin(UnresolvedBlock &UR_block, nlohmann::json &opt
 }
 
 bool RdbController::queryUserCert(UnresolvedBlock &UR_block, nlohmann::json &option, result_query_info_type &result_info) {
-  /// UserCert는 즉시 추가
+  /// unresolved block pool과 관계 없이 즉시 적용
   try {
     base58_type uid = result_info.user;
     string sn = json::get<string>(option, "sn").value();

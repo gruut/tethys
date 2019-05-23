@@ -6,7 +6,7 @@
 
 namespace gruut {
 
-enum class LedgerType : bool { USERSCOPE = true, CONTRACTSCOPE = false };
+enum class LedgerType : int { USERSCOPE, CONTRACTSCOPE };
 enum class DataType : int { WORLD, CHAIN, BACKUP, SELF_INFO };
 
 using string = std::string;
