@@ -38,7 +38,9 @@ ActiveRecord::Schema.define(version: 2019_04_18_071722) do
     t.integer "var_type", limit: 1
     t.text "var_info"
     t.bigint "up_time"
+    t.integer "up_block"
     t.string "pid", limit: 44
+    t.index ["contract_id", "var_name"], name: "index_contract_scope_on_contract_id_and_var_name", unique: true
     t.index ["contract_id"], name: "index_contract_scope_on_contract_id", unique: true
     t.index ["pid"], name: "index_contract_scope_on_pid", unique: true
   end
@@ -119,6 +121,7 @@ ActiveRecord::Schema.define(version: 2019_04_18_071722) do
     t.integer "up_block"
     t.text "tag", limit: 16777215
     t.string "pid", limit: 44
+    t.index ["pid"], name: "index_user_scope_on_pid", unique: true
   end
 
 end
