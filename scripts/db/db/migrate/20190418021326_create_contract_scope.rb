@@ -8,7 +8,10 @@ class CreateContractScope < ActiveRecord::Migration[5.2]
       t.integer :var_type, limit: 1
       t.text :var_info
       t.integer :up_time, limit: 8
+      t.integer :up_block
       t.column :pid, 'char(44)', index: { unique: true }
     end
+
+    add_index :contract_scope, [:contract_id, :var_name], unique: true
   end
 end
