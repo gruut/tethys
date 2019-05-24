@@ -17,6 +17,7 @@ message ReqSetupKey {
 
 message ResSetupKey {
     bool success = 1;
+    string info = 2;
 }
 
 message ReqLogin {
@@ -25,6 +26,7 @@ message ReqLogin {
 
 message ResLogin {
     bool success = 1;
+    string info = 2;
 }
 
 message ReqStart {
@@ -37,6 +39,7 @@ message ReqStart {
 
 message ResStart {
     bool success = 1;
+    string info = 2;
 }
 
 message ReqStatus {
@@ -53,6 +56,7 @@ message ReqLoadWorld {
 
 message ResLoadWorld {
     bool success = 1;
+    string info = 2;
 }
 
 message ReqLoadChain {
@@ -61,4 +65,5 @@ message ReqLoadChain {
 
 message ResLoadChain {
     bool success = 1;
+    string info = 2;
 }
