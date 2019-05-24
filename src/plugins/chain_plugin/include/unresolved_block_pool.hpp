@@ -4,6 +4,7 @@
 #include <atomic>
 #include <deque>
 #include <time.h>
+#include <memory>
 
 #include "../../../../lib/gruut-utils/src/time_util.hpp"
 #include "../../../../lib/gruut-utils/src/type_converter.hpp"
@@ -12,7 +13,6 @@
 
 #include "../structure/block.hpp"
 #include "mem_ledger.hpp"
-#include "state_merkle_tree.hpp"
 
 namespace gruut {
 
@@ -20,7 +20,7 @@ struct UnresolvedBlock {
   Block block;
   int32_t prev_vector_idx{-1};
   int32_t ssig_sum{0};
-  MemLedger m_mem_ledger;
+  std::vector<StateNode> mem_ledger; /// 하나가 아님. 여러 개의 node로 이루어짐. 각 transaction에 맞는 result가 반영된 ledger들이 있어야 하니까.
 
   UnresolvedBlock() = default;
   UnresolvedBlock(Block &block_, int prev_queue_idx_) : block(block_), prev_vector_idx(prev_queue_idx_) {}
@@ -39,8 +39,8 @@ private:
   std::deque<std::vector<UnresolvedBlock>> m_block_pool; // deque[n] is tree's depth n; vector's blocks are same depth(block height)
   std::recursive_mutex m_push_mutex;
 
-  StateMerkleTree m_us_tree; // user scope state tree
-  StateMerkleTree m_cs_tree; // contract scope state tree
+  StateTree m_us_tree; // user scope state tree
+  StateTree m_cs_tree; // contract scope state tree
 
   base64_type m_latest_confirmed_id;
   std::atomic<block_height_type> m_latest_confirmed_height;

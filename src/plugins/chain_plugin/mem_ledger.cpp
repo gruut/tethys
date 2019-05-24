@@ -1,4 +1,4 @@
-#include "include/state_merkle_tree.hpp"
+#include "include/mem_ledger.hpp"
 
 string toHex(int num) {
   string str_hex;
@@ -16,8 +16,8 @@ string valueToStr(vector<uint8_t> value) {
   return str;
 }
 
-// uint 값을 받아서 눈으로 볼 수 있게 binary string 으로 변환하는 함수
-char *intToBin(uint num) {
+// uint32_t 값을 받아서 눈으로 볼 수 있게 binary string 으로 변환하는 함수
+char *intToBin(uint32_t num) {
   char *ret = new char(_SHA256_SPLIT + 2);
 
   int pos = 0;
@@ -42,40 +42,44 @@ char *intToBin(uint num) {
 
 namespace gruut {
 
-void StateMerkleNode::makeValue(test_data data) {
-  // string key = to_string(data.record_id) + data.user_id + data.var_name + data.var_type + data.var_value;
-  string key = data.user_id + data.var_type + data.var_name + data.var_value;
+StateNode::StateNode(LedgerRecord &ledger) {
+  m_left = nullptr;
+  m_right = nullptr;
+
+  m_suffix = 0;
+  makeValue(ledger);
+
+  // m_path = makePath(ledger);
+  m_debug_path = 0;
+  // m_debug_uid = ledger.record_id;
+  m_suffix_len = -1;
+
+  m_ledger = make_unique<LedgerRecord>(ledger);
+}
+
+void StateNode::makeValue(LedgerRecord &ledger) {
+  BytesBuilder state_value_builder;
+  state_value_builder.append(ledger.pid);
+  state_value_builder.append(ledger.var_val);
+
+  string key = state_value_builder.getString();
   makeValue(key);
 }
-void StateMerkleNode::makeValue(string key) {
+
+void StateNode::makeValue(string &key) {
   m_value = Sha256::hash(key);
 }
-uint StateMerkleNode::makePath(test_data data) {
-  // string key = to_string(data.record_id) + data.user_id + data.var_name;
-  // cout<<"makePath"<<endl;
-  string key = data.user_id + data.var_type + data.var_name;
-  string value = valueToStr(Sha256::hash(key));
+
+uint32_t StateNode::makePath(LedgerRecord &ledger) {
+  string value = valueToStr(Sha256::hash(ledger.pid));
   value = value.substr(value.length() - _SHA256_SPLIT - 1, value.length());
-  uint path = (uint)strtoul(value.c_str(), 0, 16);
-  uint mask = (1 << _TREE_DEPTH) - 1;
+  uint32_t path = (uint32_t)strtoul(value.c_str(), 0, 16);
+  uint32_t mask = (1 << _TREE_DEPTH) - 1;
 
   return path & mask;
 }
 
-StateMerkleNode::StateMerkleNode(test_data data) {
-  m_left = nullptr;
-  m_right = nullptr;
-  // m_next = nullptr;
-  m_suffix = 0;
-  makeValue(data);
-
-  // m_path = makePath(data);
-  m_debug_path = 0;
-  // m_debug_uid = data.record_id;
-  m_suffix_len = -1;
-}
-
-void StateMerkleNode::reHash() {
+void StateNode::reHash() {
   string l_value = "", r_value = "";
 
   if (getLeft() != nullptr) {
@@ -87,23 +91,26 @@ void StateMerkleNode::reHash() {
 
   reHash(l_value, r_value);
 }
-void StateMerkleNode::reHash(string l_value, string r_value) {
+
+void StateNode::reHash(string l_value, string r_value) {
   if (l_value == "")
     makeValue(r_value);
   else if (r_value == "")
     makeValue(l_value);
-  else
-    makeValue(l_value + r_value);
+  else {
+    string combined_value = l_value + r_value;
+    makeValue(combined_value);
+  }
 }
 
 // 노드 삭제 시 부모 노드로 이동하여 변경되는 path 와 suffix, suffix_len 의 내용을 반영
 // 1. path 의 LSB 에서 suffix_len 번째 비트를 저장
 // 2. suffix 의 LSB 에서 suffix_len 번째 비트에 저장된 비트를 넣고 suffix_len 1 증가
-void StateMerkleNode::moveToParent() {
+void StateNode::moveToParent() {
   int bit;
   // 예외 처리
   if (m_suffix_len == _TREE_DEPTH) {
-    printf("StateMerkleNode::moveToParent has some error");
+    printf("StateNode::moveToParent has some error");
     return;
   }
 
@@ -112,32 +119,32 @@ void StateMerkleNode::moveToParent() {
   m_suffix_len++;
 }
 
-bool StateMerkleNode::isDummy() {
+bool StateNode::isDummy() {
   return (m_debug_path == 0);
 }
 // bool isLeaf()   { return ((m_debug_uid != -1) && (m_suffix_len == 0)); }
 
 /* setter */
-void StateMerkleNode::setLeft(StateMerkleNode *node) {
-  m_left = node;
+void StateNode::setLeft(shared_ptr<StateNode> node) {
+  m_left = make_shared<StateNode>(node);
 }
-void StateMerkleNode::setRight(StateMerkleNode *node) {
-  m_right = node;
+void StateNode::setRight(shared_ptr<StateNode> node) {
+  m_right = make_shared<StateNode>(node);
 }
-// void setNext(StateMerkleNode *node)  { m_next  = node;}
-void StateMerkleNode::setSuffix(uint _path, int pos) {
-  uint mask = (uint)(1 << pos) - 1;
+// void setNext(StateNode *node)  { m_next  = node;}
+void StateNode::setSuffix(uint32_t _path, int pos) {
+  uint32_t mask = (uint32_t)(1 << pos) - 1;
   m_suffix = _path & mask;
   m_suffix_len = pos;
 }
-void StateMerkleNode::setDebugPath(uint _path) {
+void StateNode::setDebugPath(uint32_t _path) {
   m_debug_path = _path;
 }
-void StateMerkleNode::setNodeInfo(test_data data) {
+void StateNode::setNodeInfo(LedgerRecord &data) {
   // m_debug_uid = data.record_id;
   makeValue(data);
 }
-void StateMerkleNode::overwriteNode(StateMerkleNode *node) {
+void StateNode::overwriteNode(shared_ptr<StateNode> node) {
   m_left = nullptr;
   m_right = nullptr;
   m_value = node->getValue();
@@ -147,30 +154,16 @@ void StateMerkleNode::overwriteNode(StateMerkleNode *node) {
   m_suffix_len = node->getSuffixLen();
   moveToParent(); // suffix, suffix_len, path 값 수정
 
-  delete node;
-}
-
-// for Debugging (DB에 path 값 초기 세팅용도)
-// uint makePath(int record_id, string user_id, string var_name)
-uint StateMerkleNode::makePath(string user_id, string var_type, string var_name) {
-  test_data tmp;
-  // tmp.record_id   = record_id;
-  tmp.user_id = user_id;
-  tmp.var_type = var_type;
-  tmp.var_name = var_name;
-  tmp.var_value = "0";
-  uint path = makePath(tmp);
-  // printf("path: %u\n", path);
-  return path;
+  node.reset();
 }
 
 // LSB 에서 pos 번째 bit 를 반환
 // 반환 값이 false 면 left 방향이고 true 면 right 방향임
-bool StateMerkleTree::getDirectionOf(uint path, int pos) {
+bool StateTree::getDirectionOf(uint32_t path, int pos) {
   return (path & (1 << pos)) != 0;
 }
 
-void StateMerkleTree::visit(StateMerkleNode *node, bool isPrint) {
+void StateTree::visit(shared_ptr<StateNode> node, bool isPrint) {
   string str_dir = !_debug_dir ? "Left" : "Right";
   if (!node->isDummy()) {
     if (isPrint) {
@@ -183,7 +176,7 @@ void StateMerkleTree::visit(StateMerkleNode *node, bool isPrint) {
   _debug_depth--;
 }
 // tree post-order 순회 재귀함수
-void StateMerkleTree::postOrder(StateMerkleNode *node, bool isPrint) {
+void StateTree::postOrder(shared_ptr<StateNode> node, bool isPrint) {
   if (isPrint) {
     _debug_depth++;
     string str_dir = (!_debug_dir) ? "Left" : "Right";
@@ -201,15 +194,10 @@ void StateMerkleTree::postOrder(StateMerkleNode *node, bool isPrint) {
 }
 
 // TODO: DB 와 연동하여 완성한 이후에는 new_path 파라미터 제거
-void StateMerkleTree::addNode(uint new_path, test_data data) {
-  StateMerkleNode *node = new StateMerkleNode(data);
-  node->setDebugPath(new_path);
-  addNode(new_path, node);
-}
-
-void StateMerkleTree::addNode(uint new_path, StateMerkleNode *new_node) {
-  StateMerkleNode *node = root;
-  StateMerkleNode *prev_node = nullptr;
+void StateTree::addNode(uint32_t new_path, shared_ptr<StateNode> new_node) {
+  new_node->setDebugPath(new_path);
+  shared_ptr<StateNode> node = root;
+  shared_ptr<StateNode> prev_node = nullptr;
 
   bool collision = false;
   bool dir;
@@ -227,7 +215,7 @@ void StateMerkleTree::addNode(uint new_path, StateMerkleNode *new_node) {
       break;
     }
     // 노드 삽입 후 해당 노드에서 머클 루트까지 re-hashing 용도
-    stk.push(node);
+    stk.push(make_shared<StateNode>(node));
 
     // 내려가려는 위치의 노드가 nullptr 인 경우, 해당 위치에 노드를 삽입하고 탈출
     dir = getDirectionOf(new_path, dir_pos); // false: left, true: right
@@ -251,23 +239,23 @@ void StateMerkleTree::addNode(uint new_path, StateMerkleNode *new_node) {
       }
     }
 
-    dir_pos--;
-    depth++;
+    --dir_pos;
+    ++depth;
   }
   // case: 기존 노드와 충돌 났을 경우 -> 기존 노드와 새 노드 모두 적절한 위치에 삽입 필요
   // prev_node : 부모 노드, dummy : 충돌난 곳에 삽입할 더미 노드
   // old_node : 충돌난 곳에 있던 기존 노드, new_node : 삽입하려는 새 노드
   // old_path : 기존 노드의 경로, new_path : 새 노드의 경로
   if (collision) {
-    StateMerkleNode *old_node;
-    uint old_path;
-    StateMerkleNode *dummy;
+    shared_ptr<StateNode> old_node;
+    uint32_t old_path;
+    shared_ptr<StateNode> dummy;
 
     old_node = node;
     old_path = old_node->getDebugPath();
 
     // 먼저 충돌난 곳에 dummy 노드 생성해서 연결
-    dummy = new StateMerkleNode();
+    dummy = make_shared<StateNode>();
     stk.push(dummy);
     if (!getDirectionOf(new_path, dir_pos + 1))
       prev_node->setLeft(dummy);
@@ -278,14 +266,14 @@ void StateMerkleTree::addNode(uint new_path, StateMerkleNode *new_node) {
     // 경로가 같은 횟수만큼 경로를 따라서 dummy 노드 생성 및 연결
     while (true) {
       if (depth > _TREE_DEPTH) {
-        printf("StateMerkleTree::addNode() collision unsolved.\n");
+        printf("StateTree::addNode() collision unsolved.\n");
         break;
       }
 
       if (getDirectionOf(new_path, dir_pos) != getDirectionOf(old_path, dir_pos)) {
         break;
       } else {
-        dummy = new StateMerkleNode();
+        dummy = make_shared<StateNode>();
         stk.push(dummy);
         if (!getDirectionOf(new_path, dir_pos)) {
           prev_node->setLeft(dummy);
@@ -313,7 +301,7 @@ void StateMerkleTree::addNode(uint new_path, StateMerkleNode *new_node) {
   } // collision 해결
 
   // 머클 루트까지 re-hashing
-  StateMerkleNode *tmp;
+  shared_ptr<StateNode> tmp;
   while (!stk.empty()) {
     tmp = stk.top();
     stk.pop();
@@ -324,8 +312,8 @@ void StateMerkleTree::addNode(uint new_path, StateMerkleNode *new_node) {
   m_size++;
 }
 
-void StateMerkleTree::modifyNode(uint path, test_data data) {
-  StateMerkleNode *node = getMerkleNode(path);
+void StateTree::modifyNode(uint32_t path, LedgerRecord &data) {
+  shared_ptr<StateNode> node = getMerkleNode(path);
 
   node->setNodeInfo(data);
 
@@ -338,9 +326,9 @@ void StateMerkleTree::modifyNode(uint path, test_data data) {
   }
 }
 
-void StateMerkleTree::removeNode(uint path) {
-  StateMerkleNode *node;
-  StateMerkleNode *parent, *left, *right;
+void StateTree::removeNode(uint32_t path) {
+  shared_ptr<StateNode> node;
+  shared_ptr<StateNode> parent, left, right;
 
   node = getMerkleNode(path);
   parent = stk.top();
@@ -349,10 +337,10 @@ void StateMerkleTree::removeNode(uint path) {
   // 해당 노드 삭제
   if (parent->getLeft() == node) {
     parent->setLeft(nullptr);
-    delete node;
+    node.reset();
   } else if (parent->getRight() == node) {
     parent->setRight(nullptr);
-    delete node;
+    node.reset();
   }
 
   // 머클 루트까지 올라가며 노드 정리
@@ -395,15 +383,15 @@ void StateMerkleTree::removeNode(uint path) {
   m_size--;
 }
 
-StateMerkleNode *StateMerkleTree::getMerkleNode(uint _path) {
-  StateMerkleNode *ret = nullptr;
+shared_ptr<StateNode> StateTree::getMerkleNode(uint32_t _path) {
+  shared_ptr<StateNode> ret = nullptr;
 
   while (!stk.empty()) {
     stk.pop(); // 스택 clear
   }
 
   // _path 따라 내려가면서 dummy 가 아닌 노드 (실제 정보를 가진 노드)를 발견하면 반환
-  StateMerkleNode *node = root;
+  shared_ptr<StateNode> node = root;
   int dir_pos = _TREE_DEPTH - 1;
   while (true) {
     if (!node->isDummy()) {
@@ -425,13 +413,13 @@ StateMerkleNode *StateMerkleTree::getMerkleNode(uint _path) {
   return ret;
 }
 
-vector<vector<uint8_t>> StateMerkleTree::getSiblings(uint _path) {
-  StateMerkleNode *node = getMerkleNode(_path);
+vector<vector<uint8_t>> StateTree::getSiblings(uint32_t _path) {
+  shared_ptr<StateNode> node = getMerkleNode(_path);
 
   vector<vector<uint8_t>> siblings;
   vector<uint8_t> value;
 
-  StateMerkleNode *parent_node;
+  shared_ptr<StateNode> parent_node;
   siblings.clear();
   while (!stk.empty()) {
     parent_node = stk.top();
@@ -452,11 +440,11 @@ vector<vector<uint8_t>> StateMerkleTree::getSiblings(uint _path) {
 }
 
 // Debugging
-void StateMerkleTree::printTreePostOrder() {
+void StateTree::printTreePostOrder() {
   bool isPrint = true;
 
   if (isPrint) {
-    ullint size = getSize();
+    uint64_t size = getSize();
     printf("*********** print tree data by using post-order traversal... ************\n\n");
     printf("node size: %lld\n\n", getSize());
     if (size == 0) {
@@ -485,5 +473,5 @@ void StateMerkleTree::printTreePostOrder() {
 }
 
 // setter
-// void setSize(ullint _size) { m_size = _size; }
+// void setSize(uint64_t _size) { m_size = _size; }
 } // namespace gruut

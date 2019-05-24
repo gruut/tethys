@@ -383,7 +383,7 @@ void UnresolvedBlockPool::setupStateTree() // RDB에 있는 모든 노드를 불
 //      cout << key << " in the DB" << endl;
 //      pair<int, vector<string>> data = m_server.selectAllUsingUserIdVarTypeVarName(to_user_id, to_var_type, to_var_name);
 //      val.var_value = data.second[VAR_VALUE];
-//      val.path = (uint)stoul(data.second[PATH]);
+//      val.path = (uint32_t)stoul(data.second[PATH]);
 //      val.isDeleted = false;
 //    } else if (depth == CUR_DATA) {
 //      // m_current_layer 에 있는 데이터를 읽어온 뒤, add 명령어 반영한 데이터를 다시 m_current_layer 에 저장
@@ -509,7 +509,7 @@ void UnresolvedBlockPool::setupStateTree() // RDB에 있는 모든 노드를 불
 //
 //    if (depth == NO_DATA) {
 //      // new_layer 의 map 변수에 새로운 데이터 삽입
-//      uint path = m_tree.getRoot()->makePath(user_id, var_type, var_name);
+//      uint32_t path = m_tree.getRoot()->makePath(user_id, var_type, var_name);
 //      Value val(value, path);
 //
 //      test_data new_data;
@@ -551,7 +551,7 @@ void UnresolvedBlockPool::setupStateTree() // RDB에 있는 모든 노드를 불
 //  } else if (depth == DB_DATA) {
 //    pair<int, vector<string>> data = m_server.selectAllUsingUserIdVarTypeVarName(user_id, var_type, var_name);
 //    val.var_value = data.second[VAR_VALUE];
-//    val.path = (uint)stoul(data.second[PATH]);
+//    val.path = (uint32_t)stoul(data.second[PATH]);
 //  } else if (depth == CUR_DATA) {
 //    it = m_current_layer.m_temporary_data.find(key);
 //    val = it->second;
@@ -617,7 +617,7 @@ void UnresolvedBlockPool::setupStateTree() // RDB에 있는 모든 노드를 불
 //  for (auto data : back_layer.m_temporary_data) {
 //    Key key = data.first;
 //    Value value = data.second;
-//    uint path;
+//    uint32_t path;
 //    test_data rollback_data;
 //
 //    rollback_data.user_id = key.user_id;
@@ -642,7 +642,7 @@ void UnresolvedBlockPool::setupStateTree() // RDB에 있는 모든 노드를 불
 //          pair<int, vector<string>> db_data = m_server.selectAllUsingUserIdVarTypeVarName(key.user_id, key.var_type, key.var_name);
 //
 //          rollback_data.var_value = db_data.second[VAR_VALUE];
-//          path = (uint)stoul(db_data.second[PATH]);
+//          path = (uint32_t)stoul(db_data.second[PATH]);
 //        } else {
 //          cout << "data is in the m_layer[" << depth << "]" << endl;
 //          map<Key, Value>::iterator it;
