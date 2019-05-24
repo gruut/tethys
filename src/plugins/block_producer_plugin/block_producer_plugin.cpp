@@ -2,6 +2,7 @@
 #include "../../../lib/appbase/include/application.hpp"
 #include "../chain_plugin/include/chain_plugin.hpp"
 #include <boost/asio/steady_timer.hpp>
+#include <chrono>
 
 namespace gruut {
 
@@ -37,7 +38,7 @@ private:
   }
 
   std::chrono::seconds calculateNextBlockTime() {
-    std::chrono::seconds minimum_delay_time(5);
+    float minimum_delay_time(5);
 
     // TODO: 일정 개수 이전의 블록들을 기준으로 계산합니다. 현재는 임시로 상수값
     float d = 0.5;
@@ -51,8 +52,11 @@ private:
     // calculate the distance between signers and an optimal signer.
     auto signers_distance = calculateDistanceBetweenSigners(previousBlocksOrderByDesc);
 
-    // TODO: temporary value
-    return minimum_delay_time;
+    // clang-format off
+    auto delay_seconds = std::chrono::duration<float>(minimum_delay_time + (d + (b * (exp(mergers_distance) - 1)) * (1 + signers_distance)));
+    // clang-format on
+
+    return std::chrono::duration_cast<std::chrono::seconds>(delay_seconds);
   }
 
   vector<Block> getPreviousBlocks() {
