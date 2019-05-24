@@ -151,11 +151,15 @@ private:
           partial_optimal_id_bits[j] =  optimal_signer_id_bits[i * j];
         }
 
-        dist += (getHammingDistance(bits, partial_optimal_id_bits) % 11);
+        dist += exponentialDistance((getHammingDistance(bits, partial_optimal_id_bits) % 11));
       }
     }
 
     return dist;
+  }
+
+  float exponentialDistance(float dist) {
+    return exp(dist) - 1;
   }
 
   bitset<256> getOptimalSignerId(Block &latest_block) {
