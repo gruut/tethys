@@ -7,6 +7,9 @@ namespace gruut {
 
 using namespace std;
 
+// TODO: temporary setting up fixed numbers of producers.
+constexpr int PRODUCERS_COUNT = 10;
+
 constexpr int SIGNERS_SIZE = 100;
 
 class BlockProducerPluginImpl {
@@ -41,23 +44,21 @@ private:
     float b = 0.1;
     float signers_count = 10;
 
+    vector<Block> previousBlocksOrderByDesc = move(getPreviousBlocks());
+
     // calculate the distance between a node and an optimal merger.
-    auto mergers_distance = calculateDistanceBetweenMergers();
+    auto mergers_distance = calculateDistanceBetweenMergers(previousBlocksOrderByDesc);
     // calculate the distance between signers and an optimal signer.
-    auto signers_distance = calculateDistanceBetweenSigners();
+    auto signers_distance = calculateDistanceBetweenSigners(previousBlocksOrderByDesc);
 
     // TODO: temporary value
     return minimum_delay_time;
   }
 
-  float calculateDistanceBetweenMergers() {
-    // TODO: fixed numbers of producers.
-    int producersCount = 10;
+  vector<Block> getPreviousBlocks() {
     auto& chain = dynamic_cast<ChainPlugin*>(app().getPlugin("ChainPlugin"))->chain();
-
     auto latestHeight = chain.getLatestResolvedHeight();
-
-    int from = latestHeight - producersCount + 1;
+    int from = latestHeight - PRODUCERS_COUNT + 1;
     if (from <= 0)
       from = 1;
 
@@ -66,26 +67,21 @@ private:
         return left.getHeight() > right.getHeight();
     });
 
-    if (blocks.size() != producersCount) {
-      producersCount = blocks.size();
+    return blocks;
+  }
+
+  float calculateDistanceBetweenMergers(vector<Block> &blocks) {
+    int previousProducerCount = PRODUCERS_COUNT;
+    if (blocks.size() != PRODUCERS_COUNT) {
+      previousProducerCount = blocks.size();
     }
 
-    bitset<256> id_bits = getOptimalMergerId(blocks, producersCount);
+    bitset<256> id_bits = getOptimalMergerId(blocks, previousProducerCount);
 
     auto my_id = idToBitSet(app().getId());
     float dist = getHammingDistance(id_bits, my_id);
 
     return dist;
-  }
-
-  bitset<256> idToBitSet(string_view id) {
-    string bits_str;
-
-    for (int i = 0; i < id.size(); ++i) {
-      bits_str += bitset<8>(id[i]).to_string();
-    }
-
-    return bitset<256>(bits_str);
   }
 
   bitset<256> getOptimalMergerId(vector<Block> blocks, const int producers_count) {
@@ -130,19 +126,63 @@ private:
     return optimal_merger_id;
   }
 
-  float calculateDistanceBetweenSigners() {
+  float calculateDistanceBetweenSigners(vector<Block> &blocks) {
+    assert(blocks.size() > 0);
+
+    bitset<256> optimal_signer_id_bits = getOptimalSignerId(blocks[0]);
+
     const int signers_size = SIGNERS_SIZE;
-
     auto signer_pool_manager_ptr = dynamic_cast<NetPlugin*>(app().getPlugin("NetPlugin"))->getSignerPoolManager();
-
     vector<Signer> signers = signer_pool_manager_ptr->getSigners(signers_size);
-    // do something
 
-    return 0.0;
+    vector<bitset<256>> signer_ids_bits;
+    transform(signers.begin(), signers.end(), back_inserter(signer_ids_bits), [this](Signer &signer){
+      return idToBitSet(signer.user_id);
+    });
+
+    float dist = 0;
+    for (auto &signer_id_bits : signer_ids_bits) {
+      for (auto i = 0; i < 4; ++i) {
+        bitset<64> bits;
+        bitset<64> partial_optimal_id_bits;
+
+        for (auto j = 0; j < 64; ++j) {
+          bits[j] = signer_id_bits[i * j];
+          partial_optimal_id_bits[j] =  optimal_signer_id_bits[i * j];
+        }
+
+        dist += (getHammingDistance(bits, partial_optimal_id_bits) % 11);
+      }
+    }
+
+    return dist;
   }
 
-  int getHammingDistance(bitset<256> &optimal_merger_id, bitset<256> &my_id) {
-    auto result = optimal_merger_id ^ my_id;
+  bitset<256> getOptimalSignerId(Block &latest_block) {
+    auto tx_root = latest_block.getTxRoot();
+    auto us_root = latest_block.getUserStateRoot();
+    auto cs_root = latest_block.getContractStateRoot();
+    auto sg_root = latest_block.getSgRoot();
+
+    hash_t optimal_signer_id = Sha256::hash(tx_root + us_root + cs_root + sg_root);
+
+    string id(optimal_signer_id.begin(), optimal_signer_id.end());
+    return idToBitSet(id);
+  }
+
+  bitset<256> idToBitSet(string_view id) {
+    string bits_str;
+
+    for (int i = 0; i < id.size(); ++i) {
+      bits_str += bitset<8>(id[i]).to_string();
+    }
+
+    return bitset<256>(bits_str);
+  }
+
+  template<typename T>
+  int getHammingDistance(T &optimal_id, T &my_id) {
+    auto result = optimal_id ^ my_id;
 
     return result.count();
   }
