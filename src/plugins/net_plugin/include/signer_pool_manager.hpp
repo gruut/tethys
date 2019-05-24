@@ -14,9 +14,9 @@
 
 #include <algorithm>
 #include <atomic>
-#include <shared_mutex>
 #include <optional>
 #include <random>
+#include <shared_mutex>
 #include <string>
 #include <unordered_map>
 #include <vector>
@@ -31,12 +31,13 @@ constexpr int MAX_SIGNER = 200;
 
 struct Signer {
   string user_id;
+  string pk;
   vector<uint8_t> hmac_key;
 };
 
 struct JoinTempData {
   string merger_nonce;
-  string signer_pk_cert;
+  string signer_pk;
   vector<uint8_t> shared_sk;
   uint64_t start_time;
 };
@@ -50,10 +51,11 @@ public:
   SignerPool(const SignerPool &&) = delete;
   SignerPool &operator=(const SignerPool &) = delete;
 
-  void pushSigner(const string &b58_user_id, vector<uint8_t> &hmac_key) {
+  void pushSigner(const string &b58_user_id, vector<uint8_t> &hmac_key, const string &pk) {
     Signer new_signer;
     new_signer.user_id = TypeConverter::decodeBase<58>(b58_user_id);
     new_signer.hmac_key = hmac_key;
+    new_signer.pk = pk;
 
     {
       unique_lock<shared_mutex> guard(pool_mutex);
@@ -92,12 +94,12 @@ public:
       vector<Signer> signers;
       signers.reserve(signers_count);
       for (auto &[key, value] : signer_pool) {
-          if (signers_count == 0) {
-            break;
-          }
+        if (signers_count == 0) {
+          break;
+        }
 
-          signers.push_back(value);
-          --signers_count;
+        signers.push_back(value);
+        --signers_count;
       }
 
       return signers;
@@ -161,7 +163,7 @@ public:
         throw ErrorMsgType::ECDH_INVALID_SIG;
       }
 
-      temp_signer_pool[msg.sender_id].signer_pk_cert = json::get<string>(msg.body["user"], "pk").value();
+      temp_signer_pool[msg.sender_id].signer_pk = json::get<string>(msg.body["user"], "pk").value();
 
       HmacKeyMaker key_maker;
       auto [dhx, dhy] = key_maker.getPublicKey();
@@ -175,11 +177,11 @@ public:
       }
       temp_signer_pool[msg.sender_id].shared_sk = shared_sk_bytes;
 
-      auto sn = json::get<string>(msg.body, "sn").value();
+      auto un = json::get<string>(msg.body, "un").value();
       auto mn = temp_signer_pool[msg.sender_id].merger_nonce;
       auto curr_time = TimeUtil::now();
 
-      auto sig = signMessage(curr_time, mn, sn, dhx, dhy, my_enc_sk, my_pass);
+      auto sig = signMessage(curr_time, mn, un, dhx, dhy, my_enc_sk, my_pass);
       auto msg_response2 = MessageBuilder::build<MessageType::MSG_RESPONSE_2>(curr_time, recv_id_b58, dhx, dhy, my_cert, sig);
 
       return msg_response2;
@@ -190,7 +192,7 @@ public:
         throw ErrorMsgType::ECDH_TIMEOUT;
       }
 
-      signer_pool.pushSigner(recv_id_b58, temp_signer_pool[recv_id_b58].shared_sk);
+      signer_pool.pushSigner(recv_id_b58, temp_signer_pool[recv_id_b58].shared_sk, temp_signer_pool[recv_id_b58].signer_pk);
       temp_signer_pool.erase(recv_id_b58);
 
       // TODO : signer join event should be notified to `Block producer`

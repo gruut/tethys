@@ -145,7 +145,7 @@ private:
       return MsgEntryType::BASE58_256;
     else if (key == "block" || key == "proof" || key == "output")
       return MsgEntryType::BASE64;
-    else if (key == "txroot" || key == "usroot" || key == "csroot" || key == "sgroot" || key == "hash" || key == "link")
+    else if (key == "txroot" || key == "usroot" || key == "csroot" || key == "sgroot" || key == "hash" || key == "link" || key == "un")
       return MsgEntryType::BASE64_256;
     else if (key == "sig")
       return MsgEntryType::BASE64_SIG;
