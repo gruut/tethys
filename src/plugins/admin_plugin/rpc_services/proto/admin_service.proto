@@ -3,34 +3,39 @@ syntax = "proto3";
 package grpc_admin;
 
 service GruutAdminService {
-    rpc Setup (ReqSetup) returns (ResSetup) {}
+    rpc SetupKey (ReqSetupKey) returns (ResSetupKey) {}
+    rpc Login (ReqLogin) returns (ResLogin) {}
     rpc Start (ReqStart) returns (ResStart) {}
-    rpc Stop (ReqStop) returns (ResStop) {}
+    rpc LoadWorld (ReqLoadWorld) returns (ResLoadWorld) {}
+    rpc LoadChain (ReqLoadChain) returns (ResLoadChain) {}
     rpc CheckStatus (ReqStatus) returns (ResStatus) {}
 }
-
 //TODO : 각 메시지별  내부 스펙들은 변경 될 수 있음.
-message ReqSetup {
+message ReqSetupKey {
+    string setup_port = 1;
+}
+
+message ResSetupKey {
+    bool success = 1;
+}
+
+message ReqLogin {
     string password = 1;
 }
 
-message ResSetup {
+message ResLogin {
     bool success = 1;
 }
 
 message ReqStart {
-
+    enum Mode {
+        DEFAULT = 0;
+        MONITOR = 1;
+    }
+    Mode mode = 1;
 }
 
 message ResStart {
-    bool success = 1;
-}
-
-message ReqStop {
-
-}
-
-message ResStop {
     bool success = 1;
 }
 
@@ -40,4 +45,20 @@ message ReqStatus {
 
 message ResStatus {
     bool alive = 1;
+}
+
+message ReqLoadWorld {
+
+}
+
+message ResLoadWorld {
+    bool success = 1;
+}
+
+message ReqLoadChain {
+
+}
+
+message ResLoadChain {
+    bool success = 1;
 }
