@@ -40,9 +40,9 @@ public:
   void registerService() {
     merger_status = make_shared<MergerStatus>();
 
-    new AdminService<ReqSetup, ResSetup>(&admin_service, completion_queue.get(), merger_status, setup_port);
+    new AdminService<ReqSetupKey, ResSetupKey>(&admin_service, completion_queue.get(), merger_status, setup_port);
+    new AdminService<ReqLogin, ResLogin>(&admin_service, completion_queue.get(), merger_status);
     new AdminService<ReqStart, ResStart>(&admin_service, completion_queue.get(), merger_status);
-    new AdminService<ReqStop, ResStop>(&admin_service, completion_queue.get(), merger_status);
     new AdminService<ReqStatus, ResStatus>(&admin_service, completion_queue.get(), merger_status);
   }
 

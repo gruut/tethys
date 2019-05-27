@@ -2,8 +2,8 @@
 // If you make any local change, they will be lost.
 // source: admin_service.proto
 
-#include "include/admin_service.pb.h"
 #include "include/admin_service.grpc.pb.h"
+#include "include/admin_service.pb.h"
 
 #include <grpcpp/impl/codegen/async_stream.h>
 #include <grpcpp/impl/codegen/async_unary_call.h>
@@ -16,9 +16,11 @@
 namespace grpc_admin {
 
 static const char* GruutAdminService_method_names[] = {
-  "/grpc_admin.GruutAdminService/Setup",
+  "/grpc_admin.GruutAdminService/SetupKey",
+  "/grpc_admin.GruutAdminService/Login",
   "/grpc_admin.GruutAdminService/Start",
-  "/grpc_admin.GruutAdminService/Stop",
+  "/grpc_admin.GruutAdminService/LoadWorld",
+  "/grpc_admin.GruutAdminService/LoadChain",
   "/grpc_admin.GruutAdminService/CheckStatus",
 };
 
@@ -29,22 +31,36 @@ std::unique_ptr< GruutAdminService::Stub> GruutAdminService::NewStub(const std::
 }
 
 GruutAdminService::Stub::Stub(const std::shared_ptr< ::grpc::ChannelInterface>& channel)
-  : channel_(channel), rpcmethod_Setup_(GruutAdminService_method_names[0], ::grpc::internal::RpcMethod::NORMAL_RPC, channel)
-  , rpcmethod_Start_(GruutAdminService_method_names[1], ::grpc::internal::RpcMethod::NORMAL_RPC, channel)
-  , rpcmethod_Stop_(GruutAdminService_method_names[2], ::grpc::internal::RpcMethod::NORMAL_RPC, channel)
-  , rpcmethod_CheckStatus_(GruutAdminService_method_names[3], ::grpc::internal::RpcMethod::NORMAL_RPC, channel)
+  : channel_(channel), rpcmethod_SetupKey_(GruutAdminService_method_names[0], ::grpc::internal::RpcMethod::NORMAL_RPC, channel)
+  , rpcmethod_Login_(GruutAdminService_method_names[1], ::grpc::internal::RpcMethod::NORMAL_RPC, channel)
+  , rpcmethod_Start_(GruutAdminService_method_names[2], ::grpc::internal::RpcMethod::NORMAL_RPC, channel)
+  , rpcmethod_LoadWorld_(GruutAdminService_method_names[3], ::grpc::internal::RpcMethod::NORMAL_RPC, channel)
+  , rpcmethod_LoadChain_(GruutAdminService_method_names[4], ::grpc::internal::RpcMethod::NORMAL_RPC, channel)
+  , rpcmethod_CheckStatus_(GruutAdminService_method_names[5], ::grpc::internal::RpcMethod::NORMAL_RPC, channel)
   {}
 
-::grpc::Status GruutAdminService::Stub::Setup(::grpc::ClientContext* context, const ::grpc_admin::ReqSetup& request, ::grpc_admin::ResSetup* response) {
-  return ::grpc::internal::BlockingUnaryCall(channel_.get(), rpcmethod_Setup_, context, request, response);
+::grpc::Status GruutAdminService::Stub::SetupKey(::grpc::ClientContext* context, const ::grpc_admin::ReqSetupKey& request, ::grpc_admin::ResSetupKey* response) {
+  return ::grpc::internal::BlockingUnaryCall(channel_.get(), rpcmethod_SetupKey_, context, request, response);
 }
 
-::grpc::ClientAsyncResponseReader< ::grpc_admin::ResSetup>* GruutAdminService::Stub::AsyncSetupRaw(::grpc::ClientContext* context, const ::grpc_admin::ReqSetup& request, ::grpc::CompletionQueue* cq) {
-  return ::grpc::internal::ClientAsyncResponseReaderFactory< ::grpc_admin::ResSetup>::Create(channel_.get(), cq, rpcmethod_Setup_, context, request, true);
+::grpc::ClientAsyncResponseReader< ::grpc_admin::ResSetupKey>* GruutAdminService::Stub::AsyncSetupKeyRaw(::grpc::ClientContext* context, const ::grpc_admin::ReqSetupKey& request, ::grpc::CompletionQueue* cq) {
+  return ::grpc::internal::ClientAsyncResponseReaderFactory< ::grpc_admin::ResSetupKey>::Create(channel_.get(), cq, rpcmethod_SetupKey_, context, request, true);
 }
 
-::grpc::ClientAsyncResponseReader< ::grpc_admin::ResSetup>* GruutAdminService::Stub::PrepareAsyncSetupRaw(::grpc::ClientContext* context, const ::grpc_admin::ReqSetup& request, ::grpc::CompletionQueue* cq) {
-  return ::grpc::internal::ClientAsyncResponseReaderFactory< ::grpc_admin::ResSetup>::Create(channel_.get(), cq, rpcmethod_Setup_, context, request, false);
+::grpc::ClientAsyncResponseReader< ::grpc_admin::ResSetupKey>* GruutAdminService::Stub::PrepareAsyncSetupKeyRaw(::grpc::ClientContext* context, const ::grpc_admin::ReqSetupKey& request, ::grpc::CompletionQueue* cq) {
+  return ::grpc::internal::ClientAsyncResponseReaderFactory< ::grpc_admin::ResSetupKey>::Create(channel_.get(), cq, rpcmethod_SetupKey_, context, request, false);
+}
+
+::grpc::Status GruutAdminService::Stub::Login(::grpc::ClientContext* context, const ::grpc_admin::ReqLogin& request, ::grpc_admin::ResLogin* response) {
+  return ::grpc::internal::BlockingUnaryCall(channel_.get(), rpcmethod_Login_, context, request, response);
+}
+
+::grpc::ClientAsyncResponseReader< ::grpc_admin::ResLogin>* GruutAdminService::Stub::AsyncLoginRaw(::grpc::ClientContext* context, const ::grpc_admin::ReqLogin& request, ::grpc::CompletionQueue* cq) {
+  return ::grpc::internal::ClientAsyncResponseReaderFactory< ::grpc_admin::ResLogin>::Create(channel_.get(), cq, rpcmethod_Login_, context, request, true);
+}
+
+::grpc::ClientAsyncResponseReader< ::grpc_admin::ResLogin>* GruutAdminService::Stub::PrepareAsyncLoginRaw(::grpc::ClientContext* context, const ::grpc_admin::ReqLogin& request, ::grpc::CompletionQueue* cq) {
+  return ::grpc::internal::ClientAsyncResponseReaderFactory< ::grpc_admin::ResLogin>::Create(channel_.get(), cq, rpcmethod_Login_, context, request, false);
 }
 
 ::grpc::Status GruutAdminService::Stub::Start(::grpc::ClientContext* context, const ::grpc_admin::ReqStart& request, ::grpc_admin::ResStart* response) {
@@ -59,16 +75,28 @@ GruutAdminService::Stub::Stub(const std::shared_ptr< ::grpc::ChannelInterface>& 
   return ::grpc::internal::ClientAsyncResponseReaderFactory< ::grpc_admin::ResStart>::Create(channel_.get(), cq, rpcmethod_Start_, context, request, false);
 }
 
-::grpc::Status GruutAdminService::Stub::Stop(::grpc::ClientContext* context, const ::grpc_admin::ReqStop& request, ::grpc_admin::ResStop* response) {
-  return ::grpc::internal::BlockingUnaryCall(channel_.get(), rpcmethod_Stop_, context, request, response);
+::grpc::Status GruutAdminService::Stub::LoadWorld(::grpc::ClientContext* context, const ::grpc_admin::ReqLoadWorld& request, ::grpc_admin::ResLoadWorld* response) {
+  return ::grpc::internal::BlockingUnaryCall(channel_.get(), rpcmethod_LoadWorld_, context, request, response);
 }
 
-::grpc::ClientAsyncResponseReader< ::grpc_admin::ResStop>* GruutAdminService::Stub::AsyncStopRaw(::grpc::ClientContext* context, const ::grpc_admin::ReqStop& request, ::grpc::CompletionQueue* cq) {
-  return ::grpc::internal::ClientAsyncResponseReaderFactory< ::grpc_admin::ResStop>::Create(channel_.get(), cq, rpcmethod_Stop_, context, request, true);
+::grpc::ClientAsyncResponseReader< ::grpc_admin::ResLoadWorld>* GruutAdminService::Stub::AsyncLoadWorldRaw(::grpc::ClientContext* context, const ::grpc_admin::ReqLoadWorld& request, ::grpc::CompletionQueue* cq) {
+  return ::grpc::internal::ClientAsyncResponseReaderFactory< ::grpc_admin::ResLoadWorld>::Create(channel_.get(), cq, rpcmethod_LoadWorld_, context, request, true);
 }
 
-::grpc::ClientAsyncResponseReader< ::grpc_admin::ResStop>* GruutAdminService::Stub::PrepareAsyncStopRaw(::grpc::ClientContext* context, const ::grpc_admin::ReqStop& request, ::grpc::CompletionQueue* cq) {
-  return ::grpc::internal::ClientAsyncResponseReaderFactory< ::grpc_admin::ResStop>::Create(channel_.get(), cq, rpcmethod_Stop_, context, request, false);
+::grpc::ClientAsyncResponseReader< ::grpc_admin::ResLoadWorld>* GruutAdminService::Stub::PrepareAsyncLoadWorldRaw(::grpc::ClientContext* context, const ::grpc_admin::ReqLoadWorld& request, ::grpc::CompletionQueue* cq) {
+  return ::grpc::internal::ClientAsyncResponseReaderFactory< ::grpc_admin::ResLoadWorld>::Create(channel_.get(), cq, rpcmethod_LoadWorld_, context, request, false);
+}
+
+::grpc::Status GruutAdminService::Stub::LoadChain(::grpc::ClientContext* context, const ::grpc_admin::ReqLoadChain& request, ::grpc_admin::ResLoadChain* response) {
+  return ::grpc::internal::BlockingUnaryCall(channel_.get(), rpcmethod_LoadChain_, context, request, response);
+}
+
+::grpc::ClientAsyncResponseReader< ::grpc_admin::ResLoadChain>* GruutAdminService::Stub::AsyncLoadChainRaw(::grpc::ClientContext* context, const ::grpc_admin::ReqLoadChain& request, ::grpc::CompletionQueue* cq) {
+  return ::grpc::internal::ClientAsyncResponseReaderFactory< ::grpc_admin::ResLoadChain>::Create(channel_.get(), cq, rpcmethod_LoadChain_, context, request, true);
+}
+
+::grpc::ClientAsyncResponseReader< ::grpc_admin::ResLoadChain>* GruutAdminService::Stub::PrepareAsyncLoadChainRaw(::grpc::ClientContext* context, const ::grpc_admin::ReqLoadChain& request, ::grpc::CompletionQueue* cq) {
+  return ::grpc::internal::ClientAsyncResponseReaderFactory< ::grpc_admin::ResLoadChain>::Create(channel_.get(), cq, rpcmethod_LoadChain_, context, request, false);
 }
 
 ::grpc::Status GruutAdminService::Stub::CheckStatus(::grpc::ClientContext* context, const ::grpc_admin::ReqStatus& request, ::grpc_admin::ResStatus* response) {
@@ -87,20 +115,30 @@ GruutAdminService::Service::Service() {
   AddMethod(new ::grpc::internal::RpcServiceMethod(
       GruutAdminService_method_names[0],
       ::grpc::internal::RpcMethod::NORMAL_RPC,
-      new ::grpc::internal::RpcMethodHandler< GruutAdminService::Service, ::grpc_admin::ReqSetup, ::grpc_admin::ResSetup>(
-          std::mem_fn(&GruutAdminService::Service::Setup), this)));
+      new ::grpc::internal::RpcMethodHandler< GruutAdminService::Service, ::grpc_admin::ReqSetupKey, ::grpc_admin::ResSetupKey>(
+          std::mem_fn(&GruutAdminService::Service::SetupKey), this)));
   AddMethod(new ::grpc::internal::RpcServiceMethod(
       GruutAdminService_method_names[1],
+      ::grpc::internal::RpcMethod::NORMAL_RPC,
+      new ::grpc::internal::RpcMethodHandler< GruutAdminService::Service, ::grpc_admin::ReqLogin, ::grpc_admin::ResLogin>(
+          std::mem_fn(&GruutAdminService::Service::Login), this)));
+  AddMethod(new ::grpc::internal::RpcServiceMethod(
+      GruutAdminService_method_names[2],
       ::grpc::internal::RpcMethod::NORMAL_RPC,
       new ::grpc::internal::RpcMethodHandler< GruutAdminService::Service, ::grpc_admin::ReqStart, ::grpc_admin::ResStart>(
           std::mem_fn(&GruutAdminService::Service::Start), this)));
   AddMethod(new ::grpc::internal::RpcServiceMethod(
-      GruutAdminService_method_names[2],
-      ::grpc::internal::RpcMethod::NORMAL_RPC,
-      new ::grpc::internal::RpcMethodHandler< GruutAdminService::Service, ::grpc_admin::ReqStop, ::grpc_admin::ResStop>(
-          std::mem_fn(&GruutAdminService::Service::Stop), this)));
-  AddMethod(new ::grpc::internal::RpcServiceMethod(
       GruutAdminService_method_names[3],
+      ::grpc::internal::RpcMethod::NORMAL_RPC,
+      new ::grpc::internal::RpcMethodHandler< GruutAdminService::Service, ::grpc_admin::ReqLoadWorld, ::grpc_admin::ResLoadWorld>(
+          std::mem_fn(&GruutAdminService::Service::LoadWorld), this)));
+  AddMethod(new ::grpc::internal::RpcServiceMethod(
+      GruutAdminService_method_names[4],
+      ::grpc::internal::RpcMethod::NORMAL_RPC,
+      new ::grpc::internal::RpcMethodHandler< GruutAdminService::Service, ::grpc_admin::ReqLoadChain, ::grpc_admin::ResLoadChain>(
+          std::mem_fn(&GruutAdminService::Service::LoadChain), this)));
+  AddMethod(new ::grpc::internal::RpcServiceMethod(
+      GruutAdminService_method_names[5],
       ::grpc::internal::RpcMethod::NORMAL_RPC,
       new ::grpc::internal::RpcMethodHandler< GruutAdminService::Service, ::grpc_admin::ReqStatus, ::grpc_admin::ResStatus>(
           std::mem_fn(&GruutAdminService::Service::CheckStatus), this)));
@@ -109,7 +147,14 @@ GruutAdminService::Service::Service() {
 GruutAdminService::Service::~Service() {
 }
 
-::grpc::Status GruutAdminService::Service::Setup(::grpc::ServerContext* context, const ::grpc_admin::ReqSetup* request, ::grpc_admin::ResSetup* response) {
+::grpc::Status GruutAdminService::Service::SetupKey(::grpc::ServerContext* context, const ::grpc_admin::ReqSetupKey* request, ::grpc_admin::ResSetupKey* response) {
+  (void) context;
+  (void) request;
+  (void) response;
+  return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
+}
+
+::grpc::Status GruutAdminService::Service::Login(::grpc::ServerContext* context, const ::grpc_admin::ReqLogin* request, ::grpc_admin::ResLogin* response) {
   (void) context;
   (void) request;
   (void) response;
@@ -123,7 +168,14 @@ GruutAdminService::Service::~Service() {
   return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
 }
 
-::grpc::Status GruutAdminService::Service::Stop(::grpc::ServerContext* context, const ::grpc_admin::ReqStop* request, ::grpc_admin::ResStop* response) {
+::grpc::Status GruutAdminService::Service::LoadWorld(::grpc::ServerContext* context, const ::grpc_admin::ReqLoadWorld* request, ::grpc_admin::ResLoadWorld* response) {
+  (void) context;
+  (void) request;
+  (void) response;
+  return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
+}
+
+::grpc::Status GruutAdminService::Service::LoadChain(::grpc::ServerContext* context, const ::grpc_admin::ReqLoadChain* request, ::grpc_admin::ResLoadChain* response) {
   (void) context;
   (void) request;
   (void) response;

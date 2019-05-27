@@ -26,8 +26,9 @@ Status SetupService::UserService(ServerContext *context, const Request *request,
   return Status::OK;
 }
 
-unique_ptr<Server> AdminService<ReqSetup, ResSetup>::initSetup(shared_ptr<SetupService> setup_service) {
-  string setup_serv_addr("0.0.0.0:" + port);
+unique_ptr<Server> AdminService<ReqSetupKey, ResSetupKey>::initSetup(shared_ptr<SetupService> setup_service, const string &port) {
+  string setup_serv_addr("0.0.0.0:");
+  setup_serv_addr += port.empty() ? default_setup_port : port;
 
   ServerBuilder setup_serv_builder;
   setup_serv_builder.AddListeningPort(setup_serv_addr, grpc::InsecureServerCredentials());
@@ -36,7 +37,7 @@ unique_ptr<Server> AdminService<ReqSetup, ResSetup>::initSetup(shared_ptr<SetupS
   return setup_serv_builder.BuildAndStart();
 }
 
-optional<nlohmann::json> AdminService<ReqSetup, ResSetup>::runSetup(shared_ptr<SetupService> setup_service) {
+optional<nlohmann::json> AdminService<ReqSetupKey, ResSetupKey>::runSetup(shared_ptr<SetupService> setup_service) {
   auto &promise_user_key = setup_service->getUserKeyPromise();
   auto user_key_info = promise_user_key.get_future();
   user_key_info.wait(); // waiting for user key info
@@ -48,108 +49,84 @@ optional<nlohmann::json> AdminService<ReqSetup, ResSetup>::runSetup(shared_ptr<S
   return {};
 }
 
-bool AdminService<ReqSetup, ResSetup>::checkPassword(const string &enc_sk_pem, const string &pass) {
-  try {
-    Botan::DataSource_Memory sk_datasource(enc_sk_pem);
-    Botan::PKCS8::load_key(sk_datasource, pass);
-    return true;
-  } catch (Botan::Exception &exception) {
-    logger::ERROR("[SETUP] Error on private key password");
-    return false;
-  }
-}
-
-void AdminService<ReqSetup, ResSetup>::sendKeyInfoToNet(const string &cert, const string &enc_sk_pem, const string &pass) {
-  nlohmann::json control_command;
-  int control_type = static_cast<int>(NetControlType::SETUP);
-
-  control_command["type"] = control_type;
-  control_command["enc_sk"] = enc_sk_pem;
-  control_command["cert"] = cert;
-  control_command["pass"] = pass;
-
-  app().getChannel<incoming::channels::net_control>().publish(control_command);
-}
-
-optional<string> AdminService<ReqSetup, ResSetup>::getIdFromCert(const string &cert_pem) {
+optional<string> AdminService<ReqSetupKey, ResSetupKey>::getIdFromCert(const string &cert_pem) {
   try {
     Botan::DataSource_Memory cert_datasource(cert_pem);
     Botan::X509_Certificate cert(cert_datasource);
     auto common_name = cert.subject_info("X520.CommonName");
     return common_name[0];
   } catch (Botan::Exception &exception) {
-    logger::ERROR("[SETUP] Wrong Certificate {}", exception.what());
+    logger::ERROR("[SETUP KEY] Wrong Certificate {}", exception.what());
     return {};
   }
 }
 
-// TODO : handle admin request
-void AdminService<ReqSetup, ResSetup>::proceed() {
+void AdminService<ReqSetupKey, ResSetupKey>::proceed() {
   switch (receive_status) {
   case AdminRpcCallStatus::CREATE: {
     receive_status = AdminRpcCallStatus::PROCESS;
-    service->RequestSetup(&context, &req, &responder, completion_queue, completion_queue, this);
+    service->RequestSetupKey(&context, &req, &responder, completion_queue, completion_queue, this);
     break;
   }
   case AdminRpcCallStatus::PROCESS: {
-    new AdminService<ReqSetup, ResSetup>(service, completion_queue, merger_status, port);
-    if (merger_status->user_setup) {
-      res.set_success(true);
+    new AdminService<ReqSetupKey, ResSetupKey>(service, completion_queue, merger_status, default_setup_port);
+    if (merger_status->user_login) {
+      string info = "You have been logged in";
+      logger::INFO("[SETUP KEY] {}", info);
+      res.set_success(false);
+      res.set_info(info);
       receive_status = AdminRpcCallStatus::FINISH;
       responder.Finish(res, Status::OK, this);
-      logger::INFO("[SETUP] It's already setup");
       break;
     }
-    auto pass = req.password();
     auto &chain = dynamic_cast<ChainPlugin *>(app().getPlugin("ChainPlugin"))->chain();
     auto self_sk = chain.getValueByKey(DataType::SELF_INFO, "self_enc_sk");
     auto self_cert = chain.getValueByKey(DataType::SELF_INFO, "self_cert");
-
     if (!self_sk.empty() && !self_cert.empty()) {
-      if (checkPassword(self_sk, pass)) {
-        sendKeyInfoToNet(self_cert, self_sk, pass);
-        merger_status->user_setup = true;
-        res.set_success(true);
-        logger::INFO("[SETUP] Success");
-      }
-    } else { // no key info in storage
+      string info = "Your key already exist in storage, Please login";
+      logger::INFO("[SETUP KEY] {}", info);
+      merger_status->user_setup = true;
+      res.set_success(false);
+      res.set_info(info);
+    } else {
+      auto setup_port = req.setup_port();
       shared_ptr<SetupService> setup_service = make_shared<SetupService>();
-      unique_ptr<Server> setup_server = initSetup(setup_service);
-      logger::INFO("[SETUP] Waiting for user key info");
+      unique_ptr<Server> setup_server = initSetup(setup_service, setup_port);
+      logger::INFO("[SETUP KEY] Waiting for user key info");
       auto user_key_info = runSetup(setup_service);
 
       if (user_key_info.has_value()) {
-        auto enc_sk_pem = json::get<string>(user_key_info.value(), "enc_sk");
-        auto cert = json::get<string>(user_key_info.value(), "cert");
-        if (!enc_sk_pem.has_value() || !cert.has_value()) {
-          logger::ERROR("[SETUP] Cannot find (cert / sk)");
+        auto enc_sk_pem = json::get<string>(user_key_info.value(), "enc_sk").value_or("");
+        auto cert = json::get<string>(user_key_info.value(), "cert").value_or("");
+        if (enc_sk_pem.empty() || cert.empty()) {
+          string info = "(cert / sk) is empty";
+          logger::ERROR("[SETUP KEY] {}", info);
           res.set_success(false);
-        } else if (enc_sk_pem.value().empty() || cert.value().empty()) {
-          logger::ERROR("[SETUP] (cert / sk) is empty");
-          res.set_success(false);
-        } else if (!checkPassword(enc_sk_pem.value(), pass)) {
-          res.set_success(false);
+          res.set_info(info);
         } else {
-          optional<string> my_id_b58;
-          my_id_b58 = getIdFromCert(cert.value());
+          auto my_id_b58 = getIdFromCert(cert);
           if (my_id_b58.has_value()) {
             auto my_id = TypeConverter::decodeBase<58>(my_id_b58.value());
             SelfInfo self_info;
-            self_info.enc_sk = enc_sk_pem.value();
-            self_info.cert = cert.value();
+            self_info.enc_sk = enc_sk_pem;
+            self_info.cert = cert;
             self_info.id = my_id;
             chain.saveSelfInfo(self_info);
             app().setId(my_id);
-            sendKeyInfoToNet(cert.value(), enc_sk_pem.value(), pass);
             merger_status->user_setup = true;
             res.set_success(true);
-            logger::INFO("[SETUP] Success");
+            logger::INFO("[SETUP KEY] Success");
           } else {
+            string info = "Could not find X509 common name field in Certificate";
+            res.set_info(info);
             res.set_success(false);
           }
         }
       } else {
-        logger::ERROR("[SETUP] Fail");
+        string info = "Could not receive any info from user. please `SETUP KEY` again";
+        logger::ERROR("[SETUP KEY] {}", info);
+        res.set_info(info);
+        res.set_success(false);
       }
       if (setup_server != nullptr)
         setup_server->Shutdown();
@@ -166,11 +143,82 @@ void AdminService<ReqSetup, ResSetup>::proceed() {
   }
 }
 
-template <>
-void AdminService<ReqStart, ResStart>::proceed() {}
+bool AdminService<ReqLogin, ResLogin>::checkPassword(const string &enc_sk_pem, const string &pass) {
+  try {
+    Botan::DataSource_Memory sk_datasource(enc_sk_pem);
+    Botan::PKCS8::load_key(sk_datasource, pass);
+    return true;
+  } catch (Botan::Exception &exception) {
+    logger::ERROR("[LOGIN] Error on private key password");
+    return false;
+  }
+}
+
+void AdminService<ReqLogin, ResLogin>::sendKeyInfoToNet(const string &cert, const string &enc_sk_pem, const string &pass) {
+  nlohmann::json control_command;
+  int control_type = static_cast<int>(NetControlType::SETUP);
+
+  control_command["type"] = control_type;
+  control_command["enc_sk"] = enc_sk_pem;
+  control_command["cert"] = cert;
+  control_command["pass"] = pass;
+
+  app().getChannel<incoming::channels::net_control>().publish(control_command);
+}
+
+void AdminService<ReqLogin, ResLogin>::proceed() {
+  switch (receive_status) {
+  case AdminRpcCallStatus::CREATE: {
+    receive_status = AdminRpcCallStatus::PROCESS;
+    service->RequestLogin(&context, &req, &responder, completion_queue, completion_queue, this);
+    break;
+  }
+  case AdminRpcCallStatus::PROCESS: {
+    new AdminService<ReqLogin, ResLogin>(service, completion_queue, merger_status);
+    if (merger_status->user_login) {
+      string info = "You have been logged in";
+      logger::INFO("[LOGIN] {}", info);
+      res.set_info(info);
+      res.set_success(false);
+    } else {
+      auto pass = req.password();
+      auto &chain = dynamic_cast<ChainPlugin *>(app().getPlugin("ChainPlugin"))->chain();
+      auto self_sk = chain.getValueByKey(DataType::SELF_INFO, "self_enc_sk");
+      auto self_cert = chain.getValueByKey(DataType::SELF_INFO, "self_cert");
+
+      if (!self_sk.empty() && !self_cert.empty()) {
+        if (checkPassword(self_sk, pass)) {
+          sendKeyInfoToNet(self_cert, self_sk, pass);
+          merger_status->user_setup = true;
+          merger_status->user_login = true;
+          res.set_success(true);
+          logger::INFO("[LOGIN] Success");
+        } else {
+          string info = "Fail to login, please check password and try again";
+          res.set_info(info);
+          res.set_success(false);
+          logger::ERROR("[LOGIN] {}", info);
+        }
+      } else {
+        string info = "Could not find key info. Please `Setup Key` again";
+        res.set_info(info);
+        res.set_success(false);
+        logger::ERROR("[LOGIN] {}", info);
+      }
+    }
+    receive_status = AdminRpcCallStatus::FINISH;
+    responder.Finish(res, Status::OK, this);
+    break;
+  }
+  default: {
+    delete this;
+    break;
+  }
+  }
+}
 
 template <>
-void AdminService<ReqStop, ResStop>::proceed() {}
+void AdminService<ReqStart, ResStart>::proceed() {}
 
 template <>
 void AdminService<ReqStatus, ResStatus>::proceed() {

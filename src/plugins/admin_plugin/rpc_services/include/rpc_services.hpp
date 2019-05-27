@@ -19,9 +19,10 @@ using namespace grpc_admin;
 
 struct MergerStatus {
   atomic<bool> user_setup;
+  atomic<bool> user_login;
   atomic<bool> is_running;
 
-  MergerStatus() : user_setup(false), is_running(true) {}
+  MergerStatus() : user_setup(false), user_login(false), is_running(true) {}
 };
 
 class SetupService final : public GruutUserService::Service {
@@ -72,25 +73,40 @@ private:
 };
 
 template <>
-class AdminService<ReqSetup, ResSetup> final : public CallService {
+class AdminService<ReqSetupKey, ResSetupKey> final : public CallService {
 public:
   AdminService(GruutAdminService::AsyncService *admin_service, ServerCompletionQueue *cq, shared_ptr<MergerStatus> m_status,
                const string &setup_port)
-      : CallService(admin_service, cq, m_status), responder(&context), port(setup_port) {
+      : CallService(admin_service, cq, m_status), responder(&context), default_setup_port(setup_port) {
     proceed();
   }
   void proceed() override;
 
 private:
-  string port;
-  ReqSetup req;
-  ResSetup res;
-  ServerAsyncResponseWriter<ResSetup> responder;
+  string default_setup_port;
+  ReqSetupKey req;
+  ResSetupKey res;
+  ServerAsyncResponseWriter<ResSetupKey> responder;
+  unique_ptr<Server> initSetup(shared_ptr<SetupService> setup_service, const string &port);
   optional<nlohmann::json> runSetup(shared_ptr<SetupService> setup_service);
-  unique_ptr<Server> initSetup(shared_ptr<SetupService> setup_service);
+  optional<string> getIdFromCert(const string &cert_pem);
+};
+
+template <>
+class AdminService<ReqLogin, ResLogin> final : public CallService {
+public:
+  AdminService(GruutAdminService::AsyncService *admin_service, ServerCompletionQueue *cq, shared_ptr<MergerStatus> m_status)
+      : CallService(admin_service, cq, m_status), responder(&context) {
+    proceed();
+  }
+  void proceed() override;
+
+private:
+  ReqLogin req;
+  ResLogin res;
+  ServerAsyncResponseWriter<ResLogin> responder;
   bool checkPassword(const string &enc_sk_pem, const string &pass);
   void sendKeyInfoToNet(const string &cert, const string &enc_sk_pem, const string &pass);
-  optional<string> getIdFromCert(const string &cert_pem);
 };
 
 } // namespace admin_plugin
