@@ -17,45 +17,6 @@
 
 namespace gruut {
 
-struct LedgerRecord {
-  LedgerType which_scope; // user scope or contract scope
-  string var_name;
-  string var_val;
-  int var_type;
-  string var_owner; // user scope의 경우 uid, contract scope의 경우 cid
-  timestamp_t up_time;
-  block_height_type up_block;
-  string tag;      // user scope only
-  string var_info; // contract scope only
-  hash_t pid;
-
-  LedgerRecord() = default;
-  LedgerRecord(LedgerType what_, string var_name_, string var_val_, int var_type_, string var_owner_, timestamp_t up_time_,
-               block_height_type up_block_, string tag_info_)
-      : which_scope(what_), var_name(var_name_), var_val(var_val_), var_type(var_type_), var_owner(var_owner_), up_time(up_time_),
-        up_block(up_block_) {
-    if (which_scope == LedgerType::USERSCOPE) {
-      tag = tag_info_;
-
-      BytesBuilder bytes_builder;
-      bytes_builder.append(var_name);
-      bytes_builder.append(var_type);
-      bytes_builder.appendBase<58>(var_owner);
-      bytes_builder.append(tag);
-      pid = Sha256::hash(bytes_builder.getBytes());
-    } else if (which_scope == LedgerType::CONTRACTSCOPE) {
-      var_info = tag_info_;
-
-      BytesBuilder bytes_builder;
-      bytes_builder.append(var_name);
-      bytes_builder.append(var_type);
-      bytes_builder.append(var_owner);
-      bytes_builder.append(var_info);
-      pid = Sha256::hash(bytes_builder.getBytes());
-    }
-  }
-};
-
 // TODO: define 값 변경
 #define _TREE_DEPTH 16
 #define _SHA256_SPLIT 15
@@ -154,7 +115,6 @@ public:
     m_size = 0;
   }
 
-  // TODO: DB 와 연동하여 완성한 이후에는 new_path 파라미터 제거
   void addNode(uint32_t new_path, shared_ptr<StateNode> node);
   void modifyNode(uint32_t path, LedgerRecord &data);
   void removeNode(uint32_t path);

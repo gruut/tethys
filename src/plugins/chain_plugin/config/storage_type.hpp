@@ -1,12 +1,14 @@
 #ifndef GRUUT_PUBLIC_MERGER_TYPES_HPP
 #define GRUUT_PUBLIC_MERGER_TYPES_HPP
 
+#include <bytes_builder.hpp>
+#include <sha256.hpp>
 #include <string>
 #include <vector>
 
 namespace gruut {
 
-enum class LedgerType : int { USERSCOPE, CONTRACTSCOPE };
+enum class QueryType : int { INSERT, UPDATE, DELETE };
 enum class DataType : int { WORLD, CHAIN, BACKUP, SELF_INFO };
 
 using string = std::string;
@@ -118,6 +120,56 @@ using self_info_type = struct SelfInfo {
   string enc_sk;
   string cert;
   // TODO : may need more info
+};
+
+using user_ledger_type = struct UserLedger {
+  string var_name;
+  string var_val;
+  int var_type;
+  base58_type uid;
+  timestamp_t up_time;
+  block_height_type up_block;
+  string tag;
+  hash_t pid;
+  QueryType query_type;
+
+  UserLedger() = default;
+  UserLedger(string var_name_, string var_val_, int var_type_, string uid_, timestamp_t up_time_, block_height_type up_block_,
+               string tag_, QueryType what_)
+      : var_name(var_name_), var_val(var_val_), var_type(var_type_), uid(uid_), up_time(up_time_), up_block(up_block_),
+        tag(tag_), query_type(what_) {
+    BytesBuilder bytes_builder;
+    bytes_builder.append(var_name);
+    bytes_builder.append(var_type);
+    bytes_builder.appendBase<58>(uid);
+    bytes_builder.append(tag);
+    pid = Sha256::hash(bytes_builder.getBytes());
+  }
+};
+
+using contract_ledger_type = struct ContractLedger {
+  string var_name;
+  string var_val;
+  int var_type;
+  string cid;
+  timestamp_t up_time;
+  block_height_type up_block;
+  string var_info;
+  hash_t pid;
+  QueryType query_type;
+
+  ContractLedger() = default;
+  ContractLedger(string var_name_, string var_val_, int var_type_, string cid_, timestamp_t up_time_, block_height_type up_block_,
+                 string var_info_, QueryType what_)
+      : var_name(var_name_), var_val(var_val_), var_type(var_type_), cid(cid_), up_time(up_time_), up_block(up_block_),
+        var_info(var_info_), query_type(what_) {
+    BytesBuilder bytes_builder;
+    bytes_builder.append(var_name);
+    bytes_builder.append(var_type);
+    bytes_builder.append(cid);
+    bytes_builder.append(var_info);
+    pid = Sha256::hash(bytes_builder.getBytes());
+  }
 };
 
 } // namespace gruut

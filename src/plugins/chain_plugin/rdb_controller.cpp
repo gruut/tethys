@@ -96,6 +96,52 @@ bool RdbController::insertTransactionData(Block &block) {
   return true;
 }
 
+bool RdbController::insertUserLedgerData(std::map<string, user_ledger_type> &user_ledger) {
+  for (auto &each_ledger : user_ledger) {
+    // TODO: ledger에 있는걸 rdb 에 반영
+    each_ledger.which_scope; // user scope
+    each_ledger.var_name;
+    each_ledger.var_val;
+    each_ledger.var_type;
+    each_ledger.var_owner; // uid
+    each_ledger.up_time;
+    each_ledger.up_block;
+    each_ledger.tag; // user scope only
+    each_ledger.pid;
+
+    if (each_ledger.second.query_type == QueryType::INSERT) {
+      queryInsert();
+    } else if (each_ledger.second.query_type == QueryType::UPDATE) {
+      queryUpdate();
+    } else if (each_ledger.second.query_type == QueryType::DELETE) {
+      queryDelete();
+    }
+  }
+}
+
+bool RdbController::insertContractLedgerData(std::map<string, contract_ledger_type> &contract_ledger) {
+  for (auto &each_ledger : contract_ledger) {
+    // TODO: ledger에 있는걸 rdb 에 반영
+    each_ledger.which_scope; // contract scope
+    each_ledger.var_name;
+    each_ledger.var_val;
+    each_ledger.var_type;
+    each_ledger.var_owner; // cid
+    each_ledger.up_time;
+    each_ledger.up_block;
+    each_ledger.var_info; // contract scope only
+    each_ledger.pid;
+
+    if (each_ledger.second.query_type == QueryType::INSERT) {
+      queryInsert();
+    } else if (each_ledger.second.query_type == QueryType::UPDATE) {
+      queryUpdate();
+    } else if (each_ledger.second.query_type == QueryType::DELETE) {
+      queryDelete();
+    }
+  }
+}
+
 vector<Block> RdbController::getBlocks(const string &condition) {
   try {
     soci::session db_session(RdbController::pool());
@@ -300,7 +346,7 @@ bool RdbController::queryContractDisable(UnresolvedBlock &UR_block, nlohmann::js
   return true;
 }
 
-bool RdbController::queryIncinerate(UnresolvedBlock &UR_block, nlohmann::json &option, result_query_info_type &result_info) {
+bool RdbController::queryIncinerate(std::map<string, user_ledger_type> &user_ledger, nlohmann::json &option, result_query_info_type &result_info) {
   // TODO: m_mem_ledger 사용하여 갱신값 계산. resolve 대기 필요
   try {
     string amount = json::get<string>(option, "amount").value();
@@ -327,7 +373,7 @@ bool RdbController::queryIncinerate(UnresolvedBlock &UR_block, nlohmann::json &o
   return true;
 }
 
-bool RdbController::queryCreate(UnresolvedBlock &UR_block, nlohmann::json &option, result_query_info_type &result_info) {
+bool RdbController::queryCreate(std::map<string, user_ledger_type> &user_ledger, nlohmann::json &option, result_query_info_type &result_info) {
   // TODO: m_mem_ledger 사용하여 갱신값 계산
   try {
     string amount = json::get<string>(option, "amount").value();
@@ -360,7 +406,7 @@ bool RdbController::queryCreate(UnresolvedBlock &UR_block, nlohmann::json &optio
   return true;
 }
 
-bool RdbController::queryTransfer(UnresolvedBlock &UR_block, nlohmann::json &option, result_query_info_type &result_info) {
+bool RdbController::queryTransfer(std::vector<LedgerRecord> &mem_ledger, nlohmann::json &option, result_query_info_type &result_info) {
   // TODO: m_mem_ledger 사용하여 갱신값 계산
   //    from과 to가 user/contract 따라 처리될 수 있도록 구현 필요
 
@@ -397,7 +443,7 @@ bool RdbController::queryTransfer(UnresolvedBlock &UR_block, nlohmann::json &opt
   return true;
 }
 
-bool RdbController::queryUserScope(UnresolvedBlock &UR_block, nlohmann::json &option, result_query_info_type &result_info) {
+bool RdbController::queryUserScope(std::map<string, user_ledger_type> &user_ledger, nlohmann::json &option, result_query_info_type &result_info) {
   // TODO: m_mem_ledger 사용하여 갱신값 계산
   try {
     string var_name = json::get<string>(option, "name").value();
@@ -438,12 +484,10 @@ bool RdbController::queryUserScope(UnresolvedBlock &UR_block, nlohmann::json &op
   return true;
 }
 
-bool RdbController::queryContractScope(UnresolvedBlock &UR_block, nlohmann::json &option, result_query_info_type &result_info) {
-
+bool RdbController::queryContractScope(std::map<string, contract_ledger_type> &contract_ledger, nlohmann::json &option, result_query_info_type &result_info) {
   // TODO: m_mem_ledger 사용하여 갱신값 계산
   try {
-    string var_name = json::get<string>(option, "name").value();
-    string var_value = json::get<string>(option, "value").value();
+    string var_name = mem_ledger string var_value = json::get<string>(option, "value").value();
     contract_id_type cid = json::get<string>(option, "cid").value();
     string pid = json::get<string>(option, "pid").value();
 
@@ -469,7 +513,7 @@ bool RdbController::queryContractScope(UnresolvedBlock &UR_block, nlohmann::json
   return true;
 }
 
-bool RdbController::queryTradeItem(UnresolvedBlock &UR_block, nlohmann::json &option, result_query_info_type &result_info) {
+bool RdbController::queryTradeItem(std::vector<LedgerRecord> &mem_ledger, nlohmann::json &option, result_query_info_type &result_info) {
   nlohmann::json costs = option["costs"];
   nlohmann::json units = option["units"];
   base58_type author = json::get<string>(option, "author").value();
@@ -480,18 +524,17 @@ bool RdbController::queryTradeItem(UnresolvedBlock &UR_block, nlohmann::json &op
   return true;
 }
 
-bool RdbController::queryTradeVal(UnresolvedBlock &UR_block, nlohmann::json &option, result_query_info_type &result_info) {
+bool RdbController::queryTradeVal(std::vector<LedgerRecord> &mem_ledger, nlohmann::json &option, result_query_info_type &result_info) {
   // TODO: TBA (19.05.21 현재 문서에 관련 사항 미기재)
   return true;
 }
 
-bool RdbController::queryRunQuery(UnresolvedBlock &UR_block, nlohmann::json &option, result_query_info_type &result_info) {
+bool RdbController::queryRunQuery(std::vector<LedgerRecord> &mem_ledger, nlohmann::json &option, result_query_info_type &result_info) {
   string type = json::get<string>(option, "type").value();
   nlohmann::json query = option["query"];
   timestamp_t after = static_cast<uint64_t>(stoll(json::get<string>(option, "after").value()));
 
-  if((type == "run.query") || (type == "user.cert"))
-  {
+  if ((type == "run.query") || (type == "user.cert")) {
     logger::ERROR("run.query cannot excute 'run.query' or 'user.cert'!");
     return false;
   }
@@ -499,7 +542,7 @@ bool RdbController::queryRunQuery(UnresolvedBlock &UR_block, nlohmann::json &opt
   return true;
 }
 
-bool RdbController::queryRunContract(UnresolvedBlock &UR_block, nlohmann::json &option, result_query_info_type &result_info) {
+bool RdbController::queryRunContract(std::vector<LedgerRecord> &mem_ledger, nlohmann::json &option, result_query_info_type &result_info) {
   contract_id_type cid = json::get<string>(option, "cid").value();
   string input = json::get<string>(option, "input").value();
   timestamp_t after = static_cast<uint64_t>(stoll(json::get<string>(option, "after").value()));

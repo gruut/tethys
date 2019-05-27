@@ -321,8 +321,22 @@ void UnresolvedBlockPool::updateTotalNumSSig() {
   }
 }
 
-void UnresolvedBlockPool::setupStateTree() // RDB에 있는 모든 노드를 불러올 수 있어야 하므로 관련 연동 필요
-{}
+void UnresolvedBlockPool::setupStateTree()
+{
+  // RDB에 있는 모든 엔트리를 불러와서 state tree를 작성
+  m_us_tree.addNode(entry);
+  m_cs_tree.addNode(entry);
+}
+
+bytes UnresolvedBlockPool::getUserStateRoot()
+{
+  return m_us_tree.getRootValue();
+}
+
+bytes UnresolvedBlockPool::getContractStateRoot()
+{
+  return m_cs_tree.getRootValue();
+}
 
 // ------------------------------------------------------------------
 //

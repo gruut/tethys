@@ -27,7 +27,7 @@ char *intToBin(uint32_t num) {
     } else {
       ret[pos] = '1';
     }
-    pos++;
+    ++pos;
   }
   ret[_SHA256_SPLIT + 1] = '\0';
 
@@ -71,6 +71,8 @@ void StateNode::makeValue(string &key) {
 }
 
 uint32_t StateNode::makePath(LedgerRecord &ledger) {
+  // TODO: pid가 주어지지 않았을 때 구현
+  // pid가 존재할 때
   string value = valueToStr(Sha256::hash(ledger.pid));
   value = value.substr(value.length() - _SHA256_SPLIT - 1, value.length());
   uint32_t path = (uint32_t)strtoul(value.c_str(), 0, 16);
@@ -110,13 +112,13 @@ void StateNode::moveToParent() {
   int bit;
   // 예외 처리
   if (m_suffix_len == _TREE_DEPTH) {
-    printf("StateNode::moveToParent has some error");
+    logger::ERROR("StateNode::moveToParent has some error");
     return;
   }
 
   bit = (m_debug_path & (1 << m_suffix_len)) != 0 ? 1 : 0;
   m_suffix = m_suffix | (bit << m_suffix_len);
-  m_suffix_len++;
+  ++m_suffix_len;
 }
 
 bool StateNode::isDummy() {
@@ -173,12 +175,12 @@ void StateTree::visit(shared_ptr<StateNode> node, bool isPrint) {
     }
     stk.push(node);
   }
-  _debug_depth--;
+  --_debug_depth;
 }
 // tree post-order 순회 재귀함수
 void StateTree::postOrder(shared_ptr<StateNode> node, bool isPrint) {
   if (isPrint) {
-    _debug_depth++;
+    ++_debug_depth;
     string str_dir = (!_debug_dir) ? "Left" : "Right";
     printf("%s[depth %3d] %s\n", _debug_str_depth.substr(0, _debug_depth * 2).c_str(), _debug_depth, str_dir.c_str());
   }
@@ -283,8 +285,8 @@ void StateTree::addNode(uint32_t new_path, shared_ptr<StateNode> new_node) {
         prev_node = dummy;
       }
 
-      dir_pos--;
-      depth++;
+      --dir_pos;
+      ++depth;
     }
     // 경로가 다른 위치에서 기존 노드, 새 노드 각각 삽입
     if (!getDirectionOf(new_path, dir_pos)) {
@@ -309,7 +311,7 @@ void StateTree::addNode(uint32_t new_path, shared_ptr<StateNode> new_node) {
     tmp->reHash();
   }
 
-  m_size++;
+  ++m_size;
 }
 
 void StateTree::modifyNode(uint32_t path, LedgerRecord &data) {
@@ -380,7 +382,7 @@ void StateTree::removeNode(uint32_t path) {
     stk.pop();
     parent->reHash();
   }
-  m_size--;
+  --m_size;
 }
 
 shared_ptr<StateNode> StateTree::getMerkleNode(uint32_t _path) {
@@ -408,7 +410,7 @@ shared_ptr<StateNode> StateTree::getMerkleNode(uint32_t _path) {
     } else {
       node = node->getRight();
     }
-    dir_pos--;
+    --dir_pos;
   }
   return ret;
 }
@@ -439,7 +441,6 @@ vector<vector<uint8_t>> StateTree::getSiblings(uint32_t _path) {
   return siblings;
 }
 
-// Debugging
 void StateTree::printTreePostOrder() {
   bool isPrint = true;
 
@@ -467,11 +468,9 @@ void StateTree::printTreePostOrder() {
   postOrder(root, isPrint);
 
   if (isPrint) {
-    printf("root Value: %s\n", TypeConverter::encodeBase<64>(root->getValue()).c_str());
+    printf("root Value: %s\n", TypeConverter::encodeBase<64>(TypeConverter::bytesToString(root->getValue()));
     printf("*********** finish traversal ***********\n");
   }
 }
 
-// setter
-// void setSize(uint64_t _size) { m_size = _size; }
 } // namespace gruut

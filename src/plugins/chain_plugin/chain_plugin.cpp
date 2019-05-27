@@ -202,14 +202,12 @@ public:
   }
 
   void processTxResult(const nlohmann::json &result) {
-    // 파싱한 결과로 unresolved_block에 저장될 ledger에 대한 정보를 만들고 처리
-
     base58_type block_id = json::get<string>(result["block"], "id").value();
     block_height_type block_height = static_cast<block_height_type>(stoi(json::get<string>(result["block"], "height").value()));
-    UnresolvedBlock update_UR_block = unresolved_block_pool->findBlock(block_id, block_height);
+    UnresolvedBlock updated_UR_block = unresolved_block_pool->findBlock(block_id, block_height);
 
-    if (update_UR_block.block.getBlockId() != unresolved_block_pool->getCurrentHeadId()) {
-      unresolved_block_pool->moveHead(update_UR_block.block.getPrevBlockId(), update_UR_block.block.getHeight() - 1);
+    if (updated_UR_block.block.getBlockId() != unresolved_block_pool->getCurrentHeadId()) {
+      unresolved_block_pool->moveHead(updated_UR_block.block.getPrevBlockId(), updated_UR_block.block.getHeight() - 1);
     }
 
     nlohmann::json results_json = result["results"];
@@ -235,41 +233,38 @@ public:
       nlohmann::json queries_json = each_result["queries"];
       for (auto &each_query : queries_json) {
         string type = json::get<string>(each_query, "type").value();
-        nlohmann::json option = each_query["option"];
+        nlohmann::json option_json = each_query["option"];
         if (type == "user.join") {
-          chain->queryUserJoin(update_UR_block, option, result_info);
+          chain->queryUserJoin(updated_UR_block, option_json, result_info);
         } else if (type == "user.cert") {
-          chain->queryUserCert(update_UR_block, option, result_info);
+          chain->queryUserCert(updated_UR_block, option_json, result_info);
         } else if (type == "contract.new") {
-          chain->queryContractNew(update_UR_block, option, result_info);
+          chain->queryContractNew(updated_UR_block, option_json, result_info);
         } else if (type == "contract.disable") {
-          chain->queryContractDisable(update_UR_block, option, result_info);
+          chain->queryContractDisable(updated_UR_block, option_json, result_info);
         } else if (type == "v.incinerate") {
-          chain->queryIncinerate(update_UR_block, option, result_info);
+          queryIncinerate(updated_UR_block, option_json, result_info);
         } else if (type == "v.create") {
-          chain->queryCreate(update_UR_block, option, result_info);
+          queryCreate(updated_UR_block, option_json, result_info);
         } else if (type == "v.transfer") {
-          chain->queryTransfer(update_UR_block, option, result_info);
+          queryTransfer(updated_UR_block, option_json, result_info);
         } else if (type == "scope.user") {
-          chain->queryUserScope(update_UR_block, option, result_info);
+          queryUserScope(updated_UR_block, option_json, result_info);
         } else if (type == "scope.contract") {
-          chain->queryContractScope(update_UR_block, option, result_info);
+          queryContractScope(updated_UR_block, option_json, result_info);
         } else if (type == "trade.item") {
-          chain->queryTradeItem(update_UR_block, option, result_info);
+          queryTradeItem(updated_UR_block, option_json, result_info);
         } else if (type == "trade.v") {
-          chain->queryTradeVal(update_UR_block, option, result_info);
+          queryTradeVal(updated_UR_block, option_json, result_info);
         } else if (type == "run.query") {
-          chain->queryRunQuery(update_UR_block, option, result_info);
+          queryRunQuery(updated_UR_block, option_json, result_info);
         } else if (type == "run.contract") {
-          chain->queryRunContract(update_UR_block, option, result_info);
+          queryRunContract(updated_UR_block, option_json, result_info);
         } else {
           logger::ERROR("URBP, Something error in query process");
         }
       }
     }
-
-    //  calcStateRoot(usroot);  // TODO: 추후 구현
-    //  calcStateRoot(csroot);  // TODO: 추후 구현
   }
 
   vector<Transaction> getTransactions() {
@@ -315,6 +310,8 @@ public:
         if (resolve_result) {
           chain->insertBlockData(resolved_block.block);
           chain->insertTransactionData(resolved_block.block);
+          chain->insertUserLedgerData(resolved_block.user_ledger);
+          chain->insertContractLedgerData(resolved_block.contract_ledger);
         }
       }
     } // test code end
@@ -452,9 +449,12 @@ public:
     return merkle_tree_vector;
   }
 
-  bool calcStateRoot() {
-    // user scope, contract scope의 root를 구할 때 쓰이는 동적 머클 트리
-    return true;
+  bytes getUserStateRoot() {
+    return unresolved_block_pool->getUserStateRoot();
+  }
+
+  bytes getContractStateRoot() {
+    return unresolved_block_pool->getContractStateRoot();
   }
 
   bool verifySSigs(const Block &block) const {
@@ -478,6 +478,224 @@ public:
     return true;
   }
   // block verify part end
+
+
+  // ledger process part
+  bool queryIncinerate(UnresolvedBlock &UR_block, nlohmann::json &option, result_query_info_type &result_info) {
+    // TODO: m_mem_ledger 사용하여 갱신값 계산. resolve 대기 필요
+    try {
+      string amount = json::get<string>(option, "amount").value();
+      string pid = json::get<string>(option, "pid").value();
+
+      // TODO: pid가 가리키는 user가 자신인지를 검사해야 함. 다른 유저의 변수를 삭제하면 안 됨.
+
+      UR_block.user_ledger.emplace(key, LedgerRecord);
+
+
+      // clang-format off
+      soci::row result;
+      soci::session db_session(chain->pool());
+
+      soci::statement st = (db_session.prepare << "UPDATE user_scope SET var_value = :var_value WHERE pid = :pid",
+          soci::use(amount, "var_value"), soci::use(pid, "pid"),
+          soci::into(result));
+      // clang-format on
+      st.execute(true);
+    } catch (soci::mysql_soci_error const &e) {
+      logger::ERROR("MySQL error: {}", e.what());
+      return false;
+    } catch (...) {
+      logger::ERROR("Unexpected error at `queryIncinerate`");
+      return false;
+    }
+    return true;
+  }
+
+  bool queryCreate(UnresolvedBlock &UR_block, nlohmann::json &option, result_query_info_type &result_info) {
+    // TODO: m_mem_ledger 사용하여 갱신값 계산
+    try {
+      string amount = json::get<string>(option, "amount").value();
+      string var_name = json::get<string>(option, "name").value();
+      string var_type = json::get<string>(option, "type").value();
+      string tag = json::get<string>(option, "tag").value();
+      string var_owner = result_info.user;
+      timestamp_t up_time = TimeUtil::nowBigInt(); // TODO: DB에 저장되는 시간인지, mem_ledger에 들어오는 시간인지
+      block_height_type up_block = result_info.block_height;
+      string pid = ""; // TODO: mem_ledger에서 계산됨. 연동 필요.
+
+      // clang-format off
+      soci::row result;
+      soci::session db_session(RdbController::pool());
+
+      soci::statement st = (db_session.prepare << "INSERT INTO user_scope (var_name, var_value, var_type, var_owner, up_time, up_block, tag, pid) VALUES (:var_name, :var_value, :var_type, :var_owner, :up_time, :up_block, :tag, :pid)",
+          soci::use(var_name), soci::use(amount), soci::use(var_type),
+          soci::use(var_owner), soci::use(up_time), soci::use(up_block),
+          soci::use(tag), soci::use(pid),
+          soci::into(result));
+      // clang-format on
+      st.execute(true);
+    } catch (soci::mysql_soci_error const &e) {
+      logger::ERROR("MySQL error: {}", e.what());
+      return false;
+    } catch (...) {
+      logger::ERROR("Unexpected error at `queryCreate`");
+      return false;
+    }
+    return true;
+  }
+
+  bool queryTransfer(UnresolvedBlock &UR_block, nlohmann::json &option, result_query_info_type &result_info) {
+    // TODO: m_mem_ledger 사용하여 갱신값 계산
+    //    from과 to가 user/contract 따라 처리될 수 있도록 구현 필요
+
+    try {
+      base58_type from = json::get<string>(option, "from").value();
+      base58_type to = json::get<string>(option, "to").value();
+      string amount = json::get<string>(option, "amount").value();
+      string unit = json::get<string>(option, "unit").value();
+      string pid = json::get<string>(option, "pid").value();
+      string tag = json::get<string>(option, "tag").value();
+
+      // pid는 from의 검색 조건이며, tag는 to에게 보낼 때의 tag 지정을 의미한다.
+      // to가 contract일 경우, tag는 무시되고 contract의 var_info에 from이 기록된다.
+      // TODO: transfer되어서 새로운 변수가 생겼으면 insert, 갱신이면 update 요청이 된다. mem_ledger쪽과 연계해야 함.
+
+      // clang-format off
+      soci::row result;
+      soci::session db_session(RdbController::pool());
+
+      // user_scope insert, update, contract_scope insert, update
+
+      soci::statement st = (db_session.prepare << "UPDATE user_scope SET var_value = :var_value WHERE pid = :pid",
+          soci::use(amount, "var_value"), soci::use(pid, "pid"),
+          soci::into(result));
+      // clang-format on
+      st.execute(true);
+    } catch (soci::mysql_soci_error const &e) {
+      logger::ERROR("MySQL error: {}", e.what());
+      return false;
+    } catch (...) {
+      logger::ERROR("Unexpected error at `queryTransfer`");
+      return false;
+    }
+    return true;
+  }
+
+  bool queryUserScope(UnresolvedBlock &UR_block, nlohmann::json &option, result_query_info_type &result_info) {
+    // TODO: m_mem_ledger 사용하여 갱신값 계산
+    try {
+      string var_name = json::get<string>(option, "name").value();
+      string target = json::get<string>(option, "for").value(); // user or author
+      string var_value = json::get<string>(option, "value").value();
+      string pid = json::get<string>(option, "pid").value();
+      string tag = json::get<string>(option, "tag").value();
+      base58_type uid;
+
+      if (target == "user") {
+        uid = result_info.user;
+      } else if (target == "author") {
+        uid = result_info.author;
+      } else {
+        logger::ERROR("target is not 'user' or 'author' at `queryUserScope`");
+      }
+
+      // TODO: '통화'속성의 변수는 변경 불가능한 조건 검사 시행
+      // TODO: pid의 계산방법, 반영법, for의 정확한 활용 등을 적용
+
+      // clang-format off
+      soci::row result;
+      soci::session db_session(RdbController::pool());
+
+      soci::statement st = (db_session.prepare << "UPDATE user_scope SET var_name = :var_name, var_value = :var_value, tag = :tag, WHERE pid = :pid",
+          soci::use(var_name, "var_name"), soci::use(var_value, "var_value"), soci::use(tag, "tag"),
+          soci::into(result));
+      // clang-format on
+      st.execute(true);
+    } catch (soci::mysql_soci_error const &e) {
+      logger::ERROR("MySQL error: {}", e.what());
+      return false;
+    } catch (...) {
+      logger::ERROR("Unexpected error at `queryUserScope`");
+      return false;
+    }
+
+    return true;
+  }
+
+  bool queryContractScope(UnresolvedBlock &UR_block, nlohmann::json &option, result_query_info_type &result_info) {
+    // TODO: m_mem_ledger 사용하여 갱신값 계산
+    try {
+      string var_name = json::get<string>(option, "name").value();
+      string var_value = json::get<string>(option, "value").value();
+      contract_id_type cid = json::get<string>(option, "cid").value();
+      string pid = json::get<string>(option, "pid").value();
+
+      // TODO: '통화'속성의 변수는 변경 불가능한 조건 검사 시행
+      // TODO: pid의 계산방법, 반영법, for의 정확한 활용 등을 적용
+
+      // clang-format off
+      soci::row result;
+      soci::session db_session(RdbController::pool());
+
+      soci::statement st = (db_session.prepare << "UPDATE contracts SET var_value = :var_value WHERE pid = :pid",
+          soci::use(var_name, "var_name"), soci::use(var_value, "var_value"),
+          soci::into(result));
+      // clang-format on
+      st.execute(true);
+    } catch (soci::mysql_soci_error const &e) {
+      logger::ERROR("MySQL error: {}", e.what());
+      return false;
+    } catch (...) {
+      logger::ERROR("Unexpected error at `queryContractScope`");
+      return false;
+    }
+    return true;
+  }
+
+  bool queryTradeItem(UnresolvedBlock &UR_block, nlohmann::json &option, result_query_info_type &result_info) {
+    nlohmann::json costs = option["costs"];
+    nlohmann::json units = option["units"];
+    base58_type author = json::get<string>(option, "author").value();
+    base58_type user = json::get<string>(option, "user").value();
+    string pid = json::get<string>(option, "pid").value();
+
+    // TODO: 처리 절차 구현할 것
+    return true;
+  }
+
+  bool queryTradeVal(UnresolvedBlock &UR_block, nlohmann::json &option, result_query_info_type &result_info) {
+    // TODO: TBA (19.05.21 현재 문서에 관련 사항 미기재)
+    return true;
+  }
+
+  bool queryRunQuery(UnresolvedBlock &UR_block, nlohmann::json &option, result_query_info_type &result_info) {
+    string type = json::get<string>(option, "type").value();
+    nlohmann::json query = option["query"];
+    timestamp_t after = static_cast<uint64_t>(stoll(json::get<string>(option, "after").value()));
+
+    if((type == "run.query") || (type == "user.cert"))
+    {
+      logger::ERROR("run.query cannot excute 'run.query' or 'user.cert'!");
+      return false;
+    }
+    // TODO: Scheduler에게 지연 처리 요청 전송
+    return true;
+  }
+
+  bool queryRunContract(UnresolvedBlock &UR_block, nlohmann::json &option, result_query_info_type &result_info) {
+    contract_id_type cid = json::get<string>(option, "cid").value();
+    string input = json::get<string>(option, "input").value();
+    timestamp_t after = static_cast<uint64_t>(stoll(json::get<string>(option, "after").value()));
+
+    // TODO: authority.user를 현재 user로 대체하여 Scheduler에게 요청 전송
+    return true;
+  }
+
+
+
+  // ledger process part end
+
+
 };
 
 ChainPlugin::ChainPlugin() : impl(make_unique<ChainPluginImpl>()) {}
@@ -541,7 +759,8 @@ void ChainPlugin::pluginInitialize(const boost::program_options::variables_map &
   impl->incoming_block_subscription = block_channel.subscribe([this](const nlohmann::json &block) { impl->pushBlock(block); });
 
   auto &SCE_result_channel = app().getChannel<incoming::channels::SCE_result::channel_type>();
-  impl->incoming_result_subscription = SCE_result_channel.subscribe([this](const nlohmann::json &result) { impl->processTxResult(result); });
+  impl->incoming_result_subscription =
+      SCE_result_channel.subscribe([this](const nlohmann::json &result) { impl->processTxResult(result); });
 
   impl->initialize();
 }

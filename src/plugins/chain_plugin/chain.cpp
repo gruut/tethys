@@ -82,12 +82,25 @@ Chain::~Chain() {
 }
 
 // RDB functions
+
+string Chain::getUserCert(const base58_type &user_id) {
+  return rdb_controller->getUserCert(user_id);
+}
+
 void Chain::insertBlockData(gruut::Block &block_info) {
   rdb_controller->insertBlockData(block_info);
 }
 
 void Chain::insertTransactionData(gruut::Block &block_info) {
   rdb_controller->insertTransactionData(block_info);
+}
+
+void Chain::insertUserLedgerData(std::map<string, user_ledger_type> &user_ledger) {
+  rdb_controller->insertUserLedgerData(user_ledger);
+}
+
+void Chain::insertContractLedgerData(std::map<string, contract_ledger_type> &contract_ledger) {
+  rdb_controller->insertContractLedgerData(contract_ledger);
 }
 
 vector<Block> Chain::getBlocksByHeight(int from, int to) {
@@ -109,10 +122,6 @@ block_height_type Chain::getLatestResolvedHeight() {
   return block.getHeight();
 }
 
-string Chain::getUserCert(const base58_type &user_id) {
-  return rdb_controller->getUserCert(user_id);
-}
-
 bool Chain::queryUserJoin(UnresolvedBlock &UR_block, nlohmann::json &option, result_query_info_type &result_info) {
   return rdb_controller->queryUserJoin(UR_block, option, result_info);
 }
@@ -127,42 +136,6 @@ bool Chain::queryContractNew(UnresolvedBlock &UR_block, nlohmann::json &option, 
 
 bool Chain::queryContractDisable(UnresolvedBlock &UR_block, nlohmann::json &option, result_query_info_type &result_info) {
   return rdb_controller->queryContractDisable(UR_block, option, result_info);
-}
-
-bool Chain::queryIncinerate(UnresolvedBlock &UR_block, nlohmann::json &option, result_query_info_type &result_info) {
-  return rdb_controller->queryIncinerate(UR_block, option, result_info);
-}
-
-bool Chain::queryCreate(UnresolvedBlock &UR_block, nlohmann::json &option, result_query_info_type &result_info) {
-  return rdb_controller->queryCreate(UR_block, option, result_info);
-}
-
-bool Chain::queryTransfer(UnresolvedBlock &UR_block, nlohmann::json &option, result_query_info_type &result_info) {
-  return rdb_controller->queryTransfer(UR_block, option, result_info);
-}
-
-bool Chain::queryUserScope(UnresolvedBlock &UR_block, nlohmann::json &option, result_query_info_type &result_info) {
-  return rdb_controller->queryUserScope(UR_block, option, result_info);
-}
-
-bool Chain::queryContractScope(UnresolvedBlock &UR_block, nlohmann::json &option, result_query_info_type &result_info) {
-  return rdb_controller->queryContractScope(UR_block, option, result_info);
-}
-
-bool Chain::queryTradeItem(UnresolvedBlock &UR_block, nlohmann::json &option, result_query_info_type &result_info) {
-  return rdb_controller->queryTradeItem(UR_block, option, result_info);
-}
-
-bool Chain::queryTradeVal(UnresolvedBlock &UR_block, nlohmann::json &option, result_query_info_type &result_info) {
-  return rdb_controller->queryTradeVal(UR_block, option, result_info);
-}
-
-bool Chain::queryRunQuery(UnresolvedBlock &UR_block, nlohmann::json &option, result_query_info_type &result_info) {
-  return rdb_controller->queryRunQuery(UR_block, option, result_info);
-}
-
-bool Chain::queryRunContract(UnresolvedBlock &UR_block, nlohmann::json &option, result_query_info_type &result_info) {
-  return rdb_controller->queryRunContract(UR_block, option, result_info);
 }
 
 // KV functions

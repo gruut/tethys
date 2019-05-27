@@ -5,6 +5,7 @@
 #include <deque>
 #include <time.h>
 #include <memory>
+#include <map>
 
 #include "../../../../lib/gruut-utils/src/time_util.hpp"
 #include "../../../../lib/gruut-utils/src/type_converter.hpp"
@@ -20,7 +21,8 @@ struct UnresolvedBlock {
   Block block;
   int32_t prev_vector_idx{-1};
   int32_t ssig_sum{0};
-  std::vector<StateNode> mem_ledger; /// 하나가 아님. 여러 개의 node로 이루어짐. 각 transaction에 맞는 result가 반영된 ledger들이 있어야 하니까.
+  std::map<string, LedgerRecord> user_ledger;
+  std::map<string, LedgerRecord> contract_ledger;
 
   UnresolvedBlock() = default;
   UnresolvedBlock(Block &block_, int prev_queue_idx_) : block(block_), prev_vector_idx(prev_queue_idx_) {}
@@ -105,10 +107,11 @@ public:
 
   void restorePool();
   void setupStateTree();
+  bytes getUserStateRoot();
+  bytes getContractStateRoot();
 
   UnresolvedBlock findBlock(const base58_type &block_id, const block_height_type block_height);
   void moveHead(const std::string &block_id_b64, const block_height_type target_block_height);
-
   void invalidateCaches();
 
 private:
