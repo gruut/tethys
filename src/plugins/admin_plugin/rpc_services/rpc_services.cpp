@@ -70,73 +70,98 @@ void AdminService<ReqSetupKey, ResSetupKey>::proceed() {
   }
   case AdminRpcCallStatus::PROCESS: {
     new AdminService<ReqSetupKey, ResSetupKey>(service, completion_queue, merger_status, default_setup_port);
-    if (merger_status->user_login) {
-      string info = "You have been logged in";
-      logger::INFO("[SETUP KEY] {}", info);
-      res.set_success(false);
-      res.set_info(info);
+
+    thread([&]() {
+      if (merger_status->user_login) {
+        string info = "You have been logged in";
+        res.set_info(info);
+
+        res.set_success(false);
+        receive_status = AdminRpcCallStatus::FINISH;
+        responder.Finish(res, Status::OK, this);
+
+        logger::INFO("[SETUP KEY] {}", info);
+
+        return;
+      }
+
+      auto &chain = dynamic_cast<ChainPlugin *>(app().getPlugin("ChainPlugin"))->chain();
+
+      auto self_sk = chain.getValueByKey(DataType::SELF_INFO, "self_enc_sk");
+      auto self_cert = chain.getValueByKey(DataType::SELF_INFO, "self_cert");
+
+      if (!self_sk.empty() && !self_cert.empty()) {
+        string info = "Your key already exist in storage, Please login";
+        logger::INFO("[SETUP KEY] {}", info);
+
+        merger_status->user_setup = true;
+        res.set_success(false);
+        res.set_info(info);
+      } else {
+        shared_ptr<SetupService> setup_service = make_shared<SetupService>();
+
+        auto setup_port = req.setup_port();
+        unique_ptr<Server> setup_server = initSetup(setup_service, setup_port);
+
+        logger::INFO("[SETUP KEY] Waiting for user key info");
+
+        auto user_key_info = runSetup(setup_service);
+        if (user_key_info.has_value()) {
+          auto enc_sk_pem = json::get<string>(user_key_info.value(), "enc_sk").value_or("");
+          auto cert = json::get<string>(user_key_info.value(), "cert").value_or("");
+
+          if (enc_sk_pem.empty() || cert.empty()) {
+            string info = "(cert / sk) is empty";
+            logger::ERROR("[SETUP KEY] {}", info);
+
+            res.set_success(false);
+            res.set_info(info);
+          } else {
+            auto my_id_b58 = getIdFromCert(cert);
+            if (my_id_b58.has_value()) {
+              SelfInfo self_info;
+              self_info.enc_sk = enc_sk_pem;
+              self_info.cert = cert;
+
+              auto my_id = TypeConverter::decodeBase<58>(my_id_b58.value());
+              self_info.id = my_id;
+
+              chain.saveSelfInfo(self_info);
+              app().setId(my_id);
+
+              merger_status->user_setup = true;
+              res.set_success(true);
+
+              logger::INFO("[SETUP KEY] Success");
+            } else {
+              string info = "Could not find X509 common name field in Certificate";
+              res.set_info(info);
+
+              res.set_success(false);
+            }
+          }
+        } else {
+          string info = "Could not receive any info from user. please `SETUP KEY` again";
+          logger::ERROR("[SETUP KEY] {}", info);
+
+          res.set_info(info);
+          res.set_success(false);
+        }
+        if (setup_server != nullptr)
+          setup_server->Shutdown();
+
+        setup_server.reset();
+        setup_service.reset();
+      }
+
       receive_status = AdminRpcCallStatus::FINISH;
       responder.Finish(res, Status::OK, this);
-      break;
-    }
-    auto &chain = dynamic_cast<ChainPlugin *>(app().getPlugin("ChainPlugin"))->chain();
-    auto self_sk = chain.getValueByKey(DataType::SELF_INFO, "self_enc_sk");
-    auto self_cert = chain.getValueByKey(DataType::SELF_INFO, "self_cert");
-    if (!self_sk.empty() && !self_cert.empty()) {
-      string info = "Your key already exist in storage, Please login";
-      logger::INFO("[SETUP KEY] {}", info);
-      merger_status->user_setup = true;
-      res.set_success(false);
-      res.set_info(info);
-    } else {
-      auto setup_port = req.setup_port();
-      shared_ptr<SetupService> setup_service = make_shared<SetupService>();
-      unique_ptr<Server> setup_server = initSetup(setup_service, setup_port);
-      logger::INFO("[SETUP KEY] Waiting for user key info");
-      auto user_key_info = runSetup(setup_service);
 
-      if (user_key_info.has_value()) {
-        auto enc_sk_pem = json::get<string>(user_key_info.value(), "enc_sk").value_or("");
-        auto cert = json::get<string>(user_key_info.value(), "cert").value_or("");
-        if (enc_sk_pem.empty() || cert.empty()) {
-          string info = "(cert / sk) is empty";
-          logger::ERROR("[SETUP KEY] {}", info);
-          res.set_success(false);
-          res.set_info(info);
-        } else {
-          auto my_id_b58 = getIdFromCert(cert);
-          if (my_id_b58.has_value()) {
-            auto my_id = TypeConverter::decodeBase<58>(my_id_b58.value());
-            SelfInfo self_info;
-            self_info.enc_sk = enc_sk_pem;
-            self_info.cert = cert;
-            self_info.id = my_id;
-            chain.saveSelfInfo(self_info);
-            app().setId(my_id);
-            merger_status->user_setup = true;
-            res.set_success(true);
-            logger::INFO("[SETUP KEY] Success");
-          } else {
-            string info = "Could not find X509 common name field in Certificate";
-            res.set_info(info);
-            res.set_success(false);
-          }
-        }
-      } else {
-        string info = "Could not receive any info from user. please `SETUP KEY` again";
-        logger::ERROR("[SETUP KEY] {}", info);
-        res.set_info(info);
-        res.set_success(false);
-      }
-      if (setup_server != nullptr)
-        setup_server->Shutdown();
-      setup_server.reset();
-      setup_service.reset();
-    }
-    receive_status = AdminRpcCallStatus::FINISH;
-    responder.Finish(res, Status::OK, this);
-    break;
+      return;
+    }).detach();
   }
+
+  case AdminRpcCallStatus::FINISH:
   default:
     delete this;
     break;
