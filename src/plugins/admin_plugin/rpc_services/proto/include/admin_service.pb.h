@@ -29,6 +29,7 @@
 #include <google/protobuf/message.h>
 #include <google/protobuf/repeated_field.h>  // IWYU pragma: export
 #include <google/protobuf/extension_set.h>  // IWYU pragma: export
+#include <google/protobuf/generated_enum_reflection.h>
 #include <google/protobuf/unknown_field_set.h>
 // @@protoc_insertion_point(includes)
 #define PROTOBUF_INTERNAL_EXPORT_protobuf_admin_5fservice_2eproto 
@@ -38,7 +39,7 @@ namespace protobuf_admin_5fservice_2eproto {
 struct TableStruct {
   static const ::google::protobuf::internal::ParseTableField entries[];
   static const ::google::protobuf::internal::AuxillaryParseTableField aux[];
-  static const ::google::protobuf::internal::ParseTable schema[8];
+  static const ::google::protobuf::internal::ParseTable schema[12];
   static const ::google::protobuf::internal::FieldMetadata field_metadata[];
   static const ::google::protobuf::internal::SerializationTable serialization_table[];
   static const ::google::protobuf::uint32 offsets[];
@@ -46,65 +47,102 @@ struct TableStruct {
 void AddDescriptors();
 }  // namespace protobuf_admin_5fservice_2eproto
 namespace grpc_admin {
-class ReqSetup;
-class ReqSetupDefaultTypeInternal;
-extern ReqSetupDefaultTypeInternal _ReqSetup_default_instance_;
+class ReqLoadChain;
+class ReqLoadChainDefaultTypeInternal;
+extern ReqLoadChainDefaultTypeInternal _ReqLoadChain_default_instance_;
+class ReqLoadWorld;
+class ReqLoadWorldDefaultTypeInternal;
+extern ReqLoadWorldDefaultTypeInternal _ReqLoadWorld_default_instance_;
+class ReqLogin;
+class ReqLoginDefaultTypeInternal;
+extern ReqLoginDefaultTypeInternal _ReqLogin_default_instance_;
+class ReqSetupKey;
+class ReqSetupKeyDefaultTypeInternal;
+extern ReqSetupKeyDefaultTypeInternal _ReqSetupKey_default_instance_;
 class ReqStart;
 class ReqStartDefaultTypeInternal;
 extern ReqStartDefaultTypeInternal _ReqStart_default_instance_;
 class ReqStatus;
 class ReqStatusDefaultTypeInternal;
 extern ReqStatusDefaultTypeInternal _ReqStatus_default_instance_;
-class ReqStop;
-class ReqStopDefaultTypeInternal;
-extern ReqStopDefaultTypeInternal _ReqStop_default_instance_;
-class ResSetup;
-class ResSetupDefaultTypeInternal;
-extern ResSetupDefaultTypeInternal _ResSetup_default_instance_;
+class ResLoadChain;
+class ResLoadChainDefaultTypeInternal;
+extern ResLoadChainDefaultTypeInternal _ResLoadChain_default_instance_;
+class ResLoadWorld;
+class ResLoadWorldDefaultTypeInternal;
+extern ResLoadWorldDefaultTypeInternal _ResLoadWorld_default_instance_;
+class ResLogin;
+class ResLoginDefaultTypeInternal;
+extern ResLoginDefaultTypeInternal _ResLogin_default_instance_;
+class ResSetupKey;
+class ResSetupKeyDefaultTypeInternal;
+extern ResSetupKeyDefaultTypeInternal _ResSetupKey_default_instance_;
 class ResStart;
 class ResStartDefaultTypeInternal;
 extern ResStartDefaultTypeInternal _ResStart_default_instance_;
 class ResStatus;
 class ResStatusDefaultTypeInternal;
 extern ResStatusDefaultTypeInternal _ResStatus_default_instance_;
-class ResStop;
-class ResStopDefaultTypeInternal;
-extern ResStopDefaultTypeInternal _ResStop_default_instance_;
 }  // namespace grpc_admin
 namespace google {
 namespace protobuf {
-template<> ::grpc_admin::ReqSetup* Arena::CreateMaybeMessage<::grpc_admin::ReqSetup>(Arena*);
+template<> ::grpc_admin::ReqLoadChain* Arena::CreateMaybeMessage<::grpc_admin::ReqLoadChain>(Arena*);
+template<> ::grpc_admin::ReqLoadWorld* Arena::CreateMaybeMessage<::grpc_admin::ReqLoadWorld>(Arena*);
+template<> ::grpc_admin::ReqLogin* Arena::CreateMaybeMessage<::grpc_admin::ReqLogin>(Arena*);
+template<> ::grpc_admin::ReqSetupKey* Arena::CreateMaybeMessage<::grpc_admin::ReqSetupKey>(Arena*);
 template<> ::grpc_admin::ReqStart* Arena::CreateMaybeMessage<::grpc_admin::ReqStart>(Arena*);
 template<> ::grpc_admin::ReqStatus* Arena::CreateMaybeMessage<::grpc_admin::ReqStatus>(Arena*);
-template<> ::grpc_admin::ReqStop* Arena::CreateMaybeMessage<::grpc_admin::ReqStop>(Arena*);
-template<> ::grpc_admin::ResSetup* Arena::CreateMaybeMessage<::grpc_admin::ResSetup>(Arena*);
+template<> ::grpc_admin::ResLoadChain* Arena::CreateMaybeMessage<::grpc_admin::ResLoadChain>(Arena*);
+template<> ::grpc_admin::ResLoadWorld* Arena::CreateMaybeMessage<::grpc_admin::ResLoadWorld>(Arena*);
+template<> ::grpc_admin::ResLogin* Arena::CreateMaybeMessage<::grpc_admin::ResLogin>(Arena*);
+template<> ::grpc_admin::ResSetupKey* Arena::CreateMaybeMessage<::grpc_admin::ResSetupKey>(Arena*);
 template<> ::grpc_admin::ResStart* Arena::CreateMaybeMessage<::grpc_admin::ResStart>(Arena*);
 template<> ::grpc_admin::ResStatus* Arena::CreateMaybeMessage<::grpc_admin::ResStatus>(Arena*);
-template<> ::grpc_admin::ResStop* Arena::CreateMaybeMessage<::grpc_admin::ResStop>(Arena*);
 }  // namespace protobuf
 }  // namespace google
 namespace grpc_admin {
 
+enum ReqStart_Mode {
+  ReqStart_Mode_DEFAULT = 0,
+  ReqStart_Mode_MONITOR = 1,
+  ReqStart_Mode_ReqStart_Mode_INT_MIN_SENTINEL_DO_NOT_USE_ = ::google::protobuf::kint32min,
+  ReqStart_Mode_ReqStart_Mode_INT_MAX_SENTINEL_DO_NOT_USE_ = ::google::protobuf::kint32max
+};
+bool ReqStart_Mode_IsValid(int value);
+const ReqStart_Mode ReqStart_Mode_Mode_MIN = ReqStart_Mode_DEFAULT;
+const ReqStart_Mode ReqStart_Mode_Mode_MAX = ReqStart_Mode_MONITOR;
+const int ReqStart_Mode_Mode_ARRAYSIZE = ReqStart_Mode_Mode_MAX + 1;
+
+const ::google::protobuf::EnumDescriptor* ReqStart_Mode_descriptor();
+inline const ::std::string& ReqStart_Mode_Name(ReqStart_Mode value) {
+  return ::google::protobuf::internal::NameOfEnum(
+    ReqStart_Mode_descriptor(), value);
+}
+inline bool ReqStart_Mode_Parse(
+    const ::std::string& name, ReqStart_Mode* value) {
+  return ::google::protobuf::internal::ParseNamedEnum<ReqStart_Mode>(
+    ReqStart_Mode_descriptor(), name, value);
+}
 // ===================================================================
 
-class ReqSetup : public ::google::protobuf::Message /* @@protoc_insertion_point(class_definition:grpc_admin.ReqSetup) */ {
+class ReqSetupKey : public ::google::protobuf::Message /* @@protoc_insertion_point(class_definition:grpc_admin.ReqSetupKey) */ {
  public:
-  ReqSetup();
-  virtual ~ReqSetup();
+  ReqSetupKey();
+  virtual ~ReqSetupKey();
 
-  ReqSetup(const ReqSetup& from);
+  ReqSetupKey(const ReqSetupKey& from);
 
-  inline ReqSetup& operator=(const ReqSetup& from) {
+  inline ReqSetupKey& operator=(const ReqSetupKey& from) {
     CopyFrom(from);
     return *this;
   }
   #if LANG_CXX11
-  ReqSetup(ReqSetup&& from) noexcept
-    : ReqSetup() {
+  ReqSetupKey(ReqSetupKey&& from) noexcept
+    : ReqSetupKey() {
     *this = ::std::move(from);
   }
 
-  inline ReqSetup& operator=(ReqSetup&& from) noexcept {
+  inline ReqSetupKey& operator=(ReqSetupKey&& from) noexcept {
     if (GetArenaNoVirtual() == from.GetArenaNoVirtual()) {
       if (this != &from) InternalSwap(&from);
     } else {
@@ -114,34 +152,34 @@ class ReqSetup : public ::google::protobuf::Message /* @@protoc_insertion_point(
   }
   #endif
   static const ::google::protobuf::Descriptor* descriptor();
-  static const ReqSetup& default_instance();
+  static const ReqSetupKey& default_instance();
 
   static void InitAsDefaultInstance();  // FOR INTERNAL USE ONLY
-  static inline const ReqSetup* internal_default_instance() {
-    return reinterpret_cast<const ReqSetup*>(
-               &_ReqSetup_default_instance_);
+  static inline const ReqSetupKey* internal_default_instance() {
+    return reinterpret_cast<const ReqSetupKey*>(
+               &_ReqSetupKey_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
     0;
 
-  void Swap(ReqSetup* other);
-  friend void swap(ReqSetup& a, ReqSetup& b) {
+  void Swap(ReqSetupKey* other);
+  friend void swap(ReqSetupKey& a, ReqSetupKey& b) {
     a.Swap(&b);
   }
 
   // implements Message ----------------------------------------------
 
-  inline ReqSetup* New() const final {
-    return CreateMaybeMessage<ReqSetup>(NULL);
+  inline ReqSetupKey* New() const final {
+    return CreateMaybeMessage<ReqSetupKey>(NULL);
   }
 
-  ReqSetup* New(::google::protobuf::Arena* arena) const final {
-    return CreateMaybeMessage<ReqSetup>(arena);
+  ReqSetupKey* New(::google::protobuf::Arena* arena) const final {
+    return CreateMaybeMessage<ReqSetupKey>(arena);
   }
   void CopyFrom(const ::google::protobuf::Message& from) final;
   void MergeFrom(const ::google::protobuf::Message& from) final;
-  void CopyFrom(const ReqSetup& from);
-  void MergeFrom(const ReqSetup& from);
+  void CopyFrom(const ReqSetupKey& from);
+  void MergeFrom(const ReqSetupKey& from);
   void Clear() final;
   bool IsInitialized() const final;
 
@@ -158,7 +196,236 @@ class ReqSetup : public ::google::protobuf::Message /* @@protoc_insertion_point(
   void SharedCtor();
   void SharedDtor();
   void SetCachedSize(int size) const final;
-  void InternalSwap(ReqSetup* other);
+  void InternalSwap(ReqSetupKey* other);
+  private:
+  inline ::google::protobuf::Arena* GetArenaNoVirtual() const {
+    return NULL;
+  }
+  inline void* MaybeArenaPtr() const {
+    return NULL;
+  }
+  public:
+
+  ::google::protobuf::Metadata GetMetadata() const final;
+
+  // nested types ----------------------------------------------------
+
+  // accessors -------------------------------------------------------
+
+  // string setup_port = 1;
+  void clear_setup_port();
+  static const int kSetupPortFieldNumber = 1;
+  const ::std::string& setup_port() const;
+  void set_setup_port(const ::std::string& value);
+  #if LANG_CXX11
+  void set_setup_port(::std::string&& value);
+  #endif
+  void set_setup_port(const char* value);
+  void set_setup_port(const char* value, size_t size);
+  ::std::string* mutable_setup_port();
+  ::std::string* release_setup_port();
+  void set_allocated_setup_port(::std::string* setup_port);
+
+  // @@protoc_insertion_point(class_scope:grpc_admin.ReqSetupKey)
+ private:
+
+  ::google::protobuf::internal::InternalMetadataWithArena _internal_metadata_;
+  ::google::protobuf::internal::ArenaStringPtr setup_port_;
+  mutable ::google::protobuf::internal::CachedSize _cached_size_;
+  friend struct ::protobuf_admin_5fservice_2eproto::TableStruct;
+};
+// -------------------------------------------------------------------
+
+class ResSetupKey : public ::google::protobuf::Message /* @@protoc_insertion_point(class_definition:grpc_admin.ResSetupKey) */ {
+ public:
+  ResSetupKey();
+  virtual ~ResSetupKey();
+
+  ResSetupKey(const ResSetupKey& from);
+
+  inline ResSetupKey& operator=(const ResSetupKey& from) {
+    CopyFrom(from);
+    return *this;
+  }
+  #if LANG_CXX11
+  ResSetupKey(ResSetupKey&& from) noexcept
+    : ResSetupKey() {
+    *this = ::std::move(from);
+  }
+
+  inline ResSetupKey& operator=(ResSetupKey&& from) noexcept {
+    if (GetArenaNoVirtual() == from.GetArenaNoVirtual()) {
+      if (this != &from) InternalSwap(&from);
+    } else {
+      CopyFrom(from);
+    }
+    return *this;
+  }
+  #endif
+  static const ::google::protobuf::Descriptor* descriptor();
+  static const ResSetupKey& default_instance();
+
+  static void InitAsDefaultInstance();  // FOR INTERNAL USE ONLY
+  static inline const ResSetupKey* internal_default_instance() {
+    return reinterpret_cast<const ResSetupKey*>(
+               &_ResSetupKey_default_instance_);
+  }
+  static constexpr int kIndexInFileMessages =
+    1;
+
+  void Swap(ResSetupKey* other);
+  friend void swap(ResSetupKey& a, ResSetupKey& b) {
+    a.Swap(&b);
+  }
+
+  // implements Message ----------------------------------------------
+
+  inline ResSetupKey* New() const final {
+    return CreateMaybeMessage<ResSetupKey>(NULL);
+  }
+
+  ResSetupKey* New(::google::protobuf::Arena* arena) const final {
+    return CreateMaybeMessage<ResSetupKey>(arena);
+  }
+  void CopyFrom(const ::google::protobuf::Message& from) final;
+  void MergeFrom(const ::google::protobuf::Message& from) final;
+  void CopyFrom(const ResSetupKey& from);
+  void MergeFrom(const ResSetupKey& from);
+  void Clear() final;
+  bool IsInitialized() const final;
+
+  size_t ByteSizeLong() const final;
+  bool MergePartialFromCodedStream(
+      ::google::protobuf::io::CodedInputStream* input) final;
+  void SerializeWithCachedSizes(
+      ::google::protobuf::io::CodedOutputStream* output) const final;
+  ::google::protobuf::uint8* InternalSerializeWithCachedSizesToArray(
+      bool deterministic, ::google::protobuf::uint8* target) const final;
+  int GetCachedSize() const final { return _cached_size_.Get(); }
+
+  private:
+  void SharedCtor();
+  void SharedDtor();
+  void SetCachedSize(int size) const final;
+  void InternalSwap(ResSetupKey* other);
+  private:
+  inline ::google::protobuf::Arena* GetArenaNoVirtual() const {
+    return NULL;
+  }
+  inline void* MaybeArenaPtr() const {
+    return NULL;
+  }
+  public:
+
+  ::google::protobuf::Metadata GetMetadata() const final;
+
+  // nested types ----------------------------------------------------
+
+  // accessors -------------------------------------------------------
+
+  // string info = 2;
+  void clear_info();
+  static const int kInfoFieldNumber = 2;
+  const ::std::string& info() const;
+  void set_info(const ::std::string& value);
+  #if LANG_CXX11
+  void set_info(::std::string&& value);
+  #endif
+  void set_info(const char* value);
+  void set_info(const char* value, size_t size);
+  ::std::string* mutable_info();
+  ::std::string* release_info();
+  void set_allocated_info(::std::string* info);
+
+  // bool success = 1;
+  void clear_success();
+  static const int kSuccessFieldNumber = 1;
+  bool success() const;
+  void set_success(bool value);
+
+  // @@protoc_insertion_point(class_scope:grpc_admin.ResSetupKey)
+ private:
+
+  ::google::protobuf::internal::InternalMetadataWithArena _internal_metadata_;
+  ::google::protobuf::internal::ArenaStringPtr info_;
+  bool success_;
+  mutable ::google::protobuf::internal::CachedSize _cached_size_;
+  friend struct ::protobuf_admin_5fservice_2eproto::TableStruct;
+};
+// -------------------------------------------------------------------
+
+class ReqLogin : public ::google::protobuf::Message /* @@protoc_insertion_point(class_definition:grpc_admin.ReqLogin) */ {
+ public:
+  ReqLogin();
+  virtual ~ReqLogin();
+
+  ReqLogin(const ReqLogin& from);
+
+  inline ReqLogin& operator=(const ReqLogin& from) {
+    CopyFrom(from);
+    return *this;
+  }
+  #if LANG_CXX11
+  ReqLogin(ReqLogin&& from) noexcept
+    : ReqLogin() {
+    *this = ::std::move(from);
+  }
+
+  inline ReqLogin& operator=(ReqLogin&& from) noexcept {
+    if (GetArenaNoVirtual() == from.GetArenaNoVirtual()) {
+      if (this != &from) InternalSwap(&from);
+    } else {
+      CopyFrom(from);
+    }
+    return *this;
+  }
+  #endif
+  static const ::google::protobuf::Descriptor* descriptor();
+  static const ReqLogin& default_instance();
+
+  static void InitAsDefaultInstance();  // FOR INTERNAL USE ONLY
+  static inline const ReqLogin* internal_default_instance() {
+    return reinterpret_cast<const ReqLogin*>(
+               &_ReqLogin_default_instance_);
+  }
+  static constexpr int kIndexInFileMessages =
+    2;
+
+  void Swap(ReqLogin* other);
+  friend void swap(ReqLogin& a, ReqLogin& b) {
+    a.Swap(&b);
+  }
+
+  // implements Message ----------------------------------------------
+
+  inline ReqLogin* New() const final {
+    return CreateMaybeMessage<ReqLogin>(NULL);
+  }
+
+  ReqLogin* New(::google::protobuf::Arena* arena) const final {
+    return CreateMaybeMessage<ReqLogin>(arena);
+  }
+  void CopyFrom(const ::google::protobuf::Message& from) final;
+  void MergeFrom(const ::google::protobuf::Message& from) final;
+  void CopyFrom(const ReqLogin& from);
+  void MergeFrom(const ReqLogin& from);
+  void Clear() final;
+  bool IsInitialized() const final;
+
+  size_t ByteSizeLong() const final;
+  bool MergePartialFromCodedStream(
+      ::google::protobuf::io::CodedInputStream* input) final;
+  void SerializeWithCachedSizes(
+      ::google::protobuf::io::CodedOutputStream* output) const final;
+  ::google::protobuf::uint8* InternalSerializeWithCachedSizesToArray(
+      bool deterministic, ::google::protobuf::uint8* target) const final;
+  int GetCachedSize() const final { return _cached_size_.Get(); }
+
+  private:
+  void SharedCtor();
+  void SharedDtor();
+  void SetCachedSize(int size) const final;
+  void InternalSwap(ReqLogin* other);
   private:
   inline ::google::protobuf::Arena* GetArenaNoVirtual() const {
     return NULL;
@@ -188,7 +455,7 @@ class ReqSetup : public ::google::protobuf::Message /* @@protoc_insertion_point(
   ::std::string* release_password();
   void set_allocated_password(::std::string* password);
 
-  // @@protoc_insertion_point(class_scope:grpc_admin.ReqSetup)
+  // @@protoc_insertion_point(class_scope:grpc_admin.ReqLogin)
  private:
 
   ::google::protobuf::internal::InternalMetadataWithArena _internal_metadata_;
@@ -198,24 +465,24 @@ class ReqSetup : public ::google::protobuf::Message /* @@protoc_insertion_point(
 };
 // -------------------------------------------------------------------
 
-class ResSetup : public ::google::protobuf::Message /* @@protoc_insertion_point(class_definition:grpc_admin.ResSetup) */ {
+class ResLogin : public ::google::protobuf::Message /* @@protoc_insertion_point(class_definition:grpc_admin.ResLogin) */ {
  public:
-  ResSetup();
-  virtual ~ResSetup();
+  ResLogin();
+  virtual ~ResLogin();
 
-  ResSetup(const ResSetup& from);
+  ResLogin(const ResLogin& from);
 
-  inline ResSetup& operator=(const ResSetup& from) {
+  inline ResLogin& operator=(const ResLogin& from) {
     CopyFrom(from);
     return *this;
   }
   #if LANG_CXX11
-  ResSetup(ResSetup&& from) noexcept
-    : ResSetup() {
+  ResLogin(ResLogin&& from) noexcept
+    : ResLogin() {
     *this = ::std::move(from);
   }
 
-  inline ResSetup& operator=(ResSetup&& from) noexcept {
+  inline ResLogin& operator=(ResLogin&& from) noexcept {
     if (GetArenaNoVirtual() == from.GetArenaNoVirtual()) {
       if (this != &from) InternalSwap(&from);
     } else {
@@ -225,34 +492,34 @@ class ResSetup : public ::google::protobuf::Message /* @@protoc_insertion_point(
   }
   #endif
   static const ::google::protobuf::Descriptor* descriptor();
-  static const ResSetup& default_instance();
+  static const ResLogin& default_instance();
 
   static void InitAsDefaultInstance();  // FOR INTERNAL USE ONLY
-  static inline const ResSetup* internal_default_instance() {
-    return reinterpret_cast<const ResSetup*>(
-               &_ResSetup_default_instance_);
+  static inline const ResLogin* internal_default_instance() {
+    return reinterpret_cast<const ResLogin*>(
+               &_ResLogin_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    1;
+    3;
 
-  void Swap(ResSetup* other);
-  friend void swap(ResSetup& a, ResSetup& b) {
+  void Swap(ResLogin* other);
+  friend void swap(ResLogin& a, ResLogin& b) {
     a.Swap(&b);
   }
 
   // implements Message ----------------------------------------------
 
-  inline ResSetup* New() const final {
-    return CreateMaybeMessage<ResSetup>(NULL);
+  inline ResLogin* New() const final {
+    return CreateMaybeMessage<ResLogin>(NULL);
   }
 
-  ResSetup* New(::google::protobuf::Arena* arena) const final {
-    return CreateMaybeMessage<ResSetup>(arena);
+  ResLogin* New(::google::protobuf::Arena* arena) const final {
+    return CreateMaybeMessage<ResLogin>(arena);
   }
   void CopyFrom(const ::google::protobuf::Message& from) final;
   void MergeFrom(const ::google::protobuf::Message& from) final;
-  void CopyFrom(const ResSetup& from);
-  void MergeFrom(const ResSetup& from);
+  void CopyFrom(const ResLogin& from);
+  void MergeFrom(const ResLogin& from);
   void Clear() final;
   bool IsInitialized() const final;
 
@@ -269,7 +536,7 @@ class ResSetup : public ::google::protobuf::Message /* @@protoc_insertion_point(
   void SharedCtor();
   void SharedDtor();
   void SetCachedSize(int size) const final;
-  void InternalSwap(ResSetup* other);
+  void InternalSwap(ResLogin* other);
   private:
   inline ::google::protobuf::Arena* GetArenaNoVirtual() const {
     return NULL;
@@ -285,16 +552,31 @@ class ResSetup : public ::google::protobuf::Message /* @@protoc_insertion_point(
 
   // accessors -------------------------------------------------------
 
+  // string info = 2;
+  void clear_info();
+  static const int kInfoFieldNumber = 2;
+  const ::std::string& info() const;
+  void set_info(const ::std::string& value);
+  #if LANG_CXX11
+  void set_info(::std::string&& value);
+  #endif
+  void set_info(const char* value);
+  void set_info(const char* value, size_t size);
+  ::std::string* mutable_info();
+  ::std::string* release_info();
+  void set_allocated_info(::std::string* info);
+
   // bool success = 1;
   void clear_success();
   static const int kSuccessFieldNumber = 1;
   bool success() const;
   void set_success(bool value);
 
-  // @@protoc_insertion_point(class_scope:grpc_admin.ResSetup)
+  // @@protoc_insertion_point(class_scope:grpc_admin.ResLogin)
  private:
 
   ::google::protobuf::internal::InternalMetadataWithArena _internal_metadata_;
+  ::google::protobuf::internal::ArenaStringPtr info_;
   bool success_;
   mutable ::google::protobuf::internal::CachedSize _cached_size_;
   friend struct ::protobuf_admin_5fservice_2eproto::TableStruct;
@@ -336,7 +618,7 @@ class ReqStart : public ::google::protobuf::Message /* @@protoc_insertion_point(
                &_ReqStart_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    2;
+    4;
 
   void Swap(ReqStart* other);
   friend void swap(ReqStart& a, ReqStart& b) {
@@ -386,12 +668,45 @@ class ReqStart : public ::google::protobuf::Message /* @@protoc_insertion_point(
 
   // nested types ----------------------------------------------------
 
+  typedef ReqStart_Mode Mode;
+  static const Mode DEFAULT =
+    ReqStart_Mode_DEFAULT;
+  static const Mode MONITOR =
+    ReqStart_Mode_MONITOR;
+  static inline bool Mode_IsValid(int value) {
+    return ReqStart_Mode_IsValid(value);
+  }
+  static const Mode Mode_MIN =
+    ReqStart_Mode_Mode_MIN;
+  static const Mode Mode_MAX =
+    ReqStart_Mode_Mode_MAX;
+  static const int Mode_ARRAYSIZE =
+    ReqStart_Mode_Mode_ARRAYSIZE;
+  static inline const ::google::protobuf::EnumDescriptor*
+  Mode_descriptor() {
+    return ReqStart_Mode_descriptor();
+  }
+  static inline const ::std::string& Mode_Name(Mode value) {
+    return ReqStart_Mode_Name(value);
+  }
+  static inline bool Mode_Parse(const ::std::string& name,
+      Mode* value) {
+    return ReqStart_Mode_Parse(name, value);
+  }
+
   // accessors -------------------------------------------------------
+
+  // .grpc_admin.ReqStart.Mode mode = 1;
+  void clear_mode();
+  static const int kModeFieldNumber = 1;
+  ::grpc_admin::ReqStart_Mode mode() const;
+  void set_mode(::grpc_admin::ReqStart_Mode value);
 
   // @@protoc_insertion_point(class_scope:grpc_admin.ReqStart)
  private:
 
   ::google::protobuf::internal::InternalMetadataWithArena _internal_metadata_;
+  int mode_;
   mutable ::google::protobuf::internal::CachedSize _cached_size_;
   friend struct ::protobuf_admin_5fservice_2eproto::TableStruct;
 };
@@ -432,7 +747,7 @@ class ResStart : public ::google::protobuf::Message /* @@protoc_insertion_point(
                &_ResStart_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    3;
+    5;
 
   void Swap(ResStart* other);
   friend void swap(ResStart& a, ResStart& b) {
@@ -484,6 +799,20 @@ class ResStart : public ::google::protobuf::Message /* @@protoc_insertion_point(
 
   // accessors -------------------------------------------------------
 
+  // string info = 2;
+  void clear_info();
+  static const int kInfoFieldNumber = 2;
+  const ::std::string& info() const;
+  void set_info(const ::std::string& value);
+  #if LANG_CXX11
+  void set_info(::std::string&& value);
+  #endif
+  void set_info(const char* value);
+  void set_info(const char* value, size_t size);
+  ::std::string* mutable_info();
+  ::std::string* release_info();
+  void set_allocated_info(::std::string* info);
+
   // bool success = 1;
   void clear_success();
   static const int kSuccessFieldNumber = 1;
@@ -494,205 +823,7 @@ class ResStart : public ::google::protobuf::Message /* @@protoc_insertion_point(
  private:
 
   ::google::protobuf::internal::InternalMetadataWithArena _internal_metadata_;
-  bool success_;
-  mutable ::google::protobuf::internal::CachedSize _cached_size_;
-  friend struct ::protobuf_admin_5fservice_2eproto::TableStruct;
-};
-// -------------------------------------------------------------------
-
-class ReqStop : public ::google::protobuf::Message /* @@protoc_insertion_point(class_definition:grpc_admin.ReqStop) */ {
- public:
-  ReqStop();
-  virtual ~ReqStop();
-
-  ReqStop(const ReqStop& from);
-
-  inline ReqStop& operator=(const ReqStop& from) {
-    CopyFrom(from);
-    return *this;
-  }
-  #if LANG_CXX11
-  ReqStop(ReqStop&& from) noexcept
-    : ReqStop() {
-    *this = ::std::move(from);
-  }
-
-  inline ReqStop& operator=(ReqStop&& from) noexcept {
-    if (GetArenaNoVirtual() == from.GetArenaNoVirtual()) {
-      if (this != &from) InternalSwap(&from);
-    } else {
-      CopyFrom(from);
-    }
-    return *this;
-  }
-  #endif
-  static const ::google::protobuf::Descriptor* descriptor();
-  static const ReqStop& default_instance();
-
-  static void InitAsDefaultInstance();  // FOR INTERNAL USE ONLY
-  static inline const ReqStop* internal_default_instance() {
-    return reinterpret_cast<const ReqStop*>(
-               &_ReqStop_default_instance_);
-  }
-  static constexpr int kIndexInFileMessages =
-    4;
-
-  void Swap(ReqStop* other);
-  friend void swap(ReqStop& a, ReqStop& b) {
-    a.Swap(&b);
-  }
-
-  // implements Message ----------------------------------------------
-
-  inline ReqStop* New() const final {
-    return CreateMaybeMessage<ReqStop>(NULL);
-  }
-
-  ReqStop* New(::google::protobuf::Arena* arena) const final {
-    return CreateMaybeMessage<ReqStop>(arena);
-  }
-  void CopyFrom(const ::google::protobuf::Message& from) final;
-  void MergeFrom(const ::google::protobuf::Message& from) final;
-  void CopyFrom(const ReqStop& from);
-  void MergeFrom(const ReqStop& from);
-  void Clear() final;
-  bool IsInitialized() const final;
-
-  size_t ByteSizeLong() const final;
-  bool MergePartialFromCodedStream(
-      ::google::protobuf::io::CodedInputStream* input) final;
-  void SerializeWithCachedSizes(
-      ::google::protobuf::io::CodedOutputStream* output) const final;
-  ::google::protobuf::uint8* InternalSerializeWithCachedSizesToArray(
-      bool deterministic, ::google::protobuf::uint8* target) const final;
-  int GetCachedSize() const final { return _cached_size_.Get(); }
-
-  private:
-  void SharedCtor();
-  void SharedDtor();
-  void SetCachedSize(int size) const final;
-  void InternalSwap(ReqStop* other);
-  private:
-  inline ::google::protobuf::Arena* GetArenaNoVirtual() const {
-    return NULL;
-  }
-  inline void* MaybeArenaPtr() const {
-    return NULL;
-  }
-  public:
-
-  ::google::protobuf::Metadata GetMetadata() const final;
-
-  // nested types ----------------------------------------------------
-
-  // accessors -------------------------------------------------------
-
-  // @@protoc_insertion_point(class_scope:grpc_admin.ReqStop)
- private:
-
-  ::google::protobuf::internal::InternalMetadataWithArena _internal_metadata_;
-  mutable ::google::protobuf::internal::CachedSize _cached_size_;
-  friend struct ::protobuf_admin_5fservice_2eproto::TableStruct;
-};
-// -------------------------------------------------------------------
-
-class ResStop : public ::google::protobuf::Message /* @@protoc_insertion_point(class_definition:grpc_admin.ResStop) */ {
- public:
-  ResStop();
-  virtual ~ResStop();
-
-  ResStop(const ResStop& from);
-
-  inline ResStop& operator=(const ResStop& from) {
-    CopyFrom(from);
-    return *this;
-  }
-  #if LANG_CXX11
-  ResStop(ResStop&& from) noexcept
-    : ResStop() {
-    *this = ::std::move(from);
-  }
-
-  inline ResStop& operator=(ResStop&& from) noexcept {
-    if (GetArenaNoVirtual() == from.GetArenaNoVirtual()) {
-      if (this != &from) InternalSwap(&from);
-    } else {
-      CopyFrom(from);
-    }
-    return *this;
-  }
-  #endif
-  static const ::google::protobuf::Descriptor* descriptor();
-  static const ResStop& default_instance();
-
-  static void InitAsDefaultInstance();  // FOR INTERNAL USE ONLY
-  static inline const ResStop* internal_default_instance() {
-    return reinterpret_cast<const ResStop*>(
-               &_ResStop_default_instance_);
-  }
-  static constexpr int kIndexInFileMessages =
-    5;
-
-  void Swap(ResStop* other);
-  friend void swap(ResStop& a, ResStop& b) {
-    a.Swap(&b);
-  }
-
-  // implements Message ----------------------------------------------
-
-  inline ResStop* New() const final {
-    return CreateMaybeMessage<ResStop>(NULL);
-  }
-
-  ResStop* New(::google::protobuf::Arena* arena) const final {
-    return CreateMaybeMessage<ResStop>(arena);
-  }
-  void CopyFrom(const ::google::protobuf::Message& from) final;
-  void MergeFrom(const ::google::protobuf::Message& from) final;
-  void CopyFrom(const ResStop& from);
-  void MergeFrom(const ResStop& from);
-  void Clear() final;
-  bool IsInitialized() const final;
-
-  size_t ByteSizeLong() const final;
-  bool MergePartialFromCodedStream(
-      ::google::protobuf::io::CodedInputStream* input) final;
-  void SerializeWithCachedSizes(
-      ::google::protobuf::io::CodedOutputStream* output) const final;
-  ::google::protobuf::uint8* InternalSerializeWithCachedSizesToArray(
-      bool deterministic, ::google::protobuf::uint8* target) const final;
-  int GetCachedSize() const final { return _cached_size_.Get(); }
-
-  private:
-  void SharedCtor();
-  void SharedDtor();
-  void SetCachedSize(int size) const final;
-  void InternalSwap(ResStop* other);
-  private:
-  inline ::google::protobuf::Arena* GetArenaNoVirtual() const {
-    return NULL;
-  }
-  inline void* MaybeArenaPtr() const {
-    return NULL;
-  }
-  public:
-
-  ::google::protobuf::Metadata GetMetadata() const final;
-
-  // nested types ----------------------------------------------------
-
-  // accessors -------------------------------------------------------
-
-  // bool success = 1;
-  void clear_success();
-  static const int kSuccessFieldNumber = 1;
-  bool success() const;
-  void set_success(bool value);
-
-  // @@protoc_insertion_point(class_scope:grpc_admin.ResStop)
- private:
-
-  ::google::protobuf::internal::InternalMetadataWithArena _internal_metadata_;
+  ::google::protobuf::internal::ArenaStringPtr info_;
   bool success_;
   mutable ::google::protobuf::internal::CachedSize _cached_size_;
   friend struct ::protobuf_admin_5fservice_2eproto::TableStruct;
@@ -896,6 +1027,434 @@ class ResStatus : public ::google::protobuf::Message /* @@protoc_insertion_point
   mutable ::google::protobuf::internal::CachedSize _cached_size_;
   friend struct ::protobuf_admin_5fservice_2eproto::TableStruct;
 };
+// -------------------------------------------------------------------
+
+class ReqLoadWorld : public ::google::protobuf::Message /* @@protoc_insertion_point(class_definition:grpc_admin.ReqLoadWorld) */ {
+ public:
+  ReqLoadWorld();
+  virtual ~ReqLoadWorld();
+
+  ReqLoadWorld(const ReqLoadWorld& from);
+
+  inline ReqLoadWorld& operator=(const ReqLoadWorld& from) {
+    CopyFrom(from);
+    return *this;
+  }
+  #if LANG_CXX11
+  ReqLoadWorld(ReqLoadWorld&& from) noexcept
+    : ReqLoadWorld() {
+    *this = ::std::move(from);
+  }
+
+  inline ReqLoadWorld& operator=(ReqLoadWorld&& from) noexcept {
+    if (GetArenaNoVirtual() == from.GetArenaNoVirtual()) {
+      if (this != &from) InternalSwap(&from);
+    } else {
+      CopyFrom(from);
+    }
+    return *this;
+  }
+  #endif
+  static const ::google::protobuf::Descriptor* descriptor();
+  static const ReqLoadWorld& default_instance();
+
+  static void InitAsDefaultInstance();  // FOR INTERNAL USE ONLY
+  static inline const ReqLoadWorld* internal_default_instance() {
+    return reinterpret_cast<const ReqLoadWorld*>(
+               &_ReqLoadWorld_default_instance_);
+  }
+  static constexpr int kIndexInFileMessages =
+    8;
+
+  void Swap(ReqLoadWorld* other);
+  friend void swap(ReqLoadWorld& a, ReqLoadWorld& b) {
+    a.Swap(&b);
+  }
+
+  // implements Message ----------------------------------------------
+
+  inline ReqLoadWorld* New() const final {
+    return CreateMaybeMessage<ReqLoadWorld>(NULL);
+  }
+
+  ReqLoadWorld* New(::google::protobuf::Arena* arena) const final {
+    return CreateMaybeMessage<ReqLoadWorld>(arena);
+  }
+  void CopyFrom(const ::google::protobuf::Message& from) final;
+  void MergeFrom(const ::google::protobuf::Message& from) final;
+  void CopyFrom(const ReqLoadWorld& from);
+  void MergeFrom(const ReqLoadWorld& from);
+  void Clear() final;
+  bool IsInitialized() const final;
+
+  size_t ByteSizeLong() const final;
+  bool MergePartialFromCodedStream(
+      ::google::protobuf::io::CodedInputStream* input) final;
+  void SerializeWithCachedSizes(
+      ::google::protobuf::io::CodedOutputStream* output) const final;
+  ::google::protobuf::uint8* InternalSerializeWithCachedSizesToArray(
+      bool deterministic, ::google::protobuf::uint8* target) const final;
+  int GetCachedSize() const final { return _cached_size_.Get(); }
+
+  private:
+  void SharedCtor();
+  void SharedDtor();
+  void SetCachedSize(int size) const final;
+  void InternalSwap(ReqLoadWorld* other);
+  private:
+  inline ::google::protobuf::Arena* GetArenaNoVirtual() const {
+    return NULL;
+  }
+  inline void* MaybeArenaPtr() const {
+    return NULL;
+  }
+  public:
+
+  ::google::protobuf::Metadata GetMetadata() const final;
+
+  // nested types ----------------------------------------------------
+
+  // accessors -------------------------------------------------------
+
+  // @@protoc_insertion_point(class_scope:grpc_admin.ReqLoadWorld)
+ private:
+
+  ::google::protobuf::internal::InternalMetadataWithArena _internal_metadata_;
+  mutable ::google::protobuf::internal::CachedSize _cached_size_;
+  friend struct ::protobuf_admin_5fservice_2eproto::TableStruct;
+};
+// -------------------------------------------------------------------
+
+class ResLoadWorld : public ::google::protobuf::Message /* @@protoc_insertion_point(class_definition:grpc_admin.ResLoadWorld) */ {
+ public:
+  ResLoadWorld();
+  virtual ~ResLoadWorld();
+
+  ResLoadWorld(const ResLoadWorld& from);
+
+  inline ResLoadWorld& operator=(const ResLoadWorld& from) {
+    CopyFrom(from);
+    return *this;
+  }
+  #if LANG_CXX11
+  ResLoadWorld(ResLoadWorld&& from) noexcept
+    : ResLoadWorld() {
+    *this = ::std::move(from);
+  }
+
+  inline ResLoadWorld& operator=(ResLoadWorld&& from) noexcept {
+    if (GetArenaNoVirtual() == from.GetArenaNoVirtual()) {
+      if (this != &from) InternalSwap(&from);
+    } else {
+      CopyFrom(from);
+    }
+    return *this;
+  }
+  #endif
+  static const ::google::protobuf::Descriptor* descriptor();
+  static const ResLoadWorld& default_instance();
+
+  static void InitAsDefaultInstance();  // FOR INTERNAL USE ONLY
+  static inline const ResLoadWorld* internal_default_instance() {
+    return reinterpret_cast<const ResLoadWorld*>(
+               &_ResLoadWorld_default_instance_);
+  }
+  static constexpr int kIndexInFileMessages =
+    9;
+
+  void Swap(ResLoadWorld* other);
+  friend void swap(ResLoadWorld& a, ResLoadWorld& b) {
+    a.Swap(&b);
+  }
+
+  // implements Message ----------------------------------------------
+
+  inline ResLoadWorld* New() const final {
+    return CreateMaybeMessage<ResLoadWorld>(NULL);
+  }
+
+  ResLoadWorld* New(::google::protobuf::Arena* arena) const final {
+    return CreateMaybeMessage<ResLoadWorld>(arena);
+  }
+  void CopyFrom(const ::google::protobuf::Message& from) final;
+  void MergeFrom(const ::google::protobuf::Message& from) final;
+  void CopyFrom(const ResLoadWorld& from);
+  void MergeFrom(const ResLoadWorld& from);
+  void Clear() final;
+  bool IsInitialized() const final;
+
+  size_t ByteSizeLong() const final;
+  bool MergePartialFromCodedStream(
+      ::google::protobuf::io::CodedInputStream* input) final;
+  void SerializeWithCachedSizes(
+      ::google::protobuf::io::CodedOutputStream* output) const final;
+  ::google::protobuf::uint8* InternalSerializeWithCachedSizesToArray(
+      bool deterministic, ::google::protobuf::uint8* target) const final;
+  int GetCachedSize() const final { return _cached_size_.Get(); }
+
+  private:
+  void SharedCtor();
+  void SharedDtor();
+  void SetCachedSize(int size) const final;
+  void InternalSwap(ResLoadWorld* other);
+  private:
+  inline ::google::protobuf::Arena* GetArenaNoVirtual() const {
+    return NULL;
+  }
+  inline void* MaybeArenaPtr() const {
+    return NULL;
+  }
+  public:
+
+  ::google::protobuf::Metadata GetMetadata() const final;
+
+  // nested types ----------------------------------------------------
+
+  // accessors -------------------------------------------------------
+
+  // string info = 2;
+  void clear_info();
+  static const int kInfoFieldNumber = 2;
+  const ::std::string& info() const;
+  void set_info(const ::std::string& value);
+  #if LANG_CXX11
+  void set_info(::std::string&& value);
+  #endif
+  void set_info(const char* value);
+  void set_info(const char* value, size_t size);
+  ::std::string* mutable_info();
+  ::std::string* release_info();
+  void set_allocated_info(::std::string* info);
+
+  // bool success = 1;
+  void clear_success();
+  static const int kSuccessFieldNumber = 1;
+  bool success() const;
+  void set_success(bool value);
+
+  // @@protoc_insertion_point(class_scope:grpc_admin.ResLoadWorld)
+ private:
+
+  ::google::protobuf::internal::InternalMetadataWithArena _internal_metadata_;
+  ::google::protobuf::internal::ArenaStringPtr info_;
+  bool success_;
+  mutable ::google::protobuf::internal::CachedSize _cached_size_;
+  friend struct ::protobuf_admin_5fservice_2eproto::TableStruct;
+};
+// -------------------------------------------------------------------
+
+class ReqLoadChain : public ::google::protobuf::Message /* @@protoc_insertion_point(class_definition:grpc_admin.ReqLoadChain) */ {
+ public:
+  ReqLoadChain();
+  virtual ~ReqLoadChain();
+
+  ReqLoadChain(const ReqLoadChain& from);
+
+  inline ReqLoadChain& operator=(const ReqLoadChain& from) {
+    CopyFrom(from);
+    return *this;
+  }
+  #if LANG_CXX11
+  ReqLoadChain(ReqLoadChain&& from) noexcept
+    : ReqLoadChain() {
+    *this = ::std::move(from);
+  }
+
+  inline ReqLoadChain& operator=(ReqLoadChain&& from) noexcept {
+    if (GetArenaNoVirtual() == from.GetArenaNoVirtual()) {
+      if (this != &from) InternalSwap(&from);
+    } else {
+      CopyFrom(from);
+    }
+    return *this;
+  }
+  #endif
+  static const ::google::protobuf::Descriptor* descriptor();
+  static const ReqLoadChain& default_instance();
+
+  static void InitAsDefaultInstance();  // FOR INTERNAL USE ONLY
+  static inline const ReqLoadChain* internal_default_instance() {
+    return reinterpret_cast<const ReqLoadChain*>(
+               &_ReqLoadChain_default_instance_);
+  }
+  static constexpr int kIndexInFileMessages =
+    10;
+
+  void Swap(ReqLoadChain* other);
+  friend void swap(ReqLoadChain& a, ReqLoadChain& b) {
+    a.Swap(&b);
+  }
+
+  // implements Message ----------------------------------------------
+
+  inline ReqLoadChain* New() const final {
+    return CreateMaybeMessage<ReqLoadChain>(NULL);
+  }
+
+  ReqLoadChain* New(::google::protobuf::Arena* arena) const final {
+    return CreateMaybeMessage<ReqLoadChain>(arena);
+  }
+  void CopyFrom(const ::google::protobuf::Message& from) final;
+  void MergeFrom(const ::google::protobuf::Message& from) final;
+  void CopyFrom(const ReqLoadChain& from);
+  void MergeFrom(const ReqLoadChain& from);
+  void Clear() final;
+  bool IsInitialized() const final;
+
+  size_t ByteSizeLong() const final;
+  bool MergePartialFromCodedStream(
+      ::google::protobuf::io::CodedInputStream* input) final;
+  void SerializeWithCachedSizes(
+      ::google::protobuf::io::CodedOutputStream* output) const final;
+  ::google::protobuf::uint8* InternalSerializeWithCachedSizesToArray(
+      bool deterministic, ::google::protobuf::uint8* target) const final;
+  int GetCachedSize() const final { return _cached_size_.Get(); }
+
+  private:
+  void SharedCtor();
+  void SharedDtor();
+  void SetCachedSize(int size) const final;
+  void InternalSwap(ReqLoadChain* other);
+  private:
+  inline ::google::protobuf::Arena* GetArenaNoVirtual() const {
+    return NULL;
+  }
+  inline void* MaybeArenaPtr() const {
+    return NULL;
+  }
+  public:
+
+  ::google::protobuf::Metadata GetMetadata() const final;
+
+  // nested types ----------------------------------------------------
+
+  // accessors -------------------------------------------------------
+
+  // @@protoc_insertion_point(class_scope:grpc_admin.ReqLoadChain)
+ private:
+
+  ::google::protobuf::internal::InternalMetadataWithArena _internal_metadata_;
+  mutable ::google::protobuf::internal::CachedSize _cached_size_;
+  friend struct ::protobuf_admin_5fservice_2eproto::TableStruct;
+};
+// -------------------------------------------------------------------
+
+class ResLoadChain : public ::google::protobuf::Message /* @@protoc_insertion_point(class_definition:grpc_admin.ResLoadChain) */ {
+ public:
+  ResLoadChain();
+  virtual ~ResLoadChain();
+
+  ResLoadChain(const ResLoadChain& from);
+
+  inline ResLoadChain& operator=(const ResLoadChain& from) {
+    CopyFrom(from);
+    return *this;
+  }
+  #if LANG_CXX11
+  ResLoadChain(ResLoadChain&& from) noexcept
+    : ResLoadChain() {
+    *this = ::std::move(from);
+  }
+
+  inline ResLoadChain& operator=(ResLoadChain&& from) noexcept {
+    if (GetArenaNoVirtual() == from.GetArenaNoVirtual()) {
+      if (this != &from) InternalSwap(&from);
+    } else {
+      CopyFrom(from);
+    }
+    return *this;
+  }
+  #endif
+  static const ::google::protobuf::Descriptor* descriptor();
+  static const ResLoadChain& default_instance();
+
+  static void InitAsDefaultInstance();  // FOR INTERNAL USE ONLY
+  static inline const ResLoadChain* internal_default_instance() {
+    return reinterpret_cast<const ResLoadChain*>(
+               &_ResLoadChain_default_instance_);
+  }
+  static constexpr int kIndexInFileMessages =
+    11;
+
+  void Swap(ResLoadChain* other);
+  friend void swap(ResLoadChain& a, ResLoadChain& b) {
+    a.Swap(&b);
+  }
+
+  // implements Message ----------------------------------------------
+
+  inline ResLoadChain* New() const final {
+    return CreateMaybeMessage<ResLoadChain>(NULL);
+  }
+
+  ResLoadChain* New(::google::protobuf::Arena* arena) const final {
+    return CreateMaybeMessage<ResLoadChain>(arena);
+  }
+  void CopyFrom(const ::google::protobuf::Message& from) final;
+  void MergeFrom(const ::google::protobuf::Message& from) final;
+  void CopyFrom(const ResLoadChain& from);
+  void MergeFrom(const ResLoadChain& from);
+  void Clear() final;
+  bool IsInitialized() const final;
+
+  size_t ByteSizeLong() const final;
+  bool MergePartialFromCodedStream(
+      ::google::protobuf::io::CodedInputStream* input) final;
+  void SerializeWithCachedSizes(
+      ::google::protobuf::io::CodedOutputStream* output) const final;
+  ::google::protobuf::uint8* InternalSerializeWithCachedSizesToArray(
+      bool deterministic, ::google::protobuf::uint8* target) const final;
+  int GetCachedSize() const final { return _cached_size_.Get(); }
+
+  private:
+  void SharedCtor();
+  void SharedDtor();
+  void SetCachedSize(int size) const final;
+  void InternalSwap(ResLoadChain* other);
+  private:
+  inline ::google::protobuf::Arena* GetArenaNoVirtual() const {
+    return NULL;
+  }
+  inline void* MaybeArenaPtr() const {
+    return NULL;
+  }
+  public:
+
+  ::google::protobuf::Metadata GetMetadata() const final;
+
+  // nested types ----------------------------------------------------
+
+  // accessors -------------------------------------------------------
+
+  // string info = 2;
+  void clear_info();
+  static const int kInfoFieldNumber = 2;
+  const ::std::string& info() const;
+  void set_info(const ::std::string& value);
+  #if LANG_CXX11
+  void set_info(::std::string&& value);
+  #endif
+  void set_info(const char* value);
+  void set_info(const char* value, size_t size);
+  ::std::string* mutable_info();
+  ::std::string* release_info();
+  void set_allocated_info(::std::string* info);
+
+  // bool success = 1;
+  void clear_success();
+  static const int kSuccessFieldNumber = 1;
+  bool success() const;
+  void set_success(bool value);
+
+  // @@protoc_insertion_point(class_scope:grpc_admin.ResLoadChain)
+ private:
+
+  ::google::protobuf::internal::InternalMetadataWithArena _internal_metadata_;
+  ::google::protobuf::internal::ArenaStringPtr info_;
+  bool success_;
+  mutable ::google::protobuf::internal::CachedSize _cached_size_;
+  friend struct ::protobuf_admin_5fservice_2eproto::TableStruct;
+};
 // ===================================================================
 
 
@@ -905,82 +1464,277 @@ class ResStatus : public ::google::protobuf::Message /* @@protoc_insertion_point
   #pragma GCC diagnostic push
   #pragma GCC diagnostic ignored "-Wstrict-aliasing"
 #endif  // __GNUC__
-// ReqSetup
+// ReqSetupKey
 
-// string password = 1;
-inline void ReqSetup::clear_password() {
-  password_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+// string setup_port = 1;
+inline void ReqSetupKey::clear_setup_port() {
+  setup_port_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }
-inline const ::std::string& ReqSetup::password() const {
-  // @@protoc_insertion_point(field_get:grpc_admin.ReqSetup.password)
-  return password_.GetNoArena();
+inline const ::std::string& ReqSetupKey::setup_port() const {
+  // @@protoc_insertion_point(field_get:grpc_admin.ReqSetupKey.setup_port)
+  return setup_port_.GetNoArena();
 }
-inline void ReqSetup::set_password(const ::std::string& value) {
+inline void ReqSetupKey::set_setup_port(const ::std::string& value) {
   
-  password_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), value);
-  // @@protoc_insertion_point(field_set:grpc_admin.ReqSetup.password)
+  setup_port_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), value);
+  // @@protoc_insertion_point(field_set:grpc_admin.ReqSetupKey.setup_port)
 }
 #if LANG_CXX11
-inline void ReqSetup::set_password(::std::string&& value) {
+inline void ReqSetupKey::set_setup_port(::std::string&& value) {
+  
+  setup_port_.SetNoArena(
+    &::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::move(value));
+  // @@protoc_insertion_point(field_set_rvalue:grpc_admin.ReqSetupKey.setup_port)
+}
+#endif
+inline void ReqSetupKey::set_setup_port(const char* value) {
+  GOOGLE_DCHECK(value != NULL);
+  
+  setup_port_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::string(value));
+  // @@protoc_insertion_point(field_set_char:grpc_admin.ReqSetupKey.setup_port)
+}
+inline void ReqSetupKey::set_setup_port(const char* value, size_t size) {
+  
+  setup_port_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(),
+      ::std::string(reinterpret_cast<const char*>(value), size));
+  // @@protoc_insertion_point(field_set_pointer:grpc_admin.ReqSetupKey.setup_port)
+}
+inline ::std::string* ReqSetupKey::mutable_setup_port() {
+  
+  // @@protoc_insertion_point(field_mutable:grpc_admin.ReqSetupKey.setup_port)
+  return setup_port_.MutableNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+}
+inline ::std::string* ReqSetupKey::release_setup_port() {
+  // @@protoc_insertion_point(field_release:grpc_admin.ReqSetupKey.setup_port)
+  
+  return setup_port_.ReleaseNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+}
+inline void ReqSetupKey::set_allocated_setup_port(::std::string* setup_port) {
+  if (setup_port != NULL) {
+    
+  } else {
+    
+  }
+  setup_port_.SetAllocatedNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), setup_port);
+  // @@protoc_insertion_point(field_set_allocated:grpc_admin.ReqSetupKey.setup_port)
+}
+
+// -------------------------------------------------------------------
+
+// ResSetupKey
+
+// bool success = 1;
+inline void ResSetupKey::clear_success() {
+  success_ = false;
+}
+inline bool ResSetupKey::success() const {
+  // @@protoc_insertion_point(field_get:grpc_admin.ResSetupKey.success)
+  return success_;
+}
+inline void ResSetupKey::set_success(bool value) {
+  
+  success_ = value;
+  // @@protoc_insertion_point(field_set:grpc_admin.ResSetupKey.success)
+}
+
+// string info = 2;
+inline void ResSetupKey::clear_info() {
+  info_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+}
+inline const ::std::string& ResSetupKey::info() const {
+  // @@protoc_insertion_point(field_get:grpc_admin.ResSetupKey.info)
+  return info_.GetNoArena();
+}
+inline void ResSetupKey::set_info(const ::std::string& value) {
+  
+  info_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), value);
+  // @@protoc_insertion_point(field_set:grpc_admin.ResSetupKey.info)
+}
+#if LANG_CXX11
+inline void ResSetupKey::set_info(::std::string&& value) {
+  
+  info_.SetNoArena(
+    &::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::move(value));
+  // @@protoc_insertion_point(field_set_rvalue:grpc_admin.ResSetupKey.info)
+}
+#endif
+inline void ResSetupKey::set_info(const char* value) {
+  GOOGLE_DCHECK(value != NULL);
+  
+  info_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::string(value));
+  // @@protoc_insertion_point(field_set_char:grpc_admin.ResSetupKey.info)
+}
+inline void ResSetupKey::set_info(const char* value, size_t size) {
+  
+  info_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(),
+      ::std::string(reinterpret_cast<const char*>(value), size));
+  // @@protoc_insertion_point(field_set_pointer:grpc_admin.ResSetupKey.info)
+}
+inline ::std::string* ResSetupKey::mutable_info() {
+  
+  // @@protoc_insertion_point(field_mutable:grpc_admin.ResSetupKey.info)
+  return info_.MutableNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+}
+inline ::std::string* ResSetupKey::release_info() {
+  // @@protoc_insertion_point(field_release:grpc_admin.ResSetupKey.info)
+  
+  return info_.ReleaseNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+}
+inline void ResSetupKey::set_allocated_info(::std::string* info) {
+  if (info != NULL) {
+    
+  } else {
+    
+  }
+  info_.SetAllocatedNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), info);
+  // @@protoc_insertion_point(field_set_allocated:grpc_admin.ResSetupKey.info)
+}
+
+// -------------------------------------------------------------------
+
+// ReqLogin
+
+// string password = 1;
+inline void ReqLogin::clear_password() {
+  password_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+}
+inline const ::std::string& ReqLogin::password() const {
+  // @@protoc_insertion_point(field_get:grpc_admin.ReqLogin.password)
+  return password_.GetNoArena();
+}
+inline void ReqLogin::set_password(const ::std::string& value) {
+  
+  password_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), value);
+  // @@protoc_insertion_point(field_set:grpc_admin.ReqLogin.password)
+}
+#if LANG_CXX11
+inline void ReqLogin::set_password(::std::string&& value) {
   
   password_.SetNoArena(
     &::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::move(value));
-  // @@protoc_insertion_point(field_set_rvalue:grpc_admin.ReqSetup.password)
+  // @@protoc_insertion_point(field_set_rvalue:grpc_admin.ReqLogin.password)
 }
 #endif
-inline void ReqSetup::set_password(const char* value) {
+inline void ReqLogin::set_password(const char* value) {
   GOOGLE_DCHECK(value != NULL);
   
   password_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::string(value));
-  // @@protoc_insertion_point(field_set_char:grpc_admin.ReqSetup.password)
+  // @@protoc_insertion_point(field_set_char:grpc_admin.ReqLogin.password)
 }
-inline void ReqSetup::set_password(const char* value, size_t size) {
+inline void ReqLogin::set_password(const char* value, size_t size) {
   
   password_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(),
       ::std::string(reinterpret_cast<const char*>(value), size));
-  // @@protoc_insertion_point(field_set_pointer:grpc_admin.ReqSetup.password)
+  // @@protoc_insertion_point(field_set_pointer:grpc_admin.ReqLogin.password)
 }
-inline ::std::string* ReqSetup::mutable_password() {
+inline ::std::string* ReqLogin::mutable_password() {
   
-  // @@protoc_insertion_point(field_mutable:grpc_admin.ReqSetup.password)
+  // @@protoc_insertion_point(field_mutable:grpc_admin.ReqLogin.password)
   return password_.MutableNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }
-inline ::std::string* ReqSetup::release_password() {
-  // @@protoc_insertion_point(field_release:grpc_admin.ReqSetup.password)
+inline ::std::string* ReqLogin::release_password() {
+  // @@protoc_insertion_point(field_release:grpc_admin.ReqLogin.password)
   
   return password_.ReleaseNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }
-inline void ReqSetup::set_allocated_password(::std::string* password) {
+inline void ReqLogin::set_allocated_password(::std::string* password) {
   if (password != NULL) {
     
   } else {
     
   }
   password_.SetAllocatedNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), password);
-  // @@protoc_insertion_point(field_set_allocated:grpc_admin.ReqSetup.password)
+  // @@protoc_insertion_point(field_set_allocated:grpc_admin.ReqLogin.password)
 }
 
 // -------------------------------------------------------------------
 
-// ResSetup
+// ResLogin
 
 // bool success = 1;
-inline void ResSetup::clear_success() {
+inline void ResLogin::clear_success() {
   success_ = false;
 }
-inline bool ResSetup::success() const {
-  // @@protoc_insertion_point(field_get:grpc_admin.ResSetup.success)
+inline bool ResLogin::success() const {
+  // @@protoc_insertion_point(field_get:grpc_admin.ResLogin.success)
   return success_;
 }
-inline void ResSetup::set_success(bool value) {
+inline void ResLogin::set_success(bool value) {
   
   success_ = value;
-  // @@protoc_insertion_point(field_set:grpc_admin.ResSetup.success)
+  // @@protoc_insertion_point(field_set:grpc_admin.ResLogin.success)
+}
+
+// string info = 2;
+inline void ResLogin::clear_info() {
+  info_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+}
+inline const ::std::string& ResLogin::info() const {
+  // @@protoc_insertion_point(field_get:grpc_admin.ResLogin.info)
+  return info_.GetNoArena();
+}
+inline void ResLogin::set_info(const ::std::string& value) {
+  
+  info_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), value);
+  // @@protoc_insertion_point(field_set:grpc_admin.ResLogin.info)
+}
+#if LANG_CXX11
+inline void ResLogin::set_info(::std::string&& value) {
+  
+  info_.SetNoArena(
+    &::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::move(value));
+  // @@protoc_insertion_point(field_set_rvalue:grpc_admin.ResLogin.info)
+}
+#endif
+inline void ResLogin::set_info(const char* value) {
+  GOOGLE_DCHECK(value != NULL);
+  
+  info_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::string(value));
+  // @@protoc_insertion_point(field_set_char:grpc_admin.ResLogin.info)
+}
+inline void ResLogin::set_info(const char* value, size_t size) {
+  
+  info_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(),
+      ::std::string(reinterpret_cast<const char*>(value), size));
+  // @@protoc_insertion_point(field_set_pointer:grpc_admin.ResLogin.info)
+}
+inline ::std::string* ResLogin::mutable_info() {
+  
+  // @@protoc_insertion_point(field_mutable:grpc_admin.ResLogin.info)
+  return info_.MutableNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+}
+inline ::std::string* ResLogin::release_info() {
+  // @@protoc_insertion_point(field_release:grpc_admin.ResLogin.info)
+  
+  return info_.ReleaseNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+}
+inline void ResLogin::set_allocated_info(::std::string* info) {
+  if (info != NULL) {
+    
+  } else {
+    
+  }
+  info_.SetAllocatedNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), info);
+  // @@protoc_insertion_point(field_set_allocated:grpc_admin.ResLogin.info)
 }
 
 // -------------------------------------------------------------------
 
 // ReqStart
+
+// .grpc_admin.ReqStart.Mode mode = 1;
+inline void ReqStart::clear_mode() {
+  mode_ = 0;
+}
+inline ::grpc_admin::ReqStart_Mode ReqStart::mode() const {
+  // @@protoc_insertion_point(field_get:grpc_admin.ReqStart.mode)
+  return static_cast< ::grpc_admin::ReqStart_Mode >(mode_);
+}
+inline void ReqStart::set_mode(::grpc_admin::ReqStart_Mode value) {
+  
+  mode_ = value;
+  // @@protoc_insertion_point(field_set:grpc_admin.ReqStart.mode)
+}
 
 // -------------------------------------------------------------------
 
@@ -1000,26 +1754,57 @@ inline void ResStart::set_success(bool value) {
   // @@protoc_insertion_point(field_set:grpc_admin.ResStart.success)
 }
 
-// -------------------------------------------------------------------
-
-// ReqStop
-
-// -------------------------------------------------------------------
-
-// ResStop
-
-// bool success = 1;
-inline void ResStop::clear_success() {
-  success_ = false;
+// string info = 2;
+inline void ResStart::clear_info() {
+  info_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }
-inline bool ResStop::success() const {
-  // @@protoc_insertion_point(field_get:grpc_admin.ResStop.success)
-  return success_;
+inline const ::std::string& ResStart::info() const {
+  // @@protoc_insertion_point(field_get:grpc_admin.ResStart.info)
+  return info_.GetNoArena();
 }
-inline void ResStop::set_success(bool value) {
+inline void ResStart::set_info(const ::std::string& value) {
   
-  success_ = value;
-  // @@protoc_insertion_point(field_set:grpc_admin.ResStop.success)
+  info_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), value);
+  // @@protoc_insertion_point(field_set:grpc_admin.ResStart.info)
+}
+#if LANG_CXX11
+inline void ResStart::set_info(::std::string&& value) {
+  
+  info_.SetNoArena(
+    &::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::move(value));
+  // @@protoc_insertion_point(field_set_rvalue:grpc_admin.ResStart.info)
+}
+#endif
+inline void ResStart::set_info(const char* value) {
+  GOOGLE_DCHECK(value != NULL);
+  
+  info_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::string(value));
+  // @@protoc_insertion_point(field_set_char:grpc_admin.ResStart.info)
+}
+inline void ResStart::set_info(const char* value, size_t size) {
+  
+  info_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(),
+      ::std::string(reinterpret_cast<const char*>(value), size));
+  // @@protoc_insertion_point(field_set_pointer:grpc_admin.ResStart.info)
+}
+inline ::std::string* ResStart::mutable_info() {
+  
+  // @@protoc_insertion_point(field_mutable:grpc_admin.ResStart.info)
+  return info_.MutableNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+}
+inline ::std::string* ResStart::release_info() {
+  // @@protoc_insertion_point(field_release:grpc_admin.ResStart.info)
+  
+  return info_.ReleaseNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+}
+inline void ResStart::set_allocated_info(::std::string* info) {
+  if (info != NULL) {
+    
+  } else {
+    
+  }
+  info_.SetAllocatedNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), info);
+  // @@protoc_insertion_point(field_set_allocated:grpc_admin.ResStart.info)
 }
 
 // -------------------------------------------------------------------
@@ -1044,9 +1829,167 @@ inline void ResStatus::set_alive(bool value) {
   // @@protoc_insertion_point(field_set:grpc_admin.ResStatus.alive)
 }
 
+// -------------------------------------------------------------------
+
+// ReqLoadWorld
+
+// -------------------------------------------------------------------
+
+// ResLoadWorld
+
+// bool success = 1;
+inline void ResLoadWorld::clear_success() {
+  success_ = false;
+}
+inline bool ResLoadWorld::success() const {
+  // @@protoc_insertion_point(field_get:grpc_admin.ResLoadWorld.success)
+  return success_;
+}
+inline void ResLoadWorld::set_success(bool value) {
+  
+  success_ = value;
+  // @@protoc_insertion_point(field_set:grpc_admin.ResLoadWorld.success)
+}
+
+// string info = 2;
+inline void ResLoadWorld::clear_info() {
+  info_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+}
+inline const ::std::string& ResLoadWorld::info() const {
+  // @@protoc_insertion_point(field_get:grpc_admin.ResLoadWorld.info)
+  return info_.GetNoArena();
+}
+inline void ResLoadWorld::set_info(const ::std::string& value) {
+  
+  info_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), value);
+  // @@protoc_insertion_point(field_set:grpc_admin.ResLoadWorld.info)
+}
+#if LANG_CXX11
+inline void ResLoadWorld::set_info(::std::string&& value) {
+  
+  info_.SetNoArena(
+    &::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::move(value));
+  // @@protoc_insertion_point(field_set_rvalue:grpc_admin.ResLoadWorld.info)
+}
+#endif
+inline void ResLoadWorld::set_info(const char* value) {
+  GOOGLE_DCHECK(value != NULL);
+  
+  info_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::string(value));
+  // @@protoc_insertion_point(field_set_char:grpc_admin.ResLoadWorld.info)
+}
+inline void ResLoadWorld::set_info(const char* value, size_t size) {
+  
+  info_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(),
+      ::std::string(reinterpret_cast<const char*>(value), size));
+  // @@protoc_insertion_point(field_set_pointer:grpc_admin.ResLoadWorld.info)
+}
+inline ::std::string* ResLoadWorld::mutable_info() {
+  
+  // @@protoc_insertion_point(field_mutable:grpc_admin.ResLoadWorld.info)
+  return info_.MutableNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+}
+inline ::std::string* ResLoadWorld::release_info() {
+  // @@protoc_insertion_point(field_release:grpc_admin.ResLoadWorld.info)
+  
+  return info_.ReleaseNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+}
+inline void ResLoadWorld::set_allocated_info(::std::string* info) {
+  if (info != NULL) {
+    
+  } else {
+    
+  }
+  info_.SetAllocatedNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), info);
+  // @@protoc_insertion_point(field_set_allocated:grpc_admin.ResLoadWorld.info)
+}
+
+// -------------------------------------------------------------------
+
+// ReqLoadChain
+
+// -------------------------------------------------------------------
+
+// ResLoadChain
+
+// bool success = 1;
+inline void ResLoadChain::clear_success() {
+  success_ = false;
+}
+inline bool ResLoadChain::success() const {
+  // @@protoc_insertion_point(field_get:grpc_admin.ResLoadChain.success)
+  return success_;
+}
+inline void ResLoadChain::set_success(bool value) {
+  
+  success_ = value;
+  // @@protoc_insertion_point(field_set:grpc_admin.ResLoadChain.success)
+}
+
+// string info = 2;
+inline void ResLoadChain::clear_info() {
+  info_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+}
+inline const ::std::string& ResLoadChain::info() const {
+  // @@protoc_insertion_point(field_get:grpc_admin.ResLoadChain.info)
+  return info_.GetNoArena();
+}
+inline void ResLoadChain::set_info(const ::std::string& value) {
+  
+  info_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), value);
+  // @@protoc_insertion_point(field_set:grpc_admin.ResLoadChain.info)
+}
+#if LANG_CXX11
+inline void ResLoadChain::set_info(::std::string&& value) {
+  
+  info_.SetNoArena(
+    &::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::move(value));
+  // @@protoc_insertion_point(field_set_rvalue:grpc_admin.ResLoadChain.info)
+}
+#endif
+inline void ResLoadChain::set_info(const char* value) {
+  GOOGLE_DCHECK(value != NULL);
+  
+  info_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::string(value));
+  // @@protoc_insertion_point(field_set_char:grpc_admin.ResLoadChain.info)
+}
+inline void ResLoadChain::set_info(const char* value, size_t size) {
+  
+  info_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(),
+      ::std::string(reinterpret_cast<const char*>(value), size));
+  // @@protoc_insertion_point(field_set_pointer:grpc_admin.ResLoadChain.info)
+}
+inline ::std::string* ResLoadChain::mutable_info() {
+  
+  // @@protoc_insertion_point(field_mutable:grpc_admin.ResLoadChain.info)
+  return info_.MutableNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+}
+inline ::std::string* ResLoadChain::release_info() {
+  // @@protoc_insertion_point(field_release:grpc_admin.ResLoadChain.info)
+  
+  return info_.ReleaseNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+}
+inline void ResLoadChain::set_allocated_info(::std::string* info) {
+  if (info != NULL) {
+    
+  } else {
+    
+  }
+  info_.SetAllocatedNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), info);
+  // @@protoc_insertion_point(field_set_allocated:grpc_admin.ResLoadChain.info)
+}
+
 #ifdef __GNUC__
   #pragma GCC diagnostic pop
 #endif  // __GNUC__
+// -------------------------------------------------------------------
+
+// -------------------------------------------------------------------
+
+// -------------------------------------------------------------------
+
+// -------------------------------------------------------------------
+
 // -------------------------------------------------------------------
 
 // -------------------------------------------------------------------
@@ -1065,6 +2008,18 @@ inline void ResStatus::set_alive(bool value) {
 // @@protoc_insertion_point(namespace_scope)
 
 }  // namespace grpc_admin
+
+namespace google {
+namespace protobuf {
+
+template <> struct is_proto_enum< ::grpc_admin::ReqStart_Mode> : ::std::true_type {};
+template <>
+inline const EnumDescriptor* GetEnumDescriptor< ::grpc_admin::ReqStart_Mode>() {
+  return ::grpc_admin::ReqStart_Mode_descriptor();
+}
+
+}  // namespace protobuf
+}  // namespace google
 
 // @@protoc_insertion_point(global_scope)
 
