@@ -162,6 +162,10 @@ const string &Application::getId() const {
   return id;
 }
 
+void Application::setRunFlag(){
+  running = true;
+}
+
 bool Application::isAppRunning() {
   return running;
 }
