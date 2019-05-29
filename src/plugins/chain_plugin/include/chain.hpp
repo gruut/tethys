@@ -49,9 +49,32 @@ public:
   block_height_type getLatestResolvedHeight();
   string getValueByKey(DataType what, const string &base_keys);
 
+  // Unresolved block pool functions
+  bool queryIncinerate(UnresolvedBlock &UR_block, nlohmann::json &option, result_query_info_type &result_info);
+  bool queryCreate(UnresolvedBlock &UR_block, nlohmann::json &option, result_query_info_type &result_info);
+  bool queryTransfer(UnresolvedBlock &UR_block, nlohmann::json &option, result_query_info_type &result_info);
+  bool queryUserScope(UnresolvedBlock &UR_block, nlohmann::json &option, result_query_info_type &result_info);
+  bool queryContractScope(UnresolvedBlock &UR_block, nlohmann::json &option, result_query_info_type &result_info);
+  bool queryTradeItem(UnresolvedBlock &UR_block, nlohmann::json &option, result_query_info_type &result_info);
+  bool queryTradeVal(UnresolvedBlock &UR_block, nlohmann::json &option, result_query_info_type &result_info);
+  bool queryRunQuery(UnresolvedBlock &UR_block, nlohmann::json &option, result_query_info_type &result_info);
+  bool queryRunContract(UnresolvedBlock &UR_block, nlohmann::json &option, result_query_info_type &result_info);
+  string pidCheck(optional<string> pid, string var_name, int var_type, string var_owner);
+  user_ledger_type findUserLedgerFromPoint(string key, int deq_idx, int vec_idx);
+
+  ubp_push_result_type pushBlock(Block &block, bool is_restore = false);
+  UnresolvedBlock findBlock(const base58_type &block_id, const block_height_type block_height);
+  bool resolveBlock(Block &block, UnresolvedBlock &resolved_result);
+  base58_type getCurrentHeadId();
+  bytes getUserStateRoot();
+  bytes getContractStateRoot();
+  void setPool(const base64_type &last_block_id, block_height_type last_height, timestamp_t last_time, const base64_type &last_hash,
+               const base64_type &prev_block_id);
+
 private:
   unique_ptr<class ChainImpl> impl;
   unique_ptr<RdbController> rdb_controller;
   unique_ptr<KvController> kv_controller;
+  unique_ptr<UnresolvedBlockPool> unresolved_block_pool;
 };
 } // namespace gruut

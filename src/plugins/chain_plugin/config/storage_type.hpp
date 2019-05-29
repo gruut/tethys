@@ -132,6 +132,7 @@ using user_ledger_type = struct UserLedger {
   string tag;
   hash_t pid;
   QueryType query_type;
+  bool is_deleted{false};
 
   UserLedger() = default;
   UserLedger(string var_name_, int var_type_, string uid_, string tag_) : var_name(var_name_), var_type(var_type_), uid(uid_), tag(tag_) {
@@ -154,6 +155,7 @@ using contract_ledger_type = struct ContractLedger {
   string var_info;
   hash_t pid;
   QueryType query_type;
+  bool is_deleted{false};
 
   ContractLedger() = default;
   ContractLedger(string var_name_, int var_type_, string cid_, string var_info_)

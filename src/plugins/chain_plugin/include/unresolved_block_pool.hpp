@@ -102,13 +102,16 @@ public:
                const base64_type &prev_block_id);
 
   bool prepareBins(block_height_type t_height);
-  ubp_push_result_type push(Block &block, bool is_restore = false);
+  ubp_push_result_type pushBlock(Block &block, bool is_restore = false);
   bool resolveBlock(Block &block, UnresolvedBlock &resolved_result);
 
   void restorePool();
   void setupStateTree();
   bytes getUserStateRoot();
   bytes getContractStateRoot();
+
+  user_ledger_type findUserLedgerFromHead(string key);
+  contract_ledger_type findContractLedgerFromHead(string key);
 
   UnresolvedBlock findBlock(const base58_type &block_id, const block_height_type block_height);
   UnresolvedBlock getBlock(int pool_deque_idx, int pool_vec_idx);

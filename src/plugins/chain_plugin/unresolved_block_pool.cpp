@@ -35,8 +35,8 @@ bool UnresolvedBlockPool::prepareBins(block_height_type t_height) {
   return true;
 }
 
-ubp_push_result_type UnresolvedBlockPool::push(Block &block, bool is_restore) {
-  logger::INFO("Unresolved block pool: push called");
+ubp_push_result_type UnresolvedBlockPool::pushBlock(Block &block, bool is_restore) {
+  logger::INFO("Unresolved block pool: pushBlock called");
   ubp_push_result_type ret_val; // 해당 return 구조는 추후 변경 가능성 있음
   ret_val.height = 0;
   ret_val.linked = false;
@@ -325,21 +325,58 @@ void UnresolvedBlockPool::updateTotalNumSSig() {
   }
 }
 
-void UnresolvedBlockPool::setupStateTree()
-{
+void UnresolvedBlockPool::setupStateTree() {
   // RDB에 있는 모든 엔트리를 불러와서 state tree를 작성
   m_us_tree.addNode(entry);
   m_cs_tree.addNode(entry);
 }
 
-bytes UnresolvedBlockPool::getUserStateRoot()
-{
+bytes UnresolvedBlockPool::getUserStateRoot() {
   return m_us_tree.getRootValue();
 }
 
-bytes UnresolvedBlockPool::getContractStateRoot()
-{
+bytes UnresolvedBlockPool::getContractStateRoot() {
   return m_cs_tree.getRootValue();
+}
+
+user_ledger_type UnresolvedBlockPool::findUserLedgerFromHead(string key) {
+  int pool_deque_idx = find_start_height - unresolved_block_pool->getLatestConfirmedHeight() - 1;
+  int pool_vec_idx = vec_idx;
+
+  map<string, user_ledger_type> current_user_ledgers = unresolved_block_pool->getBlock(pool_deque_idx, pool_vec_idx).user_ledger;
+  map<string, user_ledger_type>::iterator it;
+
+  while (1) {
+    it = current_user_ledgers.find(key);
+
+    if (it != current_user_ledgers.end()) {
+      if (it->second.is_deleted) {
+        return;
+      } else {
+        return;
+      }
+      break;
+    }
+    --pool_deque_idx;
+    pool_vec_idx = unresolved_block_pool->getBlock(pool_deque_idx, pool_vec_idx).prev_vector_idx;
+
+    if (pool_deque_idx < 0) {
+      // -1이 되면 db resolved 층까지 왔다는 이야기이다
+      // db에서 select문으로 조회하는데도 찾지 못한다면, 그것은 아예 존재하지 않는 데이터
+      return false;
+    }
+
+    current_user_ledgers = unresolved_block_pool->getBlock(pool_deque_idx, pool_vec_idx).user_ledger;
+  }
+
+  return unresolved_block_pool->getBlock(pool_deque_idx, pool_vec_idx).user_ledger[key];
+}
+
+contract_ledger_type UnresolvedBlockPool::findContractLedgerFromHead(string key) {
+  int pool_deque_idx = find_start_height - unresolved_block_pool->getLatestConfirmedHeight() - 1;
+  int pool_vec_idx = vec_idx;
+
+  unresolved_block_pool->getBlock(pool_deque_idx, pool_vec_idx).contract_ledger[key];
 }
 
 // ------------------------------------------------------------------

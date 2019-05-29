@@ -130,7 +130,6 @@ class ChainPluginImpl {
 public:
   unique_ptr<Chain> chain;
   unique_ptr<TransactionPool> transaction_pool;
-  unique_ptr<UnresolvedBlockPool> unresolved_block_pool;
 
   string dbms;
   string table_name;
@@ -148,7 +147,6 @@ public:
   void initialize() {
     chain = make_unique<Chain>(dbms, table_name, db_user_id, db_password);
     transaction_pool = make_unique<TransactionPool>();
-    unresolved_block_pool = make_unique<UnresolvedBlockPool>();
 
     chain->startup(genesis_state);
   }
@@ -181,7 +179,7 @@ public:
       return;
     }
 
-    ubp_push_result_type push_result = unresolved_block_pool->push(input_block);
+    ubp_push_result_type push_result = chain->pushBlock(input_block);
     if (push_result.height == 0) {
       logger::ERROR("Block input fail: height 0");
       return;
@@ -192,7 +190,7 @@ public:
     }
 
     UnresolvedBlock resolved_block;
-    bool resolve_result = unresolved_block_pool->resolveBlock(input_block, resolved_block);
+    bool resolve_result = chain->resolveBlock(input_block, resolved_block);
     if (resolve_result) {
       chain->insertBlockData(resolved_block.block);
       chain->insertTransactionData(resolved_block.block);
@@ -202,12 +200,13 @@ public:
   }
 
   void processTxResult(const nlohmann::json &result) {
+    // TODO: state tree lock 필요. head가 달라지면서 state tree가 반영되면 정확한 값이 아니게 될 수 있다
     base58_type block_id = json::get<string>(result["block"], "id").value();
     block_height_type block_height = static_cast<block_height_type>(stoi(json::get<string>(result["block"], "height").value()));
-    UnresolvedBlock updated_UR_block = unresolved_block_pool->findBlock(block_id, block_height);
+    UnresolvedBlock updated_UR_block = chain->findBlock(block_id, block_height);
 
-    if (updated_UR_block.block.getBlockId() != unresolved_block_pool->getCurrentHeadId()) {
-      unresolved_block_pool->moveHead(updated_UR_block.block.getPrevBlockId(), updated_UR_block.block.getHeight() - 1);
+    if (updated_UR_block.block.getBlockId() != chain->getCurrentHeadId()) {
+      chain->moveHead(updated_UR_block.block.getPrevBlockId(), updated_UR_block.block.getHeight() - 1);
     }
 
     nlohmann::json results_json = result["results"];
@@ -243,23 +242,23 @@ public:
         } else if (type == "contract.disable") {
           chain->queryContractDisable(updated_UR_block, option_json, result_info);
         } else if (type == "v.incinerate") {
-          queryIncinerate(updated_UR_block, option_json, result_info);
+          chain->queryIncinerate(updated_UR_block, option_json, result_info);
         } else if (type == "v.create") {
-          queryCreate(updated_UR_block, option_json, result_info);
+          chain->queryCreate(updated_UR_block, option_json, result_info);
         } else if (type == "v.transfer") {
-          queryTransfer(updated_UR_block, option_json, result_info);
+          chain->queryTransfer(updated_UR_block, option_json, result_info);
         } else if (type == "scope.user") {
-          queryUserScope(updated_UR_block, option_json, result_info);
+          chain->queryUserScope(updated_UR_block, option_json, result_info);
         } else if (type == "scope.contract") {
-          queryContractScope(updated_UR_block, option_json, result_info);
+          chain->queryContractScope(updated_UR_block, option_json, result_info);
         } else if (type == "trade.item") {
-          queryTradeItem(updated_UR_block, option_json, result_info);
+          chain->queryTradeItem(updated_UR_block, option_json, result_info);
         } else if (type == "trade.v") {
-          queryTradeVal(updated_UR_block, option_json, result_info);
+          chain->queryTradeVal(updated_UR_block, option_json, result_info);
         } else if (type == "run.query") {
-          queryRunQuery(updated_UR_block, option_json, result_info);
+          chain->queryRunQuery(updated_UR_block, option_json, result_info);
         } else if (type == "run.contract") {
-          queryRunContract(updated_UR_block, option_json, result_info);
+          chain->queryRunContract(updated_UR_block, option_json, result_info);
         } else {
           logger::ERROR("URBP, Something error in query process");
         }
@@ -276,8 +275,8 @@ public:
 
     { // test code start
       // 테스트 시에는 임의로 block_input_test.json의 블록들을 저장하는것부터 시작.
-      unresolved_block_pool->setPool("11111111111111111111111111111111", 0, 0,
-                                     "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=", "11111111111111111111111111111111");
+      chain->setPool("11111111111111111111111111111111", 0, 0,
+                     "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=", "11111111111111111111111111111111");
 
       nlohmann::json input_block_json;
 
@@ -295,7 +294,7 @@ public:
       for (int i = 0; i < 8; ++i) {
         blocks[i].initialize(input_block_json[i]);
 
-        ubp_push_result_type push_result = unresolved_block_pool->push(blocks[i]);
+        ubp_push_result_type push_result = chain->pushBlock(blocks[i]);
         if (push_result.height == 0) {
           logger::ERROR("Block input fail: height 0");
           return;
@@ -306,7 +305,7 @@ public:
         }
 
         UnresolvedBlock resolved_block;
-        bool resolve_result = unresolved_block_pool->resolveBlock(blocks[i], resolved_block);
+        bool resolve_result = chain->resolveBlock(blocks[i], resolved_block);
         if (resolve_result) {
           chain->insertBlockData(resolved_block.block);
           chain->insertTransactionData(resolved_block.block);
@@ -450,11 +449,11 @@ public:
   }
 
   bytes getUserStateRoot() {
-    return unresolved_block_pool->getUserStateRoot();
+    return chain->getUserStateRoot();
   }
 
   bytes getContractStateRoot() {
-    return unresolved_block_pool->getContractStateRoot();
+    return chain->getContractStateRoot();
   }
 
   bool verifySSigs(const Block &block) const {
@@ -478,328 +477,6 @@ public:
     return true;
   }
   // block verify part end
-
-  // ledger addition part
-  bool queryIncinerate(UnresolvedBlock &UR_block, nlohmann::json &option, result_query_info_type &result_info) {
-    string amount = json::get<string>(option, "amount").value();
-    string pid = json::get<string>(option, "pid").value();
-
-    user_ledger_type found = findUserLedger(pid, UR_block.block.getHeight() - 1, UR_block.prev_vector_idx);
-    if (found.uid != result_info.user)
-      return false;
-    int modified_value = stoi(found.var_val) - stoi(amount);
-
-    user_ledger_type user_ledger;
-    user_ledger.pid = TypeConverter::stringToBytes(pid);
-    user_ledger.var_val = to_string(modified_value);
-
-    if (modified_value <= 0)
-      user_ledger.query_type = QueryType::DELETE;
-    else
-      user_ledger.query_type = QueryType::UPDATE;
-
-    UR_block.user_ledger[pid] = user_ledger;
-
-    return true;
-  }
-
-  bool queryCreate(UnresolvedBlock &UR_block, nlohmann::json &option, result_query_info_type &result_info) {
-    string amount = json::get<string>(option, "amount").value();
-    string var_name = json::get<string>(option, "name").value();
-    int var_type = stoi(json::get<string>(option, "type").value());
-    string tag = json::get<string>(option, "tag").value();
-    base58_type uid = result_info.user;
-    timestamp_t up_time = TimeUtil::nowBigInt(); // TODO: DB에 저장되는 시간인지, mem_ledger에 들어오는 시간인지
-    block_height_type up_block = result_info.block_height;
-
-    user_ledger_type user_ledger(var_name, var_type, uid, tag);
-    string pid = TypeConverter::bytesToString(user_ledger.pid);
-
-    user_ledger_type found = findUserLedger(pid, UR_block.block.getHeight() - 1, UR_block.prev_vector_idx);
-    if (found.uid != result_info.user)
-      return false;
-
-    int modified_value = stoi(found.var_val) + stoi(amount);
-    user_ledger.var_val = to_string(modified_value);
-
-    user_ledger.up_time = up_time;
-    user_ledger.up_block = up_block;
-    user_ledger.query_type = QueryType::INSERT;
-
-    UR_block.user_ledger[pid] = user_ledger;
-
-    return true;
-  }
-
-  bool queryTransfer(UnresolvedBlock &UR_block, nlohmann::json &option, result_query_info_type &result_info) {
-    // TODO: 권한 체크 세부적으로 구현
-    string from = json::get<string>(option, "from").value();
-    string to = json::get<string>(option, "to").value();
-    string amount = json::get<string>(option, "amount").value();
-    string unit = json::get<string>(option, "unit").value();
-    string key;
-    auto pid = json::get<string>(option, "pid");
-    string tag = json::get<string>(option, "tag").value();
-    int var_type = loadVarType();
-
-    // Transfer : from
-    if (from == "contract") {
-      // from : contract
-      string cid = result_info.self;
-      contract_ledger_type contract_ledger;
-
-      key = pidCheck(pid, unit, var_type, from);
-      if (pid.has_value()) {
-        contract_ledger.pid = TypeConverter::stringToBytes(pid.value());
-      }
-
-      contract_ledger_type found = findContractLedger(key, UR_block.block.getHeight() - 1, UR_block.prev_vector_idx);
-      int modified_value = stoi(found.var_val) - stoi(amount);
-      contract_ledger.var_val = to_string(modified_value);
-
-      if (modified_value == 0)
-        contract_ledger.query_type = QueryType::DELETE;
-      else if (modified_value > 0)
-        contract_ledger.query_type = QueryType::UPDATE;
-      else {
-        logger::ERROR("var_val is under 0 in queryTransfer!");
-        return false;
-      }
-
-      UR_block.contract_ledger[key] = contract_ledger;
-    } else {
-      // from : user
-      base58_type uid;
-      if (from == "user")
-        uid = result_info.user;
-      else if (from == "author")
-        uid = result_info.author;
-
-      user_ledger_type user_ledger(unit, var_type, uid, tag);
-
-      key = pidCheck(pid, unit, var_type, uid);
-      if (pid.has_value()) {
-        user_ledger.pid = TypeConverter::stringToBytes(pid.value());
-      }
-
-      user_ledger_type found = findUserLedger(key, UR_block.block.getHeight() - 1, UR_block.prev_vector_idx);
-      int modified_value = stoi(found.var_val) - stoi(amount);
-      user_ledger.var_val = to_string(modified_value);
-
-      if (modified_value == 0)
-        user_ledger.query_type = QueryType::DELETE;
-      else if (modified_value > 0)
-        user_ledger.query_type = QueryType::UPDATE;
-      else {
-        logger::ERROR("var_val is under 0 in queryTransfer!");
-        return false;
-      }
-
-      UR_block.user_ledger[key] = user_ledger;
-    }
-
-    // Transfer : to
-    if (to.size() > 45) {
-      // to : contract
-      contract_ledger_type contract_ledger;
-
-      key = pidCheck(pid, unit, var_type, to);
-      if (pid.has_value()) {
-        contract_ledger.pid = TypeConverter::stringToBytes(pid.value());
-      }
-
-      contract_ledger_type found = findContractLedger(key, UR_block.block.getHeight() - 1, UR_block.prev_vector_idx);
-
-      if (found.var_val == "")
-        contract_ledger.query_type = QueryType::INSERT;
-      else
-        contract_ledger.query_type = QueryType::UPDATE;
-
-      int modified_value = stoi(found.var_val) + stoi(amount);
-      contract_ledger.var_val = to_string(modified_value);
-      contract_ledger.var_info = from;
-
-      UR_block.contract_ledger[key] = contract_ledger;
-    } else {
-      // to : user
-      user_ledger_type user_ledger;
-
-      key = pidCheck(pid, unit, var_type, to);
-      if (pid.has_value()) {
-        user_ledger.pid = TypeConverter::stringToBytes(pid.value());
-      }
-
-      user_ledger_type found = findUserLedger(key, UR_block.block.getHeight() - 1, UR_block.prev_vector_idx);
-      if (found.uid != result_info.user)
-        return false;
-
-      if (found.var_val == "")
-        user_ledger.query_type = QueryType::INSERT;
-      else
-        user_ledger.query_type = QueryType::UPDATE;
-
-      int modified_value = stoi(found.var_val) + stoi(amount);
-      user_ledger.var_val = to_string(modified_value);
-
-      user_ledger.tag = tag;
-
-      UR_block.user_ledger[key] = user_ledger;
-    }
-
-    return true;
-  }
-
-  bool queryUserScope(UnresolvedBlock &UR_block, nlohmann::json &option, result_query_info_type &result_info) {
-    user_ledger_type user_ledger;
-
-    string var_name = json::get<string>(option, "name").value();
-    string target = json::get<string>(option, "for").value(); // user or author
-    string var_value = json::get<string>(option, "value").value();
-    int var_type; // TODO: 세부적인 값 설정 필요
-    string key;
-    auto pid = json::get<string>(option, "pid");
-    if (pid.has_value()) {
-      user_ledger.pid = TypeConverter::stringToBytes(pid.value());
-    } else {
-      // TODO: var_name이 unique한지 검증하는 함수 추가
-      //  var_name이 없으면 insert, 1개면 update, 2개 이상이면 false
-      //  insert일 경우 var_type이 존재, 다른 경우 var_type가 생략
-      var_type = -1;
-    }
-    string tag = json::get<string>(option, "tag").value();
-    auto type_json = json::get<string>(option, "type");
-    if (type_json.has_value()) {
-      user_ledger.query_type = QueryType::INSERT;
-      var_type = stoi(type_json.value());
-    } else
-      user_ledger.query_type = QueryType::UPDATE;
-
-    base58_type uid;
-    if (target == "user") {
-      uid = result_info.user;
-    } else if (target == "author") {
-      uid = result_info.author;
-    } else {
-      logger::ERROR("target is not 'user' or 'author' at `queryUserScope`");
-    }
-
-    key = pidCheck(pid, var_name, var_type, uid);
-
-    // TODO: '통화'속성의 변수는 변경 불가능한 조건 검사 시행
-
-    user_ledger.var_val = var_value;
-    user_ledger.tag = tag; // TODO: 변수가 존재하는 경우 무시
-
-    UR_block.user_ledger[key] = user_ledger;
-
-    return true;
-  }
-
-  bool queryContractScope(UnresolvedBlock &UR_block, nlohmann::json &option, result_query_info_type &result_info) {
-    contract_ledger_type contract_ledger;
-
-    string var_name = json::get<string>(option, "name").value();
-    string var_value = json::get<string>(option, "value").value();
-    int var_type; // TODO: 세부적인 값 설정 필요
-    contract_id_type cid = json::get<string>(option, "cid").value();
-    string key;
-    auto pid = json::get<string>(option, "pid");
-    if (pid.has_value()) {
-      key = pid.value();
-    } else {
-      // TODO: var_name이 unique한지 검증하는 함수 추가
-      //  var_name이 없으면 insert, 1개면 update, 2개 이상이면 false
-      //  insert일 경우 var_type이 존재, 다른 경우 var_type가 생략
-      var_type = -1;
-    }
-    auto type_json = json::get<string>(option, "type");
-    if (type_json.has_value()) {
-      contract_ledger.query_type = QueryType::INSERT;
-      var_type = stoi(type_json.value());
-    } else
-      contract_ledger.query_type = QueryType::UPDATE;
-
-    key = pidCheck(pid, var_name, var_type, cid);
-
-    // TODO: '통화'속성의 변수는 변경 불가능한 조건 검사 시행
-
-    contract_ledger.var_val = var_value;
-
-    UR_block.contract_ledger[key] = contract_ledger;
-
-    return true;
-  }
-
-  bool queryTradeItem(UnresolvedBlock &UR_block, nlohmann::json &option, result_query_info_type &result_info) {
-    nlohmann::json costs = option["costs"];
-    nlohmann::json units = option["units"];
-    base58_type author = json::get<string>(option, "author").value();
-    base58_type user = json::get<string>(option, "user").value();
-    string pid = json::get<string>(option, "pid").value();
-
-    // TODO: 처리 절차 구현할 것
-    return true;
-  }
-
-  bool queryTradeVal(UnresolvedBlock &UR_block, nlohmann::json &option, result_query_info_type &result_info) {
-    // TODO: TBA (19.05.21 현재 문서에 관련 사항 미기재)
-    return true;
-  }
-
-  bool queryRunQuery(UnresolvedBlock &UR_block, nlohmann::json &option, result_query_info_type &result_info) {
-    string type = json::get<string>(option, "type").value();
-    nlohmann::json query = option["query"];
-    timestamp_t after = static_cast<uint64_t>(stoll(json::get<string>(option, "after").value()));
-
-    if ((type == "run.query") || (type == "user.cert")) {
-      logger::ERROR("run.query cannot excute 'run.query' or 'user.cert'!");
-      return false;
-    }
-    // TODO: Scheduler에게 지연 처리 요청 전송
-    return true;
-  }
-
-  bool queryRunContract(UnresolvedBlock &UR_block, nlohmann::json &option, result_query_info_type &result_info) {
-    contract_id_type cid = json::get<string>(option, "cid").value();
-    string input = json::get<string>(option, "input").value();
-    timestamp_t after = static_cast<uint64_t>(stoll(json::get<string>(option, "after").value()));
-
-    // TODO: authority.user를 현재 user로 대체하여 Scheduler에게 요청 전송
-    return true;
-  }
-
-  string pidCheck(optional<string> pid, string var_name, int var_type, string var_owner) {
-    string key;
-    if (pid.has_value()) {
-      key = pid.value();
-    } else {
-      // TODO: pid 없이도 unique함이 확인되어야 함
-      BytesBuilder bytes_builder;
-      bytes_builder.append(var_name);
-      bytes_builder.append(var_type);
-      bytes_builder.append(var_owner);
-      key = TypeConverter::bytesToString(Sha256::hash(bytes_builder.getBytes()));
-    }
-
-    return key;
-  }
-
-  user_ledger_type findUserLedger(string key, block_height_type find_start_height, int vec_idx) {
-    int pool_deque_idx = find_start_height - unresolved_block_pool->getLatestConfirmedHeight() - 1;
-    int pool_vec_idx = vec_idx;
-
-    
-
-    return unresolved_block_pool->getBlock(pool_deque_idx, pool_vec_idx).user_ledger[key];
-  }
-
-  contract_ledger_type findContractLedger(string key, block_height_type find_start_height, int vec_idx) {
-    int pool_deque_idx = find_start_height - unresolved_block_pool->getLatestConfirmedHeight() - 1;
-    int pool_vec_idx = vec_idx;
-
-    unresolved_block_pool->getBlock(pool_deque_idx, pool_vec_idx).contract_ledger[key];
-  }
-  // ledger addition part end
 };
 
 ChainPlugin::ChainPlugin() : impl(make_unique<ChainPluginImpl>()) {}

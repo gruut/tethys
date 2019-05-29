@@ -487,7 +487,7 @@ bool RdbController::queryUserScope(std::map<string, user_ledger_type> &user_ledg
 bool RdbController::queryContractScope(std::map<string, contract_ledger_type> &contract_ledger, nlohmann::json &option, result_query_info_type &result_info) {
   // TODO: m_mem_ledger 사용하여 갱신값 계산
   try {
-    string var_name = mem_ledger string var_value = json::get<string>(option, "value").value();
+    string var_value = json::get<string>(option, "value").value();
     contract_id_type cid = json::get<string>(option, "cid").value();
     string pid = json::get<string>(option, "pid").value();
 
