@@ -35,6 +35,8 @@ public:
     initializeAdminServer();
     registerService();
     admin_req_check_timer = make_unique<boost::asio::steady_timer>(app().getIoContext());
+
+    monitorCompletionQueue();
   }
 
   void registerService() {
@@ -46,9 +48,7 @@ public:
     new AdminService<ReqStatus, ResStatus>(&admin_service, completion_queue.get(), merger_status);
   }
 
-  void start() {
-    monitorCompletionQueue();
-  }
+  void start() {}
 
   void initializeAdminServer() {
     ServerBuilder builder;

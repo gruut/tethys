@@ -31,6 +31,8 @@ Application &Application::instance() {
 bool Application::initializeImpl() {
   initializePlugins();
 
+  io_context_ptr->run();
+
   return true;
 }
 
@@ -125,8 +127,6 @@ void Application::start() {
     sigpipe_set->cancel();
     quit();
   });
-
-  io_context_ptr->run();
 
   shutdown();
 }
