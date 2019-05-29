@@ -36,7 +36,7 @@ public:
     registerService();
     admin_req_check_timer = make_unique<boost::asio::steady_timer>(app().getIoContext());
 
-    monitorCompletionQueue();
+    handleStartCommand();
   }
 
   void registerService() {
@@ -48,7 +48,9 @@ public:
     new AdminService<ReqStatus, ResStatus>(&admin_service, completion_queue.get(), merger_status);
   }
 
-  void start() {}
+  void start() {
+    monitorCompletionQueue();
+  }
 
   void initializeAdminServer() {
     ServerBuilder builder;
@@ -58,6 +60,18 @@ public:
 
     completion_queue = builder.AddCompletionQueue();
     admin_server = builder.BuildAndStart();
+  }
+
+  void handleStartCommand() {
+    void *tag;
+    bool ok;
+
+    completion_queue->Next(&tag, &ok);
+    if (ok) {
+      static_cast<CallService *>(tag)->proceed();
+    } else {
+      throw runtime_error("START Command is not handled appropriately");
+    }
   }
 
   void monitorCompletionQueue() {
