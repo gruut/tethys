@@ -21,8 +21,8 @@ struct UnresolvedBlock {
   Block block;
   int32_t prev_vector_idx{-1};
   int32_t ssig_sum{0};
-  std::map<string, LedgerRecord> user_ledger;
-  std::map<string, LedgerRecord> contract_ledger;
+  std::map<string, user_ledger_type> user_ledger;
+  std::map<string, contract_ledger_type> contract_ledger;
 
   UnresolvedBlock() = default;
   UnresolvedBlock(Block &block_, int prev_queue_idx_) : block(block_), prev_vector_idx(prev_queue_idx_) {}
@@ -111,6 +111,8 @@ public:
   bytes getContractStateRoot();
 
   UnresolvedBlock findBlock(const base58_type &block_id, const block_height_type block_height);
+  UnresolvedBlock getBlock(int pool_deque_idx, int pool_vec_idx);
+
   void moveHead(const std::string &block_id_b64, const block_height_type target_block_height);
   void invalidateCaches();
 

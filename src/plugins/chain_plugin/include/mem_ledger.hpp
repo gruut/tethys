@@ -41,7 +41,8 @@ private:
   int m_debug_uid;       // 테스트 용도
   int m_suffix_len;
 
-  unique_ptr<LedgerRecord> m_ledger;  // 각 leaf node는 하나의 ledger만을 가리킨다
+  unique_ptr<user_ledger_type> m_user_ledger;  // 각 leaf node는 하나의 ledger만을 가리킨다
+  unique_ptr<contract_ledger_type> m_contract_ledger;
 
   void makeValue(LedgerRecord &ledger);
   void makeValue(string &key);

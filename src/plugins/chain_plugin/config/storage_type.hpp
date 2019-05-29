@@ -134,10 +134,7 @@ using user_ledger_type = struct UserLedger {
   QueryType query_type;
 
   UserLedger() = default;
-  UserLedger(string var_name_, string var_val_, int var_type_, string uid_, timestamp_t up_time_, block_height_type up_block_,
-               string tag_, QueryType what_)
-      : var_name(var_name_), var_val(var_val_), var_type(var_type_), uid(uid_), up_time(up_time_), up_block(up_block_),
-        tag(tag_), query_type(what_) {
+  UserLedger(string var_name_, int var_type_, string uid_, string tag_) : var_name(var_name_), var_type(var_type_), uid(uid_), tag(tag_) {
     BytesBuilder bytes_builder;
     bytes_builder.append(var_name);
     bytes_builder.append(var_type);
@@ -159,10 +156,8 @@ using contract_ledger_type = struct ContractLedger {
   QueryType query_type;
 
   ContractLedger() = default;
-  ContractLedger(string var_name_, string var_val_, int var_type_, string cid_, timestamp_t up_time_, block_height_type up_block_,
-                 string var_info_, QueryType what_)
-      : var_name(var_name_), var_val(var_val_), var_type(var_type_), cid(cid_), up_time(up_time_), up_block(up_block_),
-        var_info(var_info_), query_type(what_) {
+  ContractLedger(string var_name_, int var_type_, string cid_, string var_info_)
+      : var_name(var_name_), var_type(var_type_), cid(cid_), var_info(var_info_) {
     BytesBuilder bytes_builder;
     bytes_builder.append(var_name);
     bytes_builder.append(var_type);

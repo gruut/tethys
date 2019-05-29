@@ -479,176 +479,254 @@ public:
   }
   // block verify part end
 
-
-  // ledger process part
+  // ledger addition part
   bool queryIncinerate(UnresolvedBlock &UR_block, nlohmann::json &option, result_query_info_type &result_info) {
-    // TODO: m_mem_ledger 사용하여 갱신값 계산. resolve 대기 필요
-    try {
-      string amount = json::get<string>(option, "amount").value();
-      string pid = json::get<string>(option, "pid").value();
+    string amount = json::get<string>(option, "amount").value();
+    string pid = json::get<string>(option, "pid").value();
 
-      // TODO: pid가 가리키는 user가 자신인지를 검사해야 함. 다른 유저의 변수를 삭제하면 안 됨.
-
-      UR_block.user_ledger.emplace(key, LedgerRecord);
-
-
-      // clang-format off
-      soci::row result;
-      soci::session db_session(chain->pool());
-
-      soci::statement st = (db_session.prepare << "UPDATE user_scope SET var_value = :var_value WHERE pid = :pid",
-          soci::use(amount, "var_value"), soci::use(pid, "pid"),
-          soci::into(result));
-      // clang-format on
-      st.execute(true);
-    } catch (soci::mysql_soci_error const &e) {
-      logger::ERROR("MySQL error: {}", e.what());
+    user_ledger_type found = findUserLedger(pid, UR_block.block.getHeight() - 1, UR_block.prev_vector_idx);
+    if (found.uid != result_info.user)
       return false;
-    } catch (...) {
-      logger::ERROR("Unexpected error at `queryIncinerate`");
-      return false;
-    }
+    int modified_value = stoi(found.var_val) - stoi(amount);
+
+    user_ledger_type user_ledger;
+    user_ledger.pid = TypeConverter::stringToBytes(pid);
+    user_ledger.var_val = to_string(modified_value);
+
+    if (modified_value <= 0)
+      user_ledger.query_type = QueryType::DELETE;
+    else
+      user_ledger.query_type = QueryType::UPDATE;
+
+    UR_block.user_ledger[pid] = user_ledger;
+
     return true;
   }
 
   bool queryCreate(UnresolvedBlock &UR_block, nlohmann::json &option, result_query_info_type &result_info) {
-    // TODO: m_mem_ledger 사용하여 갱신값 계산
-    try {
-      string amount = json::get<string>(option, "amount").value();
-      string var_name = json::get<string>(option, "name").value();
-      string var_type = json::get<string>(option, "type").value();
-      string tag = json::get<string>(option, "tag").value();
-      string var_owner = result_info.user;
-      timestamp_t up_time = TimeUtil::nowBigInt(); // TODO: DB에 저장되는 시간인지, mem_ledger에 들어오는 시간인지
-      block_height_type up_block = result_info.block_height;
-      string pid = ""; // TODO: mem_ledger에서 계산됨. 연동 필요.
+    string amount = json::get<string>(option, "amount").value();
+    string var_name = json::get<string>(option, "name").value();
+    int var_type = stoi(json::get<string>(option, "type").value());
+    string tag = json::get<string>(option, "tag").value();
+    base58_type uid = result_info.user;
+    timestamp_t up_time = TimeUtil::nowBigInt(); // TODO: DB에 저장되는 시간인지, mem_ledger에 들어오는 시간인지
+    block_height_type up_block = result_info.block_height;
 
-      // clang-format off
-      soci::row result;
-      soci::session db_session(RdbController::pool());
+    user_ledger_type user_ledger(var_name, var_type, uid, tag);
+    string pid = TypeConverter::bytesToString(user_ledger.pid);
 
-      soci::statement st = (db_session.prepare << "INSERT INTO user_scope (var_name, var_value, var_type, var_owner, up_time, up_block, tag, pid) VALUES (:var_name, :var_value, :var_type, :var_owner, :up_time, :up_block, :tag, :pid)",
-          soci::use(var_name), soci::use(amount), soci::use(var_type),
-          soci::use(var_owner), soci::use(up_time), soci::use(up_block),
-          soci::use(tag), soci::use(pid),
-          soci::into(result));
-      // clang-format on
-      st.execute(true);
-    } catch (soci::mysql_soci_error const &e) {
-      logger::ERROR("MySQL error: {}", e.what());
+    user_ledger_type found = findUserLedger(pid, UR_block.block.getHeight() - 1, UR_block.prev_vector_idx);
+    if (found.uid != result_info.user)
       return false;
-    } catch (...) {
-      logger::ERROR("Unexpected error at `queryCreate`");
-      return false;
-    }
+
+    int modified_value = stoi(found.var_val) + stoi(amount);
+    user_ledger.var_val = to_string(modified_value);
+
+    user_ledger.up_time = up_time;
+    user_ledger.up_block = up_block;
+    user_ledger.query_type = QueryType::INSERT;
+
+    UR_block.user_ledger[pid] = user_ledger;
+
     return true;
   }
 
   bool queryTransfer(UnresolvedBlock &UR_block, nlohmann::json &option, result_query_info_type &result_info) {
-    // TODO: m_mem_ledger 사용하여 갱신값 계산
-    //    from과 to가 user/contract 따라 처리될 수 있도록 구현 필요
+    // TODO: 권한 체크 세부적으로 구현
+    string from = json::get<string>(option, "from").value();
+    string to = json::get<string>(option, "to").value();
+    string amount = json::get<string>(option, "amount").value();
+    string unit = json::get<string>(option, "unit").value();
+    string key;
+    auto pid = json::get<string>(option, "pid");
+    string tag = json::get<string>(option, "tag").value();
+    int var_type = loadVarType();
 
-    try {
-      base58_type from = json::get<string>(option, "from").value();
-      base58_type to = json::get<string>(option, "to").value();
-      string amount = json::get<string>(option, "amount").value();
-      string unit = json::get<string>(option, "unit").value();
-      string pid = json::get<string>(option, "pid").value();
-      string tag = json::get<string>(option, "tag").value();
+    // Transfer : from
+    if (from == "contract") {
+      // from : contract
+      string cid = result_info.self;
+      contract_ledger_type contract_ledger;
 
-      // pid는 from의 검색 조건이며, tag는 to에게 보낼 때의 tag 지정을 의미한다.
-      // to가 contract일 경우, tag는 무시되고 contract의 var_info에 from이 기록된다.
-      // TODO: transfer되어서 새로운 변수가 생겼으면 insert, 갱신이면 update 요청이 된다. mem_ledger쪽과 연계해야 함.
+      key = pidCheck(pid, unit, var_type, from);
+      if (pid.has_value()) {
+        contract_ledger.pid = TypeConverter::stringToBytes(pid.value());
+      }
 
-      // clang-format off
-      soci::row result;
-      soci::session db_session(RdbController::pool());
+      contract_ledger_type found = findContractLedger(key, UR_block.block.getHeight() - 1, UR_block.prev_vector_idx);
+      int modified_value = stoi(found.var_val) - stoi(amount);
+      contract_ledger.var_val = to_string(modified_value);
 
-      // user_scope insert, update, contract_scope insert, update
+      if (modified_value == 0)
+        contract_ledger.query_type = QueryType::DELETE;
+      else if (modified_value > 0)
+        contract_ledger.query_type = QueryType::UPDATE;
+      else {
+        logger::ERROR("var_val is under 0 in queryTransfer!");
+        return false;
+      }
 
-      soci::statement st = (db_session.prepare << "UPDATE user_scope SET var_value = :var_value WHERE pid = :pid",
-          soci::use(amount, "var_value"), soci::use(pid, "pid"),
-          soci::into(result));
-      // clang-format on
-      st.execute(true);
-    } catch (soci::mysql_soci_error const &e) {
-      logger::ERROR("MySQL error: {}", e.what());
-      return false;
-    } catch (...) {
-      logger::ERROR("Unexpected error at `queryTransfer`");
-      return false;
+      UR_block.contract_ledger[key] = contract_ledger;
+    } else {
+      // from : user
+      base58_type uid;
+      if (from == "user")
+        uid = result_info.user;
+      else if (from == "author")
+        uid = result_info.author;
+
+      user_ledger_type user_ledger(unit, var_type, uid, tag);
+
+      key = pidCheck(pid, unit, var_type, uid);
+      if (pid.has_value()) {
+        user_ledger.pid = TypeConverter::stringToBytes(pid.value());
+      }
+
+      user_ledger_type found = findUserLedger(key, UR_block.block.getHeight() - 1, UR_block.prev_vector_idx);
+      int modified_value = stoi(found.var_val) - stoi(amount);
+      user_ledger.var_val = to_string(modified_value);
+
+      if (modified_value == 0)
+        user_ledger.query_type = QueryType::DELETE;
+      else if (modified_value > 0)
+        user_ledger.query_type = QueryType::UPDATE;
+      else {
+        logger::ERROR("var_val is under 0 in queryTransfer!");
+        return false;
+      }
+
+      UR_block.user_ledger[key] = user_ledger;
     }
+
+    // Transfer : to
+    if (to.size() > 45) {
+      // to : contract
+      contract_ledger_type contract_ledger;
+
+      key = pidCheck(pid, unit, var_type, to);
+      if (pid.has_value()) {
+        contract_ledger.pid = TypeConverter::stringToBytes(pid.value());
+      }
+
+      contract_ledger_type found = findContractLedger(key, UR_block.block.getHeight() - 1, UR_block.prev_vector_idx);
+
+      if (found.var_val == "")
+        contract_ledger.query_type = QueryType::INSERT;
+      else
+        contract_ledger.query_type = QueryType::UPDATE;
+
+      int modified_value = stoi(found.var_val) + stoi(amount);
+      contract_ledger.var_val = to_string(modified_value);
+      contract_ledger.var_info = from;
+
+      UR_block.contract_ledger[key] = contract_ledger;
+    } else {
+      // to : user
+      user_ledger_type user_ledger;
+
+      key = pidCheck(pid, unit, var_type, to);
+      if (pid.has_value()) {
+        user_ledger.pid = TypeConverter::stringToBytes(pid.value());
+      }
+
+      user_ledger_type found = findUserLedger(key, UR_block.block.getHeight() - 1, UR_block.prev_vector_idx);
+      if (found.uid != result_info.user)
+        return false;
+
+      if (found.var_val == "")
+        user_ledger.query_type = QueryType::INSERT;
+      else
+        user_ledger.query_type = QueryType::UPDATE;
+
+      int modified_value = stoi(found.var_val) + stoi(amount);
+      user_ledger.var_val = to_string(modified_value);
+
+      user_ledger.tag = tag;
+
+      UR_block.user_ledger[key] = user_ledger;
+    }
+
     return true;
   }
 
   bool queryUserScope(UnresolvedBlock &UR_block, nlohmann::json &option, result_query_info_type &result_info) {
-    // TODO: m_mem_ledger 사용하여 갱신값 계산
-    try {
-      string var_name = json::get<string>(option, "name").value();
-      string target = json::get<string>(option, "for").value(); // user or author
-      string var_value = json::get<string>(option, "value").value();
-      string pid = json::get<string>(option, "pid").value();
-      string tag = json::get<string>(option, "tag").value();
-      base58_type uid;
+    user_ledger_type user_ledger;
 
-      if (target == "user") {
-        uid = result_info.user;
-      } else if (target == "author") {
-        uid = result_info.author;
-      } else {
-        logger::ERROR("target is not 'user' or 'author' at `queryUserScope`");
-      }
-
-      // TODO: '통화'속성의 변수는 변경 불가능한 조건 검사 시행
-      // TODO: pid의 계산방법, 반영법, for의 정확한 활용 등을 적용
-
-      // clang-format off
-      soci::row result;
-      soci::session db_session(RdbController::pool());
-
-      soci::statement st = (db_session.prepare << "UPDATE user_scope SET var_name = :var_name, var_value = :var_value, tag = :tag, WHERE pid = :pid",
-          soci::use(var_name, "var_name"), soci::use(var_value, "var_value"), soci::use(tag, "tag"),
-          soci::into(result));
-      // clang-format on
-      st.execute(true);
-    } catch (soci::mysql_soci_error const &e) {
-      logger::ERROR("MySQL error: {}", e.what());
-      return false;
-    } catch (...) {
-      logger::ERROR("Unexpected error at `queryUserScope`");
-      return false;
+    string var_name = json::get<string>(option, "name").value();
+    string target = json::get<string>(option, "for").value(); // user or author
+    string var_value = json::get<string>(option, "value").value();
+    int var_type; // TODO: 세부적인 값 설정 필요
+    string key;
+    auto pid = json::get<string>(option, "pid");
+    if (pid.has_value()) {
+      user_ledger.pid = TypeConverter::stringToBytes(pid.value());
+    } else {
+      // TODO: var_name이 unique한지 검증하는 함수 추가
+      //  var_name이 없으면 insert, 1개면 update, 2개 이상이면 false
+      //  insert일 경우 var_type이 존재, 다른 경우 var_type가 생략
+      var_type = -1;
     }
+    string tag = json::get<string>(option, "tag").value();
+    auto type_json = json::get<string>(option, "type");
+    if (type_json.has_value()) {
+      user_ledger.query_type = QueryType::INSERT;
+      var_type = stoi(type_json.value());
+    } else
+      user_ledger.query_type = QueryType::UPDATE;
+
+    base58_type uid;
+    if (target == "user") {
+      uid = result_info.user;
+    } else if (target == "author") {
+      uid = result_info.author;
+    } else {
+      logger::ERROR("target is not 'user' or 'author' at `queryUserScope`");
+    }
+
+    key = pidCheck(pid, var_name, var_type, uid);
+
+    // TODO: '통화'속성의 변수는 변경 불가능한 조건 검사 시행
+
+    user_ledger.var_val = var_value;
+    user_ledger.tag = tag; // TODO: 변수가 존재하는 경우 무시
+
+    UR_block.user_ledger[key] = user_ledger;
 
     return true;
   }
 
   bool queryContractScope(UnresolvedBlock &UR_block, nlohmann::json &option, result_query_info_type &result_info) {
-    // TODO: m_mem_ledger 사용하여 갱신값 계산
-    try {
-      string var_name = json::get<string>(option, "name").value();
-      string var_value = json::get<string>(option, "value").value();
-      contract_id_type cid = json::get<string>(option, "cid").value();
-      string pid = json::get<string>(option, "pid").value();
+    contract_ledger_type contract_ledger;
 
-      // TODO: '통화'속성의 변수는 변경 불가능한 조건 검사 시행
-      // TODO: pid의 계산방법, 반영법, for의 정확한 활용 등을 적용
-
-      // clang-format off
-      soci::row result;
-      soci::session db_session(RdbController::pool());
-
-      soci::statement st = (db_session.prepare << "UPDATE contracts SET var_value = :var_value WHERE pid = :pid",
-          soci::use(var_name, "var_name"), soci::use(var_value, "var_value"),
-          soci::into(result));
-      // clang-format on
-      st.execute(true);
-    } catch (soci::mysql_soci_error const &e) {
-      logger::ERROR("MySQL error: {}", e.what());
-      return false;
-    } catch (...) {
-      logger::ERROR("Unexpected error at `queryContractScope`");
-      return false;
+    string var_name = json::get<string>(option, "name").value();
+    string var_value = json::get<string>(option, "value").value();
+    int var_type; // TODO: 세부적인 값 설정 필요
+    contract_id_type cid = json::get<string>(option, "cid").value();
+    string key;
+    auto pid = json::get<string>(option, "pid");
+    if (pid.has_value()) {
+      key = pid.value();
+    } else {
+      // TODO: var_name이 unique한지 검증하는 함수 추가
+      //  var_name이 없으면 insert, 1개면 update, 2개 이상이면 false
+      //  insert일 경우 var_type이 존재, 다른 경우 var_type가 생략
+      var_type = -1;
     }
+    auto type_json = json::get<string>(option, "type");
+    if (type_json.has_value()) {
+      contract_ledger.query_type = QueryType::INSERT;
+      var_type = stoi(type_json.value());
+    } else
+      contract_ledger.query_type = QueryType::UPDATE;
+
+    key = pidCheck(pid, var_name, var_type, cid);
+
+    // TODO: '통화'속성의 변수는 변경 불가능한 조건 검사 시행
+
+    contract_ledger.var_val = var_value;
+
+    UR_block.contract_ledger[key] = contract_ledger;
+
     return true;
   }
 
@@ -673,8 +751,7 @@ public:
     nlohmann::json query = option["query"];
     timestamp_t after = static_cast<uint64_t>(stoll(json::get<string>(option, "after").value()));
 
-    if((type == "run.query") || (type == "user.cert"))
-    {
+    if ((type == "run.query") || (type == "user.cert")) {
       logger::ERROR("run.query cannot excute 'run.query' or 'user.cert'!");
       return false;
     }
@@ -691,11 +768,38 @@ public:
     return true;
   }
 
+  string pidCheck(optional<string> pid, string var_name, int var_type, string var_owner) {
+    string key;
+    if (pid.has_value()) {
+      key = pid.value();
+    } else {
+      // TODO: pid 없이도 unique함이 확인되어야 함
+      BytesBuilder bytes_builder;
+      bytes_builder.append(var_name);
+      bytes_builder.append(var_type);
+      bytes_builder.append(var_owner);
+      key = TypeConverter::bytesToString(Sha256::hash(bytes_builder.getBytes()));
+    }
 
+    return key;
+  }
 
-  // ledger process part end
+  user_ledger_type findUserLedger(string key, block_height_type find_start_height, int vec_idx) {
+    int pool_deque_idx = find_start_height - unresolved_block_pool->getLatestConfirmedHeight() - 1;
+    int pool_vec_idx = vec_idx;
 
+    
 
+    return unresolved_block_pool->getBlock(pool_deque_idx, pool_vec_idx).user_ledger[key];
+  }
+
+  contract_ledger_type findContractLedger(string key, block_height_type find_start_height, int vec_idx) {
+    int pool_deque_idx = find_start_height - unresolved_block_pool->getLatestConfirmedHeight() - 1;
+    int pool_vec_idx = vec_idx;
+
+    unresolved_block_pool->getBlock(pool_deque_idx, pool_vec_idx).contract_ledger[key];
+  }
+  // ledger addition part end
 };
 
 ChainPlugin::ChainPlugin() : impl(make_unique<ChainPluginImpl>()) {}

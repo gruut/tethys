@@ -114,6 +114,10 @@ UnresolvedBlock UnresolvedBlockPool::findBlock(const base58_type &block_id, cons
   return UnresolvedBlock{};
 }
 
+UnresolvedBlock UnresolvedBlockPool::getBlock(int pool_deque_idx, int pool_vec_idx) {
+  return m_block_pool[pool_deque_idx][pool_vec_idx];
+}
+
 void UnresolvedBlockPool::moveHead(const base64_type &target_block_id_b64, const block_height_type target_block_height) {
   if (!target_block_id_b64.empty()) {
     // latest_confirmed의 height가 10이었고, 현재 옮기려는 타겟의 height가 12라면 m_block_pool[1]에 있어야 한다
