@@ -16,11 +16,13 @@ Status SetupService::UserService(ServerContext *context, const Request *request,
   Status rpc_status;
   MessageParser msg_parser;
   auto input_data = msg_parser.parseMessage(request->message(), rpc_status);
+
   if (!input_data.has_value()) {
     user_key_info.set_value({});
     response->set_status(Reply_Status_INVALID);
     return rpc_status;
   }
+
   user_key_info.set_value(input_data.value().body);
   response->set_status(Reply_Status_SUCCESS);
   return Status::OK;
@@ -39,13 +41,21 @@ unique_ptr<Server> AdminService<ReqSetupKey, ResSetupKey>::initSetup(shared_ptr<
 
 optional<nlohmann::json> AdminService<ReqSetupKey, ResSetupKey>::runSetup(shared_ptr<SetupService> setup_service) {
   auto &promise_user_key = setup_service->getUserKeyPromise();
-  auto user_key_info = promise_user_key.get_future();
-  user_key_info.wait(); // waiting for user key info
+  auto future = promise_user_key.get_future();
 
-  auto sk_cert = user_key_info.get();
+  std::future_status status;
+  status = future.wait_for(std::chrono::seconds(30));
+
+  if (status == std::future_status::timeout) {
+    logger::ERROR("[SETUP KEY] Timeout occurs when waiting for a user_key_info");
+    return {};
+  }
+
+  auto sk_cert = future.get();
   if (sk_cert.has_value()) {
     return sk_cert.value();
   }
+
   return {};
 }
 
@@ -102,7 +112,6 @@ void AdminService<ReqSetupKey, ResSetupKey>::proceed() {
 
         auto setup_port = req.setup_port();
         unique_ptr<Server> setup_server = initSetup(setup_service, setup_port);
-
         logger::INFO("[SETUP KEY] Waiting for user key info");
 
         auto user_key_info = runSetup(setup_service);
@@ -157,11 +166,11 @@ void AdminService<ReqSetupKey, ResSetupKey>::proceed() {
       receive_status = AdminRpcCallStatus::FINISH;
       responder.Finish(res, Status::OK, this);
 
-      return;
     }).detach();
+
+    break;
   }
 
-  case AdminRpcCallStatus::FINISH:
   default:
     delete this;
     break;
