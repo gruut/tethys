@@ -82,6 +82,12 @@ bool Application::parseProgramOptions(int argc, char **argv) {
 void Application::initializePlugins() {
   auto plugin_names = program_options->options_map.at("plugin").as<vector<string>>();
 
+  auto result = find(plugin_names.begin(), plugin_names.end(), "AdminPlugin");
+  if (result == plugin_names.end()) {
+    logger::ERROR("'AdminPlugin' is necessarily required. Please make sure that 'AdminPlugin' is configured in the configuration file.");
+
+    exit(1);
+  }
   for_each(begin(plugin_names), end(plugin_names), [this](const string &plugin_name) {
     auto it = app_plugins_map.find(plugin_name);
     if (it != app_plugins_map.end()) {
