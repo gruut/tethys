@@ -12,6 +12,39 @@ namespace admin_plugin {
 using namespace appbase;
 using namespace std;
 
+template <PluginName T1, ControlType T2>
+class CommandDelegate {
+public:
+  CommandDelegate() = default;
+
+  template <PluginName U1 = T1, ControlType U2 = T2, typename = enable_if_t<U1 == PluginName::NET && U2 == ControlType::LOGIN>>
+  void operator()(const string &cert, const string &enc_sk_pem, const string &pass) {
+    nlohmann::json control_command;
+    int control_type = static_cast<int>(ControlType::LOGIN);
+
+    control_command["type"] = control_type;
+    control_command["enc_sk"] = enc_sk_pem;
+    control_command["cert"] = cert;
+    control_command["pass"] = pass;
+
+    app().getChannel<incoming::channels::net_control>().publish(control_command);
+  }
+
+  template <PluginName U1 = T1, ControlType U2 = T2, typename = enable_if_t<U1 == PluginName::NET && U2 == ControlType::START>>
+  void operator()(ModeType net_mode) {
+    nlohmann::json control_command;
+    int control_type = static_cast<int>(ControlType::START);
+    int net_mode_type = static_cast<int>(net_mode);
+
+    control_command["type"] = control_type;
+    control_command["mode"] = net_mode_type;
+
+    app().getChannel<incoming::channels::net_control>().publish(control_command);
+  }
+
+  // TODO : send world creation info & local chain info to chain plugin
+};
+
 Status SetupService::UserService(ServerContext *context, const Request *request, Reply *response) {
   Status rpc_status;
   MessageParser msg_parser;
@@ -165,7 +198,6 @@ void AdminService<ReqSetupKey, ResSetupKey>::proceed() {
 
       receive_status = AdminRpcCallStatus::FINISH;
       responder.Finish(res, Status::OK, this);
-
     }).detach();
 
     break;
@@ -186,18 +218,6 @@ bool AdminService<ReqLogin, ResLogin>::checkPassword(const string &enc_sk_pem, c
     logger::ERROR("[LOGIN] Error on private key password");
     return false;
   }
-}
-
-void AdminService<ReqLogin, ResLogin>::sendKeyInfoToNet(const string &cert, const string &enc_sk_pem, const string &pass) {
-  nlohmann::json control_command;
-  int control_type = static_cast<int>(NetControlType::SETUP);
-
-  control_command["type"] = control_type;
-  control_command["enc_sk"] = enc_sk_pem;
-  control_command["cert"] = cert;
-  control_command["pass"] = pass;
-
-  app().getChannel<incoming::channels::net_control>().publish(control_command);
 }
 
 void AdminService<ReqLogin, ResLogin>::proceed() {
@@ -222,7 +242,8 @@ void AdminService<ReqLogin, ResLogin>::proceed() {
 
       if (!self_sk.empty() && !self_cert.empty()) {
         if (checkPassword(self_sk, pass)) {
-          sendKeyInfoToNet(self_cert, self_sk, pass);
+          CommandDelegate<PluginName::NET, ControlType::LOGIN> forwarder;
+          forwarder(self_cert, self_sk, pass);
           merger_status->user_setup = true;
           merger_status->user_login = true;
           res.set_success(true);
@@ -252,7 +273,55 @@ void AdminService<ReqLogin, ResLogin>::proceed() {
 }
 
 template <>
-void AdminService<ReqStart, ResStart>::proceed() {}
+void AdminService<ReqStart, ResStart>::proceed() {
+  switch (receive_status) {
+  case AdminRpcCallStatus::CREATE: {
+    receive_status = AdminRpcCallStatus::PROCESS;
+    service->RequestStart(&context, &req, &responder, completion_queue, completion_queue, this);
+    break;
+  }
+  case AdminRpcCallStatus::PROCESS: {
+    new AdminService<ReqStart, ResStart>(service, completion_queue, merger_status);
+
+    auto mode = req.mode();
+    if (merger_status->run_mode == static_cast<ModeType>(mode)) {
+      string info = "It's already running as a ";
+      string mode_type = merger_status->run_mode == ModeType::DEFAULT ? "default mode" : "monitor mode";
+      info += mode_type;
+      logger::ERROR("[START] {}", info);
+
+      res.set_success(false);
+      res.set_info(info);
+
+    } else if (mode == ReqStart_Mode_DEFAULT && !merger_status->user_login) {
+      string info = "Could not join a network. Please setup & login OR start as a monitoring mode";
+      logger::ERROR("[START] {}", info);
+
+      res.set_success(false);
+      res.set_info(info);
+
+    } else {
+      auto run_mode = static_cast<ModeType>(mode);
+      CommandDelegate<PluginName::NET, ControlType::START> forwarder;
+      forwarder(run_mode);
+
+      res.set_success(true);
+      merger_status->is_running = true;
+      merger_status->run_mode = run_mode;
+      app().setRunFlag();
+
+      string mode_type = mode == ReqStart_Mode_DEFAULT ? "default" : "monitor";
+      logger::INFO("[START] Success / Mode : {}", mode_type);
+    }
+    receive_status = AdminRpcCallStatus::FINISH;
+    responder.Finish(res, Status::OK, this);
+    break;
+  }
+  default:
+    delete this;
+    break;
+  }
+}
 
 template <>
 void AdminService<ReqStatus, ResStatus>::proceed() {
