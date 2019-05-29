@@ -80,6 +80,8 @@ public:
   void setId(string_view _id);
   const string &getId() const;
 
+  bool isAppRunning();
+
   auto &getIoContext() {
     return *io_context_ptr;
   }
@@ -121,6 +123,8 @@ private:
   unique_ptr<ProgramOptions> program_options;
 
   string id;
+
+  bool running = false;
 
 private:
   bool parseProgramOptions(int argc, char **argv);

@@ -162,6 +162,10 @@ const string &Application::getId() const {
   return id;
 }
 
+bool Application::isAppRunning() {
+  return running;
+}
+
 Application &app() {
   return Application::instance();
 }
