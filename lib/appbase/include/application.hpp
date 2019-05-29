@@ -78,6 +78,7 @@ public:
   }
 
   void setId(string_view _id);
+  void setRunFlag();
   const string &getId() const;
 
   bool isAppRunning();

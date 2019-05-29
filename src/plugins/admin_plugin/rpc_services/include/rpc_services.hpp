@@ -1,6 +1,7 @@
 #pragma once
 
 #include "../../../net_plugin/rpc_services/protos/include/user_service.grpc.pb.h"
+#include "../../include/admin_type.hpp"
 #include "../proto/include/admin_service.grpc.pb.h"
 #include <atomic>
 #include <future>
@@ -21,8 +22,9 @@ struct MergerStatus {
   atomic<bool> user_setup;
   atomic<bool> user_login;
   atomic<bool> is_running;
+  atomic<ModeType> run_mode;
 
-  MergerStatus() : user_setup(false), user_login(false), is_running(true) {}
+  MergerStatus() : user_setup(false), user_login(false), is_running(false), run_mode(ModeType::NONE) {}
 };
 
 class SetupService final : public GruutUserService::Service {
@@ -106,7 +108,6 @@ private:
   ResLogin res;
   ServerAsyncResponseWriter<ResLogin> responder;
   bool checkPassword(const string &enc_sk_pem, const string &pass);
-  void sendKeyInfoToNet(const string &cert, const string &enc_sk_pem, const string &pass);
 };
 
 } // namespace admin_plugin

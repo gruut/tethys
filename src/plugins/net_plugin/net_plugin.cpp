@@ -1,5 +1,6 @@
 #include "include/net_plugin.hpp"
 #include "../../../lib/json/include/json.hpp"
+#include "../admin_plugin/include/admin_type.hpp"
 #include "config/include/network_config.hpp"
 #include "include/http_client.hpp"
 #include "include/id_mapping_table.hpp"
@@ -23,6 +24,7 @@
 namespace gruut {
 using namespace std;
 using namespace net_plugin;
+using namespace admin_plugin;
 
 const auto CONNECTION_CHECK_PERIOD = std::chrono::seconds(30);
 const auto NET_MESSAGE_CHECK_PERIOD = std::chrono::milliseconds(1);
@@ -57,7 +59,8 @@ public:
   outgoing::channels::network::channel_type::Handle out_channel_subscription;
   incoming::channels::net_control::channel_type::Handle net_control_channel_subscription;
 
-  atomic<bool> user_setup_flag{false};
+  atomic<bool> user_login_flag{false};
+  shared_ptr<atomic<ModeType>> mode;
 
   ~NetPluginImpl() {
     if (server != nullptr)
@@ -98,6 +101,7 @@ public:
   }
 
   void registerServices() {
+    mode = make_shared<atomic<ModeType>>(ModeType::NONE);
     signer_pool_manager = make_shared<SignerPoolManager>();
     signer_conn_table = make_shared<SignerConnTable>();
     broadcast_check_table = make_shared<BroadcastMsgTable>();
@@ -113,6 +117,7 @@ public:
   void start() {
     monitorCompletionQueue();
     startConnectionMonitors();
+    getPeersFromTracker();
   }
 
   void monitorCompletionQueue() {
@@ -364,24 +369,22 @@ public:
 
   void controlNet(nlohmann::json &control_info) {
     int control_type_int = json::get<int>(control_info, "type").value();
-    NetControlType control_type = static_cast<NetControlType>(control_type_int);
+    auto control_type = static_cast<ControlType>(control_type_int);
 
     switch (control_type) {
-    case NetControlType::SETUP: {
-      if (!user_setup_flag) {
-        user_setup_flag = true;
+    case ControlType::LOGIN: {
+      if (!user_login_flag) {
+        user_login_flag = true;
         signer_pool_manager->setSelfKeyInfo(control_info);
-        getPeersFromTracker();
-        // TODO : do something more
       }
       break;
     }
-    case NetControlType::START: {
-      // TODO : do something
-      break;
-    }
-    case NetControlType::STOP: {
-      // TODO : do something
+    case ControlType::START: {
+      int mode_type_int = json::get<int>(control_info, "mode").value();
+      auto mode_type = static_cast<ModeType>(mode_type_int);
+
+      *mode = mode_type;
+      // TODO : Network plugin have to work differently depending on a mode
       break;
     }
     }
