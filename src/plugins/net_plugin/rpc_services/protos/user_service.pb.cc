@@ -179,16 +179,17 @@ void AddDescriptorsImpl() {
       "ERNAL\020\003\022\027\n\023ECDH_ILLEGAL_ACCESS\020\025\022\030\n\024ECDH"
       "_MAX_SIGNER_POOL\020\026\022\020\n\014ECDH_TIMEOUT\020\027\022\024\n\020"
       "ECDH_INVALID_SIG\020\030\022\023\n\017ECDH_INVALID_PK\020\0312"
-      "\277\001\n\020GruutUserService\022<\n\013OpenChannel\022\023.gr"
-      "pc_user.Identity\032\022.grpc_user.Message\"\000(\001"
-      "0\001\0226\n\014KeyExService\022\022.grpc_user.Request\032\020"
-      ".grpc_user.Reply\"\000\0225\n\013UserService\022\022.grpc"
-      "_user.Request\032\020.grpc_user.Reply\"\000B-\n\033com"
-      ".gruutnetworks.gruutuserB\014GruutNetworkP\001"
-      "b\006proto3"
+      "\372\001\n\021TethysUserService\022=\n\016ReqSsigService\022"
+      "\023.grpc_user.Identity\032\022.grpc_user.Message"
+      "\"\0000\001\0226\n\014KeyExService\022\022.grpc_user.Request"
+      "\032\020.grpc_user.Reply\"\000\0225\n\013UserService\022\022.gr"
+      "pc_user.Request\032\020.grpc_user.Reply\"\000\0227\n\rS"
+      "ignerService\022\022.grpc_user.Request\032\020.grpc_"
+      "user.Reply\"\000B\"\n\026io.tethys.tethyswalletB\006"
+      "TethysP\001b\006proto3"
   };
   ::google::protobuf::DescriptorPool::InternalAddGeneratedFile(
-      descriptor, 608);
+      descriptor, 656);
   ::google::protobuf::MessageFactory::InternalRegisterGeneratedFile(
     "user_service.proto", &protobuf_RegisterTypes);
 }

@@ -47,10 +47,10 @@ protected:
   RpcCallStatus m_receive_status;
 };
 
-class OpenChannelWithSigner final : public CallData {
+class ReqSigService final : public CallData {
 public:
-  OpenChannelWithSigner(GruutUserService::AsyncService *service, ServerCompletionQueue *cq, shared_ptr<SignerConnTable> signer_conn_table,
-                        shared_ptr<SignerPoolManager> signer_pool_manager)
+  ReqSigService(TethysUserService::AsyncService *service, ServerCompletionQueue *cq, shared_ptr<SignerConnTable> signer_conn_table,
+                shared_ptr<SignerPoolManager> signer_pool_manager)
       : m_stream(&m_context), m_signer_conn_table(move(signer_conn_table)), m_signer_pool_manager(move(signer_pool_manager)) {
 
     m_service = service;
@@ -62,9 +62,9 @@ public:
 
 private:
   string m_signer_id_b58;
-  GruutUserService::AsyncService *m_service;
+  TethysUserService::AsyncService *m_service;
   Identity m_request;
-  ServerAsyncReaderWriter<Message, Identity> m_stream;
+  ServerAsyncWriter<Message> m_stream;
 
   shared_ptr<SignerConnTable> m_signer_conn_table;
   shared_ptr<SignerPoolManager> m_signer_pool_manager;
@@ -73,7 +73,7 @@ private:
 
 class KeyExService final : public CallData {
 public:
-  KeyExService(GruutUserService::AsyncService *service, ServerCompletionQueue *cq, shared_ptr<SignerPoolManager> signer_pool_manager)
+  KeyExService(TethysUserService::AsyncService *service, ServerCompletionQueue *cq, shared_ptr<SignerPoolManager> signer_pool_manager)
       : m_responder(&m_context), m_signer_pool_manager(move(signer_pool_manager)) {
     m_service = service;
     m_completion_queue = cq;
@@ -83,7 +83,7 @@ public:
   }
 
 private:
-  GruutUserService::AsyncService *m_service;
+  TethysUserService::AsyncService *m_service;
   Request m_request;
   Reply m_reply;
   ServerAsyncResponseWriter<Reply> m_responder;
@@ -93,7 +93,7 @@ private:
 
 class UserService final : public CallData {
 public:
-  UserService(GruutUserService::AsyncService *service, ServerCompletionQueue *cq, shared_ptr<SignerPoolManager> signer_pool_manager,
+  UserService(TethysUserService::AsyncService *service, ServerCompletionQueue *cq, shared_ptr<SignerPoolManager> signer_pool_manager,
               shared_ptr<RoutingTable> routing_table)
       : m_responder(&m_context), m_signer_pool_manager(move(signer_pool_manager)), m_routing_table(move(routing_table)) {
     m_service = service;
@@ -104,12 +104,32 @@ public:
   }
 
 private:
-  GruutUserService::AsyncService *m_service;
+  TethysUserService::AsyncService *m_service;
   Request m_request;
   Reply m_reply;
   ServerAsyncResponseWriter<Reply> m_responder;
   shared_ptr<SignerPoolManager> m_signer_pool_manager;
   shared_ptr<RoutingTable> m_routing_table;
+  void proceed() override;
+};
+
+class SignerService final : public CallData {
+public:
+  SignerService(TethysUserService::AsyncService *service, ServerCompletionQueue *cq, shared_ptr<SignerPoolManager> signer_pool_manager)
+      : m_responder(&m_context), m_signer_pool_manager(move(signer_pool_manager)) {
+    m_service = service;
+    m_completion_queue = cq;
+    m_receive_status = RpcCallStatus::CREATE;
+
+    proceed();
+  }
+
+private:
+  TethysUserService::AsyncService *m_service;
+  Request m_request;
+  Reply m_reply;
+  ServerAsyncResponseWriter<Reply> m_responder;
+  shared_ptr<SignerPoolManager> m_signer_pool_manager;
   void proceed() override;
 };
 

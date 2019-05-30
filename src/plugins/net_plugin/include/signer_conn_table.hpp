@@ -16,7 +16,7 @@ using namespace std;
 
 struct SignerRpcInfo {
   void *tag_identity;
-  ServerAsyncReaderWriter<Message, Identity> *send_msg;
+  ServerAsyncWriter<Message> *send_msg;
 };
 
 class SignerConnTable {
@@ -33,7 +33,7 @@ public:
 
   ~SignerConnTable() = default;
 
-  void setRpcInfo(const string &recv_id_b58, ServerAsyncReaderWriter<Message, Identity> *reply_rpc, void *tag) {
+  void setRpcInfo(const string &recv_id_b58, ServerAsyncWriter<Message> *reply_rpc, void *tag) {
     {
       lock_guard<std::mutex> lock(table_mutex);
       signer_conn_table[recv_id_b58].send_msg = reply_rpc;
