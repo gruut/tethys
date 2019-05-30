@@ -37,7 +37,7 @@ constexpr auto FIND_NODE_TIMEOUT = std::chrono::milliseconds(100);
 class NetPluginImpl {
 public:
   GruutMergerService::AsyncService merger_service;
-  GruutUserService::AsyncService user_service;
+  TethysUserService::AsyncService user_service;
   KademliaService::AsyncService kademlia_service;
 
   string p2p_address;
@@ -107,8 +107,9 @@ public:
     broadcast_check_table = make_shared<BroadcastMsgTable>();
     id_mapping_table = make_shared<IdMappingTable>();
 
-    new OpenChannelWithSigner(&user_service, completion_queue.get(), signer_conn_table, signer_pool_manager);
+    new ReqSigService(&user_service, completion_queue.get(), signer_conn_table, signer_pool_manager);
     new KeyExService(&user_service, completion_queue.get(), signer_pool_manager);
+    new SignerService(&user_service, completion_queue.get(), signer_pool_manager);
     new UserService(&user_service, completion_queue.get(), signer_pool_manager, routing_table);
     new MergerService(&merger_service, completion_queue.get(), routing_table, broadcast_check_table, id_mapping_table);
     new FindNode(&kademlia_service, completion_queue.get(), routing_table);

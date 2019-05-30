@@ -244,22 +244,21 @@ private:
   shared_ptr<SignerPoolManager> signer_pool_manager;
 };
 
-void OpenChannelWithSigner::proceed() {
+void ReqSigService::proceed() {
   switch (m_receive_status) {
   case RpcCallStatus::CREATE: {
     m_receive_status = RpcCallStatus::READ;
     m_context.AsyncNotifyWhenDone(this);
-    m_service->RequestOpenChannel(&m_context, &m_stream, m_completion_queue, m_completion_queue, this);
+    m_service->RequestReqSsigService(&m_context, &m_request, &m_stream, m_completion_queue, m_completion_queue, this);
   } break;
 
   case RpcCallStatus::READ: {
-    new OpenChannelWithSigner(m_service, m_completion_queue, m_signer_conn_table, m_signer_pool_manager);
+    new ReqSigService(m_service, m_completion_queue, m_signer_conn_table, m_signer_pool_manager);
     m_receive_status = RpcCallStatus::PROCESS;
-    m_stream.Read(&m_request, this);
+    m_signer_id_b58 = m_request.sender();
   } break;
 
   case RpcCallStatus::PROCESS: {
-    m_signer_id_b58 = m_request.sender();
     m_receive_status = RpcCallStatus::WAIT;
     m_signer_conn_table->setRpcInfo(m_signer_id_b58, &m_stream, this);
 
@@ -270,7 +269,6 @@ void OpenChannelWithSigner::proceed() {
       m_signer_conn_table->eraseRpcInfo(m_signer_id_b58);
       m_signer_pool_manager->removeSigner(m_signer_id_b58);
       m_signer_pool_manager->removeTempSigner(m_signer_id_b58);
-      // TODO: signer leave event should be notified to `Block producer`
 
       delete this;
     }
@@ -423,6 +421,56 @@ void UserService::proceed() {
                 }
               }
             }
+          } else
+            m_reply.set_status(Reply_Status_INVALID);
+        }
+      } else {
+        m_reply.set_status(Reply_Status_INVALID);
+      }
+    } catch (exception &e) {
+      m_reply.set_status(Reply_Status_INTERNAL);
+    }
+    m_receive_status = RpcCallStatus::FINISH;
+    m_responder.Finish(m_reply, rpc_status, this);
+    break;
+  }
+  default: {
+    delete this;
+    break;
+  }
+  }
+}
+
+void SignerService::proceed() {
+  switch (m_receive_status) {
+  case RpcCallStatus::CREATE: {
+    m_receive_status = RpcCallStatus::PROCESS;
+    m_service->RequestUserService(&m_context, &m_request, &m_responder, m_completion_queue, m_completion_queue, this);
+    break;
+  }
+  case RpcCallStatus::PROCESS: {
+    new SignerService(m_service, m_completion_queue, m_signer_pool_manager);
+    Status rpc_status;
+    try {
+      string packed_msg = m_request.message();
+      MessageParser msg_parser;
+      auto input_data = msg_parser.parseMessage(packed_msg, rpc_status);
+      if (input_data.has_value()) {
+        auto signer_id_b58 = input_data.value().sender_id;
+        MessageValidator msg_validator;
+        if (!msg_validator.validate(input_data.value().body)) {
+          rpc_status = Status(StatusCode::INVALID_ARGUMENT, "Bad request (message validation fail)");
+        }
+        if (rpc_status.ok()) {
+          auto hmac_key = m_signer_pool_manager->getHmacKey(signer_id_b58);
+          if (hmac_key.has_value())
+            rpc_status = verifyHMAC(packed_msg, hmac_key.value());
+          else
+            rpc_status = Status(StatusCode::UNAUTHENTICATED, "Bad request (cannot find hmac key)");
+          if (rpc_status.ok()) {
+            MessageHandler msg_handler;
+            msg_handler(input_data.value());
+            m_reply.set_status(Reply_Status_SUCCESS);
           } else
             m_reply.set_status(Reply_Status_INVALID);
         }

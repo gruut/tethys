@@ -27,7 +27,7 @@ struct MergerStatus {
   MergerStatus() : user_setup(false), user_login(false), is_running(false), run_mode(ModeType::NONE) {}
 };
 
-class SetupService final : public GruutUserService::Service {
+class SetupService final : public TethysUserService::Service {
 public:
   SetupService() = default;
   Status UserService(ServerContext *context, const Request *request, Reply *response) override;
