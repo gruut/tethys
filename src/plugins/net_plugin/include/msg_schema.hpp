@@ -536,6 +536,9 @@ static SchemaMap schema_map = {{MessageType::MSG_PING,
     "user": {
       "type": "string"
     },
+    "mode": {
+      "type": "string"
+    },
     "val": {
       "type": "boolean"
     }
@@ -543,6 +546,7 @@ static SchemaMap schema_map = {{MessageType::MSG_PING,
   "required": [
     "time",
     "user",
+    "mode",
     "val"
   ]
 })"_json},
