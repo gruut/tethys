@@ -12,8 +12,6 @@ int main(int argc, char **argv) {
   if (!appbase::app().initialize<AdminPlugin, NetPlugin, ChainPlugin, BlockProducerPlugin>(argc, argv))
     return -1;
 
-  while(!app().isAppRunning());
-
   appbase::app().start();
   return 0;
 }

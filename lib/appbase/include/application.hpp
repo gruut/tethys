@@ -131,6 +131,11 @@ private:
   bool parseProgramOptions(int argc, char **argv);
 
   void initializePlugins();
+
+  void startInitializedPlugins();
+
+  void registerErrorSignalHandlers();
+
 };
 
 Application &app();
