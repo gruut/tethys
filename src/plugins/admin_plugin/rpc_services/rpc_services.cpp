@@ -311,6 +311,9 @@ void AdminService<ReqStart, ResStart>::proceed() {
       app().setRunFlag();
 
       string mode_type = mode == ReqStart_Mode_DEFAULT ? "default" : "monitor";
+
+      res.set_info("Start to running the node on " + mode_type + " mode");
+
       logger::INFO("[START] Success / Mode : {}", mode_type);
     }
     receive_status = AdminRpcCallStatus::FINISH;

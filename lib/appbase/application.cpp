@@ -31,8 +31,6 @@ Application &Application::instance() {
 bool Application::initializeImpl() {
   initializePlugins();
 
-  io_context_ptr->run();
-
   return true;
 }
 
@@ -101,34 +99,48 @@ void Application::initializePlugins() {
 }
 
 void Application::start() {
+  thread proactor([this](){io_context_ptr->run();});
+
+  startInitializedPlugins();
+
+  registerErrorSignalHandlers();
+
+  proactor.join();
+
+  shutdown();
+}
+
+void Application::startInitializedPlugins() {
+  while(!app().isAppRunning());
+
   for (auto &[_, plugin_ptr] : app_plugins_map) {
     if(plugin_ptr->getState() == AbstractPlugin::plugin_state::initialized) {
       plugin_ptr->start();
     }
   }
+}
 
+void Application::registerErrorSignalHandlers() {
   shared_ptr<boost::asio::signal_set> sigint_set(new boost::asio::signal_set(*io_context_ptr, SIGINT));
   sigint_set->async_wait([sigint_set, this](const boost::system::error_code &err, int num) {
-    logger::ERROR("SIGINT Received: {}", err.message());
-    sigint_set->cancel();
-    quit();
+      logger::ERROR("SIGINT Received: {}", err.message());
+      sigint_set->cancel();
+      quit();
   });
 
   shared_ptr<boost::asio::signal_set> sigterm_set(new boost::asio::signal_set(*io_context_ptr, SIGTERM));
   sigterm_set->async_wait([sigterm_set, this](const boost::system::error_code &err, int num) {
-    logger::ERROR("SIGTERM Received: {}", err.message());
-    sigterm_set->cancel();
-    quit();
+      logger::ERROR("SIGTERM Received: {}", err.message());
+      sigterm_set->cancel();
+      quit();
   });
 
   shared_ptr<boost::asio::signal_set> sigpipe_set(new boost::asio::signal_set(*io_context_ptr, SIGPIPE));
   sigpipe_set->async_wait([sigpipe_set, this](const boost::system::error_code &err, int num) {
-    logger::ERROR("SIGPIPE Received: {}", err.message());
-    sigpipe_set->cancel();
-    quit();
+      logger::ERROR("SIGPIPE Received: {}", err.message());
+      sigpipe_set->cancel();
+      quit();
   });
-
-  shutdown();
 }
 
 void Application::quit() {
