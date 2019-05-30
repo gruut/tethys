@@ -65,6 +65,9 @@ private:
   }
   bool validateEntry(MsgEntryType entry_type, const string &val) {
     switch (entry_type) {
+    case MsgEntryType::USER_MODE: {
+      return (val == "user" || val == "signer" || val == "all")
+    }
     case MsgEntryType::DECIMAL:
     case MsgEntryType::TIMESTAMP: {
       if (!all_of(val.begin(), val.end(), ::isdigit)) {
@@ -159,6 +162,8 @@ private:
       return MsgEntryType::HEX_256;
     else if (key == "val" || key == "confirm")
       return MsgEntryType::BOOL;
+    else if (key == "mode")
+      return MsgEntryType::USER_MODE;
     else
       return MsgEntryType::NONE;
   }

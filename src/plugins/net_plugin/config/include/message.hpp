@@ -120,6 +120,7 @@ enum class MsgEntryType {
   PEM_PK,
   HEX_256,
   CONTRACT_ID,
+  USER_MODE,
   BOOL,
   NONE
 };
