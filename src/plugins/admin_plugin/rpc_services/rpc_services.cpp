@@ -12,37 +12,82 @@ namespace admin_plugin {
 using namespace appbase;
 using namespace std;
 
-template <PluginName T1, ControlType T2>
-class CommandDelegate {
+template <typename T>
+class CommandDelegator {
 public:
-  CommandDelegate() = default;
+  CommandDelegator() = default;
 
-  template <PluginName U1 = T1, ControlType U2 = T2, typename = enable_if_t<U1 == PluginName::NET && U2 == ControlType::LOGIN>>
-  void operator()(const string &cert, const string &enc_sk_pem, const string &pass) {
+  void delegate() {
+    setControlType();
+    nlohmann::json control_command = createControlCommand();
+
+    sendCommand(control_command);
+  }
+
+  const int getControlType() const {
+    return control_type;
+  }
+
+private:
+  virtual nlohmann::json createControlCommand() = 0;
+  virtual void sendCommand(nlohmann::json control_command) = 0;
+  virtual void setControlType() = 0;
+
+protected:
+  int control_type;
+};
+
+class LoginCommandDelegator : public CommandDelegator<ReqLogin> {
+public:
+  LoginCommandDelegator(string_view _env_sk_pem, string_view _cert, string_view _pass):
+    secret_key(_env_sk_pem), cert(_cert), pass(_pass) {}
+
+private:
+  nlohmann::json createControlCommand() override {
     nlohmann::json control_command;
-    int control_type = static_cast<int>(ControlType::LOGIN);
 
-    control_command["type"] = control_type;
-    control_command["enc_sk"] = enc_sk_pem;
+    control_command["type"] = getControlType();
+    control_command["enc_sk"] = secret_key;
     control_command["cert"] = cert;
     control_command["pass"] = pass;
 
+    return control_command;
+  }
+
+  void sendCommand(nlohmann::json control_command) override {
     app().getChannel<incoming::channels::net_control>().publish(control_command);
   }
 
-  template <PluginName U1 = T1, ControlType U2 = T2, typename = enable_if_t<U1 == PluginName::NET && U2 == ControlType::START>>
-  void operator()(ModeType net_mode) {
+  void setControlType() override {
+    control_type = static_cast<int>(ControlType::LOGIN);
+  }
+
+  string secret_key, cert, pass;
+};
+
+class StartCommandDelegator : public CommandDelegator<ReqStart> {
+public:
+  StartCommandDelegator(ModeType _net_mode): net_mode(_net_mode) {}
+
+private:
+  nlohmann::json createControlCommand() override {
     nlohmann::json control_command;
-    int control_type = static_cast<int>(ControlType::START);
-    int net_mode_type = static_cast<int>(net_mode);
 
-    control_command["type"] = control_type;
-    control_command["mode"] = net_mode_type;
+    control_command["type"] = getControlType();
+    control_command["mode"] = net_mode;
 
+    return control_command;
+  }
+
+  void sendCommand(nlohmann::json control_command) override {
     app().getChannel<incoming::channels::net_control>().publish(control_command);
   }
 
-  // TODO : send world creation info & local chain info to chain plugin
+  void setControlType() override {
+    control_type = static_cast<int>(ControlType::START);
+  }
+
+  ModeType net_mode;
 };
 
 Status SetupService::UserService(ServerContext *context, const Request *request, Reply *response) {
@@ -242,11 +287,14 @@ void AdminService<ReqLogin, ResLogin>::proceed() {
 
       if (!self_sk.empty() && !self_cert.empty()) {
         if (checkPassword(self_sk, pass)) {
-          CommandDelegate<PluginName::NET, ControlType::LOGIN> forwarder;
-          forwarder(self_cert, self_sk, pass);
+          LoginCommandDelegator delegator(self_sk, self_cert, pass);
+          delegator.delegate();
+
           merger_status->user_setup = true;
           merger_status->user_login = true;
+
           res.set_success(true);
+
           logger::INFO("[LOGIN] Success");
         } else {
           string info = "Fail to login, please check password and try again";
@@ -302,8 +350,8 @@ void AdminService<ReqStart, ResStart>::proceed() {
 
     } else {
       auto run_mode = static_cast<ModeType>(mode);
-      CommandDelegate<PluginName::NET, ControlType::START> forwarder;
-      forwarder(run_mode);
+      StartCommandDelegator delegator(run_mode);
+      delegator.delegate();
 
       res.set_success(true);
       merger_status->is_running = true;
