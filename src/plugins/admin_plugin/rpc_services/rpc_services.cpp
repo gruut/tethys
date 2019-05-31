@@ -333,8 +333,7 @@ void AdminService<ReqStart, ResStart>::proceed() {
   case AdminRpcCallStatus::PROCESS: {
     new AdminService<ReqStart, ResStart>(service, completion_queue);
 
-    auto mode = req.mode();
-    if (app().runningMode() == static_cast<RunningMode>(mode)) {
+    if (app().isAppRunning()) {
       string info = "It's already running as a ";
       string mode_type = app().runningMode() == RunningMode::DEFAULT ? "default mode" : "monitor mode";
       info += mode_type;
@@ -343,7 +342,14 @@ void AdminService<ReqStart, ResStart>::proceed() {
       res.set_success(false);
       res.set_info(info);
 
-    } else if (mode == ReqStart_Mode_DEFAULT && !app().isUserSignedIn()) {
+      receive_status = AdminRpcCallStatus::FINISH;
+      responder.Finish(res, Status::OK, this);
+
+      break;
+    }
+
+    auto mode = req.mode();
+    if (mode == ReqStart_Mode_DEFAULT && !app().isUserSignedIn()) {
       string info = "Could not join a network. Please setup & login OR start as a monitoring mode";
       logger::ERROR("[START] {}", info);
 
@@ -366,6 +372,7 @@ void AdminService<ReqStart, ResStart>::proceed() {
 
       logger::INFO("[START] Success / Mode : {}", mode_type);
     }
+
     receive_status = AdminRpcCallStatus::FINISH;
     responder.Finish(res, Status::OK, this);
     break;
