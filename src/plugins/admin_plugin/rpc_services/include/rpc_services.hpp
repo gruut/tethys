@@ -18,15 +18,6 @@ using namespace grpc;
 using namespace grpc_user;
 using namespace grpc_admin;
 
-struct MergerStatus {
-  atomic<bool> user_setup;
-  atomic<bool> user_login;
-  atomic<bool> is_running;
-  atomic<ModeType> run_mode;
-
-  MergerStatus() : user_setup(false), user_login(false), is_running(false), run_mode(ModeType::NONE) {}
-};
-
 class SetupService final : public TethysUserService::Service {
 public:
   SetupService() = default;
@@ -43,8 +34,7 @@ enum class AdminRpcCallStatus { CREATE, PROCESS, FINISH };
 
 class CallService {
 public:
-  CallService(GruutAdminService::AsyncService *admin_service, ServerCompletionQueue *cq, shared_ptr<MergerStatus> m_status)
-      : merger_status(m_status) {
+  CallService(GruutAdminService::AsyncService *admin_service, ServerCompletionQueue *cq) {
     service = admin_service;
     completion_queue = cq;
   }
@@ -52,7 +42,6 @@ public:
   virtual void proceed() = 0;
 
 protected:
-  shared_ptr<MergerStatus> merger_status;
   GruutAdminService::AsyncService *service;
   ServerCompletionQueue *completion_queue;
   ServerContext context;
@@ -62,8 +51,8 @@ protected:
 template <typename Request, typename Response>
 class AdminService final : public CallService {
 public:
-  AdminService(GruutAdminService::AsyncService *admin_service, ServerCompletionQueue *cq, shared_ptr<MergerStatus> m_status)
-      : CallService(admin_service, cq, m_status), responder(&context) {
+  AdminService(GruutAdminService::AsyncService *admin_service, ServerCompletionQueue *cq)
+      : CallService(admin_service, cq), responder(&context) {
     proceed();
   }
   void proceed() override;
@@ -77,9 +66,9 @@ private:
 template <>
 class AdminService<ReqSetupKey, ResSetupKey> final : public CallService {
 public:
-  AdminService(GruutAdminService::AsyncService *admin_service, ServerCompletionQueue *cq, shared_ptr<MergerStatus> m_status,
+  AdminService(GruutAdminService::AsyncService *admin_service, ServerCompletionQueue *cq,
                const string &setup_port)
-      : CallService(admin_service, cq, m_status), responder(&context), default_setup_port(setup_port) {
+      : CallService(admin_service, cq), responder(&context), default_setup_port(setup_port) {
     proceed();
   }
   void proceed() override;
@@ -97,8 +86,8 @@ private:
 template <>
 class AdminService<ReqLogin, ResLogin> final : public CallService {
 public:
-  AdminService(GruutAdminService::AsyncService *admin_service, ServerCompletionQueue *cq, shared_ptr<MergerStatus> m_status)
-      : CallService(admin_service, cq, m_status), responder(&context) {
+  AdminService(GruutAdminService::AsyncService *admin_service, ServerCompletionQueue *cq)
+      : CallService(admin_service, cq), responder(&context) {
     proceed();
   }
   void proceed() override;
