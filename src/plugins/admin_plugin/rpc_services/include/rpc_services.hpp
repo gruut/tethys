@@ -34,69 +34,88 @@ enum class AdminRpcCallStatus { CREATE, PROCESS, FINISH };
 
 class CallService {
 public:
-  CallService(GruutAdminService::AsyncService *admin_service, ServerCompletionQueue *cq) {
-    service = admin_service;
-    completion_queue = cq;
-  }
-
   virtual void proceed() = 0;
-
-protected:
-  GruutAdminService::AsyncService *service;
-  ServerCompletionQueue *completion_queue;
-  ServerContext context;
-  AdminRpcCallStatus receive_status{AdminRpcCallStatus::CREATE};
 };
 
 template <typename Request, typename Response>
-class AdminService final : public CallService {
+class AdminService : public CallService {
 public:
   AdminService(GruutAdminService::AsyncService *admin_service, ServerCompletionQueue *cq)
-      : CallService(admin_service, cq), responder(&context) {
-    proceed();
+      : service(admin_service), completion_queue(cq), responder(&context) {
+    call_status = AdminRpcCallStatus::PROCESS;
   }
-  void proceed() override;
 
-private:
+  void proceed() override {}
+
+  void sendFinishedMsg(const Response &res) {
+    responder.Finish(res, Status::OK, this);
+
+    call_status = AdminRpcCallStatus::FINISH;
+  }
+
+protected:
   Request req;
   Response res;
   ServerAsyncResponseWriter<Response> responder;
+
+  GruutAdminService::AsyncService *service;
+  ServerCompletionQueue *completion_queue;
+
+  ServerContext context;
+
+  AdminRpcCallStatus call_status{AdminRpcCallStatus::CREATE};
 };
 
-template <>
-class AdminService<ReqSetupKey, ResSetupKey> final : public CallService {
+class SetupKeyService final : public AdminService<ReqSetupKey, ResSetupKey> {
+  using super = AdminService<ReqSetupKey, ResSetupKey>;
+
 public:
-  AdminService(GruutAdminService::AsyncService *admin_service, ServerCompletionQueue *cq,
-               const string &setup_port)
-      : CallService(admin_service, cq), responder(&context), default_setup_port(setup_port) {
-    proceed();
+  SetupKeyService(GruutAdminService::AsyncService *admin_service, ServerCompletionQueue *cq, string_view setup_port)
+      : super(admin_service, cq), default_setup_port(setup_port) {
+    service->RequestSetupKey(&context, &req, &responder, completion_queue, completion_queue, this);
   }
   void proceed() override;
 
 private:
-  string default_setup_port;
-  ReqSetupKey req;
-  ResSetupKey res;
-  ServerAsyncResponseWriter<ResSetupKey> responder;
   unique_ptr<Server> initSetup(shared_ptr<SetupService> setup_service, const string &port);
   optional<nlohmann::json> runSetup(shared_ptr<SetupService> setup_service);
   optional<string> getIdFromCert(const string &cert_pem);
+
+  string default_setup_port;
 };
 
-template <>
-class AdminService<ReqLogin, ResLogin> final : public CallService {
+class LoginService final : public AdminService<ReqLogin, ResLogin> {
+  using super = AdminService<ReqLogin, ResLogin>;
+
 public:
-  AdminService(GruutAdminService::AsyncService *admin_service, ServerCompletionQueue *cq)
-      : CallService(admin_service, cq), responder(&context) {
-    proceed();
+  LoginService(GruutAdminService::AsyncService *admin_service, ServerCompletionQueue *cq) : super(admin_service, cq) {
+    service->RequestLogin(&context, &req, &responder, completion_queue, completion_queue, this);
   }
+
   void proceed() override;
 
 private:
-  ReqLogin req;
-  ResLogin res;
-  ServerAsyncResponseWriter<ResLogin> responder;
   bool checkPassword(const string &enc_sk_pem, const string &pass);
+};
+
+class StartService final : public AdminService<ReqStart, ResStart> {
+  using super = AdminService<ReqStart, ResStart>;
+
+public:
+  StartService(GruutAdminService::AsyncService *admin_service, ServerCompletionQueue *cq) : super(admin_service, cq) {
+    service->RequestStart(&context, &req, &responder, completion_queue, completion_queue, this);
+  }
+  void proceed() override;
+};
+
+class StatusService final : public AdminService<ReqStatus, ResStatus> {
+  using super = AdminService<ReqStatus, ResStatus>;
+
+public:
+  StatusService(GruutAdminService::AsyncService *admin_service, ServerCompletionQueue *cq) : super(admin_service, cq) {
+    service->RequestCheckStatus(&context, &req, &responder, completion_queue, completion_queue, this);
+  }
+  void proceed() override;
 };
 
 } // namespace admin_plugin
