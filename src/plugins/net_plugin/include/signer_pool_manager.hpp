@@ -29,9 +29,12 @@ using namespace std;
 constexpr uint64_t JOIN_TIMEOUT_SEC = 10;
 constexpr int MAX_SIGNER = 200;
 
+enum class UserMode { USER_ONLY, SIGNER_ONLY, ALL };
+
 struct Signer {
   string user_id;
   string pk;
+  UserMode mode;
   vector<uint8_t> hmac_key;
 };
 
@@ -51,14 +54,17 @@ public:
   SignerPool(const SignerPool &&) = delete;
   SignerPool &operator=(const SignerPool &) = delete;
 
-  void pushSigner(const string &b58_user_id, vector<uint8_t> &hmac_key, const string &pk) {
+  void pushSigner(const string &b58_user_id, vector<uint8_t> &hmac_key, const string &pk, UserMode mode) {
     Signer new_signer;
     new_signer.user_id = TypeConverter::decodeBase<58>(b58_user_id);
     new_signer.hmac_key = hmac_key;
     new_signer.pk = pk;
+    new_signer.mode = mode;
 
     {
       unique_lock<shared_mutex> guard(pool_mutex);
+      if (mode != UserMode::USER_ONLY)
+        ++num_of_signers;
       signer_pool[b58_user_id] = new_signer;
     }
   }
@@ -68,6 +74,8 @@ public:
       unique_lock<shared_mutex> guard(pool_mutex);
 
       if (signer_pool.count(b58_user_id) > 0) {
+        if (signer_pool[b58_user_id].mode != UserMode::USER_ONLY)
+          --num_of_signers;
         signer_pool.erase(b58_user_id);
         return true;
       }
@@ -89,7 +97,7 @@ public:
     {
       shared_lock<shared_mutex> guard(pool_mutex);
 
-      int signers_count = std::min(size, signer_pool.size());
+      int signers_count = std::min(size, num_of_signers);
 
       vector<Signer> signers;
       signers.reserve(signers_count);
@@ -97,9 +105,10 @@ public:
         if (signers_count == 0) {
           break;
         }
-
-        signers.push_back(value);
-        --signers_count;
+        if (value.mode != UserMode::USER_ONLY) {
+          signers.push_back(value);
+          --signers_count;
+        }
       }
 
       return signers;
@@ -110,11 +119,12 @@ public:
     {
       shared_lock<shared_mutex> guard(pool_mutex);
 
-      return MAX_SIGNER >= signer_pool.size();
+      return MAX_SIGNER >= num_of_signers;
     }
   }
 
 private:
+  unsigned long num_of_signers{0};
   unordered_map<string, Signer> signer_pool;
   shared_mutex pool_mutex;
 };
@@ -191,8 +201,16 @@ public:
         logger::ERROR("[ECDH] Join timeout");
         throw ErrorMsgType::ECDH_TIMEOUT;
       }
+      auto mode = json::get<string>(msg.body, "mode").value();
+      UserMode user_mode;
+      if (mode == "user")
+        user_mode = UserMode::USER_ONLY;
+      else if (mode == "signer")
+        user_mode = UserMode::SIGNER_ONLY;
+      else
+        user_mode = UserMode::ALL;
 
-      signer_pool.pushSigner(recv_id_b58, temp_signer_pool[recv_id_b58].shared_sk, temp_signer_pool[recv_id_b58].signer_pk);
+      signer_pool.pushSigner(recv_id_b58, temp_signer_pool[recv_id_b58].shared_sk, temp_signer_pool[recv_id_b58].signer_pk, user_mode);
       temp_signer_pool.erase(recv_id_b58);
 
       // TODO : signer join event should be notified to `Block producer`
