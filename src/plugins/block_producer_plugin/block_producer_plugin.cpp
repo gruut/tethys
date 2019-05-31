@@ -136,11 +136,11 @@ private:
     bitset<256> optimal_signer_id_bits = getOptimalSignerId(blocks[0]);
 
     const int signers_size = SIGNERS_SIZE;
-    auto signer_pool_manager_ptr = dynamic_cast<NetPlugin*>(app().getPlugin("NetPlugin"))->getSignerPoolManager();
-    vector<Signer> signers = signer_pool_manager_ptr->getSigners(signers_size);
+    auto user_pool_manager_ptr = dynamic_cast<NetPlugin *>(app().getPlugin("NetPlugin"))->getUserPoolManager();
+    vector<User> signers = user_pool_manager_ptr->getSigners(signers_size);
 
     vector<bitset<256>> signer_ids_bits;
-    transform(signers.begin(), signers.end(), back_inserter(signer_ids_bits), [this](Signer &signer){
+    transform(signers.begin(), signers.end(), back_inserter(signer_ids_bits), [this](User &signer){
       return idToBitSet(signer.user_id);
     });
 
