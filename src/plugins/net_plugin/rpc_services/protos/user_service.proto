@@ -7,7 +7,7 @@ option java_outer_classname = "Tethys";
 package grpc_user;
 
 service TethysUserService {
-    rpc ReqSsigService (Identity) returns (stream Message) {}
+    rpc PushService (Identity) returns (stream Message) {}
     rpc KeyExService (Request) returns (Reply) {}
     rpc UserService (Request) returns (Reply) {}
     rpc SignerService (Request) returns (Reply) {}
@@ -38,4 +38,5 @@ message Reply {
     }
     Status status = 1;
     bytes message = 2;
+    string err_info = 3;
 }
