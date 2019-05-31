@@ -4,6 +4,8 @@
 #include "../../../lib/gruut-utils/src/ecdsa.hpp"
 #include "../../../plugins/net_plugin/include/message_parser.hpp"
 #include "../../chain_plugin/include/chain_plugin.hpp"
+#include "../include/command_delegator.hpp"
+
 #include <exception>
 
 namespace gruut {
@@ -11,84 +13,6 @@ namespace admin_plugin {
 
 using namespace appbase;
 using namespace std;
-
-template <typename T>
-class CommandDelegator {
-public:
-  CommandDelegator() = default;
-
-  void delegate() {
-    setControlType();
-    nlohmann::json control_command = createControlCommand();
-
-    sendCommand(control_command);
-  }
-
-  const int getControlType() const {
-    return control_type;
-  }
-
-private:
-  virtual nlohmann::json createControlCommand() = 0;
-  virtual void sendCommand(nlohmann::json control_command) = 0;
-  virtual void setControlType() = 0;
-
-protected:
-  int control_type;
-};
-
-class LoginCommandDelegator : public CommandDelegator<ReqLogin> {
-public:
-  LoginCommandDelegator(string_view _env_sk_pem, string_view _cert, string_view _pass):
-    secret_key(_env_sk_pem), cert(_cert), pass(_pass) {}
-
-private:
-  nlohmann::json createControlCommand() override {
-    nlohmann::json control_command;
-
-    control_command["type"] = getControlType();
-    control_command["enc_sk"] = secret_key;
-    control_command["cert"] = cert;
-    control_command["pass"] = pass;
-
-    return control_command;
-  }
-
-  void sendCommand(nlohmann::json control_command) override {
-    app().getChannel<incoming::channels::net_control>().publish(control_command);
-  }
-
-  void setControlType() override {
-    control_type = static_cast<int>(ControlType::LOGIN);
-  }
-
-  string secret_key, cert, pass;
-};
-
-class StartCommandDelegator : public CommandDelegator<ReqStart> {
-public:
-  StartCommandDelegator(RunningMode _net_mode): net_mode(_net_mode) {}
-
-private:
-  nlohmann::json createControlCommand() override {
-    nlohmann::json control_command;
-
-    control_command["type"] = getControlType();
-    control_command["mode"] = net_mode;
-
-    return control_command;
-  }
-
-  void sendCommand(nlohmann::json control_command) override {
-    app().getChannel<incoming::channels::net_control>().publish(control_command);
-  }
-
-  void setControlType() override {
-    control_type = static_cast<int>(ControlType::START);
-  }
-
-  RunningMode net_mode;
-};
 
 Status SetupService::UserService(ServerContext *context, const Request *request, Reply *response) {
   Status rpc_status;
@@ -106,7 +30,7 @@ Status SetupService::UserService(ServerContext *context, const Request *request,
   return Status::OK;
 }
 
-unique_ptr<Server> AdminService<ReqSetupKey, ResSetupKey>::initSetup(shared_ptr<SetupService> setup_service, const string &port) {
+unique_ptr<Server> SetupKeyService::initSetup(shared_ptr<SetupService> setup_service, const string &port) {
   string setup_serv_addr("0.0.0.0:");
   setup_serv_addr += port.empty() ? default_setup_port : port;
 
@@ -117,7 +41,7 @@ unique_ptr<Server> AdminService<ReqSetupKey, ResSetupKey>::initSetup(shared_ptr<
   return setup_serv_builder.BuildAndStart();
 }
 
-optional<nlohmann::json> AdminService<ReqSetupKey, ResSetupKey>::runSetup(shared_ptr<SetupService> setup_service) {
+optional<nlohmann::json> SetupKeyService::runSetup(shared_ptr<SetupService> setup_service) {
   auto &promise_user_key = setup_service->getUserKeyPromise();
   auto future = promise_user_key.get_future();
 
@@ -137,7 +61,7 @@ optional<nlohmann::json> AdminService<ReqSetupKey, ResSetupKey>::runSetup(shared
   return {};
 }
 
-optional<string> AdminService<ReqSetupKey, ResSetupKey>::getIdFromCert(const string &cert_pem) {
+optional<string> SetupKeyService::getIdFromCert(const string &cert_pem) {
   try {
     Botan::DataSource_Memory cert_datasource(cert_pem);
     Botan::X509_Certificate cert(cert_datasource);
@@ -149,114 +73,104 @@ optional<string> AdminService<ReqSetupKey, ResSetupKey>::getIdFromCert(const str
   }
 }
 
-void AdminService<ReqSetupKey, ResSetupKey>::proceed() {
-  switch (receive_status) {
-  case AdminRpcCallStatus::CREATE: {
-    receive_status = AdminRpcCallStatus::PROCESS;
-    service->RequestSetupKey(&context, &req, &responder, completion_queue, completion_queue, this);
-    break;
+void SetupKeyService::proceed() {
+  new SetupKeyService(service, completion_queue, default_setup_port);
+
+  if (call_status == AdminRpcCallStatus::FINISH) {
+    delete this;
+
+    return;
   }
-  case AdminRpcCallStatus::PROCESS: {
-    new AdminService<ReqSetupKey, ResSetupKey>(service, completion_queue, default_setup_port);
 
-    thread([&]() {
-      if (app().isUserSignedIn()) {
-        string info = "You have been logged in";
-        res.set_info(info);
+  thread([&]() {
+    if (app().isUserSignedIn()) {
+      string info = "You have been logged in";
+      res.set_info(info);
 
-        res.set_success(false);
-        receive_status = AdminRpcCallStatus::FINISH;
-        responder.Finish(res, Status::OK, this);
+      res.set_success(false);
 
-        logger::INFO("[SETUP KEY] {}", info);
+      sendFinishedMsg(res);
 
-        return;
-      }
+      logger::INFO("[SETUP KEY] {}", info);
 
-      auto &chain = dynamic_cast<ChainPlugin *>(app().getPlugin("ChainPlugin"))->chain();
+      return;
+    }
 
-      auto self_sk = chain.getValueByKey(DataType::SELF_INFO, "self_enc_sk");
-      auto self_cert = chain.getValueByKey(DataType::SELF_INFO, "self_cert");
+    auto &chain = dynamic_cast<ChainPlugin *>(app().getPlugin("ChainPlugin"))->chain();
 
-      if (!self_sk.empty() && !self_cert.empty()) {
-        string info = "Your key already exists in storage, Please login";
-        logger::INFO("[SETUP KEY] {}", info);
+    auto self_sk = chain.getValueByKey(DataType::SELF_INFO, "self_enc_sk");
+    auto self_cert = chain.getValueByKey(DataType::SELF_INFO, "self_cert");
 
-        app().completeUserSetup();
+    if (!self_sk.empty() && !self_cert.empty()) {
+      string info = "Your key already exists in storage, Please login";
+      logger::INFO("[SETUP KEY] {}", info);
 
-        res.set_success(false);
-        res.set_info(info);
-      } else {
-        shared_ptr<SetupService> setup_service = make_shared<SetupService>();
+      app().completeUserSetup();
 
-        auto setup_port = req.setup_port();
-        unique_ptr<Server> setup_server = initSetup(setup_service, setup_port);
-        logger::INFO("[SETUP KEY] Waiting for user key info");
+      res.set_success(false);
+      res.set_info(info);
+    } else {
+      shared_ptr<SetupService> setup_service = make_shared<SetupService>();
 
-        auto user_key_info = runSetup(setup_service);
-        if (user_key_info.has_value()) {
-          auto enc_sk_pem = json::get<string>(user_key_info.value(), "enc_sk").value_or("");
-          auto cert = json::get<string>(user_key_info.value(), "cert").value_or("");
+      auto setup_port = req.setup_port();
+      unique_ptr<Server> setup_server = initSetup(setup_service, setup_port);
+      logger::INFO("[SETUP KEY] Waiting for user key info");
 
-          if (enc_sk_pem.empty() || cert.empty()) {
-            string info = "(cert / sk) is empty";
-            logger::ERROR("[SETUP KEY] {}", info);
+      auto user_key_info = runSetup(setup_service);
+      if (user_key_info.has_value()) {
+        auto enc_sk_pem = json::get<string>(user_key_info.value(), "enc_sk").value_or("");
+        auto cert = json::get<string>(user_key_info.value(), "cert").value_or("");
 
-            res.set_success(false);
-            res.set_info(info);
-          } else {
-            auto my_id_b58 = getIdFromCert(cert);
-            if (my_id_b58.has_value()) {
-              SelfInfo self_info;
-              self_info.enc_sk = enc_sk_pem;
-              self_info.cert = cert;
-
-              auto my_id = TypeConverter::decodeBase<58>(my_id_b58.value());
-              self_info.id = my_id;
-
-              chain.saveSelfInfo(self_info);
-
-              app().setId(my_id);
-              app().completeUserSetup();
-
-              res.set_success(true);
-
-              logger::INFO("[SETUP KEY] Success");
-            } else {
-              string info = "Could not find X509 common name field in Certificate";
-              res.set_info(info);
-
-              res.set_success(false);
-            }
-          }
-        } else {
-          string info = "Could not receive any info from user. please `SETUP KEY` again";
+        if (enc_sk_pem.empty() || cert.empty()) {
+          string info = "(cert / sk) is empty";
           logger::ERROR("[SETUP KEY] {}", info);
 
-          res.set_info(info);
           res.set_success(false);
+          res.set_info(info);
+        } else {
+          auto my_id_b58 = getIdFromCert(cert);
+          if (my_id_b58.has_value()) {
+            SelfInfo self_info;
+            self_info.enc_sk = enc_sk_pem;
+            self_info.cert = cert;
+
+            auto my_id = TypeConverter::decodeBase<58>(my_id_b58.value());
+            self_info.id = my_id;
+
+            chain.saveSelfInfo(self_info);
+
+            app().setId(my_id);
+            app().completeUserSetup();
+
+            res.set_success(true);
+
+            logger::INFO("[SETUP KEY] Success");
+          } else {
+            string info = "Could not find X509 common name field in Certificate";
+            res.set_info(info);
+
+            res.set_success(false);
+          }
         }
-        if (setup_server != nullptr)
-          setup_server->Shutdown();
+      } else {
+        string info = "Could not receive any info from user. please `SETUP KEY` again";
+        logger::ERROR("[SETUP KEY] {}", info);
 
-        setup_server.reset();
-        setup_service.reset();
+        res.set_info(info);
+        res.set_success(false);
       }
+      if (setup_server != nullptr)
+        setup_server->Shutdown();
 
-      receive_status = AdminRpcCallStatus::FINISH;
-      responder.Finish(res, Status::OK, this);
-    }).detach();
+      setup_server.reset();
+      setup_service.reset();
+    }
 
-    break;
-  }
-
-  default:
-    delete this;
-    break;
-  }
+    sendFinishedMsg(res);
+  }).detach();
 }
 
-bool AdminService<ReqLogin, ResLogin>::checkPassword(const string &enc_sk_pem, const string &pass) {
+bool LoginService::checkPassword(const string &enc_sk_pem, const string &pass) {
   try {
     Botan::DataSource_Memory sk_datasource(enc_sk_pem);
     Botan::PKCS8::load_key(sk_datasource, pass);
@@ -267,143 +181,118 @@ bool AdminService<ReqLogin, ResLogin>::checkPassword(const string &enc_sk_pem, c
   }
 }
 
-void AdminService<ReqLogin, ResLogin>::proceed() {
-  switch (receive_status) {
-  case AdminRpcCallStatus::CREATE: {
-    receive_status = AdminRpcCallStatus::PROCESS;
-    service->RequestLogin(&context, &req, &responder, completion_queue, completion_queue, this);
-    break;
+void LoginService::proceed() {
+  new LoginService(service, completion_queue);
+
+  if (call_status == AdminRpcCallStatus::FINISH) {
+    delete this;
+
+    return;
   }
-  case AdminRpcCallStatus::PROCESS: {
-    new AdminService<ReqLogin, ResLogin>(service, completion_queue);
-    if (app().isUserSignedIn()) {
-      string info = "You have been logged in";
-      logger::INFO("[LOGIN] {}", info);
-      res.set_info(info);
-      res.set_success(false);
-    } else {
-      auto pass = req.password();
-      auto &chain = dynamic_cast<ChainPlugin *>(app().getPlugin("ChainPlugin"))->chain();
-      auto self_sk = chain.getValueByKey(DataType::SELF_INFO, "self_enc_sk");
-      auto self_cert = chain.getValueByKey(DataType::SELF_INFO, "self_cert");
 
-      if (!self_sk.empty() && !self_cert.empty()) {
-        if (checkPassword(self_sk, pass)) {
-          LoginCommandDelegator delegator(self_sk, self_cert, pass);
-          delegator.delegate();
+  if (app().isUserSignedIn()) {
+    string info = "You have been logged in";
+    logger::INFO("[LOGIN] {}", info);
+    res.set_info(info);
+    res.set_success(false);
+  } else {
+    auto pass = req.password();
+    auto &chain = dynamic_cast<ChainPlugin *>(app().getPlugin("ChainPlugin"))->chain();
+    auto self_sk = chain.getValueByKey(DataType::SELF_INFO, "self_enc_sk");
+    auto self_cert = chain.getValueByKey(DataType::SELF_INFO, "self_cert");
 
-          app().completeUserSetup();
-          app().completeUserSignedIn();
+    if (!self_sk.empty() && !self_cert.empty()) {
+      if (checkPassword(self_sk, pass)) {
+        LoginCommandDelegator delegator(self_sk, self_cert, pass);
+        delegator.delegate();
 
-          res.set_success(true);
+        app().completeUserSetup();
+        app().completeUserSignedIn();
 
-          logger::INFO("[LOGIN] Success");
-        } else {
-          string info = "Fail to login, please check password and try again";
-          res.set_info(info);
-          res.set_success(false);
-          logger::ERROR("[LOGIN] {}", info);
-        }
+        res.set_success(true);
+
+        logger::INFO("[LOGIN] Success");
       } else {
-        string info = "Could not find key info. Please `Setup Key` again";
+        string info = "Fail to login, please check password and try again";
         res.set_info(info);
         res.set_success(false);
         logger::ERROR("[LOGIN] {}", info);
       }
-    }
-    receive_status = AdminRpcCallStatus::FINISH;
-    responder.Finish(res, Status::OK, this);
-    break;
-  }
-  default: {
-    delete this;
-    break;
-  }
-  }
-}
-
-template <>
-void AdminService<ReqStart, ResStart>::proceed() {
-  switch (receive_status) {
-  case AdminRpcCallStatus::CREATE: {
-    receive_status = AdminRpcCallStatus::PROCESS;
-    service->RequestStart(&context, &req, &responder, completion_queue, completion_queue, this);
-    break;
-  }
-  case AdminRpcCallStatus::PROCESS: {
-    new AdminService<ReqStart, ResStart>(service, completion_queue);
-
-    if (app().isAppRunning()) {
-      string info = "It's already running as a ";
-      string mode_type = app().runningMode() == RunningMode::DEFAULT ? "default mode" : "monitor mode";
-      info += mode_type;
-      logger::ERROR("[START] {}", info);
-
-      res.set_success(false);
-      res.set_info(info);
-
-      receive_status = AdminRpcCallStatus::FINISH;
-      responder.Finish(res, Status::OK, this);
-
-      break;
-    }
-
-    auto mode = req.mode();
-    if (mode == ReqStart_Mode_DEFAULT && !app().isUserSignedIn()) {
-      string info = "Could not join a network. Please setup & login OR start as a monitoring mode";
-      logger::ERROR("[START] {}", info);
-
-      res.set_success(false);
-      res.set_info(info);
-
     } else {
-      auto run_mode = static_cast<RunningMode>(mode);
-      StartCommandDelegator delegator(run_mode);
-      delegator.delegate();
-
-      res.set_success(true);
-
-      app().setRunFlag();
-      app().runningMode() = run_mode;
-
-      string mode_type = mode == ReqStart_Mode_DEFAULT ? "default" : "monitor";
-
-      res.set_info("Start to running the node on " + mode_type + " mode");
-
-      logger::INFO("[START] Success / Mode : {}", mode_type);
+      string info = "Could not find key info. Please `Setup Key` again";
+      res.set_info(info);
+      res.set_success(false);
+      logger::ERROR("[LOGIN] {}", info);
     }
+  }
 
-    receive_status = AdminRpcCallStatus::FINISH;
-    responder.Finish(res, Status::OK, this);
-    break;
-  }
-  default:
-    delete this;
-    break;
-  }
+  sendFinishedMsg(res);
 }
 
-template <>
-void AdminService<ReqStatus, ResStatus>::proceed() {
-  switch (receive_status) {
-  case AdminRpcCallStatus::CREATE: {
-    receive_status = AdminRpcCallStatus::PROCESS;
-    service->RequestCheckStatus(&context, &req, &responder, completion_queue, completion_queue, this);
-  } break;
+void StartService::proceed() {
+  new StartService(service, completion_queue);
 
-  case AdminRpcCallStatus::PROCESS: {
-    new AdminService<ReqStatus, ResStatus>(service, completion_queue);
-
-    res.set_alive(app().isAppRunning());
-
-    receive_status = AdminRpcCallStatus::FINISH;
-    responder.Finish(res, Status::OK, this);
-  } break;
-
-  default: {
+  if (call_status == AdminRpcCallStatus::FINISH) {
     delete this;
-  } break;
+
+    return;
   }
+
+  new StartService(service, completion_queue);
+
+  if (app().isAppRunning()) {
+    string info = "It's already running as a ";
+    string mode_type = app().runningMode() == RunningMode::DEFAULT ? "default mode" : "monitor mode";
+    info += mode_type;
+    logger::ERROR("[START] {}", info);
+
+    res.set_success(false);
+    res.set_info(info);
+
+    sendFinishedMsg(res);
+
+    return;
+  }
+
+  auto mode = req.mode();
+  if (mode == ReqStart_Mode_DEFAULT && !app().isUserSignedIn()) {
+    string info = "Could not join a network. Please setup & login OR start as a monitoring mode";
+    logger::ERROR("[START] {}", info);
+
+    res.set_success(false);
+    res.set_info(info);
+  } else {
+    auto run_mode = static_cast<RunningMode>(mode);
+    StartCommandDelegator delegator(run_mode);
+    delegator.delegate();
+
+    res.set_success(true);
+
+    app().setRunFlag();
+    app().runningMode() = run_mode;
+
+    string mode_type = mode == ReqStart_Mode_DEFAULT ? "default" : "monitor";
+
+    res.set_info("Start to running the node on " + mode_type + " mode");
+
+    logger::INFO("[START] Success / Mode : {}", mode_type);
+  }
+
+  sendFinishedMsg(res);
+}
+
+void StatusService::proceed() {
+  new StatusService(service, completion_queue);
+
+  if (call_status == AdminRpcCallStatus::FINISH) {
+    delete this;
+
+    return;
+  }
+
+  res.set_alive(app().isAppRunning());
+
+  sendFinishedMsg(res);
 }
 
 } // namespace admin_plugin
