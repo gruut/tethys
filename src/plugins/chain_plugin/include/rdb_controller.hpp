@@ -28,29 +28,23 @@ private:
 public:
   RdbController(string_view dbms, string_view table_name, string_view db_user_id, string_view db_password);
   soci::connection_pool &pool();
-  bool insertBlockData(Block &block);
-  bool insertTransactionData(Block &block);
-  bool insertUserLedgerData(std::map<string, user_ledger_type> &user_ledger);
-  bool insertContractLedgerData(std::map<string, contract_ledger_type> &contract_ledger);
+  bool applyBlock(Block &block);
+  bool applyTransaction(Block &block);
+  bool applyUserLedger(std::map<string, user_ledger_type> &user_ledger);
+  bool applyContractLedger(std::map<string, contract_ledger_type> &contract_ledger);
+  bool applyUserAttribute(UnresolvedBlock &UR_block, nlohmann::json &option, result_query_info_type &result_info);
+  bool applyUserCert(UnresolvedBlock &UR_block, nlohmann::json &option, result_query_info_type &result_info);
+  bool applyContract(UnresolvedBlock &UR_block, nlohmann::json &option, result_query_info_type &result_info);
 
   vector<Block> getBlocks(const string &condition);
   Block getBlock(const string &condition);
   string getUserCert(const base58_type &user_id);
 
-  bool queryUserJoin(UnresolvedBlock &UR_block, nlohmann::json &option, result_query_info_type &result_info);
-  bool queryUserCert(UnresolvedBlock &UR_block, nlohmann::json &option, result_query_info_type &result_info);
-  bool queryContractNew(UnresolvedBlock &UR_block, nlohmann::json &option, result_query_info_type &result_info);
-  bool queryContractDisable(UnresolvedBlock &UR_block, nlohmann::json &option, result_query_info_type &result_info);
-
-  bool queryIncinerate(std::map<string, user_ledger_type> &user_ledger, nlohmann::json &option, result_query_info_type &result_info);
-  bool queryCreate(std::map<string, user_ledger_type> &user_ledger, nlohmann::json &option, result_query_info_type &result_info);
-  bool queryTransfer(std::vector<LedgerRecord> &mem_ledger, nlohmann::json &option, result_query_info_type &result_info);
-  bool queryUserScope(std::map<string, user_ledger_type> &user_ledger, nlohmann::json &option, result_query_info_type &result_info);
-  bool queryContractScope(std::map<string, contract_ledger_type> &contract_ledger, nlohmann::json &option, result_query_info_type &result_info);
-  bool queryTradeItem(std::vector<LedgerRecord> &mem_ledger, nlohmann::json &option, result_query_info_type &result_info);
-  bool queryTradeVal(std::vector<LedgerRecord> &mem_ledger, nlohmann::json &option, result_query_info_type &result_info);
   bool queryRunQuery(std::vector<LedgerRecord> &mem_ledger, nlohmann::json &option, result_query_info_type &result_info);
   bool queryRunContract(std::vector<LedgerRecord> &mem_ledger, nlohmann::json &option, result_query_info_type &result_info);
+
+  bool checkUnique();
+  bool findUserFromRDB(string pid, user_ledger_type &user_ledger);
 };
 } // namespace gruut
 #endif

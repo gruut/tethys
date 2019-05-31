@@ -340,43 +340,21 @@ bytes UnresolvedBlockPool::getContractStateRoot() {
 }
 
 user_ledger_type UnresolvedBlockPool::findUserLedgerFromHead(string key) {
-  int pool_deque_idx = find_start_height - unresolved_block_pool->getLatestConfirmedHeight() - 1;
-  int pool_vec_idx = vec_idx;
-
-  map<string, user_ledger_type> current_user_ledgers = unresolved_block_pool->getBlock(pool_deque_idx, pool_vec_idx).user_ledger;
-  map<string, user_ledger_type>::iterator it;
-
-  while (1) {
-    it = current_user_ledgers.find(key);
-
-    if (it != current_user_ledgers.end()) {
-      if (it->second.is_deleted) {
-        return;
-      } else {
-        return;
-      }
-      break;
-    }
-    --pool_deque_idx;
-    pool_vec_idx = unresolved_block_pool->getBlock(pool_deque_idx, pool_vec_idx).prev_vector_idx;
-
-    if (pool_deque_idx < 0) {
-      // -1이 되면 db resolved 층까지 왔다는 이야기이다
-      // db에서 select문으로 조회하는데도 찾지 못한다면, 그것은 아예 존재하지 않는 데이터
-      return false;
-    }
-
-    current_user_ledgers = unresolved_block_pool->getBlock(pool_deque_idx, pool_vec_idx).user_ledger;
-  }
-
-  return unresolved_block_pool->getBlock(pool_deque_idx, pool_vec_idx).user_ledger[key];
+  if (m_us_tree.getMerkleNode(stoi(key)) == nullptr) {
+    user_ledger_type empty_ledger;
+    empty_ledger.is_empty = true;
+    return empty_ledger;
+  } else
+    return m_us_tree.getMerkleNode(stoi(key))->getUserLedger();
 }
 
 contract_ledger_type UnresolvedBlockPool::findContractLedgerFromHead(string key) {
-  int pool_deque_idx = find_start_height - unresolved_block_pool->getLatestConfirmedHeight() - 1;
-  int pool_vec_idx = vec_idx;
-
-  unresolved_block_pool->getBlock(pool_deque_idx, pool_vec_idx).contract_ledger[key];
+  if (m_cs_tree.getMerkleNode(stoi(key)) == nullptr) {
+    contract_ledger_type empty_ledger;
+    empty_ledger.is_empty = true;
+    return empty_ledger;
+  } else
+    return m_cs_tree.getMerkleNode(stoi(key))->getContractLedger();
 }
 
 // ------------------------------------------------------------------
@@ -392,7 +370,6 @@ contract_ledger_type UnresolvedBlockPool::findContractLedgerFromHead(string key)
 //      res = addCommand(transaction, value);
 //    } else if (transaction["command"] == "send") {
 //      res = sendCommand(transaction);
-//
 //    } else if (transaction["command"] == "new") {
 //      res = newCommand(transaction);
 //    } else if (transaction["command"] == "del") {

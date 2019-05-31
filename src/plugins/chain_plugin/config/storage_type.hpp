@@ -132,7 +132,7 @@ using user_ledger_type = struct UserLedger {
   string tag;
   hash_t pid;
   QueryType query_type;
-  bool is_deleted{false};
+  bool is_empty{false};
 
   UserLedger() = default;
   UserLedger(string var_name_, int var_type_, string uid_, string tag_) : var_name(var_name_), var_type(var_type_), uid(uid_), tag(tag_) {
@@ -155,7 +155,7 @@ using contract_ledger_type = struct ContractLedger {
   string var_info;
   hash_t pid;
   QueryType query_type;
-  bool is_deleted{false};
+  bool is_empty{false};
 
   ContractLedger() = default;
   ContractLedger(string var_name_, int var_type_, string cid_, string var_info_)
@@ -167,6 +167,12 @@ using contract_ledger_type = struct ContractLedger {
     bytes_builder.append(var_info);
     pid = Sha256::hash(bytes_builder.getBytes());
   }
+};
+
+using search_result_type = struct LedgerSearchResult {
+  bool not_found{false};
+  user_ledger_type user_ledger;
+  contract_ledger_type contract_ledger;
 };
 
 } // namespace gruut

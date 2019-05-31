@@ -21,8 +21,8 @@ struct UnresolvedBlock {
   Block block;
   int32_t prev_vector_idx{-1};
   int32_t ssig_sum{0};
-  std::map<string, user_ledger_type> user_ledger;
-  std::map<string, contract_ledger_type> contract_ledger;
+  std::map<string, user_ledger_type> user_ledger_list;
+  std::map<string, contract_ledger_type> contract_ledger_list;
 
   UnresolvedBlock() = default;
   UnresolvedBlock(Block &block_, int prev_queue_idx_) : block(block_), prev_vector_idx(prev_queue_idx_) {}

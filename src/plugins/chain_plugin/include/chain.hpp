@@ -30,15 +30,15 @@ public:
 
   // RDB functions
   string getUserCert(const base58_type &user_id);
-  void insertBlockData(Block &block_info);
-  void insertTransactionData(Block &block_info);
-  void insertUserLedgerData(std::map<string, user_ledger_type> &user_ledger);
-  void insertContractLedgerData(std::map<string, contract_ledger_type> &contract_ledger);
+  bool applyBlock(Block &block_info);
+  bool applyTransaction(Block &block_info);
+  bool applyUserLedger(std::map<string, user_ledger_type> &user_ledger);
+  bool applyContractLedger(std::map<string, contract_ledger_type> &contract_ledger);
+  bool applyUserAttribute(UnresolvedBlock &UR_block, nlohmann::json &option, result_query_info_type &result_info);
+  bool applyUserCert(UnresolvedBlock &UR_block, nlohmann::json &option, result_query_info_type &result_info);
+  bool applyContract(UnresolvedBlock &UR_block, nlohmann::json &option, result_query_info_type &result_info);
 
-  bool queryUserJoin(UnresolvedBlock &UR_block, nlohmann::json &option, result_query_info_type &result_info);
-  bool queryUserCert(UnresolvedBlock &UR_block, nlohmann::json &option, result_query_info_type &result_info);
-  bool queryContractNew(UnresolvedBlock &UR_block, nlohmann::json &option, result_query_info_type &result_info);
-  bool queryContractDisable(UnresolvedBlock &UR_block, nlohmann::json &option, result_query_info_type &result_info);
+  bool findUserFromRDB(string key, user_ledger_type &user_ledger);
 
   // KV functions
   void saveWorld(world_type &world_info);
@@ -50,6 +50,10 @@ public:
   string getValueByKey(DataType what, const string &base_keys);
 
   // Unresolved block pool functions
+  bool queryUserJoin(UnresolvedBlock &UR_block, nlohmann::json &option, result_query_info_type &result_info);
+  bool queryUserCert(UnresolvedBlock &UR_block, nlohmann::json &option, result_query_info_type &result_info);
+  bool queryContractNew(UnresolvedBlock &UR_block, nlohmann::json &option, result_query_info_type &result_info);
+  bool queryContractDisable(UnresolvedBlock &UR_block, nlohmann::json &option, result_query_info_type &result_info);
   bool queryIncinerate(UnresolvedBlock &UR_block, nlohmann::json &option, result_query_info_type &result_info);
   bool queryCreate(UnresolvedBlock &UR_block, nlohmann::json &option, result_query_info_type &result_info);
   bool queryTransfer(UnresolvedBlock &UR_block, nlohmann::json &option, result_query_info_type &result_info);
@@ -60,7 +64,7 @@ public:
   bool queryRunQuery(UnresolvedBlock &UR_block, nlohmann::json &option, result_query_info_type &result_info);
   bool queryRunContract(UnresolvedBlock &UR_block, nlohmann::json &option, result_query_info_type &result_info);
   string pidCheck(optional<string> pid, string var_name, int var_type, string var_owner);
-  user_ledger_type findUserLedgerFromPoint(string key, int deq_idx, int vec_idx);
+  search_result_type findUserLedgerFromPoint(string key, block_height_type height, int vec_idx);
 
   ubp_push_result_type pushBlock(Block &block, bool is_restore = false);
   UnresolvedBlock findBlock(const base58_type &block_id, const block_height_type block_height);

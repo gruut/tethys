@@ -192,8 +192,8 @@ public:
     UnresolvedBlock resolved_block;
     bool resolve_result = chain->resolveBlock(input_block, resolved_block);
     if (resolve_result) {
-      chain->insertBlockData(resolved_block.block);
-      chain->insertTransactionData(resolved_block.block);
+      chain->applyBlock(resolved_block.block);
+      chain->applyTransaction(resolved_block.block);
     }
 
     return;
@@ -307,17 +307,20 @@ public:
         UnresolvedBlock resolved_block;
         bool resolve_result = chain->resolveBlock(blocks[i], resolved_block);
         if (resolve_result) {
-          chain->insertBlockData(resolved_block.block);
-          chain->insertTransactionData(resolved_block.block);
-          chain->insertUserLedgerData(resolved_block.user_ledger);
-          chain->insertContractLedgerData(resolved_block.contract_ledger);
+          chain->applyBlock(resolved_block.block);
+          chain->applyTransaction(resolved_block.block);
+          chain->applyUserLedger(resolved_block.user_ledger_list);
+          chain->applyContractLedger(resolved_block.contract_ledger_list);
+          chain->applyUserAttribute();
+          chain->applyUserCert();
+          chain->applyContract();
         }
       }
     } // test code end
 
     { // test code start
       // 단순 입력 테스트. 실제로는 push해서 들어가야 한다.
-      //    chain->insertBlockData(blocks[0]);
+      //    chain->applyBlock(blocks[0]);
       //    logger::INFO("first block id: " + first_block.getBlockId());
       //    logger::INFO("first block 0th cert content: " + first_block.getUserCerts()[0].cert_content);
       //    logger::INFO("first block 0th txid: " + first_block.getTransactions()[0].getTxId());

@@ -35,22 +35,25 @@ class StateNode {
 private:
   shared_ptr<StateNode> m_left;
   shared_ptr<StateNode> m_right;
+  vector<uint8_t> m_hash_value;
   uint32_t m_suffix; // TODO: 비트 확장
-  vector<uint8_t> m_value;
-  uint32_t m_debug_path; // 노드 분기 시 필요할 것으로 예상됨
-  int m_debug_uid;       // 테스트 용도
   int m_suffix_len;
 
-  unique_ptr<user_ledger_type> m_user_ledger;  // 각 leaf node는 하나의 ledger만을 가리킨다
+  unique_ptr<user_ledger_type> m_user_ledger; // 각 leaf node는 하나의 ledger만을 가리킨다
   unique_ptr<contract_ledger_type> m_contract_ledger;
 
-  void makeValue(LedgerRecord &ledger);
+  uint32_t m_debug_path; // 노드 분기 시 필요할 것으로 예상됨
+
+  void makeValue(user_ledger_type &user_ledger);
+  void makeValue(contract_ledger_type &contract_ledger);
   void makeValue(string &key);
-  uint32_t makePath(LedgerRecord &ledger);
+  uint32_t makePath(user_ledger_type &user_ledger);
+  uint32_t makePath(contract_ledger_type &contract_ledger);
 
 public:
   StateNode() = default;
-  StateNode(LedgerRecord &ledger);
+  StateNode(user_ledger_type &user_ledger);
+  StateNode(contract_ledger_type &contract_ledger);
   void reHash();
   void reHash(string l_value, string r_value);
 
@@ -61,7 +64,6 @@ public:
   bool isDummy();
   // bool isLeaf()   { return ((m_debug_uid != -1) && (m_suffix_len == 0)); }
 
-  /* setter */
   void setLeft(shared_ptr<StateNode> node);
   void setRight(shared_ptr<StateNode> node);
   void setSuffix(uint32_t _path, int pos);
@@ -69,26 +71,15 @@ public:
   void setNodeInfo(LedgerRecord &data);
   void overwriteNode(shared_ptr<StateNode> node);
 
-  /* getter */
-  shared_ptr<StateNode> getLeft() {
-    return m_left;
-  }
-  shared_ptr<StateNode> getRight() {
-    return m_right;
-  }
-  uint32_t getSuffix() {
-    return m_suffix;
-  }
-  vector<uint8_t> getValue() {
-    return m_value;
-  }
-  uint32_t getDebugPath() {
-    return m_debug_path;
-  }
-  // int getDebugUid()       { return m_debug_uid; }
-  int getSuffixLen() {
-    return m_suffix_len;
-  }
+  shared_ptr<StateNode> getLeft();
+  shared_ptr<StateNode> getRight();
+  uint32_t getSuffix();
+  vector<uint8_t> getValue();
+  uint32_t getDebugPath();
+  int getSuffixLen();
+
+  const user_ledger_type &getUserLedger() const;
+  const contract_ledger_type &getContractLedger() const;
 };
 
 class StateTree {
@@ -132,9 +123,6 @@ public:
   }
   vector<uint8_t> getRootValue() {
     return root->getValue();
-  }
-  string getRootValueStr() {
-    return valueToStr(root->getValue());
   }
   shared_ptr<StateNode> getRoot() {
     return root;

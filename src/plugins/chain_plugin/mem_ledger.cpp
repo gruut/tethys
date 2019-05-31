@@ -42,32 +42,53 @@ char *intToBin(uint32_t num) {
 
 namespace gruut {
 
-StateNode::StateNode(LedgerRecord &ledger) {
+StateNode::StateNode(user_ledger_type &user_ledger) {
   m_left = nullptr;
   m_right = nullptr;
 
   m_suffix = 0;
-  makeValue(ledger);
+  makeValue(user_ledger);
 
   // m_path = makePath(ledger);
   m_debug_path = 0;
-  // m_debug_uid = ledger.record_id;
   m_suffix_len = -1;
 
-  m_ledger = make_unique<LedgerRecord>(ledger);
+  m_user_ledger = make_unique<user_ledger_type>(user_ledger);
 }
 
-void StateNode::makeValue(LedgerRecord &ledger) {
+void StateNode::makeValue(user_ledger_type &user_ledger) {
   BytesBuilder state_value_builder;
-  state_value_builder.append(ledger.pid);
-  state_value_builder.append(ledger.var_val);
+  state_value_builder.append(user_ledger.pid);
+  state_value_builder.append(user_ledger.var_val);
+
+  string key = state_value_builder.getString();
+  makeValue(key);
+}
+
+StateNode::StateNode(contract_ledger_type &contract_ledger) {
+  m_left = nullptr;
+  m_right = nullptr;
+  m_suffix = 0;
+  makeValue(contract_ledger);
+
+  // m_path = makePath(ledger);
+  m_debug_path = 0;
+  m_suffix_len = -1;
+
+  m_contract_ledger = make_unique<contract_ledger_type>(contract_ledger);
+}
+
+void StateNode::makeValue(contract_ledger_type &contract_ledger) {
+  BytesBuilder state_value_builder;
+  state_value_builder.append(contract_ledger.pid);
+  state_value_builder.append(contract_ledger.var_val);
 
   string key = state_value_builder.getString();
   makeValue(key);
 }
 
 void StateNode::makeValue(string &key) {
-  m_value = Sha256::hash(key);
+  m_hash_value = Sha256::hash(key);
 }
 
 uint32_t StateNode::makePath(LedgerRecord &ledger) {
@@ -126,7 +147,6 @@ bool StateNode::isDummy() {
 }
 // bool isLeaf()   { return ((m_debug_uid != -1) && (m_suffix_len == 0)); }
 
-/* setter */
 void StateNode::setLeft(shared_ptr<StateNode> node) {
   m_left = make_shared<StateNode>(node);
 }
@@ -143,13 +163,13 @@ void StateNode::setDebugPath(uint32_t _path) {
   m_debug_path = _path;
 }
 void StateNode::setNodeInfo(LedgerRecord &data) {
-  // m_debug_uid = data.record_id;
   makeValue(data);
 }
+
 void StateNode::overwriteNode(shared_ptr<StateNode> node) {
   m_left = nullptr;
   m_right = nullptr;
-  m_value = node->getValue();
+  m_hash_value = node->getValue();
   // m_debug_uid = node->getDebugUid();
   m_suffix = node->getSuffix();
   m_debug_path = node->getDebugPath();
@@ -157,6 +177,38 @@ void StateNode::overwriteNode(shared_ptr<StateNode> node) {
   moveToParent(); // suffix, suffix_len, path 값 수정
 
   node.reset();
+}
+
+shared_ptr<StateNode> StateNode::getLeft() {
+  return m_left;
+}
+
+shared_ptr<StateNode> StateNode::getRight() {
+  return m_right;
+}
+
+uint32_t StateNode::getSuffix() {
+  return m_suffix;
+}
+
+vector<uint8_t> StateNode::getValue() {
+  return m_hash_value;
+}
+
+uint32_t StateNode::getDebugPath() {
+  return m_debug_path;
+}
+
+int StateNode::getSuffixLen() {
+  return m_suffix_len;
+}
+
+const user_ledger_type &StateNode::getUserLedger() const {
+  return *m_user_ledger.get();
+}
+
+const contract_ledger_type &StateNode::getContractLedger() const {
+  return *m_contract_ledger.get();
 }
 
 // LSB 에서 pos 번째 bit 를 반환
