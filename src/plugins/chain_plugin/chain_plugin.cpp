@@ -317,15 +317,6 @@ public:
         }
       }
     } // test code end
-
-    { // test code start
-      // 단순 입력 테스트. 실제로는 push해서 들어가야 한다.
-      //    chain->applyBlock(blocks[0]);
-      //    logger::INFO("first block id: " + first_block.getBlockId());
-      //    logger::INFO("first block 0th cert content: " + first_block.getUserCerts()[0].cert_content);
-      //    logger::INFO("first block 0th txid: " + first_block.getTransactions()[0].getTxId());
-      //    logger::INFO("first block 0th cid: " + first_block.getTransactions()[0].getContractId());
-    } // test code end
   }
 
   // block verify 코드. chain의 접근권한이 필요함. 정리 필요.

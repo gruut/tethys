@@ -175,5 +175,36 @@ using search_result_type = struct LedgerSearchResult {
   contract_ledger_type contract_ledger;
 };
 
+using user_attribute_type = struct UserAttribute {
+  base58_type uid;
+  timestamp_t register_day;
+  string register_code;
+  int gender;
+  string isc_type;
+  string isc_code;
+  string location;
+  int age_limit;
+  string sigma;
+};
+
+using user_cert_type = struct UserCert {
+  base58_type uid;
+  string sn;
+  timestamp_t nvbefore;
+  timestamp_t nvafter;
+  string x509;
+};
+
+using contract_type = struct Contract {
+  contract_id_type cid;
+  timestamp_t after;
+  timestamp_t before;
+  base58_type author;
+  contract_id_type friends;
+  string contract;
+  string desc;
+  string sigma;
+};
+
 } // namespace gruut
 #endif

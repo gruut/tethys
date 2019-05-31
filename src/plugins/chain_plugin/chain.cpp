@@ -104,16 +104,16 @@ bool Chain::applyContractLedger(std::map<string, contract_ledger_type> &contract
   return rdb_controller->applyContractLedger(contract_ledger);
 }
 
-bool Chain::applyUserAttribute(UnresolvedBlock &UR_block, nlohmann::json &option, result_query_info_type &result_info) {
-  return rdb_controller->applyUserAttribute(UR_block, option, result_info);
+bool Chain::applyUserAttribute(std::map<base58_type, user_attribute_type> &user_attribute_list) {
+  return rdb_controller->applyUserAttribute(user_attribute_list);
 }
 
-bool Chain::applyUserCert(UnresolvedBlock &UR_block, nlohmann::json &option, result_query_info_type &result_info) {
-  return rdb_controller->applyUserCert(UR_block, option, result_info);
+bool Chain::applyUserCert(std::map<base58_type, user_cert_type> &user_cert_list) {
+  return rdb_controller->applyUserCert(user_cert_list);
 }
 
-bool Chain::applyContract(UnresolvedBlock &UR_block, nlohmann::json &option, result_query_info_type &result_info) {
-  return rdb_controller->applyContract(UR_block, option, result_info);
+bool Chain::applyContract(std::map<base58_type, contract_type> &contract_list) {
+  return rdb_controller->applyContract(contract_list);
 }
 
 vector<Block> Chain::getBlocksByHeight(int from, int to) {
@@ -162,51 +162,58 @@ string Chain::getValueByKey(DataType what, const string &base_keys) {
 
 // Unresolved block pool functions
 bool Chain::queryUserJoin(UnresolvedBlock &UR_block, nlohmann::json &option, result_query_info_type &result_info) {
-  base58_type uid = result_info.user;
-  timestamp_t register_day = static_cast<gruut::timestamp_t>(stoll(json::get<string>(option, "register_day").value()));
-  string register_code = json::get<string>(option, "register_code").value();
-  int gender = stoi(json::get<string>(option, "gender").value());
-  string isc_type = json::get<string>(option, "isc_type").value();
-  string isc_code = json::get<string>(option, "isc_code").value();
-  string location = json::get<string>(option, "location").value();
-  int age_limit = stoi(json::get<string>(option, "age_limit").value());
+  user_attribute_type user_info;
 
-  string msg = uid + to_string(register_day) + register_code + to_string(gender) + isc_type + isc_code + location + to_string(age_limit);
+  user_info.uid = result_info.user;
+  user_info.register_day = static_cast<gruut::timestamp_t>(stoll(json::get<string>(option, "register_day").value()));
+  user_info.register_code = json::get<string>(option, "register_code").value();
+  user_info.gender = stoi(json::get<string>(option, "gender").value());
+  user_info.isc_type = json::get<string>(option, "isc_type").value();
+  user_info.isc_code = json::get<string>(option, "isc_code").value();
+  user_info.location = json::get<string>(option, "location").value();
+  user_info.age_limit = stoi(json::get<string>(option, "age_limit").value());
+
+  string msg = user_info.uid + to_string(user_info.register_day) + user_info.register_code + to_string(user_info.gender) +
+               user_info.isc_type + user_info.isc_code + user_info.location + to_string(user_info.age_limit);
 
   // TODO: signature by Gruut Authority 정확히 구현
   AGS ags;
   /// auto sigma = ags.sign(GruutAuthority_secret_key, msg);
-  string sigma = "TODO: signature by Gruut Authority";
+  user_info.sigma = "TODO: signature by Gruut Authority";
 
-  // TODO: mem_ledger의 UserAttribute 저장할 구조체에 저장
+  UR_block.user_attribute_list[user_info.uid] = user_info;
 
   return true;
 }
 
 bool Chain::queryUserCert(UnresolvedBlock &UR_block, nlohmann::json &option, result_query_info_type &result_info) {
-  base58_type uid = result_info.user;
-  string sn = json::get<string>(option, "sn").value();
-  timestamp_t nvbefore = static_cast<uint64_t>(stoll(json::get<string>(option, "notbefore").value()));
-  timestamp_t nvafter = static_cast<uint64_t>(stoll(json::get<string>(option, "notafter").value()));
-  string x509 = json::get<string>(option, "x509").value();
+  user_cert_type user_cert;
 
-  // TODO: mem_ledger의 UserCert 저장할 구조체에 저장
+  user_cert.uid = result_info.user;
+  user_cert.sn = json::get<string>(option, "sn").value();
+  user_cert.nvbefore = static_cast<uint64_t>(stoll(json::get<string>(option, "notbefore").value()));
+  user_cert.nvafter = static_cast<uint64_t>(stoll(json::get<string>(option, "notafter").value()));
+  user_cert.x509 = json::get<string>(option, "x509").value();
+
+  UR_block.user_cert_list[user_cert.uid] = user_cert;
 
   return true;
 }
 
 bool Chain::queryContractNew(UnresolvedBlock &UR_block, nlohmann::json &option, result_query_info_type &result_info) {
-  contract_id_type cid = json::get<string>(option, "cid").value();
-  timestamp_t after = static_cast<uint64_t>(stoll(json::get<string>(option, "after").value()));
-  timestamp_t before = static_cast<uint64_t>(stoll(json::get<string>(option, "before").value()));
-  base58_type author = json::get<string>(option, "author").value();
+  contract_type contract_info;
 
-  // TODO: friend 추가할 때 자신을 friend로 추가한 contract를 찾아서 추가해야함을 주의
+  contract_info.cid = json::get<string>(option, "cid").value();
+  contract_info.after = static_cast<uint64_t>(stoll(json::get<string>(option, "after").value()));
+  contract_info.before = static_cast<uint64_t>(stoll(json::get<string>(option, "before").value()));
+  contract_info.author = json::get<string>(option, "author").value();
+  // TODO: friend 추가할 때 자신을 friend로 추가한 contract를 찾아서 추가해야 함
   contract_id_type friends = json::get<string>(option, "friend").value();
-
   string contract = json::get<string>(option, "contract").value();
   string desc = json::get<string>(option, "desc").value();
   string sigma = json::get<string>(option, "sigma").value();
+
+  UR_block.contract_list[contract_info.cid] = contract_info;
 
   return true;
 }

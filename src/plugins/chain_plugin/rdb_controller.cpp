@@ -96,7 +96,7 @@ bool RdbController::applyTransaction(Block &block) {
   return true;
 }
 
-bool RdbController::applyUserLedger(std::map<string, user_ledger_type> &user_ledger) {
+bool RdbController::applyUserLedger(std::map<string, user_ledger_type> &user_ledger_list) {
   try {
     string var_name;
     string var_val;
@@ -110,7 +110,7 @@ bool RdbController::applyUserLedger(std::map<string, user_ledger_type> &user_led
     // TODO: '통화'속성의 변수는 변경 불가능한 조건 검사 시행
     // TODO: pid의 계산방법, 반영법, for의 정확한 활용 등을 적용
 
-    for (auto &each_ledger : user_ledger) {
+    for (auto &each_ledger : user_ledger_list) {
       soci::row result;
       soci::session db_session(RdbController::pool());
       soci::statement st(db_session);
@@ -144,7 +144,7 @@ bool RdbController::applyUserLedger(std::map<string, user_ledger_type> &user_led
   return true;
 }
 
-bool RdbController::applyContractLedger(std::map<string, contract_ledger_type> &contract_ledger) {
+bool RdbController::applyContractLedger(std::map<string, contract_ledger_type> &contract_ledger_list) {
   try {
     string var_name;
     string var_val;
@@ -158,7 +158,7 @@ bool RdbController::applyContractLedger(std::map<string, contract_ledger_type> &
     // TODO: '통화'속성의 변수는 변경 불가능한 조건 검사 시행
     // TODO: pid의 계산방법, 반영법, for의 정확한 활용 등을 적용
 
-    for (auto &each_ledger : contract_ledger) {
+    for (auto &each_ledger : contract_ledger_list) {
       soci::row result;
       soci::session db_session(RdbController::pool());
       soci::statement st(db_session);
@@ -192,32 +192,43 @@ bool RdbController::applyContractLedger(std::map<string, contract_ledger_type> &
   return true;
 }
 
-bool RdbController::applyUserAttribute(UnresolvedBlock &UR_block, nlohmann::json &option, result_query_info_type &result_info) {
+bool RdbController::applyUserAttribute(std::map<base58_type, user_attribute_type> &user_attribute_list) {
   try {
-    base58_type uid = result_info.user;
-    timestamp_t register_day = static_cast<gruut::timestamp_t>(stoll(json::get<string>(option, "register_day").value()));
-    string register_code = json::get<string>(option, "register_code").value();
-    int gender = stoi(json::get<string>(option, "gender").value());
-    string isc_type = json::get<string>(option, "isc_type").value();
-    string isc_code = json::get<string>(option, "isc_code").value();
-    string location = json::get<string>(option, "location").value();
-    int age_limit = stoi(json::get<string>(option, "age_limit").value());
-
-    string msg = uid + to_string(register_day) + register_code + to_string(gender) + isc_type + isc_code + location + to_string(age_limit);
+    base58_type uid;
+    timestamp_t register_day;
+    string register_code;
+    int gender;
+    string isc_type;
+    string isc_code;
+    string location;
+    int age_limit;
 
     // TODO: INSERT일수도, UPDATE일수도 있음. 구분 필요.
 
-    // clang-format off
-    soci::row result;
-    soci::session db_session(RdbController::pool());
+    for (auto &each_attribute : user_attribute_list) {
+      soci::row result;
+      soci::session db_session(RdbController::pool());
+      soci::statement st(db_session);
 
-    soci::statement st = (db_session.prepare << "INSERT INTO user_attributes (uid, register_day, register_code, gender, isc_type, isc_code, location, age_limit, sigma) VALUES (:uid, :register_day, :register_code, :gender, :isc_type, :isc_code, :location, :age_limit, :sigma)",
-        soci::use(uid), soci::use(register_day), soci::use(register_code),
-        soci::use(gender), soci::use(isc_type), soci::use(isc_code),
-        soci::use(location), soci::use(age_limit), soci::use(sigma),
-        soci::into(result));
-    // clang-format on
-    st.execute(true);
+      // clang-format off
+      if (each_attribute.second.query_type == QueryType::INSERT) {
+        st = (db_session.prepare << "INSERT INTO user_attributes (var_name, var_value, var_type, var_owner, up_time, up_block, tag, pid) VALUES (:var_name, :var_value, :var_type, :var_owner, :up_time, :up_block, :tag, :pid)",
+            soci::use(var_name, "var_name"), soci::use(var_val, "var_value"), soci::use(tag, "tag"),
+            soci::into(result));
+      } else if (each_attribute.second.query_type == QueryType::UPDATE) {
+        st = (db_session.prepare << "UPDATE user_attributes SET var_name = :var_name, var_value = :var_value, tag = :tag, WHERE pid = :pid",
+            soci::use(var_name, "var_name"), soci::use(var_val, "var_value"), soci::use(tag, "tag"),
+            soci::into(result));
+      } else if ((each_attribute.second.query_type == QueryType::DELETE) && (each_attribute.second.var_val == "")) {
+        st = (db_session.prepare << "DELETE FROM user_attributes WHERE ",
+            soci::use(var_name, "var_name"), soci::use(var_val, "var_value"), soci::use(tag, "tag"),
+            soci::into(result));
+      } else
+        logger::ERROR("Error at applyUserAttribute");
+      // clang-format on
+
+      st.execute(true);
+    }
   } catch (soci::mysql_soci_error const &e) {
     logger::ERROR("MySQL error: {}", e.what());
     return false;
@@ -228,25 +239,39 @@ bool RdbController::applyUserAttribute(UnresolvedBlock &UR_block, nlohmann::json
   return true;
 }
 
-bool RdbController::applyUserCert(UnresolvedBlock &UR_block, nlohmann::json &option, result_query_info_type &result_info) {
+bool RdbController::applyUserCert(std::map<base58_type, user_cert_type> &user_cert_list) {
   try {
-    base58_type uid = result_info.user;
-    string sn = json::get<string>(option, "sn").value();
-    timestamp_t nvbefore = static_cast<uint64_t>(stoll(json::get<string>(option, "notbefore").value()));
-    timestamp_t nvafter = static_cast<uint64_t>(stoll(json::get<string>(option, "notafter").value()));
-    string x509 = json::get<string>(option, "x509").value();
+    base58_type uid;
+    string sn;
+    timestamp_t nvbefore;
+    timestamp_t nvafter;
+    string x509;
 
     // TODO: INSERT일수도, UPDATE일수도 있음. 구분 필요.
+    for (auto &each_cert : user_cert_list) {
+      soci::row result;
+      soci::session db_session(RdbController::pool());
+      soci::statement st(db_session);
 
-    // clang-format off
-    soci::row result;
-    soci::session db_session(RdbController::pool());
+      // clang-format off
+      if (each_cert.second.query_type == QueryType::INSERT) {
+        st = (db_session.prepare << "INSERT INTO user_certificates (var_name, var_value, var_type, var_owner, up_time, up_block, tag, pid) VALUES (:var_name, :var_value, :var_type, :var_owner, :up_time, :up_block, :tag, :pid)",
+            soci::use(var_name, "var_name"), soci::use(var_val, "var_value"), soci::use(tag, "tag"),
+            soci::into(result));
+      } else if (each_cert.second.query_type == QueryType::UPDATE) {
+        st = (db_session.prepare << "UPDATE user_certificates SET var_name = :var_name, var_value = :var_value, tag = :tag, WHERE pid = :pid",
+            soci::use(var_name, "var_name"), soci::use(var_val, "var_value"), soci::use(tag, "tag"),
+            soci::into(result));
+      } else if ((each_cert.second.query_type == QueryType::DELETE) && (each_cert.second.var_val == "")) {
+        st = (db_session.prepare << "DELETE FROM user_certificates WHERE ",
+            soci::use(var_name, "var_name"), soci::use(var_val, "var_value"), soci::use(tag, "tag"),
+            soci::into(result));
+      } else
+        logger::ERROR("Error at applyUserCert");
+      // clang-format on
 
-    soci::statement st = (db_session.prepare << "INSERT INTO user_certificates (uid, sn, nvbefore, nvafter, x509) VALUES (:uid, :sn, :nvbefore, :nvafter, :x509)",
-        soci::use(uid), soci::use(sn), soci::use(nvbefore), soci::use(nvafter), soci::use(x509),
-        soci::into(result));
-    // clang-format on
-    st.execute(true);
+      st.execute(true);
+    }
   } catch (soci::mysql_soci_error const &e) {
     logger::ERROR("MySQL error: {}", e.what());
     return false;
@@ -257,48 +282,44 @@ bool RdbController::applyUserCert(UnresolvedBlock &UR_block, nlohmann::json &opt
   return true;
 }
 
-bool RdbController::applyContract(UnresolvedBlock &UR_block, nlohmann::json &option, result_query_info_type &result_info) {
+bool RdbController::applyContract(std::map<base58_type, contract_type> &contract_list) {
   try {
-    contract_id_type cid = json::get<string>(option, "cid").value();
-    timestamp_t after = static_cast<uint64_t>(stoll(json::get<string>(option, "after").value()));
-    timestamp_t before = static_cast<uint64_t>(stoll(json::get<string>(option, "before").value()));
-    base58_type author = json::get<string>(option, "author").value();
+    contract_id_type cid;
+    timestamp_t after;
+    timestamp_t before;
+    base58_type author;
+    // TODO: friend 추가할 때 자신을 friend로 추가한 contract를 찾아서 추가해야함을 주의
+    contract_id_type friends;
+    string contract;
+    string desc;
+    string sigma;
 
     // TODO: INSERT일수도, UPDATE일수도 있음. 구분 필요.
 
-    // TODO: friend 추가할 때 자신을 friend로 추가한 contract를 찾아서 추가해야함을 주의
-    contract_id_type friends = json::get<string>(option, "friend").value();
+    for (auto &each_contract : contract_list) {
+      soci::row result;
+      soci::session db_session(RdbController::pool());
+      soci::statement st(db_session);
 
-    string contract = json::get<string>(option, "contract").value();
-    string desc = json::get<string>(option, "desc").value();
-    string sigma = json::get<string>(option, "sigma").value();
+      // clang-format off
+      if (each_contract.second.query_type == QueryType::INSERT) {
+        st = (db_session.prepare << "INSERT INTO contracts (var_name, var_value, var_type, var_owner, up_time, up_block, tag, pid) VALUES (:var_name, :var_value, :var_type, :var_owner, :up_time, :up_block, :tag, :pid)",
+            soci::use(var_name, "var_name"), soci::use(var_val, "var_value"), soci::use(tag, "tag"),
+            soci::into(result));
+      } else if (each_contract.second.query_type == QueryType::UPDATE) {
+        st = (db_session.prepare << "UPDATE contracts SET var_name = :var_name, var_value = :var_value, tag = :tag, WHERE pid = :pid",
+            soci::use(var_name, "var_name"), soci::use(var_val, "var_value"), soci::use(tag, "tag"),
+            soci::into(result));
+      } else if ((each_contract.second.query_type == QueryType::DELETE) && (each_contract.second.var_val == "")) {
+        st = (db_session.prepare << "DELETE FROM contracts WHERE ",
+            soci::use(var_name, "var_name"), soci::use(var_val, "var_value"), soci::use(tag, "tag"),
+            soci::into(result));
+      } else
+        logger::ERROR("Error at applyContract");
+      // clang-format on
 
-    // clang-format off
-    soci::row result;
-    soci::session db_session(RdbController::pool());
-
-    soci::statement st = (db_session.prepare << "INSERT INTO contracts (cid, after, before, author, friends, contract, desc, sigma) VALUES (:cid, :after, :before, :author, :friends, :contract, :desc, :sigma)",
-        soci::use(cid), soci::use(after), soci::use(before), soci::use(author), soci::use(friends),
-        soci::use(contract), soci::use(desc), soci::use(sigma),
-        soci::into(result));
-    // clang-format on
-    st.execute(true);
-
-    // TODO: 아래의 disableContract 내용도 포함시킬 것
-    // TODO: $user = cid.author인 경우에만 허용
-    contract_id_type cid = json::get<string>(option, "cid").value();
-    timestamp_t before = TimeUtil::nowBigInt();
-
-    // clang-format off
-    soci::row result;
-    soci::session db_session(RdbController::pool());
-
-    soci::statement st = (db_session.prepare << "UPDATE contracts SET before = :before WHERE cid = :cid",
-        soci::use(cid, "cid"), soci::use(before, "before"),
-        soci::into(result));
-    // clang-format on
-    st.execute(true);
-
+      st.execute(true);
+    }
   } catch (soci::mysql_soci_error const &e) {
     logger::ERROR("MySQL error: {}", e.what());
     return false;
@@ -413,7 +434,7 @@ bool RdbController::checkUnique() {
   st.execute(true);
 
   int num_rows = (int)st.get_affected_rows();
-  if(num_rows == 1)
+  if (num_rows == 1)
     return true;
   else
     return false;

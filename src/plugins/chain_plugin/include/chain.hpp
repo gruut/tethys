@@ -34,9 +34,9 @@ public:
   bool applyTransaction(Block &block_info);
   bool applyUserLedger(std::map<string, user_ledger_type> &user_ledger);
   bool applyContractLedger(std::map<string, contract_ledger_type> &contract_ledger);
-  bool applyUserAttribute(UnresolvedBlock &UR_block, nlohmann::json &option, result_query_info_type &result_info);
-  bool applyUserCert(UnresolvedBlock &UR_block, nlohmann::json &option, result_query_info_type &result_info);
-  bool applyContract(UnresolvedBlock &UR_block, nlohmann::json &option, result_query_info_type &result_info);
+  bool applyUserAttribute(std::map<base58_type, user_attribute_type> &user_attribute_list);
+  bool applyUserCert(std::map<base58_type, user_cert_type> &user_cert_list);
+  bool applyContract(std::map<base58_type, contract_type> &contract_list);
 
   bool findUserFromRDB(string key, user_ledger_type &user_ledger);
 

@@ -23,6 +23,9 @@ struct UnresolvedBlock {
   int32_t ssig_sum{0};
   std::map<string, user_ledger_type> user_ledger_list;
   std::map<string, contract_ledger_type> contract_ledger_list;
+  std::map<base58_type, user_attribute_type> user_attribute_list;
+  std::map<base58_type, user_cert_type> user_cert_list;
+  std::map<base58_type, contract_type> contract_list;
 
   UnresolvedBlock() = default;
   UnresolvedBlock(Block &block_, int prev_queue_idx_) : block(block_), prev_vector_idx(prev_queue_idx_) {}
