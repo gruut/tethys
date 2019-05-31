@@ -7,7 +7,7 @@
 #include "../include/message_builder.hpp"
 #include "../include/message_packer.hpp"
 #include "../include/message_parser.hpp"
-#include "../include/signer_pool_manager.hpp"
+#include "../include/user_pool_manager.hpp"
 #include "application.hpp"
 
 #include <boost/algorithm/string.hpp>
@@ -201,7 +201,7 @@ public:
   MessageHandler() = default;
   explicit MessageHandler(ServerContext *server_context, shared_ptr<IdMappingTable> table)
       : context(server_context), id_mapping_table(table) {}
-  explicit MessageHandler(shared_ptr<SignerPoolManager> pool_manager) : signer_pool_manager(pool_manager) {}
+  explicit MessageHandler(shared_ptr<UserPoolManager> pool_manager) : user_pool_manager(pool_manager) {}
   optional<OutNetMsg> operator()(InNetMsg &msg) {
     return handle_message(msg);
   }
@@ -224,7 +224,7 @@ private:
     case MessageType::MSG_JOIN:
     case MessageType::MSG_RESPONSE_1:
     case MessageType::MSG_SUCCESS:
-      return signer_pool_manager->handleMsg(msg);
+      return user_pool_manager->handleMsg(msg);
     case MessageType::MSG_SSIG:
       // TODO : ssig message must be sent to `block producer`
     case MessageType::MSG_REQ_TX_CHECK:
@@ -246,7 +246,7 @@ private:
 
   ServerContext *context;
   shared_ptr<IdMappingTable> id_mapping_table;
-  shared_ptr<SignerPoolManager> signer_pool_manager;
+  shared_ptr<UserPoolManager> user_pool_manager;
 };
 
 void ReqSigService::proceed() {
@@ -258,22 +258,22 @@ void ReqSigService::proceed() {
   } break;
 
   case RpcCallStatus::READ: {
-    new ReqSigService(m_service, m_completion_queue, m_signer_conn_table, m_signer_pool_manager);
+    new ReqSigService(m_service, m_completion_queue, m_user_conn_table, m_user_pool_manager);
     m_receive_status = RpcCallStatus::PROCESS;
-    m_signer_id_b58 = m_request.sender();
+    m_user_id_b58 = m_request.sender();
   } break;
 
   case RpcCallStatus::PROCESS: {
     m_receive_status = RpcCallStatus::WAIT;
-    m_signer_conn_table->setRpcInfo(m_signer_id_b58, &m_stream, this);
+    m_user_conn_table->setRpcInfo(m_user_id_b58, &m_stream, this);
 
   } break;
 
   case RpcCallStatus::WAIT: {
     if (m_context.IsCancelled()) {
-      m_signer_conn_table->eraseRpcInfo(m_signer_id_b58);
-      m_signer_pool_manager->removeSigner(m_signer_id_b58);
-      m_signer_pool_manager->removeTempSigner(m_signer_id_b58);
+      m_user_conn_table->eraseRpcInfo(m_user_id_b58);
+      m_user_pool_manager->removeUser(m_user_id_b58);
+      m_user_pool_manager->removeTempUser(m_user_id_b58);
 
       delete this;
     }
@@ -302,7 +302,7 @@ void KeyExService::proceed() {
   } break;
 
   case RpcCallStatus::PROCESS: {
-    new KeyExService(m_service, m_completion_queue, m_signer_pool_manager);
+    new KeyExService(m_service, m_completion_queue, m_user_pool_manager);
     Status rpc_status;
     try {
       string packed_msg = m_request.message();
@@ -310,28 +310,28 @@ void KeyExService::proceed() {
       auto input_data = msg_parser.parseMessage(packed_msg, rpc_status);
       if (input_data.has_value()) {
         auto msg_type = input_data.value().type;
-        auto signer_id_b58 = input_data.value().sender_id;
+        auto user_id_b58 = input_data.value().sender_id;
         MessageValidator msg_validator;
         if (!msg_validator.validate(input_data.value().body))
           rpc_status = Status(StatusCode::INVALID_ARGUMENT, "Bad request (message validate fail");
 
         if (rpc_status.ok() && (msg_type == MessageType::MSG_SSIG || msg_type == MessageType::MSG_SUCCESS)) {
-          auto hmac_key = msg_type == MessageType::MSG_SSIG ? m_signer_pool_manager->getHmacKey(signer_id_b58)
-                                                            : m_signer_pool_manager->getTempHmacKey(signer_id_b58);
+          auto hmac_key = msg_type == MessageType::MSG_SSIG ? m_user_pool_manager->getHmacKey(user_id_b58)
+                                                            : m_user_pool_manager->getTempHmacKey(user_id_b58);
           if (hmac_key.has_value())
             rpc_status = verifyHMAC(packed_msg, hmac_key.value());
           else
             rpc_status = Status(StatusCode::UNAUTHENTICATED, "Bad request (cannot find hmac key)");
         }
         if (rpc_status.ok()) {
-          MessageHandler msg_handler(m_signer_pool_manager);
+          MessageHandler msg_handler(m_user_pool_manager);
           auto reply_msg = msg_handler(input_data.value());
 
           if (reply_msg.has_value()) {
             auto reply_msg_type = reply_msg.value().type;
             string reply_packed_msg;
             if (reply_msg_type == MessageType::MSG_ACCEPT) {
-              auto hmac_key = m_signer_pool_manager->getHmacKey(signer_id_b58);
+              auto hmac_key = m_user_pool_manager->getHmacKey(user_id_b58);
               if (hmac_key.has_value())
                 reply_packed_msg = MessagePacker::packMessage<MACAlgorithmType::HMAC>(reply_msg.value(), hmac_key.value());
               else
@@ -375,20 +375,20 @@ void UserService::proceed() {
     break;
   }
   case RpcCallStatus::PROCESS: {
-    new UserService(m_service, m_completion_queue, m_signer_pool_manager, m_routing_table);
+    new UserService(m_service, m_completion_queue, m_user_pool_manager, m_routing_table);
     Status rpc_status;
     try {
       string packed_msg = m_request.message();
       MessageParser msg_parser;
       auto input_data = msg_parser.parseMessage(packed_msg, rpc_status);
       if (input_data.has_value()) {
-        auto signer_id_b58 = input_data.value().sender_id;
+        auto user_id_b58 = input_data.value().sender_id;
         MessageValidator msg_validator;
         if (!msg_validator.validate(input_data.value().body)) {
           rpc_status = Status(StatusCode::INVALID_ARGUMENT, "Bad request (message validation fail)");
         }
         if (rpc_status.ok()) {
-          auto hmac_key = m_signer_pool_manager->getHmacKey(signer_id_b58);
+          auto hmac_key = m_user_pool_manager->getHmacKey(user_id_b58);
           if (hmac_key.has_value())
             rpc_status = verifyHMAC(packed_msg, hmac_key.value());
           else
@@ -454,20 +454,20 @@ void SignerService::proceed() {
     break;
   }
   case RpcCallStatus::PROCESS: {
-    new SignerService(m_service, m_completion_queue, m_signer_pool_manager);
+    new SignerService(m_service, m_completion_queue, m_user_pool_manager);
     Status rpc_status;
     try {
       string packed_msg = m_request.message();
       MessageParser msg_parser;
       auto input_data = msg_parser.parseMessage(packed_msg, rpc_status);
       if (input_data.has_value()) {
-        auto signer_id_b58 = input_data.value().sender_id;
+        auto user_id_b58 = input_data.value().sender_id;
         MessageValidator msg_validator;
         if (!msg_validator.validate(input_data.value().body)) {
           rpc_status = Status(StatusCode::INVALID_ARGUMENT, "Bad request (message validation fail)");
         }
         if (rpc_status.ok()) {
-          auto hmac_key = m_signer_pool_manager->getHmacKey(signer_id_b58);
+          auto hmac_key = m_user_pool_manager->getHmacKey(user_id_b58);
           if (hmac_key.has_value())
             rpc_status = verifyHMAC(packed_msg, hmac_key.value());
           else

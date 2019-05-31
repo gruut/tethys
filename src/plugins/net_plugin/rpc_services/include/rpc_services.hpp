@@ -9,8 +9,8 @@
 #include "../../../channel_interface/include/channel_interface.hpp"
 #include "../../config/include/network_type.hpp"
 #include "../../include/id_mapping_table.hpp"
-#include "../../include/signer_conn_table.hpp"
-#include "../../include/signer_pool_manager.hpp"
+#include "../../include/user_conn_table.hpp"
+#include "../../include/user_pool_manager.hpp"
 
 #include "../../kademlia/include/node.hpp"
 #include "../../kademlia/include/routing.hpp"
@@ -49,9 +49,9 @@ protected:
 
 class ReqSigService final : public CallData {
 public:
-  ReqSigService(TethysUserService::AsyncService *service, ServerCompletionQueue *cq, shared_ptr<SignerConnTable> signer_conn_table,
-                shared_ptr<SignerPoolManager> signer_pool_manager)
-      : m_stream(&m_context), m_signer_conn_table(move(signer_conn_table)), m_signer_pool_manager(move(signer_pool_manager)) {
+  ReqSigService(TethysUserService::AsyncService *service, ServerCompletionQueue *cq, shared_ptr<UserConnTable> user_conn_table,
+                shared_ptr<UserPoolManager> user_pool_manager)
+      : m_stream(&m_context), m_user_conn_table(move(user_conn_table)), m_user_pool_manager(move(user_pool_manager)) {
 
     m_service = service;
     m_completion_queue = cq;
@@ -61,20 +61,20 @@ public:
   }
 
 private:
-  string m_signer_id_b58;
+  string m_user_id_b58;
   TethysUserService::AsyncService *m_service;
   Identity m_request;
   ServerAsyncWriter<Message> m_stream;
 
-  shared_ptr<SignerConnTable> m_signer_conn_table;
-  shared_ptr<SignerPoolManager> m_signer_pool_manager;
+  shared_ptr<UserConnTable> m_user_conn_table;
+  shared_ptr<UserPoolManager> m_user_pool_manager;
   void proceed() override;
 };
 
 class KeyExService final : public CallData {
 public:
-  KeyExService(TethysUserService::AsyncService *service, ServerCompletionQueue *cq, shared_ptr<SignerPoolManager> signer_pool_manager)
-      : m_responder(&m_context), m_signer_pool_manager(move(signer_pool_manager)) {
+  KeyExService(TethysUserService::AsyncService *service, ServerCompletionQueue *cq, shared_ptr<UserPoolManager> user_pool_manager)
+      : m_responder(&m_context), m_user_pool_manager(move(user_pool_manager)) {
     m_service = service;
     m_completion_queue = cq;
     m_receive_status = RpcCallStatus::CREATE;
@@ -87,15 +87,15 @@ private:
   Request m_request;
   Reply m_reply;
   ServerAsyncResponseWriter<Reply> m_responder;
-  shared_ptr<SignerPoolManager> m_signer_pool_manager;
+  shared_ptr<UserPoolManager> m_user_pool_manager;
   void proceed() override;
 };
 
 class UserService final : public CallData {
 public:
-  UserService(TethysUserService::AsyncService *service, ServerCompletionQueue *cq, shared_ptr<SignerPoolManager> signer_pool_manager,
+  UserService(TethysUserService::AsyncService *service, ServerCompletionQueue *cq, shared_ptr<UserPoolManager> user_pool_manager,
               shared_ptr<RoutingTable> routing_table)
-      : m_responder(&m_context), m_signer_pool_manager(move(signer_pool_manager)), m_routing_table(move(routing_table)) {
+      : m_responder(&m_context), m_user_pool_manager(move(user_pool_manager)), m_routing_table(move(routing_table)) {
     m_service = service;
     m_completion_queue = cq;
     m_receive_status = RpcCallStatus::CREATE;
@@ -108,15 +108,15 @@ private:
   Request m_request;
   Reply m_reply;
   ServerAsyncResponseWriter<Reply> m_responder;
-  shared_ptr<SignerPoolManager> m_signer_pool_manager;
+  shared_ptr<UserPoolManager> m_user_pool_manager;
   shared_ptr<RoutingTable> m_routing_table;
   void proceed() override;
 };
 
 class SignerService final : public CallData {
 public:
-  SignerService(TethysUserService::AsyncService *service, ServerCompletionQueue *cq, shared_ptr<SignerPoolManager> signer_pool_manager)
-      : m_responder(&m_context), m_signer_pool_manager(move(signer_pool_manager)) {
+  SignerService(TethysUserService::AsyncService *service, ServerCompletionQueue *cq, shared_ptr<UserPoolManager> user_pool_manager)
+      : m_responder(&m_context), m_user_pool_manager(move(user_pool_manager)) {
     m_service = service;
     m_completion_queue = cq;
     m_receive_status = RpcCallStatus::CREATE;
@@ -129,7 +129,7 @@ private:
   Request m_request;
   Reply m_reply;
   ServerAsyncResponseWriter<Reply> m_responder;
-  shared_ptr<SignerPoolManager> m_signer_pool_manager;
+  shared_ptr<UserPoolManager> m_user_pool_manager;
   void proceed() override;
 };
 

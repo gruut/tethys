@@ -47,8 +47,8 @@ public:
   unique_ptr<Server> server;
   unique_ptr<ServerCompletionQueue> completion_queue;
 
-  shared_ptr<SignerPoolManager> signer_pool_manager;
-  shared_ptr<SignerConnTable> signer_conn_table;
+  shared_ptr<UserPoolManager> user_pool_manager;
+  shared_ptr<UserConnTable> user_conn_table;
   shared_ptr<RoutingTable> routing_table;
   shared_ptr<IdMappingTable> id_mapping_table;
   shared_ptr<BroadcastMsgTable> broadcast_check_table;
@@ -98,15 +98,15 @@ public:
   }
 
   void registerServices() {
-    signer_pool_manager = make_shared<SignerPoolManager>();
-    signer_conn_table = make_shared<SignerConnTable>();
+    user_pool_manager = make_shared<UserPoolManager>();
+    user_conn_table = make_shared<UserConnTable>();
     broadcast_check_table = make_shared<BroadcastMsgTable>();
     id_mapping_table = make_shared<IdMappingTable>();
 
-    new ReqSigService(&user_service, completion_queue.get(), signer_conn_table, signer_pool_manager);
-    new KeyExService(&user_service, completion_queue.get(), signer_pool_manager);
-    new SignerService(&user_service, completion_queue.get(), signer_pool_manager);
-    new UserService(&user_service, completion_queue.get(), signer_pool_manager, routing_table);
+    new ReqSigService(&user_service, completion_queue.get(), user_conn_table, user_pool_manager);
+    new KeyExService(&user_service, completion_queue.get(), user_pool_manager);
+    new SignerService(&user_service, completion_queue.get(), user_pool_manager);
+    new UserService(&user_service, completion_queue.get(), user_pool_manager, routing_table);
     new MergerService(&merger_service, completion_queue.get(), routing_table, broadcast_check_table, id_mapping_table);
     new FindNode(&kademlia_service, completion_queue.get(), routing_table);
   }
@@ -346,20 +346,20 @@ public:
       }
     } else if (checkUserMsgType(out_msg.type)) {
       for (auto &b58_receiver_id : out_msg.receivers) {
-        SignerRpcInfo signer_rpc_info = signer_conn_table->getRpcInfo(b58_receiver_id);
-        if (signer_rpc_info.send_msg == nullptr)
+        UserRpcInfo user_rpc_info = user_conn_table->getRpcInfo(b58_receiver_id);
+        if (user_rpc_info.sender == nullptr)
           continue;
 
         string packed_msg;
-        auto hmac_key = signer_pool_manager->getHmacKey(b58_receiver_id);
+        auto hmac_key = user_pool_manager->getHmacKey(b58_receiver_id);
         if (!hmac_key.has_value())
           continue;
         packed_msg = MessagePacker::packMessage<MACAlgorithmType::HMAC>(out_msg, hmac_key.value());
 
-        auto tag = static_cast<Identity *>(signer_rpc_info.tag_identity);
+        auto tag = static_cast<Identity *>(user_rpc_info.tag_identity);
         Message msg;
         msg.set_message(packed_msg);
-        signer_rpc_info.send_msg->Write(msg, tag);
+        user_rpc_info.sender->Write(msg, tag);
       }
     }
   }
@@ -372,7 +372,7 @@ public:
     case ControlType::LOGIN: {
       if (!app().isUserSignedIn()) {
         app().completeUserSignedIn();
-        signer_pool_manager->setSelfKeyInfo(control_info);
+        user_pool_manager->setSelfKeyInfo(control_info);
       }
       break;
     }
@@ -387,8 +387,8 @@ public:
     return (msg_type == MessageType::MSG_REQ_SSIG || msg_type == MessageType::MSG_RES_TX_CHECK || msg_type == MessageType::MSG_RESULT);
   }
 
-  shared_ptr<SignerPoolManager> getSignerPoolManager() const {
-    return signer_pool_manager;
+  shared_ptr<UserPoolManager> getUserPoolManager() const {
+    return user_pool_manager;
   }
 };
 
@@ -429,8 +429,8 @@ void NetPlugin::pluginStart() {
   impl->start();
 }
 
-shared_ptr<SignerPoolManager> NetPlugin::getSignerPoolManager() {
-  return impl->getSignerPoolManager();
+shared_ptr<UserPoolManager> NetPlugin::getUserPoolManager() {
+  return impl->getUserPoolManager();
 }
 
 NetPlugin::~NetPlugin() {

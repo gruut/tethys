@@ -31,7 +31,7 @@ constexpr int MAX_SIGNER = 200;
 
 enum class UserMode { USER_ONLY, SIGNER_ONLY, ALL };
 
-struct Signer {
+struct User {
   string user_id;
   string pk;
   UserMode mode;
@@ -40,43 +40,43 @@ struct Signer {
 
 struct JoinTempData {
   string merger_nonce;
-  string signer_pk;
+  string user_pk;
   vector<uint8_t> shared_sk;
   uint64_t start_time;
 };
 
-using TempSignerPool = unordered_map<string, JoinTempData>;
+using TempUserPool = unordered_map<string, JoinTempData>;
 
-class SignerPool {
+class UserPool {
 public:
-  SignerPool() = default;
-  SignerPool(const SignerPool &) = delete;
-  SignerPool(const SignerPool &&) = delete;
-  SignerPool &operator=(const SignerPool &) = delete;
+  UserPool() = default;
+  UserPool(const UserPool &) = delete;
+  UserPool(const UserPool &&) = delete;
+  UserPool &operator=(const UserPool &) = delete;
 
-  void pushSigner(const string &b58_user_id, vector<uint8_t> &hmac_key, const string &pk, UserMode mode) {
-    Signer new_signer;
-    new_signer.user_id = TypeConverter::decodeBase<58>(b58_user_id);
-    new_signer.hmac_key = hmac_key;
-    new_signer.pk = pk;
-    new_signer.mode = mode;
+  void pushUser(const string &b58_user_id, vector<uint8_t> &hmac_key, const string &pk, UserMode mode) {
+    User new_user;
+    new_user.user_id = TypeConverter::decodeBase<58>(b58_user_id);
+    new_user.hmac_key = hmac_key;
+    new_user.pk = pk;
+    new_user.mode = mode;
 
     {
       unique_lock<shared_mutex> guard(pool_mutex);
       if (mode != UserMode::USER_ONLY)
         ++num_of_signers;
-      signer_pool[b58_user_id] = new_signer;
+      user_pool[b58_user_id] = new_user;
     }
   }
 
-  bool eraseSigner(const string &b58_user_id) {
+  bool eraseUser(const string &b58_user_id) {
     {
       unique_lock<shared_mutex> guard(pool_mutex);
 
-      if (signer_pool.count(b58_user_id) > 0) {
-        if (signer_pool[b58_user_id].mode != UserMode::USER_ONLY)
+      if (user_pool.count(b58_user_id) > 0) {
+        if (user_pool[b58_user_id].mode != UserMode::USER_ONLY)
           --num_of_signers;
-        signer_pool.erase(b58_user_id);
+        user_pool.erase(b58_user_id);
         return true;
       }
       return false;
@@ -87,21 +87,21 @@ public:
     {
       shared_lock<shared_mutex> guard(pool_mutex);
 
-      if (signer_pool.count(b58_user_id) > 0)
-        return signer_pool[b58_user_id].hmac_key;
+      if (user_pool.count(b58_user_id) > 0)
+        return user_pool[b58_user_id].hmac_key;
       return {};
     }
   }
 
-  vector<Signer> getSigners(unsigned long size) {
+  vector<User> getSigners(unsigned long size) {
     {
       shared_lock<shared_mutex> guard(pool_mutex);
 
       int signers_count = std::min(size, num_of_signers);
 
-      vector<Signer> signers;
+      vector<User> signers;
       signers.reserve(signers_count);
-      for (auto &[key, value] : signer_pool) {
+      for (auto &[key, value] : user_pool) {
         if (signers_count == 0) {
           break;
         }
@@ -125,16 +125,16 @@ public:
 
 private:
   unsigned long num_of_signers{0};
-  unordered_map<string, Signer> signer_pool;
+  unordered_map<string, User> user_pool;
   shared_mutex pool_mutex;
 };
 
-class SignerPoolManager {
+class UserPoolManager {
 public:
-  SignerPoolManager() = default;
-  SignerPoolManager(const SignerPoolManager &) = delete;
-  SignerPoolManager(SignerPoolManager &&) = default;
-  SignerPoolManager &operator=(SignerPoolManager &&) = default;
+  UserPoolManager() = default;
+  UserPoolManager(const UserPoolManager &) = delete;
+  UserPoolManager(UserPoolManager &&) = default;
+  UserPoolManager &operator=(UserPoolManager &&) = default;
 
   OutNetMsg handleMsg(InNetMsg &msg) {
     string recv_id_b58 = msg.sender_id;
@@ -142,25 +142,25 @@ public:
     switch (msg.type) {
     case MessageType::MSG_JOIN: {
       if (!isJoinable()) {
-        logger::ERROR("[ECDH] Signer pool is full");
+        logger::ERROR("[ECDH] User pool is full");
         throw ErrorMsgType::ECDH_MAX_SIGNER_POOL;
       }
 
-      auto signer_id_in_body = json::get<string>(msg.body, "user");
-      if (signer_id_in_body.value() != msg.sender_id) {
+      auto user_id_in_body = json::get<string>(msg.body, "user");
+      if (user_id_in_body.value() != msg.sender_id) {
         logger::ERROR("[ECDH] Message header and body id are different");
         throw ErrorMsgType::ECDH_ILLEGAL_ACCESS;
       }
 
-      temp_signer_pool[msg.sender_id].start_time = TimeUtil::nowBigInt();
+      temp_user_pool[msg.sender_id].start_time = TimeUtil::nowBigInt();
       auto merger_nonce = TypeConverter::encodeBase<64>((RandomNumGenerator::randomize(32)));
-      temp_signer_pool[msg.sender_id].merger_nonce = merger_nonce;
+      temp_user_pool[msg.sender_id].merger_nonce = merger_nonce;
 
       auto msg_challenge = MessageBuilder::build<MessageType::MSG_CHALLENGE>(recv_id_b58, merger_nonce);
       return msg_challenge;
     }
     case MessageType::MSG_RESPONSE_1: {
-      if (temp_signer_pool.find(msg.sender_id) == temp_signer_pool.end()) {
+      if (temp_user_pool.find(msg.sender_id) == temp_user_pool.end()) {
         logger::ERROR("[ECDH] Illegal Trial");
         throw ErrorMsgType::ECDH_ILLEGAL_ACCESS;
       }
@@ -173,22 +173,22 @@ public:
         throw ErrorMsgType::ECDH_INVALID_SIG;
       }
 
-      temp_signer_pool[msg.sender_id].signer_pk = json::get<string>(msg.body["user"], "pk").value();
+      temp_user_pool[msg.sender_id].user_pk = json::get<string>(msg.body["user"], "pk").value();
 
       HmacKeyMaker key_maker;
       auto [dhx, dhy] = key_maker.getPublicKey();
 
-      auto signer_dhx = json::get<string>(msg.body["dh"], "x").value();
-      auto signer_dhy = json::get<string>(msg.body["dh"], "y").value();
-      auto shared_sk_bytes = key_maker.getSharedSecretKey(signer_dhx, signer_dhy, 32);
+      auto user_dhx = json::get<string>(msg.body["dh"], "x").value();
+      auto user_dhy = json::get<string>(msg.body["dh"], "y").value();
+      auto shared_sk_bytes = key_maker.getSharedSecretKey(user_dhx, user_dhy, 32);
       if (shared_sk_bytes.empty()) {
         logger::ERROR("[ECDH] Failed to generate SSK (invalid PK)");
         throw ErrorMsgType::ECDH_INVALID_PK;
       }
-      temp_signer_pool[msg.sender_id].shared_sk = shared_sk_bytes;
+      temp_user_pool[msg.sender_id].shared_sk = shared_sk_bytes;
 
       auto un = json::get<string>(msg.body, "un").value();
-      auto mn = temp_signer_pool[msg.sender_id].merger_nonce;
+      auto mn = temp_user_pool[msg.sender_id].merger_nonce;
       auto curr_time = TimeUtil::now();
 
       auto sig = signMessage(curr_time, mn, un, dhx, dhy, my_enc_sk, my_pass);
@@ -210,10 +210,8 @@ public:
       else
         user_mode = UserMode::ALL;
 
-      signer_pool.pushSigner(recv_id_b58, temp_signer_pool[recv_id_b58].shared_sk, temp_signer_pool[recv_id_b58].signer_pk, user_mode);
-      temp_signer_pool.erase(recv_id_b58);
-
-      // TODO : signer join event should be notified to `Block producer`
+      user_pool.pushUser(recv_id_b58, temp_user_pool[recv_id_b58].shared_sk, temp_user_pool[recv_id_b58].user_pk, user_mode);
+      temp_user_pool.erase(recv_id_b58);
 
       auto msg_accept = MessageBuilder::build<MessageType::MSG_ACCEPT>(recv_id_b58);
       return msg_accept;
@@ -225,25 +223,25 @@ public:
     }
   }
 
-  vector<Signer> getSigners(int size) {
-    return signer_pool.getSigners(size);
+  vector<User> getSigners(int size) {
+    return user_pool.getSigners(size);
   }
 
-  void removeSigner(const string &b58_signer_id) {
-    signer_pool.eraseSigner(b58_signer_id);
+  void removeUser(const string &b58_suser_id) {
+    user_pool.eraseUser(b58_suser_id);
   }
-  void removeTempSigner(const string &b58_signer_id) {
-    if (temp_signer_pool.count(b58_signer_id) > 0)
-      temp_signer_pool.erase(b58_signer_id);
-  }
-
-  optional<vector<uint8_t>> getHmacKey(const string &b58_signer_id) {
-    return signer_pool.getHmacKey(b58_signer_id);
+  void removeTempUser(const string &b58_user_id) {
+    if (temp_user_pool.count(b58_user_id) > 0)
+      temp_user_pool.erase(b58_user_id);
   }
 
-  optional<vector<uint8_t>> getTempHmacKey(const string &b58_signer_id) {
-    if (temp_signer_pool.count(b58_signer_id) > 0) {
-      return temp_signer_pool[b58_signer_id].shared_sk;
+  optional<vector<uint8_t>> getHmacKey(const string &b58_user_id) {
+    return user_pool.getHmacKey(b58_user_id);
+  }
+
+  optional<vector<uint8_t>> getTempHmacKey(const string &b58_user_id) {
+    if (temp_user_pool.count(b58_user_id) > 0) {
+      return temp_user_pool[b58_user_id].shared_sk;
     }
     return {};
   }
@@ -264,30 +262,30 @@ private:
   string my_pass;
 
   bool isJoinable() {
-    return signer_pool.full();
+    return user_pool.full();
   }
 
-  bool isTimeout(const string &b58_signer_id) {
-    return (TimeUtil::nowBigInt() - temp_signer_pool[b58_signer_id].start_time) > JOIN_TIMEOUT_SEC;
+  bool isTimeout(const string &b58_user_id) {
+    return (TimeUtil::nowBigInt() - temp_user_pool[b58_user_id].start_time) > JOIN_TIMEOUT_SEC;
   }
 
-  bool verifySignature(const string &signer_id_b58, nlohmann::json &msg_body) {
+  bool verifySignature(const string &user_id_b58, nlohmann::json &msg_body) {
     auto dh = json::get<nlohmann::json>(msg_body, "dh");
-    auto sn = json::get<string>(msg_body, "sn");
+    auto sn = json::get<string>(msg_body, "un");
     auto timestamp = json::get<string>(msg_body, "time");
-    auto signer_info = json::get<nlohmann::json>(msg_body, "user");
-    if (!dh.has_value() || !sn.has_value() || !timestamp.has_value() || !signer_info.has_value())
+    auto user_info = json::get<nlohmann::json>(msg_body, "user");
+    if (!dh.has_value() || !sn.has_value() || !timestamp.has_value() || !user_info.has_value())
       return false;
 
     auto dhx = json::get<string>(dh.value(), "x");
     auto dhy = json::get<string>(dh.value(), "y");
-    auto signer_pk = json::get<string>(signer_info.value(), "pk");
-    auto signer_b64_sig = json::get<string>(signer_info.value(), "sig");
-    if (!dhx.has_value() || !dhy.has_value() || !signer_pk.has_value() || !signer_b64_sig.has_value())
+    auto user_pk = json::get<string>(user_info.value(), "pk");
+    auto user_b64_sig = json::get<string>(user_info.value(), "sig");
+    if (!dhx.has_value() || !dhy.has_value() || !user_pk.has_value() || !user_b64_sig.has_value())
       return false;
 
-    auto signer_sig_str = TypeConverter::decodeBase<64>(signer_b64_sig.value());
-    auto mn = temp_signer_pool[signer_id_b58].merger_nonce;
+    auto user_sig_str = TypeConverter::decodeBase<64>(user_b64_sig.value());
+    auto mn = temp_user_pool[user_id_b58].merger_nonce;
 
     BytesBuilder bytes_builder;
     bytes_builder.appendBase<64>(mn);
@@ -296,7 +294,7 @@ private:
     bytes_builder.appendHex(dhy.value());
     bytes_builder.appendDec(timestamp.value());
 
-    return ECDSA::doVerify(signer_pk.value(), bytes_builder.getBytes(), vector<uint8_t>(signer_sig_str.begin(), signer_sig_str.end()));
+    return ECDSA::doVerify(user_pk.value(), bytes_builder.getBytes(), vector<uint8_t>(user_sig_str.begin(), user_sig_str.end()));
   }
   string signMessage(const string &timestamp, const string &mn, const string &sn, const string &dhx, const string &dhy,
                      const string &sk_pem, const string &sk_pass) {
@@ -311,8 +309,8 @@ private:
     return TypeConverter::encodeBase<64>(sig);
   }
 
-  SignerPool signer_pool;
-  TempSignerPool temp_signer_pool;
+  UserPool user_pool;
+  TempUserPool temp_user_pool;
 };
 
 } // namespace gruut

@@ -14,51 +14,51 @@ using namespace grpc;
 using namespace grpc_user;
 using namespace std;
 
-struct SignerRpcInfo {
+struct UserRpcInfo {
   void *tag_identity;
-  ServerAsyncWriter<Message> *send_msg;
+  ServerAsyncWriter<Message> *sender;
 };
 
-class SignerConnTable {
+class UserConnTable {
 public:
-  SignerConnTable() = default;
+  UserConnTable() = default;
 
-  SignerConnTable(const SignerConnTable &) = delete;
+  UserConnTable(const UserConnTable &) = delete;
 
-  SignerConnTable &operator=(const SignerConnTable &) = delete;
+  UserConnTable &operator=(const UserConnTable &) = delete;
 
-  SignerConnTable(SignerConnTable &&) = default;
+  UserConnTable(UserConnTable &&) = default;
 
-  SignerConnTable &operator=(SignerConnTable &&) = default;
+  UserConnTable &operator=(UserConnTable &&) = default;
 
-  ~SignerConnTable() = default;
+  ~UserConnTable() = default;
 
   void setRpcInfo(const string &recv_id_b58, ServerAsyncWriter<Message> *reply_rpc, void *tag) {
     {
       lock_guard<std::mutex> lock(table_mutex);
-      signer_conn_table[recv_id_b58].send_msg = reply_rpc;
-      signer_conn_table[recv_id_b58].tag_identity = tag;
+      user_conn_table[recv_id_b58].sender = reply_rpc;
+      user_conn_table[recv_id_b58].tag_identity = tag;
     }
   }
 
   void eraseRpcInfo(const string &recv_id_b58) {
     {
       lock_guard<std::mutex> lock(table_mutex);
-      signer_conn_table.erase(recv_id_b58);
+      user_conn_table.erase(recv_id_b58);
     }
   }
 
-  SignerRpcInfo getRpcInfo(const string &recv_id_b58) {
+  UserRpcInfo getRpcInfo(const string &recv_id_b58) {
     {
       lock_guard<std::mutex> lock(table_mutex);
-      SignerRpcInfo rpc_info = signer_conn_table[recv_id_b58];
+      UserRpcInfo rpc_info = user_conn_table[recv_id_b58];
 
       return rpc_info;
     }
   }
 
 private:
-  unordered_map<string, SignerRpcInfo> signer_conn_table;
+  unordered_map<string, UserRpcInfo> user_conn_table;
   std::mutex table_mutex;
 };
 } // namespace gruut
