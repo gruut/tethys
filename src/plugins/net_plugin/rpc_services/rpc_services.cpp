@@ -258,20 +258,20 @@ void ReqSigService::proceed() {
   } break;
 
   case RpcCallStatus::READ: {
-    new ReqSigService(m_service, m_completion_queue, m_signer_conn_table, m_user_pool_manager);
+    new ReqSigService(m_service, m_completion_queue, m_user_conn_table, m_user_pool_manager);
     m_receive_status = RpcCallStatus::PROCESS;
     m_user_id_b58 = m_request.sender();
   } break;
 
   case RpcCallStatus::PROCESS: {
     m_receive_status = RpcCallStatus::WAIT;
-    m_signer_conn_table->setRpcInfo(m_user_id_b58, &m_stream, this);
+    m_user_conn_table->setRpcInfo(m_user_id_b58, &m_stream, this);
 
   } break;
 
   case RpcCallStatus::WAIT: {
     if (m_context.IsCancelled()) {
-      m_signer_conn_table->eraseRpcInfo(m_user_id_b58);
+      m_user_conn_table->eraseRpcInfo(m_user_id_b58);
       m_user_pool_manager->removeUser(m_user_id_b58);
       m_user_pool_manager->removeTempUser(m_user_id_b58);
 

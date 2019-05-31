@@ -48,7 +48,7 @@ public:
   unique_ptr<ServerCompletionQueue> completion_queue;
 
   shared_ptr<UserPoolManager> user_pool_manager;
-  shared_ptr<SignerConnTable> signer_conn_table;
+  shared_ptr<UserConnTable> user_conn_table;
   shared_ptr<RoutingTable> routing_table;
   shared_ptr<IdMappingTable> id_mapping_table;
   shared_ptr<BroadcastMsgTable> broadcast_check_table;
@@ -99,11 +99,11 @@ public:
 
   void registerServices() {
     user_pool_manager = make_shared<UserPoolManager>();
-    signer_conn_table = make_shared<SignerConnTable>();
+    user_conn_table = make_shared<UserConnTable>();
     broadcast_check_table = make_shared<BroadcastMsgTable>();
     id_mapping_table = make_shared<IdMappingTable>();
 
-    new ReqSigService(&user_service, completion_queue.get(), signer_conn_table, user_pool_manager);
+    new ReqSigService(&user_service, completion_queue.get(), user_conn_table, user_pool_manager);
     new KeyExService(&user_service, completion_queue.get(), user_pool_manager);
     new SignerService(&user_service, completion_queue.get(), user_pool_manager);
     new UserService(&user_service, completion_queue.get(), user_pool_manager, routing_table);
@@ -346,8 +346,8 @@ public:
       }
     } else if (checkUserMsgType(out_msg.type)) {
       for (auto &b58_receiver_id : out_msg.receivers) {
-        SignerRpcInfo signer_rpc_info = signer_conn_table->getRpcInfo(b58_receiver_id);
-        if (signer_rpc_info.send_msg == nullptr)
+        UserRpcInfo user_rpc_info = user_conn_table->getRpcInfo(b58_receiver_id);
+        if (user_rpc_info.sender == nullptr)
           continue;
 
         string packed_msg;
@@ -356,10 +356,10 @@ public:
           continue;
         packed_msg = MessagePacker::packMessage<MACAlgorithmType::HMAC>(out_msg, hmac_key.value());
 
-        auto tag = static_cast<Identity *>(signer_rpc_info.tag_identity);
+        auto tag = static_cast<Identity *>(user_rpc_info.tag_identity);
         Message msg;
         msg.set_message(packed_msg);
-        signer_rpc_info.send_msg->Write(msg, tag);
+        user_rpc_info.sender->Write(msg, tag);
       }
     }
   }

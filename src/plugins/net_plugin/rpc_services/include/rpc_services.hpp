@@ -9,7 +9,7 @@
 #include "../../../channel_interface/include/channel_interface.hpp"
 #include "../../config/include/network_type.hpp"
 #include "../../include/id_mapping_table.hpp"
-#include "../../include/signer_conn_table.hpp"
+#include "../../include/user_conn_table.hpp"
 #include "../../include/user_pool_manager.hpp"
 
 #include "../../kademlia/include/node.hpp"
@@ -49,9 +49,9 @@ protected:
 
 class ReqSigService final : public CallData {
 public:
-  ReqSigService(TethysUserService::AsyncService *service, ServerCompletionQueue *cq, shared_ptr<SignerConnTable> signer_conn_table,
+  ReqSigService(TethysUserService::AsyncService *service, ServerCompletionQueue *cq, shared_ptr<UserConnTable> user_conn_table,
                 shared_ptr<UserPoolManager> user_pool_manager)
-      : m_stream(&m_context), m_signer_conn_table(move(signer_conn_table)), m_user_pool_manager(move(user_pool_manager)) {
+      : m_stream(&m_context), m_user_conn_table(move(user_conn_table)), m_user_pool_manager(move(user_pool_manager)) {
 
     m_service = service;
     m_completion_queue = cq;
@@ -66,7 +66,7 @@ private:
   Identity m_request;
   ServerAsyncWriter<Message> m_stream;
 
-  shared_ptr<SignerConnTable> m_signer_conn_table;
+  shared_ptr<UserConnTable> m_user_conn_table;
   shared_ptr<UserPoolManager> m_user_pool_manager;
   void proceed() override;
 };
