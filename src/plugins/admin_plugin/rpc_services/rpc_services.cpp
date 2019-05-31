@@ -39,8 +39,8 @@ protected:
 
 class LoginCommandDelegator : public CommandDelegator<ReqLogin> {
 public:
-  LoginCommandDelegator(string_view _env_sk_pem, string_view _cert, string_view _pass):
-    secret_key(_env_sk_pem), cert(_cert), pass(_pass) {}
+  LoginCommandDelegator(string_view _env_sk_pem, string_view _cert, string_view _pass)
+      : secret_key(_env_sk_pem), cert(_cert), pass(_pass) {}
 
 private:
   nlohmann::json createControlCommand() override {
@@ -67,7 +67,7 @@ private:
 
 class StartCommandDelegator : public CommandDelegator<ReqStart> {
 public:
-  StartCommandDelegator(RunningMode _net_mode): net_mode(_net_mode) {}
+  StartCommandDelegator(RunningMode _net_mode) : net_mode(_net_mode) {}
 
 private:
   nlohmann::json createControlCommand() override {
@@ -91,18 +91,18 @@ private:
 };
 
 Status SetupService::UserService(ServerContext *context, const Request *request, Reply *response) {
-  Status rpc_status;
+  string err_info;
   MessageParser msg_parser;
-  auto input_data = msg_parser.parseMessage(request->message(), rpc_status);
+  auto input_data = msg_parser.parseMessage(request->message(), err_info);
 
   if (!input_data.has_value()) {
     user_key_info.set_value({});
+    response->set_err_info(err_info);
     response->set_status(Reply_Status_INVALID);
-    return rpc_status;
+  } else {
+    user_key_info.set_value(input_data.value().body);
+    response->set_status(Reply_Status_SUCCESS);
   }
-
-  user_key_info.set_value(input_data.value().body);
-  response->set_status(Reply_Status_SUCCESS);
   return Status::OK;
 }
 

@@ -249,16 +249,16 @@ private:
   shared_ptr<UserPoolManager> user_pool_manager;
 };
 
-void ReqSigService::proceed() {
+void PushService::proceed() {
   switch (m_receive_status) {
   case RpcCallStatus::CREATE: {
     m_receive_status = RpcCallStatus::READ;
     m_context.AsyncNotifyWhenDone(this);
-    m_service->RequestReqSsigService(&m_context, &m_request, &m_stream, m_completion_queue, m_completion_queue, this);
+    m_service->RequestPushService(&m_context, &m_request, &m_stream, m_completion_queue, m_completion_queue, this);
   } break;
 
   case RpcCallStatus::READ: {
-    new ReqSigService(m_service, m_completion_queue, m_user_conn_table, m_user_pool_manager);
+    new PushService(m_service, m_completion_queue, m_user_conn_table, m_user_pool_manager);
     m_receive_status = RpcCallStatus::PROCESS;
     m_user_id_b58 = m_request.sender();
   } break;
@@ -284,14 +284,11 @@ void ReqSigService::proceed() {
   }
 }
 
-Status verifyHMAC(string_view packed_msg, vector<uint8_t> &hmac_key) {
+bool verifyHMAC(string_view packed_msg, vector<uint8_t> &hmac_key) {
   auto hmac_str = packed_msg.substr(packed_msg.length() - 32);
   vector<uint8_t> hmac(hmac_str.begin(), hmac_str.end());
   auto raw_msg = string(packed_msg.substr(0, packed_msg.length() - 32));
-  if (!Hmac::verifyHMAC(raw_msg, hmac, hmac_key)) {
-    return Status(StatusCode::UNAUTHENTICATED, "Bad request (Wrong HMAC)");
-  }
-  return Status::OK;
+  return Hmac::verifyHMAC(raw_msg, hmac, hmac_key);
 }
 
 void KeyExService::proceed() {
@@ -303,27 +300,25 @@ void KeyExService::proceed() {
 
   case RpcCallStatus::PROCESS: {
     new KeyExService(m_service, m_completion_queue, m_user_pool_manager);
-    Status rpc_status;
+    string err_info;
     try {
       string packed_msg = m_request.message();
       MessageParser msg_parser;
-      auto input_data = msg_parser.parseMessage(packed_msg, rpc_status);
+      auto input_data = msg_parser.parseMessage(packed_msg, err_info);
       if (input_data.has_value()) {
         auto msg_type = input_data.value().type;
         auto user_id_b58 = input_data.value().sender_id;
+
         MessageValidator msg_validator;
         if (!msg_validator.validate(input_data.value().body))
-          rpc_status = Status(StatusCode::INVALID_ARGUMENT, "Bad request (message validate fail");
+          err_info = "Bad request (message validate fail)";
 
-        if (rpc_status.ok() && (msg_type == MessageType::MSG_SSIG || msg_type == MessageType::MSG_SUCCESS)) {
-          auto hmac_key = msg_type == MessageType::MSG_SSIG ? m_user_pool_manager->getHmacKey(user_id_b58)
-                                                            : m_user_pool_manager->getTempHmacKey(user_id_b58);
-          if (hmac_key.has_value())
-            rpc_status = verifyHMAC(packed_msg, hmac_key.value());
-          else
-            rpc_status = Status(StatusCode::UNAUTHENTICATED, "Bad request (cannot find hmac key)");
+        if (err_info.empty() && msg_type == MessageType::MSG_SUCCESS) {
+          auto hmac_key = m_user_pool_manager->getTempHmacKey(user_id_b58).value_or(vector<uint8_t>());
+          if (!verifyHMAC(packed_msg, hmac_key))
+            err_info = "Bad request (fail to verify hmac )";
         }
-        if (rpc_status.ok()) {
+        if (err_info.empty()) {
           MessageHandler msg_handler(m_user_pool_manager);
           auto reply_msg = msg_handler(input_data.value());
 
@@ -335,30 +330,31 @@ void KeyExService::proceed() {
               if (hmac_key.has_value())
                 reply_packed_msg = MessagePacker::packMessage<MACAlgorithmType::HMAC>(reply_msg.value(), hmac_key.value());
               else
-                rpc_status = Status(StatusCode::UNAUTHENTICATED, "Bad request (cannot find hmac key");
+                err_info = "Bad request (cannot find hmac key)";
+
             } else {
               reply_packed_msg = MessagePacker::packMessage<MACAlgorithmType::NONE>(reply_msg.value());
             }
             if (!reply_packed_msg.empty()) {
               m_reply.set_message(reply_packed_msg);
-              m_reply.set_status(Reply_Status_SUCCESS); // SUCCESS
-            } else {
-              m_reply.set_status(Reply_Status_INVALID);
+              m_reply.set_status(Reply_Status_SUCCESS);
             }
           }
-        } else {
-          m_reply.set_status(Reply_Status_INVALID);
         }
-      } else {
-        m_reply.set_status(Reply_Status_INVALID); // INVALID
       }
-    } catch (exception &e) { // INTERNAL
+      if (!err_info.empty()) {
+        m_reply.set_err_info(err_info);
+        m_reply.set_status(Reply_Status_INVALID);
+      }
+    } catch (exception &e) {
+      m_reply.set_err_info(e.what());
       m_reply.set_status(Reply_Status_INTERNAL);
-    } catch (ErrorMsgType err_msg_type) { // KEY EXCHANGE ERROR
+    } catch (ErrorMsgType err_msg_type) {
+      m_reply.set_err_info("ECDH Key exchange error");
       m_reply.set_status((Reply_Status)err_msg_type);
     }
     m_receive_status = RpcCallStatus::FINISH;
-    m_responder.Finish(m_reply, rpc_status, this);
+    m_responder.Finish(m_reply, Status::OK, this);
   } break;
 
   default: {
@@ -376,30 +372,27 @@ void UserService::proceed() {
   }
   case RpcCallStatus::PROCESS: {
     new UserService(m_service, m_completion_queue, m_user_pool_manager, m_routing_table);
-    Status rpc_status;
+    string err_info;
     try {
       string packed_msg = m_request.message();
       MessageParser msg_parser;
-      auto input_data = msg_parser.parseMessage(packed_msg, rpc_status);
+      auto input_data = msg_parser.parseMessage(packed_msg, err_info);
       if (input_data.has_value()) {
         auto user_id_b58 = input_data.value().sender_id;
         MessageValidator msg_validator;
-        if (!msg_validator.validate(input_data.value().body)) {
-          rpc_status = Status(StatusCode::INVALID_ARGUMENT, "Bad request (message validation fail)");
-        }
-        if (rpc_status.ok()) {
-          auto hmac_key = m_user_pool_manager->getHmacKey(user_id_b58);
-          if (hmac_key.has_value())
-            rpc_status = verifyHMAC(packed_msg, hmac_key.value());
-          else
-            rpc_status = Status(StatusCode::UNAUTHENTICATED, "Bad request (cannot find hmac key)");
-          if (rpc_status.ok()) {
+        if (!msg_validator.validate(input_data.value().body))
+          err_info = "Bad request (message validation fail)";
+
+        if (err_info.empty()) {
+          auto hmac_key = m_user_pool_manager->getHmacKey(user_id_b58).value_or(vector<uint8_t>());
+
+          if (verifyHMAC(packed_msg, hmac_key)) {
             MessageHandler msg_handler;
             msg_handler(input_data.value());
             m_reply.set_status(Reply_Status_SUCCESS);
 
             auto msg_type = input_data.value().type;
-            if (msg_type == MessageType::MSG_TX) {
+            if (msg_type == MessageType::MSG_TX) { // forwarding TX message to other nodes
               grpc_merger::RequestMsg request;
 
               OutNetMsg out_msg;
@@ -426,17 +419,21 @@ void UserService::proceed() {
                 }
               }
             }
-          } else
-            m_reply.set_status(Reply_Status_INVALID);
+          } else {
+            err_info = "Bad request (fail to verify hmac)";
+          }
         }
-      } else {
+      }
+      if (!err_info.empty()) {
+        m_reply.set_err_info(err_info);
         m_reply.set_status(Reply_Status_INVALID);
       }
     } catch (exception &e) {
+      m_reply.set_err_info(e.what());
       m_reply.set_status(Reply_Status_INTERNAL);
     }
     m_receive_status = RpcCallStatus::FINISH;
-    m_responder.Finish(m_reply, rpc_status, this);
+    m_responder.Finish(m_reply, Status::OK, this);
     break;
   }
   default: {
@@ -455,38 +452,38 @@ void SignerService::proceed() {
   }
   case RpcCallStatus::PROCESS: {
     new SignerService(m_service, m_completion_queue, m_user_pool_manager);
-    Status rpc_status;
+    string err_info;
     try {
       string packed_msg = m_request.message();
       MessageParser msg_parser;
-      auto input_data = msg_parser.parseMessage(packed_msg, rpc_status);
+      auto input_data = msg_parser.parseMessage(packed_msg, err_info);
       if (input_data.has_value()) {
         auto user_id_b58 = input_data.value().sender_id;
         MessageValidator msg_validator;
-        if (!msg_validator.validate(input_data.value().body)) {
-          rpc_status = Status(StatusCode::INVALID_ARGUMENT, "Bad request (message validation fail)");
-        }
-        if (rpc_status.ok()) {
-          auto hmac_key = m_user_pool_manager->getHmacKey(user_id_b58);
-          if (hmac_key.has_value())
-            rpc_status = verifyHMAC(packed_msg, hmac_key.value());
-          else
-            rpc_status = Status(StatusCode::UNAUTHENTICATED, "Bad request (cannot find hmac key)");
-          if (rpc_status.ok()) {
+        if (!msg_validator.validate(input_data.value().body))
+          err_info = "Bad request (message validation fail)";
+
+        if (err_info.empty()) {
+          auto hmac_key = m_user_pool_manager->getHmacKey(user_id_b58).value_or(vector<uint8_t>());
+          if (verifyHMAC(packed_msg, hmac_key)) {
             MessageHandler msg_handler;
             msg_handler(input_data.value());
             m_reply.set_status(Reply_Status_SUCCESS);
-          } else
-            m_reply.set_status(Reply_Status_INVALID);
+          } else {
+            err_info = "Bad request (fail to verify hmac)";
+          }
         }
-      } else {
+      }
+      if (!err_info.empty()) {
+        m_reply.set_err_info(err_info);
         m_reply.set_status(Reply_Status_INVALID);
       }
     } catch (exception &e) {
+      m_reply.set_err_info(e.what());
       m_reply.set_status(Reply_Status_INTERNAL);
     }
     m_receive_status = RpcCallStatus::FINISH;
-    m_responder.Finish(m_reply, rpc_status, this);
+    m_responder.Finish(m_reply, Status::OK, this);
     break;
   }
   default: {
@@ -505,18 +502,17 @@ void MergerService::proceed() {
 
   case RpcCallStatus::PROCESS: {
     new MergerService(m_service, m_completion_queue, m_routing_table, m_broadcast_check_table, id_mapping_table);
-    Status rpc_status;
-
+    string err_info;
     try {
       string packed_msg = m_request.message();
       MessageParser msg_parser;
-      auto input_data = msg_parser.parseMessage(packed_msg, rpc_status);
+      auto input_data = msg_parser.parseMessage(packed_msg, err_info);
       if (input_data.has_value()) {
         MessageValidator msg_validator;
         if (!msg_validator.validate(input_data.value().body))
-          rpc_status = Status(StatusCode::INVALID_ARGUMENT, "Bad request (message validate fail");
+          err_info = "Bad request (message validate fail)";
       }
-      if (rpc_status.ok()) {
+      if (err_info.empty()) {
         // Forwarding message to other nodes
         if (m_request.broadcast()) {
           string msg_id = m_request.message_id();
@@ -525,7 +521,7 @@ void MergerService::proceed() {
             m_reply.set_status(grpc_merger::MsgStatus_Status_DUPLICATED);
             m_reply.set_message("duplicate message");
             m_receive_status = RpcCallStatus::FINISH;
-            m_responder.Finish(m_reply, rpc_status, this);
+            m_responder.Finish(m_reply, Status::OK, this);
             break;
           }
           uint64_t now = TimeUtil::nowBigInt();
@@ -551,21 +547,20 @@ void MergerService::proceed() {
             }
           }
         }
-        m_reply.set_status(grpc_merger::MsgStatus_Status_SUCCESS); // SUCCESS
-        m_reply.set_message("OK");
+        m_reply.set_status(grpc_merger::MsgStatus_Status_SUCCESS);
 
         MessageHandler msg_handler(&m_context, id_mapping_table);
         msg_handler(input_data.value());
       } else {
-        m_reply.set_status(grpc_merger::MsgStatus_Status_INVALID); // INVALID
-        m_reply.set_message(rpc_status.error_message());
+        m_reply.set_status(grpc_merger::MsgStatus_Status_INVALID);
+        m_reply.set_message(err_info);
       }
-    } catch (exception &e) { // INTERNAL
+    } catch (exception &e) {
       m_reply.set_status(grpc_merger::MsgStatus_Status_INTERNAL);
-      m_reply.set_message("Merger internal error");
+      m_reply.set_message(e.what());
     }
     m_receive_status = RpcCallStatus::FINISH;
-    m_responder.Finish(m_reply, rpc_status, this);
+    m_responder.Finish(m_reply, Status::OK, this);
 
   } break;
 
