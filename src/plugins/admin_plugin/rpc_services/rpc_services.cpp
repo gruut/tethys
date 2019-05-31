@@ -67,7 +67,7 @@ private:
 
 class StartCommandDelegator : public CommandDelegator<ReqStart> {
 public:
-  StartCommandDelegator(ModeType _net_mode): net_mode(_net_mode) {}
+  StartCommandDelegator(RunningMode _net_mode): net_mode(_net_mode) {}
 
 private:
   nlohmann::json createControlCommand() override {
@@ -87,7 +87,7 @@ private:
     control_type = static_cast<int>(ControlType::START);
   }
 
-  ModeType net_mode;
+  RunningMode net_mode;
 };
 
 Status SetupService::UserService(ServerContext *context, const Request *request, Reply *response) {
@@ -157,10 +157,10 @@ void AdminService<ReqSetupKey, ResSetupKey>::proceed() {
     break;
   }
   case AdminRpcCallStatus::PROCESS: {
-    new AdminService<ReqSetupKey, ResSetupKey>(service, completion_queue, merger_status, default_setup_port);
+    new AdminService<ReqSetupKey, ResSetupKey>(service, completion_queue, default_setup_port);
 
     thread([&]() {
-      if (merger_status->user_login) {
+      if (app().isUserSignedIn()) {
         string info = "You have been logged in";
         res.set_info(info);
 
@@ -179,10 +179,11 @@ void AdminService<ReqSetupKey, ResSetupKey>::proceed() {
       auto self_cert = chain.getValueByKey(DataType::SELF_INFO, "self_cert");
 
       if (!self_sk.empty() && !self_cert.empty()) {
-        string info = "Your key already exist in storage, Please login";
+        string info = "Your key already exists in storage, Please login";
         logger::INFO("[SETUP KEY] {}", info);
 
-        merger_status->user_setup = true;
+        app().completeUserSetup();
+
         res.set_success(false);
         res.set_info(info);
       } else {
@@ -214,9 +215,10 @@ void AdminService<ReqSetupKey, ResSetupKey>::proceed() {
               self_info.id = my_id;
 
               chain.saveSelfInfo(self_info);
-              app().setId(my_id);
 
-              merger_status->user_setup = true;
+              app().setId(my_id);
+              app().completeUserSetup();
+
               res.set_success(true);
 
               logger::INFO("[SETUP KEY] Success");
@@ -273,8 +275,8 @@ void AdminService<ReqLogin, ResLogin>::proceed() {
     break;
   }
   case AdminRpcCallStatus::PROCESS: {
-    new AdminService<ReqLogin, ResLogin>(service, completion_queue, merger_status);
-    if (merger_status->user_login) {
+    new AdminService<ReqLogin, ResLogin>(service, completion_queue);
+    if (app().isUserSignedIn()) {
       string info = "You have been logged in";
       logger::INFO("[LOGIN] {}", info);
       res.set_info(info);
@@ -290,8 +292,8 @@ void AdminService<ReqLogin, ResLogin>::proceed() {
           LoginCommandDelegator delegator(self_sk, self_cert, pass);
           delegator.delegate();
 
-          merger_status->user_setup = true;
-          merger_status->user_login = true;
+          app().completeUserSetup();
+          app().completeUserSignedIn();
 
           res.set_success(true);
 
@@ -329,19 +331,19 @@ void AdminService<ReqStart, ResStart>::proceed() {
     break;
   }
   case AdminRpcCallStatus::PROCESS: {
-    new AdminService<ReqStart, ResStart>(service, completion_queue, merger_status);
+    new AdminService<ReqStart, ResStart>(service, completion_queue);
 
     auto mode = req.mode();
-    if (merger_status->run_mode == static_cast<ModeType>(mode)) {
+    if (app().runningMode() == static_cast<RunningMode>(mode)) {
       string info = "It's already running as a ";
-      string mode_type = merger_status->run_mode == ModeType::DEFAULT ? "default mode" : "monitor mode";
+      string mode_type = app().runningMode() == RunningMode::DEFAULT ? "default mode" : "monitor mode";
       info += mode_type;
       logger::ERROR("[START] {}", info);
 
       res.set_success(false);
       res.set_info(info);
 
-    } else if (mode == ReqStart_Mode_DEFAULT && !merger_status->user_login) {
+    } else if (mode == ReqStart_Mode_DEFAULT && !app().isUserSignedIn()) {
       string info = "Could not join a network. Please setup & login OR start as a monitoring mode";
       logger::ERROR("[START] {}", info);
 
@@ -349,14 +351,14 @@ void AdminService<ReqStart, ResStart>::proceed() {
       res.set_info(info);
 
     } else {
-      auto run_mode = static_cast<ModeType>(mode);
+      auto run_mode = static_cast<RunningMode>(mode);
       StartCommandDelegator delegator(run_mode);
       delegator.delegate();
 
       res.set_success(true);
-      merger_status->is_running = true;
-      merger_status->run_mode = run_mode;
+
       app().setRunFlag();
+      app().runningMode() = run_mode;
 
       string mode_type = mode == ReqStart_Mode_DEFAULT ? "default" : "monitor";
 
@@ -383,9 +385,9 @@ void AdminService<ReqStatus, ResStatus>::proceed() {
   } break;
 
   case AdminRpcCallStatus::PROCESS: {
-    new AdminService<ReqStatus, ResStatus>(service, completion_queue, merger_status);
+    new AdminService<ReqStatus, ResStatus>(service, completion_queue);
 
-    res.set_alive(merger_status->is_running);
+    res.set_alive(app().isAppRunning());
 
     receive_status = AdminRpcCallStatus::FINISH;
     responder.Finish(res, Status::OK, this);

@@ -12,8 +12,6 @@ const auto ADMIN_REQ_CHECK_PERIOD = std::chrono::milliseconds(100);
 
 class AdminPluginImpl {
 public:
-  std::shared_ptr<MergerStatus> merger_status;
-
   GruutAdminService::AsyncService admin_service;
 
   unique_ptr<Server> admin_server;
@@ -40,12 +38,10 @@ public:
   }
 
   void registerService() {
-    merger_status = make_shared<MergerStatus>();
-
-    new AdminService<ReqSetupKey, ResSetupKey>(&admin_service, completion_queue.get(), merger_status, setup_port);
-    new AdminService<ReqLogin, ResLogin>(&admin_service, completion_queue.get(), merger_status);
-    new AdminService<ReqStart, ResStart>(&admin_service, completion_queue.get(), merger_status);
-    new AdminService<ReqStatus, ResStatus>(&admin_service, completion_queue.get(), merger_status);
+    new AdminService<ReqSetupKey, ResSetupKey>(&admin_service, completion_queue.get(), setup_port);
+    new AdminService<ReqLogin, ResLogin>(&admin_service, completion_queue.get());
+    new AdminService<ReqStart, ResStart>(&admin_service, completion_queue.get());
+    new AdminService<ReqStatus, ResStatus>(&admin_service, completion_queue.get());
   }
 
   void start() {}

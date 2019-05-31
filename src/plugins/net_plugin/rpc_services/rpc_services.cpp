@@ -66,7 +66,7 @@ private:
   bool validateEntry(MsgEntryType entry_type, const string &val) {
     switch (entry_type) {
     case MsgEntryType::USER_MODE: {
-      return (val == "user" || val == "signer" || val == "all")
+      return (val == "user" || val == "signer" || val == "all");
     }
     case MsgEntryType::DECIMAL:
     case MsgEntryType::TIMESTAMP: {

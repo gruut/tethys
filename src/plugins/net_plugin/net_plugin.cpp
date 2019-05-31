@@ -59,9 +59,6 @@ public:
   outgoing::channels::network::channel_type::Handle out_channel_subscription;
   incoming::channels::net_control::channel_type::Handle net_control_channel_subscription;
 
-  atomic<bool> user_login_flag{false};
-  shared_ptr<atomic<ModeType>> mode;
-
   ~NetPluginImpl() {
     if (server != nullptr)
       server->Shutdown();
@@ -101,7 +98,6 @@ public:
   }
 
   void registerServices() {
-    mode = make_shared<atomic<ModeType>>(ModeType::NONE);
     signer_pool_manager = make_shared<SignerPoolManager>();
     signer_conn_table = make_shared<SignerConnTable>();
     broadcast_check_table = make_shared<BroadcastMsgTable>();
@@ -374,18 +370,10 @@ public:
 
     switch (control_type) {
     case ControlType::LOGIN: {
-      if (!user_login_flag) {
-        user_login_flag = true;
+      if (!app().isUserSignedIn()) {
+        app().completeUserSignedIn();
         signer_pool_manager->setSelfKeyInfo(control_info);
       }
-      break;
-    }
-    case ControlType::START: {
-      int mode_type_int = json::get<int>(control_info, "mode").value();
-      auto mode_type = static_cast<ModeType>(mode_type_int);
-
-      *mode = mode_type;
-      // TODO : Network plugin have to work differently depending on a mode
       break;
     }
     }

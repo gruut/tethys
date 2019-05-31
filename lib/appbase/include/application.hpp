@@ -22,6 +22,17 @@ namespace po = boost::program_options;
 
 class ProgramOptions;
 
+enum class RunningMode : int { NONE = -1, DEFAULT = 0, MONITOR = 1 };
+
+struct ApplicationStatus {
+    bool user_setup;
+    bool user_login;
+
+    RunningMode run_mode;
+
+    ApplicationStatus() : user_setup(false), user_login(false), run_mode(RunningMode::NONE) {}
+};
+
 class Application {
 public:
   ~Application();
@@ -82,6 +93,12 @@ public:
   const string &getId() const;
 
   bool isAppRunning();
+  bool isUserSignedIn();
+
+  void completeUserSetup();
+  void completeUserSignedIn();
+
+  RunningMode &runningMode();
 
   auto &getIoContext() {
     return *io_context_ptr;
@@ -135,6 +152,8 @@ private:
   void startInitializedPlugins();
 
   void registerErrorSignalHandlers();
+
+  ApplicationStatus application_status;
 
 };
 

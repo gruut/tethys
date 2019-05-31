@@ -182,6 +182,22 @@ bool Application::isAppRunning() {
   return running;
 }
 
+bool Application::isUserSignedIn() {
+  return application_status.user_login;
+}
+
+void Application::completeUserSetup() {
+  application_status.user_setup = true;
+}
+
+void Application::completeUserSignedIn() {
+  application_status.user_login = true;
+}
+
+RunningMode &Application::runningMode() {
+  return application_status.run_mode;
+}
+
 Application &app() {
   return Application::instance();
 }
