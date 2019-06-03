@@ -8,6 +8,15 @@
 
 #include <exception>
 
+#define BEFORE_PROCEED(SERVICE_CLASS, SERVICE, COMPLETION_QUEUE, ...)                                                                      \
+  do {                                                                                                                                     \
+    new SERVICE_CLASS(SERVICE, COMPLETION_QUEUE, ##__VA_ARGS__);                                                                           \
+    if (call_status == AdminRpcCallStatus::FINISH) {                                                                                       \
+      delete this;                                                                                                                         \
+      return;                                                                                                                              \
+    }                                                                                                                                      \
+  } while (0)
+
 namespace gruut {
 namespace admin_plugin {
 
@@ -74,13 +83,7 @@ optional<string> SetupKeyService::getIdFromCert(const string &cert_pem) {
 }
 
 void SetupKeyService::proceed() {
-  new SetupKeyService(service, completion_queue, default_setup_port);
-
-  if (call_status == AdminRpcCallStatus::FINISH) {
-    delete this;
-
-    return;
-  }
+  BEFORE_PROCEED(SetupKeyService, service, completion_queue, default_setup_port);
 
   thread([&]() {
     if (app().isUserSignedIn()) {
@@ -182,13 +185,7 @@ bool LoginService::checkPassword(const string &enc_sk_pem, const string &pass) {
 }
 
 void LoginService::proceed() {
-  new LoginService(service, completion_queue);
-
-  if (call_status == AdminRpcCallStatus::FINISH) {
-    delete this;
-
-    return;
-  }
+  BEFORE_PROCEED(LoginService, service, completion_queue);
 
   if (app().isUserSignedIn()) {
     string info = "You have been logged in";
@@ -230,15 +227,7 @@ void LoginService::proceed() {
 }
 
 void StartService::proceed() {
-  new StartService(service, completion_queue);
-
-  if (call_status == AdminRpcCallStatus::FINISH) {
-    delete this;
-
-    return;
-  }
-
-  new StartService(service, completion_queue);
+  BEFORE_PROCEED(StartService, service, completion_queue);
 
   if (app().isAppRunning()) {
     string info = "It's already running as a ";
@@ -282,13 +271,7 @@ void StartService::proceed() {
 }
 
 void StatusService::proceed() {
-  new StatusService(service, completion_queue);
-
-  if (call_status == AdminRpcCallStatus::FINISH) {
-    delete this;
-
-    return;
-  }
+  BEFORE_PROCEED(StatusService, service, completion_queue);
 
   res.set_alive(app().isAppRunning());
 
