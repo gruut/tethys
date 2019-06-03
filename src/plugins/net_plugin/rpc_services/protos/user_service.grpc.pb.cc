@@ -2,8 +2,8 @@
 // If you make any local change, they will be lost.
 // source: user_service.proto
 
-#include "include/user_service.grpc.pb.h"
 #include "include/user_service.pb.h"
+#include "include/user_service.grpc.pb.h"
 
 #include <grpcpp/impl/codegen/async_stream.h>
 #include <grpcpp/impl/codegen/async_unary_call.h>
@@ -16,7 +16,7 @@
 namespace grpc_user {
 
 static const char* TethysUserService_method_names[] = {
-  "/grpc_user.TethysUserService/ReqSsigService",
+  "/grpc_user.TethysUserService/PushService",
   "/grpc_user.TethysUserService/KeyExService",
   "/grpc_user.TethysUserService/UserService",
   "/grpc_user.TethysUserService/SignerService",
@@ -29,22 +29,22 @@ std::unique_ptr< TethysUserService::Stub> TethysUserService::NewStub(const std::
 }
 
 TethysUserService::Stub::Stub(const std::shared_ptr< ::grpc::ChannelInterface>& channel)
-  : channel_(channel), rpcmethod_ReqSsigService_(TethysUserService_method_names[0], ::grpc::internal::RpcMethod::SERVER_STREAMING, channel)
+  : channel_(channel), rpcmethod_PushService_(TethysUserService_method_names[0], ::grpc::internal::RpcMethod::SERVER_STREAMING, channel)
   , rpcmethod_KeyExService_(TethysUserService_method_names[1], ::grpc::internal::RpcMethod::NORMAL_RPC, channel)
   , rpcmethod_UserService_(TethysUserService_method_names[2], ::grpc::internal::RpcMethod::NORMAL_RPC, channel)
   , rpcmethod_SignerService_(TethysUserService_method_names[3], ::grpc::internal::RpcMethod::NORMAL_RPC, channel)
   {}
 
-::grpc::ClientReader< ::grpc_user::Message>* TethysUserService::Stub::ReqSsigServiceRaw(::grpc::ClientContext* context, const ::grpc_user::Identity& request) {
-  return ::grpc::internal::ClientReaderFactory< ::grpc_user::Message>::Create(channel_.get(), rpcmethod_ReqSsigService_, context, request);
+::grpc::ClientReader< ::grpc_user::Message>* TethysUserService::Stub::PushServiceRaw(::grpc::ClientContext* context, const ::grpc_user::Identity& request) {
+  return ::grpc::internal::ClientReaderFactory< ::grpc_user::Message>::Create(channel_.get(), rpcmethod_PushService_, context, request);
 }
 
-::grpc::ClientAsyncReader< ::grpc_user::Message>* TethysUserService::Stub::AsyncReqSsigServiceRaw(::grpc::ClientContext* context, const ::grpc_user::Identity& request, ::grpc::CompletionQueue* cq, void* tag) {
-  return ::grpc::internal::ClientAsyncReaderFactory< ::grpc_user::Message>::Create(channel_.get(), cq, rpcmethod_ReqSsigService_, context, request, true, tag);
+::grpc::ClientAsyncReader< ::grpc_user::Message>* TethysUserService::Stub::AsyncPushServiceRaw(::grpc::ClientContext* context, const ::grpc_user::Identity& request, ::grpc::CompletionQueue* cq, void* tag) {
+  return ::grpc::internal::ClientAsyncReaderFactory< ::grpc_user::Message>::Create(channel_.get(), cq, rpcmethod_PushService_, context, request, true, tag);
 }
 
-::grpc::ClientAsyncReader< ::grpc_user::Message>* TethysUserService::Stub::PrepareAsyncReqSsigServiceRaw(::grpc::ClientContext* context, const ::grpc_user::Identity& request, ::grpc::CompletionQueue* cq) {
-  return ::grpc::internal::ClientAsyncReaderFactory< ::grpc_user::Message>::Create(channel_.get(), cq, rpcmethod_ReqSsigService_, context, request, false, nullptr);
+::grpc::ClientAsyncReader< ::grpc_user::Message>* TethysUserService::Stub::PrepareAsyncPushServiceRaw(::grpc::ClientContext* context, const ::grpc_user::Identity& request, ::grpc::CompletionQueue* cq) {
+  return ::grpc::internal::ClientAsyncReaderFactory< ::grpc_user::Message>::Create(channel_.get(), cq, rpcmethod_PushService_, context, request, false, nullptr);
 }
 
 ::grpc::Status TethysUserService::Stub::KeyExService(::grpc::ClientContext* context, const ::grpc_user::Request& request, ::grpc_user::Reply* response) {
@@ -88,7 +88,7 @@ TethysUserService::Service::Service() {
       TethysUserService_method_names[0],
       ::grpc::internal::RpcMethod::SERVER_STREAMING,
       new ::grpc::internal::ServerStreamingHandler< TethysUserService::Service, ::grpc_user::Identity, ::grpc_user::Message>(
-          std::mem_fn(&TethysUserService::Service::ReqSsigService), this)));
+          std::mem_fn(&TethysUserService::Service::PushService), this)));
   AddMethod(new ::grpc::internal::RpcServiceMethod(
       TethysUserService_method_names[1],
       ::grpc::internal::RpcMethod::NORMAL_RPC,
@@ -109,7 +109,7 @@ TethysUserService::Service::Service() {
 TethysUserService::Service::~Service() {
 }
 
-::grpc::Status TethysUserService::Service::ReqSsigService(::grpc::ServerContext* context, const ::grpc_user::Identity* request, ::grpc::ServerWriter< ::grpc_user::Message>* writer) {
+::grpc::Status TethysUserService::Service::PushService(::grpc::ServerContext* context, const ::grpc_user::Identity* request, ::grpc::ServerWriter< ::grpc_user::Message>* writer) {
   (void) context;
   (void) request;
   (void) writer;

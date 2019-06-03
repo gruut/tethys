@@ -34,14 +34,14 @@ class TethysUserService final {
   class StubInterface {
    public:
     virtual ~StubInterface() {}
-    std::unique_ptr< ::grpc::ClientReaderInterface< ::grpc_user::Message>> ReqSsigService(::grpc::ClientContext* context, const ::grpc_user::Identity& request) {
-      return std::unique_ptr< ::grpc::ClientReaderInterface< ::grpc_user::Message>>(ReqSsigServiceRaw(context, request));
+    std::unique_ptr< ::grpc::ClientReaderInterface< ::grpc_user::Message>> PushService(::grpc::ClientContext* context, const ::grpc_user::Identity& request) {
+      return std::unique_ptr< ::grpc::ClientReaderInterface< ::grpc_user::Message>>(PushServiceRaw(context, request));
     }
-    std::unique_ptr< ::grpc::ClientAsyncReaderInterface< ::grpc_user::Message>> AsyncReqSsigService(::grpc::ClientContext* context, const ::grpc_user::Identity& request, ::grpc::CompletionQueue* cq, void* tag) {
-      return std::unique_ptr< ::grpc::ClientAsyncReaderInterface< ::grpc_user::Message>>(AsyncReqSsigServiceRaw(context, request, cq, tag));
+    std::unique_ptr< ::grpc::ClientAsyncReaderInterface< ::grpc_user::Message>> AsyncPushService(::grpc::ClientContext* context, const ::grpc_user::Identity& request, ::grpc::CompletionQueue* cq, void* tag) {
+      return std::unique_ptr< ::grpc::ClientAsyncReaderInterface< ::grpc_user::Message>>(AsyncPushServiceRaw(context, request, cq, tag));
     }
-    std::unique_ptr< ::grpc::ClientAsyncReaderInterface< ::grpc_user::Message>> PrepareAsyncReqSsigService(::grpc::ClientContext* context, const ::grpc_user::Identity& request, ::grpc::CompletionQueue* cq) {
-      return std::unique_ptr< ::grpc::ClientAsyncReaderInterface< ::grpc_user::Message>>(PrepareAsyncReqSsigServiceRaw(context, request, cq));
+    std::unique_ptr< ::grpc::ClientAsyncReaderInterface< ::grpc_user::Message>> PrepareAsyncPushService(::grpc::ClientContext* context, const ::grpc_user::Identity& request, ::grpc::CompletionQueue* cq) {
+      return std::unique_ptr< ::grpc::ClientAsyncReaderInterface< ::grpc_user::Message>>(PrepareAsyncPushServiceRaw(context, request, cq));
     }
     virtual ::grpc::Status KeyExService(::grpc::ClientContext* context, const ::grpc_user::Request& request, ::grpc_user::Reply* response) = 0;
     std::unique_ptr< ::grpc::ClientAsyncResponseReaderInterface< ::grpc_user::Reply>> AsyncKeyExService(::grpc::ClientContext* context, const ::grpc_user::Request& request, ::grpc::CompletionQueue* cq) {
@@ -65,9 +65,9 @@ class TethysUserService final {
       return std::unique_ptr< ::grpc::ClientAsyncResponseReaderInterface< ::grpc_user::Reply>>(PrepareAsyncSignerServiceRaw(context, request, cq));
     }
   private:
-    virtual ::grpc::ClientReaderInterface< ::grpc_user::Message>* ReqSsigServiceRaw(::grpc::ClientContext* context, const ::grpc_user::Identity& request) = 0;
-    virtual ::grpc::ClientAsyncReaderInterface< ::grpc_user::Message>* AsyncReqSsigServiceRaw(::grpc::ClientContext* context, const ::grpc_user::Identity& request, ::grpc::CompletionQueue* cq, void* tag) = 0;
-    virtual ::grpc::ClientAsyncReaderInterface< ::grpc_user::Message>* PrepareAsyncReqSsigServiceRaw(::grpc::ClientContext* context, const ::grpc_user::Identity& request, ::grpc::CompletionQueue* cq) = 0;
+    virtual ::grpc::ClientReaderInterface< ::grpc_user::Message>* PushServiceRaw(::grpc::ClientContext* context, const ::grpc_user::Identity& request) = 0;
+    virtual ::grpc::ClientAsyncReaderInterface< ::grpc_user::Message>* AsyncPushServiceRaw(::grpc::ClientContext* context, const ::grpc_user::Identity& request, ::grpc::CompletionQueue* cq, void* tag) = 0;
+    virtual ::grpc::ClientAsyncReaderInterface< ::grpc_user::Message>* PrepareAsyncPushServiceRaw(::grpc::ClientContext* context, const ::grpc_user::Identity& request, ::grpc::CompletionQueue* cq) = 0;
     virtual ::grpc::ClientAsyncResponseReaderInterface< ::grpc_user::Reply>* AsyncKeyExServiceRaw(::grpc::ClientContext* context, const ::grpc_user::Request& request, ::grpc::CompletionQueue* cq) = 0;
     virtual ::grpc::ClientAsyncResponseReaderInterface< ::grpc_user::Reply>* PrepareAsyncKeyExServiceRaw(::grpc::ClientContext* context, const ::grpc_user::Request& request, ::grpc::CompletionQueue* cq) = 0;
     virtual ::grpc::ClientAsyncResponseReaderInterface< ::grpc_user::Reply>* AsyncUserServiceRaw(::grpc::ClientContext* context, const ::grpc_user::Request& request, ::grpc::CompletionQueue* cq) = 0;
@@ -78,14 +78,14 @@ class TethysUserService final {
   class Stub final : public StubInterface {
    public:
     Stub(const std::shared_ptr< ::grpc::ChannelInterface>& channel);
-    std::unique_ptr< ::grpc::ClientReader< ::grpc_user::Message>> ReqSsigService(::grpc::ClientContext* context, const ::grpc_user::Identity& request) {
-      return std::unique_ptr< ::grpc::ClientReader< ::grpc_user::Message>>(ReqSsigServiceRaw(context, request));
+    std::unique_ptr< ::grpc::ClientReader< ::grpc_user::Message>> PushService(::grpc::ClientContext* context, const ::grpc_user::Identity& request) {
+      return std::unique_ptr< ::grpc::ClientReader< ::grpc_user::Message>>(PushServiceRaw(context, request));
     }
-    std::unique_ptr< ::grpc::ClientAsyncReader< ::grpc_user::Message>> AsyncReqSsigService(::grpc::ClientContext* context, const ::grpc_user::Identity& request, ::grpc::CompletionQueue* cq, void* tag) {
-      return std::unique_ptr< ::grpc::ClientAsyncReader< ::grpc_user::Message>>(AsyncReqSsigServiceRaw(context, request, cq, tag));
+    std::unique_ptr< ::grpc::ClientAsyncReader< ::grpc_user::Message>> AsyncPushService(::grpc::ClientContext* context, const ::grpc_user::Identity& request, ::grpc::CompletionQueue* cq, void* tag) {
+      return std::unique_ptr< ::grpc::ClientAsyncReader< ::grpc_user::Message>>(AsyncPushServiceRaw(context, request, cq, tag));
     }
-    std::unique_ptr< ::grpc::ClientAsyncReader< ::grpc_user::Message>> PrepareAsyncReqSsigService(::grpc::ClientContext* context, const ::grpc_user::Identity& request, ::grpc::CompletionQueue* cq) {
-      return std::unique_ptr< ::grpc::ClientAsyncReader< ::grpc_user::Message>>(PrepareAsyncReqSsigServiceRaw(context, request, cq));
+    std::unique_ptr< ::grpc::ClientAsyncReader< ::grpc_user::Message>> PrepareAsyncPushService(::grpc::ClientContext* context, const ::grpc_user::Identity& request, ::grpc::CompletionQueue* cq) {
+      return std::unique_ptr< ::grpc::ClientAsyncReader< ::grpc_user::Message>>(PrepareAsyncPushServiceRaw(context, request, cq));
     }
     ::grpc::Status KeyExService(::grpc::ClientContext* context, const ::grpc_user::Request& request, ::grpc_user::Reply* response) override;
     std::unique_ptr< ::grpc::ClientAsyncResponseReader< ::grpc_user::Reply>> AsyncKeyExService(::grpc::ClientContext* context, const ::grpc_user::Request& request, ::grpc::CompletionQueue* cq) {
@@ -111,16 +111,16 @@ class TethysUserService final {
 
    private:
     std::shared_ptr< ::grpc::ChannelInterface> channel_;
-    ::grpc::ClientReader< ::grpc_user::Message>* ReqSsigServiceRaw(::grpc::ClientContext* context, const ::grpc_user::Identity& request) override;
-    ::grpc::ClientAsyncReader< ::grpc_user::Message>* AsyncReqSsigServiceRaw(::grpc::ClientContext* context, const ::grpc_user::Identity& request, ::grpc::CompletionQueue* cq, void* tag) override;
-    ::grpc::ClientAsyncReader< ::grpc_user::Message>* PrepareAsyncReqSsigServiceRaw(::grpc::ClientContext* context, const ::grpc_user::Identity& request, ::grpc::CompletionQueue* cq) override;
+    ::grpc::ClientReader< ::grpc_user::Message>* PushServiceRaw(::grpc::ClientContext* context, const ::grpc_user::Identity& request) override;
+    ::grpc::ClientAsyncReader< ::grpc_user::Message>* AsyncPushServiceRaw(::grpc::ClientContext* context, const ::grpc_user::Identity& request, ::grpc::CompletionQueue* cq, void* tag) override;
+    ::grpc::ClientAsyncReader< ::grpc_user::Message>* PrepareAsyncPushServiceRaw(::grpc::ClientContext* context, const ::grpc_user::Identity& request, ::grpc::CompletionQueue* cq) override;
     ::grpc::ClientAsyncResponseReader< ::grpc_user::Reply>* AsyncKeyExServiceRaw(::grpc::ClientContext* context, const ::grpc_user::Request& request, ::grpc::CompletionQueue* cq) override;
     ::grpc::ClientAsyncResponseReader< ::grpc_user::Reply>* PrepareAsyncKeyExServiceRaw(::grpc::ClientContext* context, const ::grpc_user::Request& request, ::grpc::CompletionQueue* cq) override;
     ::grpc::ClientAsyncResponseReader< ::grpc_user::Reply>* AsyncUserServiceRaw(::grpc::ClientContext* context, const ::grpc_user::Request& request, ::grpc::CompletionQueue* cq) override;
     ::grpc::ClientAsyncResponseReader< ::grpc_user::Reply>* PrepareAsyncUserServiceRaw(::grpc::ClientContext* context, const ::grpc_user::Request& request, ::grpc::CompletionQueue* cq) override;
     ::grpc::ClientAsyncResponseReader< ::grpc_user::Reply>* AsyncSignerServiceRaw(::grpc::ClientContext* context, const ::grpc_user::Request& request, ::grpc::CompletionQueue* cq) override;
     ::grpc::ClientAsyncResponseReader< ::grpc_user::Reply>* PrepareAsyncSignerServiceRaw(::grpc::ClientContext* context, const ::grpc_user::Request& request, ::grpc::CompletionQueue* cq) override;
-    const ::grpc::internal::RpcMethod rpcmethod_ReqSsigService_;
+    const ::grpc::internal::RpcMethod rpcmethod_PushService_;
     const ::grpc::internal::RpcMethod rpcmethod_KeyExService_;
     const ::grpc::internal::RpcMethod rpcmethod_UserService_;
     const ::grpc::internal::RpcMethod rpcmethod_SignerService_;
@@ -131,28 +131,28 @@ class TethysUserService final {
    public:
     Service();
     virtual ~Service();
-    virtual ::grpc::Status ReqSsigService(::grpc::ServerContext* context, const ::grpc_user::Identity* request, ::grpc::ServerWriter< ::grpc_user::Message>* writer);
+    virtual ::grpc::Status PushService(::grpc::ServerContext* context, const ::grpc_user::Identity* request, ::grpc::ServerWriter< ::grpc_user::Message>* writer);
     virtual ::grpc::Status KeyExService(::grpc::ServerContext* context, const ::grpc_user::Request* request, ::grpc_user::Reply* response);
     virtual ::grpc::Status UserService(::grpc::ServerContext* context, const ::grpc_user::Request* request, ::grpc_user::Reply* response);
     virtual ::grpc::Status SignerService(::grpc::ServerContext* context, const ::grpc_user::Request* request, ::grpc_user::Reply* response);
   };
   template <class BaseClass>
-  class WithAsyncMethod_ReqSsigService : public BaseClass {
+  class WithAsyncMethod_PushService : public BaseClass {
    private:
     void BaseClassMustBeDerivedFromService(const Service *service) {}
    public:
-    WithAsyncMethod_ReqSsigService() {
+    WithAsyncMethod_PushService() {
       ::grpc::Service::MarkMethodAsync(0);
     }
-    ~WithAsyncMethod_ReqSsigService() override {
+    ~WithAsyncMethod_PushService() override {
       BaseClassMustBeDerivedFromService(this);
     }
     // disable synchronous version of this method
-    ::grpc::Status ReqSsigService(::grpc::ServerContext* context, const ::grpc_user::Identity* request, ::grpc::ServerWriter< ::grpc_user::Message>* writer) override {
+    ::grpc::Status PushService(::grpc::ServerContext* context, const ::grpc_user::Identity* request, ::grpc::ServerWriter< ::grpc_user::Message>* writer) override {
       abort();
       return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
     }
-    void RequestReqSsigService(::grpc::ServerContext* context, ::grpc_user::Identity* request, ::grpc::ServerAsyncWriter< ::grpc_user::Message>* writer, ::grpc::CompletionQueue* new_call_cq, ::grpc::ServerCompletionQueue* notification_cq, void *tag) {
+    void RequestPushService(::grpc::ServerContext* context, ::grpc_user::Identity* request, ::grpc::ServerAsyncWriter< ::grpc_user::Message>* writer, ::grpc::CompletionQueue* new_call_cq, ::grpc::ServerCompletionQueue* notification_cq, void *tag) {
       ::grpc::Service::RequestAsyncServerStreaming(0, context, request, writer, new_call_cq, notification_cq, tag);
     }
   };
@@ -216,20 +216,20 @@ class TethysUserService final {
       ::grpc::Service::RequestAsyncUnary(3, context, request, response, new_call_cq, notification_cq, tag);
     }
   };
-  typedef WithAsyncMethod_ReqSsigService<WithAsyncMethod_KeyExService<WithAsyncMethod_UserService<WithAsyncMethod_SignerService<Service > > > > AsyncService;
+  typedef WithAsyncMethod_PushService<WithAsyncMethod_KeyExService<WithAsyncMethod_UserService<WithAsyncMethod_SignerService<Service > > > > AsyncService;
   template <class BaseClass>
-  class WithGenericMethod_ReqSsigService : public BaseClass {
+  class WithGenericMethod_PushService : public BaseClass {
    private:
     void BaseClassMustBeDerivedFromService(const Service *service) {}
    public:
-    WithGenericMethod_ReqSsigService() {
+    WithGenericMethod_PushService() {
       ::grpc::Service::MarkMethodGeneric(0);
     }
-    ~WithGenericMethod_ReqSsigService() override {
+    ~WithGenericMethod_PushService() override {
       BaseClassMustBeDerivedFromService(this);
     }
     // disable synchronous version of this method
-    ::grpc::Status ReqSsigService(::grpc::ServerContext* context, const ::grpc_user::Identity* request, ::grpc::ServerWriter< ::grpc_user::Message>* writer) override {
+    ::grpc::Status PushService(::grpc::ServerContext* context, const ::grpc_user::Identity* request, ::grpc::ServerWriter< ::grpc_user::Message>* writer) override {
       abort();
       return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
     }
@@ -286,22 +286,22 @@ class TethysUserService final {
     }
   };
   template <class BaseClass>
-  class WithRawMethod_ReqSsigService : public BaseClass {
+  class WithRawMethod_PushService : public BaseClass {
    private:
     void BaseClassMustBeDerivedFromService(const Service *service) {}
    public:
-    WithRawMethod_ReqSsigService() {
+    WithRawMethod_PushService() {
       ::grpc::Service::MarkMethodRaw(0);
     }
-    ~WithRawMethod_ReqSsigService() override {
+    ~WithRawMethod_PushService() override {
       BaseClassMustBeDerivedFromService(this);
     }
     // disable synchronous version of this method
-    ::grpc::Status ReqSsigService(::grpc::ServerContext* context, const ::grpc_user::Identity* request, ::grpc::ServerWriter< ::grpc_user::Message>* writer) override {
+    ::grpc::Status PushService(::grpc::ServerContext* context, const ::grpc_user::Identity* request, ::grpc::ServerWriter< ::grpc_user::Message>* writer) override {
       abort();
       return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
     }
-    void RequestReqSsigService(::grpc::ServerContext* context, ::grpc::ByteBuffer* request, ::grpc::ServerAsyncWriter< ::grpc::ByteBuffer>* writer, ::grpc::CompletionQueue* new_call_cq, ::grpc::ServerCompletionQueue* notification_cq, void *tag) {
+    void RequestPushService(::grpc::ServerContext* context, ::grpc::ByteBuffer* request, ::grpc::ServerAsyncWriter< ::grpc::ByteBuffer>* writer, ::grpc::CompletionQueue* new_call_cq, ::grpc::ServerCompletionQueue* notification_cq, void *tag) {
       ::grpc::Service::RequestAsyncServerStreaming(0, context, request, writer, new_call_cq, notification_cq, tag);
     }
   };
@@ -427,27 +427,27 @@ class TethysUserService final {
   };
   typedef WithStreamedUnaryMethod_KeyExService<WithStreamedUnaryMethod_UserService<WithStreamedUnaryMethod_SignerService<Service > > > StreamedUnaryService;
   template <class BaseClass>
-  class WithSplitStreamingMethod_ReqSsigService : public BaseClass {
+  class WithSplitStreamingMethod_PushService : public BaseClass {
    private:
     void BaseClassMustBeDerivedFromService(const Service *service) {}
    public:
-    WithSplitStreamingMethod_ReqSsigService() {
+    WithSplitStreamingMethod_PushService() {
       ::grpc::Service::MarkMethodStreamed(0,
-        new ::grpc::internal::SplitServerStreamingHandler< ::grpc_user::Identity, ::grpc_user::Message>(std::bind(&WithSplitStreamingMethod_ReqSsigService<BaseClass>::StreamedReqSsigService, this, std::placeholders::_1, std::placeholders::_2)));
+        new ::grpc::internal::SplitServerStreamingHandler< ::grpc_user::Identity, ::grpc_user::Message>(std::bind(&WithSplitStreamingMethod_PushService<BaseClass>::StreamedPushService, this, std::placeholders::_1, std::placeholders::_2)));
     }
-    ~WithSplitStreamingMethod_ReqSsigService() override {
+    ~WithSplitStreamingMethod_PushService() override {
       BaseClassMustBeDerivedFromService(this);
     }
     // disable regular version of this method
-    ::grpc::Status ReqSsigService(::grpc::ServerContext* context, const ::grpc_user::Identity* request, ::grpc::ServerWriter< ::grpc_user::Message>* writer) override {
+    ::grpc::Status PushService(::grpc::ServerContext* context, const ::grpc_user::Identity* request, ::grpc::ServerWriter< ::grpc_user::Message>* writer) override {
       abort();
       return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
     }
     // replace default version of method with split streamed
-    virtual ::grpc::Status StreamedReqSsigService(::grpc::ServerContext* context, ::grpc::ServerSplitStreamer< ::grpc_user::Identity,::grpc_user::Message>* server_split_streamer) = 0;
+    virtual ::grpc::Status StreamedPushService(::grpc::ServerContext* context, ::grpc::ServerSplitStreamer< ::grpc_user::Identity,::grpc_user::Message>* server_split_streamer) = 0;
   };
-  typedef WithSplitStreamingMethod_ReqSsigService<Service > SplitStreamedService;
-  typedef WithSplitStreamingMethod_ReqSsigService<WithStreamedUnaryMethod_KeyExService<WithStreamedUnaryMethod_UserService<WithStreamedUnaryMethod_SignerService<Service > > > > StreamedService;
+  typedef WithSplitStreamingMethod_PushService<Service > SplitStreamedService;
+  typedef WithSplitStreamingMethod_PushService<WithStreamedUnaryMethod_KeyExService<WithStreamedUnaryMethod_UserService<WithStreamedUnaryMethod_SignerService<Service > > > > StreamedService;
 };
 
 }  // namespace grpc_user

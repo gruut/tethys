@@ -103,7 +103,7 @@ public:
     broadcast_check_table = make_shared<BroadcastMsgTable>();
     id_mapping_table = make_shared<IdMappingTable>();
 
-    new ReqSigService(&user_service, completion_queue.get(), user_conn_table, user_pool_manager);
+    new PushService(&user_service, completion_queue.get(), user_conn_table, user_pool_manager);
     new KeyExService(&user_service, completion_queue.get(), user_pool_manager);
     new SignerService(&user_service, completion_queue.get(), user_pool_manager);
     new UserService(&user_service, completion_queue.get(), user_pool_manager, routing_table);

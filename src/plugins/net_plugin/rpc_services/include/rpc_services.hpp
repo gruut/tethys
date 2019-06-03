@@ -47,10 +47,10 @@ protected:
   RpcCallStatus m_receive_status;
 };
 
-class ReqSigService final : public CallData {
+class PushService final : public CallData {
 public:
-  ReqSigService(TethysUserService::AsyncService *service, ServerCompletionQueue *cq, shared_ptr<UserConnTable> user_conn_table,
-                shared_ptr<UserPoolManager> user_pool_manager)
+  PushService(TethysUserService::AsyncService *service, ServerCompletionQueue *cq, shared_ptr<UserConnTable> user_conn_table,
+              shared_ptr<UserPoolManager> user_pool_manager)
       : m_stream(&m_context), m_user_conn_table(move(user_conn_table)), m_user_pool_manager(move(user_pool_manager)) {
 
     m_service = service;

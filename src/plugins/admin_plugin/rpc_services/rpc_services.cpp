@@ -15,18 +15,19 @@ using namespace appbase;
 using namespace std;
 
 Status SetupService::UserService(ServerContext *context, const Request *request, Reply *response) {
-  Status rpc_status;
+  string err_info;
   MessageParser msg_parser;
-  auto input_data = msg_parser.parseMessage(request->message(), rpc_status);
+  auto input_data = msg_parser.parseMessage(request->message(), err_info);
 
   if (!input_data.has_value()) {
     user_key_info.set_value({});
+    response->set_err_info(err_info);
     response->set_status(Reply_Status_INVALID);
-    return rpc_status;
+  } else {
+    user_key_info.set_value(input_data.value().body);
+    response->set_status(Reply_Status_SUCCESS);
   }
 
-  user_key_info.set_value(input_data.value().body);
-  response->set_status(Reply_Status_SUCCESS);
   return Status::OK;
 }
 

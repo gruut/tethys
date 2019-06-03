@@ -134,6 +134,7 @@ const ::google::protobuf::uint32 TableStruct::offsets[] GOOGLE_PROTOBUF_ATTRIBUT
   ~0u,  // no _weak_field_map_
   GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::grpc_user::Reply, status_),
   GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::grpc_user::Reply, message_),
+  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::grpc_user::Reply, err_info_),
 };
 static const ::google::protobuf::internal::MigrationSchema schemas[] GOOGLE_PROTOBUF_ATTRIBUTE_SECTION_VARIABLE(protodesc_cold) = {
   { 0, -1, sizeof(::grpc_user::Identity)},
@@ -172,24 +173,24 @@ void AddDescriptorsImpl() {
   static const char descriptor[] GOOGLE_PROTOBUF_ATTRIBUTE_SECTION_VARIABLE(protodesc_cold) = {
       "\n\022user_service.proto\022\tgrpc_user\"\032\n\010Ident"
       "ity\022\016\n\006sender\030\001 \001(\014\"\032\n\007Message\022\017\n\007messag"
-      "e\030\001 \001(\014\"\032\n\007Request\022\017\n\007message\030\001 \001(\014\"\361\001\n\005"
+      "e\030\001 \001(\014\"\032\n\007Request\022\017\n\007message\030\001 \001(\014\"\203\002\n\005"
       "Reply\022\'\n\006status\030\001 \001(\0162\027.grpc_user.Reply."
-      "Status\022\017\n\007message\030\002 \001(\014\"\255\001\n\006Status\022\013\n\007UN"
-      "KNOWN\020\000\022\013\n\007SUCCESS\020\001\022\013\n\007INVALID\020\002\022\014\n\010INT"
-      "ERNAL\020\003\022\027\n\023ECDH_ILLEGAL_ACCESS\020\025\022\030\n\024ECDH"
-      "_MAX_SIGNER_POOL\020\026\022\020\n\014ECDH_TIMEOUT\020\027\022\024\n\020"
-      "ECDH_INVALID_SIG\020\030\022\023\n\017ECDH_INVALID_PK\020\0312"
-      "\372\001\n\021TethysUserService\022=\n\016ReqSsigService\022"
-      "\023.grpc_user.Identity\032\022.grpc_user.Message"
-      "\"\0000\001\0226\n\014KeyExService\022\022.grpc_user.Request"
-      "\032\020.grpc_user.Reply\"\000\0225\n\013UserService\022\022.gr"
-      "pc_user.Request\032\020.grpc_user.Reply\"\000\0227\n\rS"
-      "ignerService\022\022.grpc_user.Request\032\020.grpc_"
-      "user.Reply\"\000B\"\n\026io.tethys.tethyswalletB\006"
-      "TethysP\001b\006proto3"
+      "Status\022\017\n\007message\030\002 \001(\014\022\020\n\010err_info\030\003 \001("
+      "\t\"\255\001\n\006Status\022\013\n\007UNKNOWN\020\000\022\013\n\007SUCCESS\020\001\022\013"
+      "\n\007INVALID\020\002\022\014\n\010INTERNAL\020\003\022\027\n\023ECDH_ILLEGA"
+      "L_ACCESS\020\025\022\030\n\024ECDH_MAX_SIGNER_POOL\020\026\022\020\n\014"
+      "ECDH_TIMEOUT\020\027\022\024\n\020ECDH_INVALID_SIG\020\030\022\023\n\017"
+      "ECDH_INVALID_PK\020\0312\367\001\n\021TethysUserService\022"
+      ":\n\013PushService\022\023.grpc_user.Identity\032\022.gr"
+      "pc_user.Message\"\0000\001\0226\n\014KeyExService\022\022.gr"
+      "pc_user.Request\032\020.grpc_user.Reply\"\000\0225\n\013U"
+      "serService\022\022.grpc_user.Request\032\020.grpc_us"
+      "er.Reply\"\000\0227\n\rSignerService\022\022.grpc_user."
+      "Request\032\020.grpc_user.Reply\"\000B\"\n\026io.tethys"
+      ".tethyswalletB\006TethysP\001b\006proto3"
   };
   ::google::protobuf::DescriptorPool::InternalAddGeneratedFile(
-      descriptor, 656);
+      descriptor, 671);
   ::google::protobuf::MessageFactory::InternalRegisterGeneratedFile(
     "user_service.proto", &protobuf_RegisterTypes);
 }
@@ -939,6 +940,7 @@ void Reply::InitAsDefaultInstance() {
 #if !defined(_MSC_VER) || _MSC_VER >= 1900
 const int Reply::kStatusFieldNumber;
 const int Reply::kMessageFieldNumber;
+const int Reply::kErrInfoFieldNumber;
 #endif  // !defined(_MSC_VER) || _MSC_VER >= 1900
 
 Reply::Reply()
@@ -956,12 +958,17 @@ Reply::Reply(const Reply& from)
   if (from.message().size() > 0) {
     message_.AssignWithDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), from.message_);
   }
+  err_info_.UnsafeSetDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+  if (from.err_info().size() > 0) {
+    err_info_.AssignWithDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), from.err_info_);
+  }
   status_ = from.status_;
   // @@protoc_insertion_point(copy_constructor:grpc_user.Reply)
 }
 
 void Reply::SharedCtor() {
   message_.UnsafeSetDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+  err_info_.UnsafeSetDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
   status_ = 0;
 }
 
@@ -972,6 +979,7 @@ Reply::~Reply() {
 
 void Reply::SharedDtor() {
   message_.DestroyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+  err_info_.DestroyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }
 
 void Reply::SetCachedSize(int size) const {
@@ -995,6 +1003,7 @@ void Reply::Clear() {
   (void) cached_has_bits;
 
   message_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+  err_info_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
   status_ = 0;
   _internal_metadata_.Clear();
 }
@@ -1030,6 +1039,22 @@ bool Reply::MergePartialFromCodedStream(
             static_cast< ::google::protobuf::uint8>(18u /* 18 & 0xFF */)) {
           DO_(::google::protobuf::internal::WireFormatLite::ReadBytes(
                 input, this->mutable_message()));
+        } else {
+          goto handle_unusual;
+        }
+        break;
+      }
+
+      // string err_info = 3;
+      case 3: {
+        if (static_cast< ::google::protobuf::uint8>(tag) ==
+            static_cast< ::google::protobuf::uint8>(26u /* 26 & 0xFF */)) {
+          DO_(::google::protobuf::internal::WireFormatLite::ReadString(
+                input, this->mutable_err_info()));
+          DO_(::google::protobuf::internal::WireFormatLite::VerifyUtf8String(
+            this->err_info().data(), static_cast<int>(this->err_info().length()),
+            ::google::protobuf::internal::WireFormatLite::PARSE,
+            "grpc_user.Reply.err_info"));
         } else {
           goto handle_unusual;
         }
@@ -1074,6 +1099,16 @@ void Reply::SerializeWithCachedSizes(
       2, this->message(), output);
   }
 
+  // string err_info = 3;
+  if (this->err_info().size() > 0) {
+    ::google::protobuf::internal::WireFormatLite::VerifyUtf8String(
+      this->err_info().data(), static_cast<int>(this->err_info().length()),
+      ::google::protobuf::internal::WireFormatLite::SERIALIZE,
+      "grpc_user.Reply.err_info");
+    ::google::protobuf::internal::WireFormatLite::WriteStringMaybeAliased(
+      3, this->err_info(), output);
+  }
+
   if ((_internal_metadata_.have_unknown_fields() &&  ::google::protobuf::internal::GetProto3PreserveUnknownsDefault())) {
     ::google::protobuf::internal::WireFormat::SerializeUnknownFields(
         (::google::protobuf::internal::GetProto3PreserveUnknownsDefault()   ? _internal_metadata_.unknown_fields()   : _internal_metadata_.default_instance()), output);
@@ -1101,6 +1136,17 @@ void Reply::SerializeWithCachedSizes(
         2, this->message(), target);
   }
 
+  // string err_info = 3;
+  if (this->err_info().size() > 0) {
+    ::google::protobuf::internal::WireFormatLite::VerifyUtf8String(
+      this->err_info().data(), static_cast<int>(this->err_info().length()),
+      ::google::protobuf::internal::WireFormatLite::SERIALIZE,
+      "grpc_user.Reply.err_info");
+    target =
+      ::google::protobuf::internal::WireFormatLite::WriteStringToArray(
+        3, this->err_info(), target);
+  }
+
   if ((_internal_metadata_.have_unknown_fields() &&  ::google::protobuf::internal::GetProto3PreserveUnknownsDefault())) {
     target = ::google::protobuf::internal::WireFormat::SerializeUnknownFieldsToArray(
         (::google::protobuf::internal::GetProto3PreserveUnknownsDefault()   ? _internal_metadata_.unknown_fields()   : _internal_metadata_.default_instance()), target);
@@ -1123,6 +1169,13 @@ size_t Reply::ByteSizeLong() const {
     total_size += 1 +
       ::google::protobuf::internal::WireFormatLite::BytesSize(
         this->message());
+  }
+
+  // string err_info = 3;
+  if (this->err_info().size() > 0) {
+    total_size += 1 +
+      ::google::protobuf::internal::WireFormatLite::StringSize(
+        this->err_info());
   }
 
   // .grpc_user.Reply.Status status = 1;
@@ -1162,6 +1215,10 @@ void Reply::MergeFrom(const Reply& from) {
 
     message_.AssignWithDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), from.message_);
   }
+  if (from.err_info().size() > 0) {
+
+    err_info_.AssignWithDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), from.err_info_);
+  }
   if (from.status() != 0) {
     set_status(from.status());
   }
@@ -1192,6 +1249,8 @@ void Reply::Swap(Reply* other) {
 void Reply::InternalSwap(Reply* other) {
   using std::swap;
   message_.Swap(&other->message_, &::google::protobuf::internal::GetEmptyStringAlreadyInited(),
+    GetArenaNoVirtual());
+  err_info_.Swap(&other->err_info_, &::google::protobuf::internal::GetEmptyStringAlreadyInited(),
     GetArenaNoVirtual());
   swap(status_, other->status_);
   _internal_metadata_.Swap(&other->_internal_metadata_);

@@ -574,6 +574,20 @@ class Reply : public ::google::protobuf::Message /* @@protoc_insertion_point(cla
   ::std::string* release_message();
   void set_allocated_message(::std::string* message);
 
+  // string err_info = 3;
+  void clear_err_info();
+  static const int kErrInfoFieldNumber = 3;
+  const ::std::string& err_info() const;
+  void set_err_info(const ::std::string& value);
+  #if LANG_CXX11
+  void set_err_info(::std::string&& value);
+  #endif
+  void set_err_info(const char* value);
+  void set_err_info(const char* value, size_t size);
+  ::std::string* mutable_err_info();
+  ::std::string* release_err_info();
+  void set_allocated_err_info(::std::string* err_info);
+
   // .grpc_user.Reply.Status status = 1;
   void clear_status();
   static const int kStatusFieldNumber = 1;
@@ -585,6 +599,7 @@ class Reply : public ::google::protobuf::Message /* @@protoc_insertion_point(cla
 
   ::google::protobuf::internal::InternalMetadataWithArena _internal_metadata_;
   ::google::protobuf::internal::ArenaStringPtr message_;
+  ::google::protobuf::internal::ArenaStringPtr err_info_;
   int status_;
   mutable ::google::protobuf::internal::CachedSize _cached_size_;
   friend struct ::protobuf_user_5fservice_2eproto::TableStruct;
@@ -836,6 +851,59 @@ inline void Reply::set_allocated_message(::std::string* message) {
   }
   message_.SetAllocatedNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), message);
   // @@protoc_insertion_point(field_set_allocated:grpc_user.Reply.message)
+}
+
+// string err_info = 3;
+inline void Reply::clear_err_info() {
+  err_info_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+}
+inline const ::std::string& Reply::err_info() const {
+  // @@protoc_insertion_point(field_get:grpc_user.Reply.err_info)
+  return err_info_.GetNoArena();
+}
+inline void Reply::set_err_info(const ::std::string& value) {
+  
+  err_info_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), value);
+  // @@protoc_insertion_point(field_set:grpc_user.Reply.err_info)
+}
+#if LANG_CXX11
+inline void Reply::set_err_info(::std::string&& value) {
+  
+  err_info_.SetNoArena(
+    &::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::move(value));
+  // @@protoc_insertion_point(field_set_rvalue:grpc_user.Reply.err_info)
+}
+#endif
+inline void Reply::set_err_info(const char* value) {
+  GOOGLE_DCHECK(value != NULL);
+  
+  err_info_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::string(value));
+  // @@protoc_insertion_point(field_set_char:grpc_user.Reply.err_info)
+}
+inline void Reply::set_err_info(const char* value, size_t size) {
+  
+  err_info_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(),
+      ::std::string(reinterpret_cast<const char*>(value), size));
+  // @@protoc_insertion_point(field_set_pointer:grpc_user.Reply.err_info)
+}
+inline ::std::string* Reply::mutable_err_info() {
+  
+  // @@protoc_insertion_point(field_mutable:grpc_user.Reply.err_info)
+  return err_info_.MutableNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+}
+inline ::std::string* Reply::release_err_info() {
+  // @@protoc_insertion_point(field_release:grpc_user.Reply.err_info)
+  
+  return err_info_.ReleaseNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+}
+inline void Reply::set_allocated_err_info(::std::string* err_info) {
+  if (err_info != NULL) {
+    
+  } else {
+    
+  }
+  err_info_.SetAllocatedNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), err_info);
+  // @@protoc_insertion_point(field_set_allocated:grpc_user.Reply.err_info)
 }
 
 #ifdef __GNUC__
