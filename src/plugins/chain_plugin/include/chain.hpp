@@ -39,6 +39,8 @@ public:
   bool applyContract(std::map<base58_type, contract_type> &contract_list);
 
   bool findUserFromRDB(string key, user_ledger_type &user_ledger);
+  bool findContractFromRDB(string key, contract_ledger_type &contract_ledger);
+  int getVarType(string &key);
 
   // KV functions
   void saveWorld(world_type &world_info);
@@ -65,6 +67,7 @@ public:
   bool queryRunContract(UnresolvedBlock &UR_block, nlohmann::json &option, result_query_info_type &result_info);
   string pidCheck(optional<string> pid, string var_name, int var_type, string var_owner);
   search_result_type findUserLedgerFromPoint(string key, block_height_type height, int vec_idx);
+  search_result_type findContractLedgerFromPoint(string key, block_height_type height, int vec_idx);
 
   ubp_push_result_type pushBlock(Block &block, bool is_restore = false);
   UnresolvedBlock findBlock(const base58_type &block_id, const block_height_type block_height);

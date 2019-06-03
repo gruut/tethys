@@ -442,13 +442,28 @@ bool RdbController::checkUnique() {
 
 bool RdbController::findUserFromRDB(string pid, user_ledger_type &user_ledger) {
   try {
+    string var_name, var_value, var_owner, tag, pid;
+    short var_type;
+    long long up_time;
+    int up_block;
+
+    // clang-format off
     soci::row result;
     soci::session db_session(RdbController::pool());
-    soci::statement st = (db_session.prepare << "SELECT * from user_scope WHERE pid = :pid", soci::use(pid, "pid"), soci::into(result));
+    soci::statement st = (db_session.prepare << "SELECT var_name, var_value, var_type, var_owner, up_time, up_block, tag, pid from user_scope WHERE pid = :pid", soci::use(pid, "pid"), soci::into(result));
     st.execute(true);
 
-    // TODO: SELECT문으로 얻은 결과를 user_ledger로 반영하면 reference이기 때문에 반영되어 전달
+    result >> var_name >> var_value >> var_type >> var_owner >> up_time >> up_block >> tag >> pid;
 
+    user_ledger.var_name = var_name;
+    user_ledger.var_val = var_value;
+    user_ledger.var_type = (int)var_type;
+    user_ledger.uid = var_owner;
+    user_ledger.up_time = (uint64_t)up_time;
+    user_ledger.up_block = (block_height_type)up_block;
+    user_ledger.tag = tag;
+    user_ledger.pid = TypeConverter::stringToBytes(pid);
+    // clang-format on
   } catch (soci::mysql_soci_error const &e) {
     logger::ERROR("MySQL error: {}", e.what());
     return false;
@@ -457,6 +472,70 @@ bool RdbController::findUserFromRDB(string pid, user_ledger_type &user_ledger) {
     return false;
   }
   return true;
+}
+
+bool RdbController::findContractFromRDB(string pid, gruut::contract_ledger_type &contract_ledger) {
+  try {
+    string var_name, var_value, contract_id, var_info, pid;
+    short var_type;
+    long long up_time;
+    int up_block;
+
+    // clang-format off
+    soci::row result;
+    soci::session db_session(RdbController::pool());
+    soci::statement st = (db_session.prepare << "SELECT var_name, var_value, var_type, contract_id, up_time, up_block, var_info, pid from contract_scope WHERE pid = :pid", soci::use(pid, "pid"), soci::into(result));
+    st.execute(true);
+
+    result >> var_name >> var_value >> var_type >> contract_id >> up_time >> up_block >> var_info >> pid;
+
+    contract_ledger.var_name = var_name;
+    contract_ledger.var_val = var_value;
+    contract_ledger.var_type = (int)var_type;
+    contract_ledger.cid = contract_id;
+    contract_ledger.up_time = (uint64_t)up_time;
+    contract_ledger.up_block = (block_height_type)up_block;
+    contract_ledger.var_info = var_info;
+    contract_ledger.pid = TypeConverter::stringToBytes(pid);
+    // clang-format on
+  } catch (soci::mysql_soci_error const &e) {
+    logger::ERROR("MySQL error: {}", e.what());
+    return false;
+  } catch (...) {
+    logger::ERROR("Unexpected error at `queryUserScope`");
+    return false;
+  }
+  return true;
+}
+
+int RdbController::getVarType(string &key) {
+  try {
+    // TODO: pid가 생략됐을 때의 검색도 구현해야 함
+    string pid = key;
+    short var_type;
+
+    soci::row result;
+    soci::session db_session(RdbController::pool());
+    soci::statement st(db_session);
+
+    if(key.size() > 45)
+    {
+      st = (db_session.prepare << "SELECT var_type from contract_scope WHERE pid = :pid", soci::use(pid, "pid"), soci::into(result));
+    } else {
+      st = (db_session.prepare << "SELECT var_type from user_scope WHERE pid = :pid", soci::use(pid, "pid"), soci::into(result));
+    }
+    st.execute(true);
+
+    result >> var_type;
+
+    return var_type;
+  } catch (soci::mysql_soci_error const &e) {
+    logger::ERROR("MySQL error: {}", e.what());
+    return -1;
+  } catch (...) {
+    logger::ERROR("Unexpected error at `getVarType`");
+    return -1;
+  }
 }
 
 } // namespace gruut

@@ -139,6 +139,14 @@ bool Chain::findUserFromRDB(string key, user_ledger_type &user_ledger) {
   return rdb_controller->findUserFromRDB(key, user_ledger);
 }
 
+bool Chain::findContractFromRDB(string key, contract_ledger_type &contract_ledger) {
+  return rdb_controller->findContractFromRDB(key, contract_ledger);
+}
+
+int Chain::getVarType(string &key) {
+  return rdb_controller->getVarType(key);
+}
+
 // KV functions
 void Chain::saveWorld(world_type &world_info) {
   kv_controller->saveWorld(world_info);
@@ -295,13 +303,15 @@ bool Chain::queryTransfer(UnresolvedBlock &UR_block, nlohmann::json &option, res
   string key;
   auto pid = json::get<string>(option, "pid");
   string tag = json::get<string>(option, "tag").value();
-  int var_type = loadVarType();
+  int var_type;
 
   // Transfer : from
   if (from == "contract") {
     // from : contract
     string cid = result_info.self;
     contract_ledger_type contract_ledger;
+
+    var_type = getVarType(cid);
 
     key = pidCheck(pid, unit, var_type, from);
     if (pid.has_value()) {
@@ -335,6 +345,8 @@ bool Chain::queryTransfer(UnresolvedBlock &UR_block, nlohmann::json &option, res
       uid = result_info.user;
     else if (from == "author")
       uid = result_info.author;
+
+    var_type = getVarType(uid);
 
     user_ledger_type user_ledger(unit, var_type, uid, tag);
 
@@ -574,6 +586,34 @@ search_result_type Chain::findUserLedgerFromPoint(string key, block_height_type 
     if (pool_deque_idx < 0) {
       // -1이 되면 rdb에서 찾을 차례. select문으로 조회하는데도 찾지 못한다면 존재하지 않는 데이터
       bool result = findUserFromRDB(key, search_result.user_ledger);
+      if (!result) {
+        search_result.not_found = true;
+      }
+      return search_result;
+    }
+  }
+}
+
+search_result_type Chain::findContractLedgerFromPoint(string key, block_height_type height, int vec_idx) {
+  search_result_type search_result;
+  int pool_deque_idx = height - unresolved_block_pool->getLatestConfirmedHeight() - 1;
+  int pool_vec_idx = vec_idx;
+
+  map<string, contract_ledger_type> current_contract_ledgers = unresolved_block_pool->getBlock(pool_deque_idx, pool_vec_idx).contract_ledger_list;
+  map<string, contract_ledger_type>::iterator it;
+
+  while (1) {
+    it = current_contract_ledgers.find(key);
+    if (it != current_contract_ledgers.end()) {
+      search_result.contract_ledger = it->second;
+      return search_result;
+    }
+    pool_vec_idx = unresolved_block_pool->getBlock(pool_deque_idx, pool_vec_idx).prev_vector_idx;
+    --pool_deque_idx;
+
+    if (pool_deque_idx < 0) {
+      // -1이 되면 rdb에서 찾을 차례. select문으로 조회하는데도 찾지 못한다면 존재하지 않는 데이터
+      bool result = findContractFromRDB(key, search_result.contract_ledger);
       if (!result) {
         search_result.not_found = true;
       }

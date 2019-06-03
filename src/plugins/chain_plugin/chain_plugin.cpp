@@ -311,9 +311,9 @@ public:
           chain->applyTransaction(resolved_block.block);
           chain->applyUserLedger(resolved_block.user_ledger_list);
           chain->applyContractLedger(resolved_block.contract_ledger_list);
-          chain->applyUserAttribute();
-          chain->applyUserCert();
-          chain->applyContract();
+          chain->applyUserAttribute(resolved_block.user_attribute_list);
+          chain->applyUserCert(resolved_block.user_cert_list);
+          chain->applyContract(resolved_block.contract_list);
         }
       }
     } // test code end
