@@ -5,8 +5,18 @@
 #include "../../../plugins/net_plugin/include/message_parser.hpp"
 #include "../../chain_plugin/include/chain_plugin.hpp"
 #include "../include/command_delegator.hpp"
+#include "../middlewares/include/admin_middleware.hpp"
 
 #include <exception>
+
+#define SET_MIDDLEWARE(SERVICE_CLASS)                                                                                                      \
+  auto middleware = make_unique<AdminMiddleware<SERVICE_CLASS>>();                                                                         \
+  auto [result, error_message] = middleware->next();                                                                                       \
+  if (!result) {                                                                                                                           \
+    res.set_info(error_message);                                                                                                           \
+    res.set_success(false);                                                                                                                \
+    return;                                                                                                                                \
+  }
 
 #define BEFORE_PROCEED(SERVICE_CLASS, SERVICE, COMPLETION_QUEUE, ...)                                                                      \
   do {                                                                                                                                     \
@@ -186,6 +196,7 @@ bool LoginService::checkPassword(const string &enc_sk_pem, const string &pass) {
 }
 
 void LoginService::proceed() {
+  SET_MIDDLEWARE(LoginService)
   BEFORE_PROCEED(LoginService, service, completion_queue);
 
   if (app().isUserSignedIn()) {

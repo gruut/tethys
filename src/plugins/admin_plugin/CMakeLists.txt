@@ -8,6 +8,7 @@ file(GLOB HEADERS
         "include/*.hpp"
         "rpc_services/proto/include/*.h"
         "rpc_services/include/*.hpp"
+        "middlewares/include/*.hpp"
         )
 
 file(GLOB SOURCES
