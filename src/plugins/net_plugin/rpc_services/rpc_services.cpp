@@ -301,6 +301,14 @@ void KeyExService::proceed() {
   case RpcCallStatus::PROCESS: {
     new KeyExService(m_service, m_completion_queue, m_user_pool_manager);
     string err_info;
+    if (app().runningMode() == RunningMode::MONITOR) {
+      err_info = "This node is running as a monitoring mode. Please contact other node.";
+      m_reply.set_err_info(err_info);
+      m_reply.set_status(Reply_Status_INTERNAL);
+      m_receive_status = RpcCallStatus::FINISH;
+      m_responder.Finish(m_reply, Status::OK, this);
+      break;
+    }
     try {
       string packed_msg = m_request.message();
       MessageParser msg_parser;
@@ -547,10 +555,11 @@ void MergerService::proceed() {
             }
           }
         }
+        if (app().runningMode() != RunningMode::MONITOR || input_data.value().type != MessageType::MSG_TX) {
+          MessageHandler msg_handler(&m_context, id_mapping_table);
+          msg_handler(input_data.value());
+        }
         m_reply.set_status(grpc_merger::MsgStatus_Status_SUCCESS);
-
-        MessageHandler msg_handler(&m_context, id_mapping_table);
-        msg_handler(input_data.value());
       } else {
         m_reply.set_status(grpc_merger::MsgStatus_Status_INVALID);
         m_reply.set_message(err_info);
