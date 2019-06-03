@@ -9,15 +9,7 @@
 
 #include <exception>
 
-#define SET_MIDDLEWARE(SERVICE_CLASS)                                                                                                      \
-  auto middleware = make_unique<AdminMiddleware<SERVICE_CLASS>>();                                                                         \
-  auto [result, error_message] = middleware->next();                                                                                       \
-  if (!result) {                                                                                                                           \
-    res.set_info(error_message);                                                                                                           \
-    res.set_success(false);                                                                                                                \
-    return;                                                                                                                                \
-  }
-
+// IMPORTANT: This should be located right after `proceed()`
 #define BEFORE_PROCEED(SERVICE_CLASS, SERVICE, COMPLETION_QUEUE, ...)                                                                      \
   do {                                                                                                                                     \
     new SERVICE_CLASS(SERVICE, COMPLETION_QUEUE, ##__VA_ARGS__);                                                                           \
@@ -26,6 +18,19 @@
       return;                                                                                                                              \
     }                                                                                                                                      \
   } while (0)
+
+#define SET_MIDDLEWARE(SERVICE_CLASS)                                                                                                      \
+  auto middleware = make_unique<AdminMiddleware<SERVICE_CLASS>>();                                                                         \
+  auto [result, error_message] = middleware->next();                                                                                       \
+  if (!result) {                                                                                                                           \
+    res.set_info(error_message);                                                                                                           \
+    res.set_success(false);                                                                                                                \
+                                                                                                                                           \
+    sendFinishedMsg(res);                                                                                                                  \
+                                                                                                                                           \
+    logger::ERROR(error_message);                                                                                                          \
+    return;                                                                                                                                \
+  }
 
 namespace gruut {
 namespace admin_plugin {
@@ -183,21 +188,9 @@ void SetupKeyService::proceed() {
     sendFinishedMsg(res);
   }).detach();
 }
-
-bool LoginService::checkPassword(const string &enc_sk_pem, const string &pass) {
-  try {
-    Botan::DataSource_Memory sk_datasource(enc_sk_pem);
-    Botan::PKCS8::load_key(sk_datasource, pass);
-    return true;
-  } catch (Botan::Exception &exception) {
-    logger::ERROR("[LOGIN] Error on private key password");
-    return false;
-  }
-}
-
 void LoginService::proceed() {
-  SET_MIDDLEWARE(LoginService)
   BEFORE_PROCEED(LoginService, service, completion_queue);
+  SET_MIDDLEWARE(LoginService)
 
   if (app().isUserSignedIn()) {
     string info = "You have been logged in";
@@ -236,6 +229,17 @@ void LoginService::proceed() {
   }
 
   sendFinishedMsg(res);
+}
+
+bool LoginService::checkPassword(const string &enc_sk_pem, const string &pass) {
+  try {
+    Botan::DataSource_Memory sk_datasource(enc_sk_pem);
+    Botan::PKCS8::load_key(sk_datasource, pass);
+    return true;
+  } catch (Botan::Exception &exception) {
+    logger::ERROR("[LOGIN] Error on private key password");
+    return false;
+  }
 }
 
 void StartService::proceed() {
