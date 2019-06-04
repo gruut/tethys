@@ -7,7 +7,9 @@
 #include "../include/command_delegator.hpp"
 #include "../middlewares/include/admin_middleware.hpp"
 
+#include <boost/filesystem.hpp>
 #include <exception>
+#include <fstream>
 
 // IMPORTANT: This should be located right after `proceed()`
 #define BEFORE_PROCEED(SERVICE_CLASS, SERVICE, COMPLETION_QUEUE, ...)                                                                      \
@@ -34,6 +36,8 @@
 
 namespace gruut {
 namespace admin_plugin {
+
+namespace fs = boost::filesystem;
 
 using namespace appbase;
 using namespace std;
@@ -270,10 +274,18 @@ bool LoginService::checkPassword(const string &enc_sk_pem, const string &pass) {
 void StartService::proceed() {
   BEFORE_PROCEED(StartService, service, completion_queue);
 
+  string info;
+
   if (app().isAppRunning()) {
-    string info = "It's already running as a ";
+    info = "It's already running as a ";
     string mode_type = app().runningMode() == RunningMode::DEFAULT ? "default mode" : "monitor mode";
     info += mode_type;
+  }
+
+  if (!app().isWorldLoaded())
+    info = "World has not be loaded yet.";
+
+  if (!info.empty()) {
     logger::ERROR("[START] {}", info);
 
     res.set_success(false);
@@ -286,7 +298,7 @@ void StartService::proceed() {
 
   auto mode = req.mode();
   if (mode == ReqStart_Mode_DEFAULT && !app().isUserSignedIn()) {
-    string info = "Could not join a network. Please setup & login OR start as a monitoring mode";
+    info = "Could not join a network. Please setup & login OR start as a monitoring mode";
     logger::ERROR("[START] {}", info);
 
     res.set_success(false);
@@ -316,6 +328,42 @@ void StatusService::proceed() {
 
   res.set_alive(app().isAppRunning());
 
+  sendFinishedMsg(res);
+}
+
+void LoadWorldService::proceed() {
+  BEFORE_PROCEED(LoadWorldService, service, completion_queue);
+  SET_MIDDLEWARE(LoadWorldService)
+
+  // TODO : in case of path is `url`, handle it different way
+  fs::path world_info_path = req.path();
+  if (world_info_path.is_relative())
+    world_info_path = fs::current_path() / world_info_path;
+
+  if (!fs::exists(world_info_path)) {
+    string info = "Can not find a world file. path :" + world_info_path.string();
+    logger::ERROR("[LOAD WORLD] {}", info);
+    res.set_info(info);
+    res.set_success(false);
+  } else {
+    ifstream i(world_info_path.make_preferred().string());
+    nlohmann::json world_state;
+
+    i >> world_state;
+
+    auto &chain = dynamic_cast<ChainPlugin *>(app().getPlugin("ChainPlugin"))->chain();
+    try {
+      chain.initWorld(world_state);
+      res.set_success(true);
+      logger::INFO("[LOAD WORLD] Success to load world");
+      app().completeLoadWorld();
+
+    } catch (...) {
+      string info = "Can not load world. please check world json file.";
+      res.set_info(info);
+      res.set_success(false);
+    }
+  }
   sendFinishedMsg(res);
 }
 

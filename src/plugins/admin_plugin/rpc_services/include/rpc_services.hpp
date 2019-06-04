@@ -123,5 +123,15 @@ public:
   void proceed() override;
 };
 
+class LoadWorldService final : public AdminService<ReqLoadWorld, ResLoadWorld> {
+  using super = AdminService<ReqLoadWorld, ResLoadWorld>;
+
+public:
+  LoadWorldService(GruutAdminService::AsyncService *admin_service, ServerCompletionQueue *cq) : super(admin_service, cq) {
+    service->RequestLoadWorld(&context, &req, &responder, completion_queue, completion_queue, this);
+  }
+  void proceed() override;
+};
+
 } // namespace admin_plugin
 } // namespace gruut

@@ -324,6 +324,7 @@ const ::google::protobuf::uint32 TableStruct::offsets[] GOOGLE_PROTOBUF_ATTRIBUT
   ~0u,  // no _extensions_
   ~0u,  // no _oneof_case_
   ~0u,  // no _weak_field_map_
+  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::grpc_admin::ReqLoadWorld, path_),
   ~0u,  // no _has_bits_
   GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::grpc_admin::ResLoadWorld, _internal_metadata_),
   ~0u,  // no _extensions_
@@ -336,6 +337,7 @@ const ::google::protobuf::uint32 TableStruct::offsets[] GOOGLE_PROTOBUF_ATTRIBUT
   ~0u,  // no _extensions_
   ~0u,  // no _oneof_case_
   ~0u,  // no _weak_field_map_
+  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::grpc_admin::ReqLoadChain, path_),
   ~0u,  // no _has_bits_
   GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::grpc_admin::ResLoadChain, _internal_metadata_),
   ~0u,  // no _extensions_
@@ -354,9 +356,9 @@ static const ::google::protobuf::internal::MigrationSchema schemas[] GOOGLE_PROT
   { 39, -1, sizeof(::grpc_admin::ReqStatus)},
   { 44, -1, sizeof(::grpc_admin::ResStatus)},
   { 50, -1, sizeof(::grpc_admin::ReqLoadWorld)},
-  { 55, -1, sizeof(::grpc_admin::ResLoadWorld)},
-  { 62, -1, sizeof(::grpc_admin::ReqLoadChain)},
-  { 67, -1, sizeof(::grpc_admin::ResLoadChain)},
+  { 56, -1, sizeof(::grpc_admin::ResLoadWorld)},
+  { 63, -1, sizeof(::grpc_admin::ReqLoadChain)},
+  { 69, -1, sizeof(::grpc_admin::ResLoadChain)},
 };
 
 static ::google::protobuf::Message const * const file_default_instances[] = {
@@ -403,24 +405,24 @@ void AddDescriptorsImpl() {
       "\'\n\004mode\030\001 \001(\0162\031.grpc_admin.ReqStart.Mode"
       "\" \n\004Mode\022\013\n\007DEFAULT\020\000\022\013\n\007MONITOR\020\001\")\n\010Re"
       "sStart\022\017\n\007success\030\001 \001(\010\022\014\n\004info\030\002 \001(\t\"\013\n"
-      "\tReqStatus\"\032\n\tResStatus\022\r\n\005alive\030\001 \001(\010\"\016"
-      "\n\014ReqLoadWorld\"-\n\014ResLoadWorld\022\017\n\007succes"
-      "s\030\001 \001(\010\022\014\n\004info\030\002 \001(\t\"\016\n\014ReqLoadChain\"-\n"
-      "\014ResLoadChain\022\017\n\007success\030\001 \001(\010\022\014\n\004info\030\002"
-      " \001(\t2\206\003\n\021GruutAdminService\022>\n\010SetupKey\022\027"
-      ".grpc_admin.ReqSetupKey\032\027.grpc_admin.Res"
-      "SetupKey\"\000\0225\n\005Login\022\024.grpc_admin.ReqLogi"
-      "n\032\024.grpc_admin.ResLogin\"\000\0225\n\005Start\022\024.grp"
-      "c_admin.ReqStart\032\024.grpc_admin.ResStart\"\000"
-      "\022A\n\tLoadWorld\022\030.grpc_admin.ReqLoadWorld\032"
-      "\030.grpc_admin.ResLoadWorld\"\000\022A\n\tLoadChain"
-      "\022\030.grpc_admin.ReqLoadChain\032\030.grpc_admin."
-      "ResLoadChain\"\000\022=\n\013CheckStatus\022\025.grpc_adm"
-      "in.ReqStatus\032\025.grpc_admin.ResStatus\"\000b\006p"
-      "roto3"
+      "\tReqStatus\"\032\n\tResStatus\022\r\n\005alive\030\001 \001(\010\"\034"
+      "\n\014ReqLoadWorld\022\014\n\004path\030\001 \001(\t\"-\n\014ResLoadW"
+      "orld\022\017\n\007success\030\001 \001(\010\022\014\n\004info\030\002 \001(\t\"\034\n\014R"
+      "eqLoadChain\022\014\n\004path\030\001 \001(\t\"-\n\014ResLoadChai"
+      "n\022\017\n\007success\030\001 \001(\010\022\014\n\004info\030\002 \001(\t2\206\003\n\021Gru"
+      "utAdminService\022>\n\010SetupKey\022\027.grpc_admin."
+      "ReqSetupKey\032\027.grpc_admin.ResSetupKey\"\000\0225"
+      "\n\005Login\022\024.grpc_admin.ReqLogin\032\024.grpc_adm"
+      "in.ResLogin\"\000\0225\n\005Start\022\024.grpc_admin.ReqS"
+      "tart\032\024.grpc_admin.ResStart\"\000\022A\n\tLoadWorl"
+      "d\022\030.grpc_admin.ReqLoadWorld\032\030.grpc_admin"
+      ".ResLoadWorld\"\000\022A\n\tLoadChain\022\030.grpc_admi"
+      "n.ReqLoadChain\032\030.grpc_admin.ResLoadChain"
+      "\"\000\022=\n\013CheckStatus\022\025.grpc_admin.ReqStatus"
+      "\032\025.grpc_admin.ResStatus\"\000b\006proto3"
   };
   ::google::protobuf::DescriptorPool::InternalAddGeneratedFile(
-      descriptor, 885);
+      descriptor, 913);
   ::google::protobuf::MessageFactory::InternalRegisterGeneratedFile(
     "admin_service.proto", &protobuf_RegisterTypes);
 }
@@ -2410,6 +2412,7 @@ void ResStatus::InternalSwap(ResStatus* other) {
 void ReqLoadWorld::InitAsDefaultInstance() {
 }
 #if !defined(_MSC_VER) || _MSC_VER >= 1900
+const int ReqLoadWorld::kPathFieldNumber;
 #endif  // !defined(_MSC_VER) || _MSC_VER >= 1900
 
 ReqLoadWorld::ReqLoadWorld()
@@ -2423,10 +2426,15 @@ ReqLoadWorld::ReqLoadWorld(const ReqLoadWorld& from)
   : ::google::protobuf::Message(),
       _internal_metadata_(NULL) {
   _internal_metadata_.MergeFrom(from._internal_metadata_);
+  path_.UnsafeSetDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+  if (from.path().size() > 0) {
+    path_.AssignWithDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), from.path_);
+  }
   // @@protoc_insertion_point(copy_constructor:grpc_admin.ReqLoadWorld)
 }
 
 void ReqLoadWorld::SharedCtor() {
+  path_.UnsafeSetDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }
 
 ReqLoadWorld::~ReqLoadWorld() {
@@ -2435,6 +2443,7 @@ ReqLoadWorld::~ReqLoadWorld() {
 }
 
 void ReqLoadWorld::SharedDtor() {
+  path_.DestroyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }
 
 void ReqLoadWorld::SetCachedSize(int size) const {
@@ -2457,6 +2466,7 @@ void ReqLoadWorld::Clear() {
   // Prevent compiler warnings about cached_has_bits being unused
   (void) cached_has_bits;
 
+  path_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
   _internal_metadata_.Clear();
 }
 
@@ -2469,12 +2479,33 @@ bool ReqLoadWorld::MergePartialFromCodedStream(
     ::std::pair<::google::protobuf::uint32, bool> p = input->ReadTagWithCutoffNoLastTag(127u);
     tag = p.first;
     if (!p.second) goto handle_unusual;
-  handle_unusual:
-    if (tag == 0) {
-      goto success;
+    switch (::google::protobuf::internal::WireFormatLite::GetTagFieldNumber(tag)) {
+      // string path = 1;
+      case 1: {
+        if (static_cast< ::google::protobuf::uint8>(tag) ==
+            static_cast< ::google::protobuf::uint8>(10u /* 10 & 0xFF */)) {
+          DO_(::google::protobuf::internal::WireFormatLite::ReadString(
+                input, this->mutable_path()));
+          DO_(::google::protobuf::internal::WireFormatLite::VerifyUtf8String(
+            this->path().data(), static_cast<int>(this->path().length()),
+            ::google::protobuf::internal::WireFormatLite::PARSE,
+            "grpc_admin.ReqLoadWorld.path"));
+        } else {
+          goto handle_unusual;
+        }
+        break;
+      }
+
+      default: {
+      handle_unusual:
+        if (tag == 0) {
+          goto success;
+        }
+        DO_(::google::protobuf::internal::WireFormat::SkipField(
+              input, tag, _internal_metadata_.mutable_unknown_fields()));
+        break;
+      }
     }
-    DO_(::google::protobuf::internal::WireFormat::SkipField(
-          input, tag, _internal_metadata_.mutable_unknown_fields()));
   }
 success:
   // @@protoc_insertion_point(parse_success:grpc_admin.ReqLoadWorld)
@@ -2491,6 +2522,16 @@ void ReqLoadWorld::SerializeWithCachedSizes(
   ::google::protobuf::uint32 cached_has_bits = 0;
   (void) cached_has_bits;
 
+  // string path = 1;
+  if (this->path().size() > 0) {
+    ::google::protobuf::internal::WireFormatLite::VerifyUtf8String(
+      this->path().data(), static_cast<int>(this->path().length()),
+      ::google::protobuf::internal::WireFormatLite::SERIALIZE,
+      "grpc_admin.ReqLoadWorld.path");
+    ::google::protobuf::internal::WireFormatLite::WriteStringMaybeAliased(
+      1, this->path(), output);
+  }
+
   if ((_internal_metadata_.have_unknown_fields() &&  ::google::protobuf::internal::GetProto3PreserveUnknownsDefault())) {
     ::google::protobuf::internal::WireFormat::SerializeUnknownFields(
         (::google::protobuf::internal::GetProto3PreserveUnknownsDefault()   ? _internal_metadata_.unknown_fields()   : _internal_metadata_.default_instance()), output);
@@ -2504,6 +2545,17 @@ void ReqLoadWorld::SerializeWithCachedSizes(
   // @@protoc_insertion_point(serialize_to_array_start:grpc_admin.ReqLoadWorld)
   ::google::protobuf::uint32 cached_has_bits = 0;
   (void) cached_has_bits;
+
+  // string path = 1;
+  if (this->path().size() > 0) {
+    ::google::protobuf::internal::WireFormatLite::VerifyUtf8String(
+      this->path().data(), static_cast<int>(this->path().length()),
+      ::google::protobuf::internal::WireFormatLite::SERIALIZE,
+      "grpc_admin.ReqLoadWorld.path");
+    target =
+      ::google::protobuf::internal::WireFormatLite::WriteStringToArray(
+        1, this->path(), target);
+  }
 
   if ((_internal_metadata_.have_unknown_fields() &&  ::google::protobuf::internal::GetProto3PreserveUnknownsDefault())) {
     target = ::google::protobuf::internal::WireFormat::SerializeUnknownFieldsToArray(
@@ -2522,6 +2574,13 @@ size_t ReqLoadWorld::ByteSizeLong() const {
       ::google::protobuf::internal::WireFormat::ComputeUnknownFieldsSize(
         (::google::protobuf::internal::GetProto3PreserveUnknownsDefault()   ? _internal_metadata_.unknown_fields()   : _internal_metadata_.default_instance()));
   }
+  // string path = 1;
+  if (this->path().size() > 0) {
+    total_size += 1 +
+      ::google::protobuf::internal::WireFormatLite::StringSize(
+        this->path());
+  }
+
   int cached_size = ::google::protobuf::internal::ToCachedSize(total_size);
   SetCachedSize(cached_size);
   return total_size;
@@ -2549,6 +2608,10 @@ void ReqLoadWorld::MergeFrom(const ReqLoadWorld& from) {
   ::google::protobuf::uint32 cached_has_bits = 0;
   (void) cached_has_bits;
 
+  if (from.path().size() > 0) {
+
+    path_.AssignWithDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), from.path_);
+  }
 }
 
 void ReqLoadWorld::CopyFrom(const ::google::protobuf::Message& from) {
@@ -2575,6 +2638,8 @@ void ReqLoadWorld::Swap(ReqLoadWorld* other) {
 }
 void ReqLoadWorld::InternalSwap(ReqLoadWorld* other) {
   using std::swap;
+  path_.Swap(&other->path_, &::google::protobuf::internal::GetEmptyStringAlreadyInited(),
+    GetArenaNoVirtual());
   _internal_metadata_.Swap(&other->_internal_metadata_);
 }
 
@@ -2868,6 +2933,7 @@ void ResLoadWorld::InternalSwap(ResLoadWorld* other) {
 void ReqLoadChain::InitAsDefaultInstance() {
 }
 #if !defined(_MSC_VER) || _MSC_VER >= 1900
+const int ReqLoadChain::kPathFieldNumber;
 #endif  // !defined(_MSC_VER) || _MSC_VER >= 1900
 
 ReqLoadChain::ReqLoadChain()
@@ -2881,10 +2947,15 @@ ReqLoadChain::ReqLoadChain(const ReqLoadChain& from)
   : ::google::protobuf::Message(),
       _internal_metadata_(NULL) {
   _internal_metadata_.MergeFrom(from._internal_metadata_);
+  path_.UnsafeSetDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+  if (from.path().size() > 0) {
+    path_.AssignWithDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), from.path_);
+  }
   // @@protoc_insertion_point(copy_constructor:grpc_admin.ReqLoadChain)
 }
 
 void ReqLoadChain::SharedCtor() {
+  path_.UnsafeSetDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }
 
 ReqLoadChain::~ReqLoadChain() {
@@ -2893,6 +2964,7 @@ ReqLoadChain::~ReqLoadChain() {
 }
 
 void ReqLoadChain::SharedDtor() {
+  path_.DestroyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }
 
 void ReqLoadChain::SetCachedSize(int size) const {
@@ -2915,6 +2987,7 @@ void ReqLoadChain::Clear() {
   // Prevent compiler warnings about cached_has_bits being unused
   (void) cached_has_bits;
 
+  path_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
   _internal_metadata_.Clear();
 }
 
@@ -2927,12 +3000,33 @@ bool ReqLoadChain::MergePartialFromCodedStream(
     ::std::pair<::google::protobuf::uint32, bool> p = input->ReadTagWithCutoffNoLastTag(127u);
     tag = p.first;
     if (!p.second) goto handle_unusual;
-  handle_unusual:
-    if (tag == 0) {
-      goto success;
+    switch (::google::protobuf::internal::WireFormatLite::GetTagFieldNumber(tag)) {
+      // string path = 1;
+      case 1: {
+        if (static_cast< ::google::protobuf::uint8>(tag) ==
+            static_cast< ::google::protobuf::uint8>(10u /* 10 & 0xFF */)) {
+          DO_(::google::protobuf::internal::WireFormatLite::ReadString(
+                input, this->mutable_path()));
+          DO_(::google::protobuf::internal::WireFormatLite::VerifyUtf8String(
+            this->path().data(), static_cast<int>(this->path().length()),
+            ::google::protobuf::internal::WireFormatLite::PARSE,
+            "grpc_admin.ReqLoadChain.path"));
+        } else {
+          goto handle_unusual;
+        }
+        break;
+      }
+
+      default: {
+      handle_unusual:
+        if (tag == 0) {
+          goto success;
+        }
+        DO_(::google::protobuf::internal::WireFormat::SkipField(
+              input, tag, _internal_metadata_.mutable_unknown_fields()));
+        break;
+      }
     }
-    DO_(::google::protobuf::internal::WireFormat::SkipField(
-          input, tag, _internal_metadata_.mutable_unknown_fields()));
   }
 success:
   // @@protoc_insertion_point(parse_success:grpc_admin.ReqLoadChain)
@@ -2949,6 +3043,16 @@ void ReqLoadChain::SerializeWithCachedSizes(
   ::google::protobuf::uint32 cached_has_bits = 0;
   (void) cached_has_bits;
 
+  // string path = 1;
+  if (this->path().size() > 0) {
+    ::google::protobuf::internal::WireFormatLite::VerifyUtf8String(
+      this->path().data(), static_cast<int>(this->path().length()),
+      ::google::protobuf::internal::WireFormatLite::SERIALIZE,
+      "grpc_admin.ReqLoadChain.path");
+    ::google::protobuf::internal::WireFormatLite::WriteStringMaybeAliased(
+      1, this->path(), output);
+  }
+
   if ((_internal_metadata_.have_unknown_fields() &&  ::google::protobuf::internal::GetProto3PreserveUnknownsDefault())) {
     ::google::protobuf::internal::WireFormat::SerializeUnknownFields(
         (::google::protobuf::internal::GetProto3PreserveUnknownsDefault()   ? _internal_metadata_.unknown_fields()   : _internal_metadata_.default_instance()), output);
@@ -2962,6 +3066,17 @@ void ReqLoadChain::SerializeWithCachedSizes(
   // @@protoc_insertion_point(serialize_to_array_start:grpc_admin.ReqLoadChain)
   ::google::protobuf::uint32 cached_has_bits = 0;
   (void) cached_has_bits;
+
+  // string path = 1;
+  if (this->path().size() > 0) {
+    ::google::protobuf::internal::WireFormatLite::VerifyUtf8String(
+      this->path().data(), static_cast<int>(this->path().length()),
+      ::google::protobuf::internal::WireFormatLite::SERIALIZE,
+      "grpc_admin.ReqLoadChain.path");
+    target =
+      ::google::protobuf::internal::WireFormatLite::WriteStringToArray(
+        1, this->path(), target);
+  }
 
   if ((_internal_metadata_.have_unknown_fields() &&  ::google::protobuf::internal::GetProto3PreserveUnknownsDefault())) {
     target = ::google::protobuf::internal::WireFormat::SerializeUnknownFieldsToArray(
@@ -2980,6 +3095,13 @@ size_t ReqLoadChain::ByteSizeLong() const {
       ::google::protobuf::internal::WireFormat::ComputeUnknownFieldsSize(
         (::google::protobuf::internal::GetProto3PreserveUnknownsDefault()   ? _internal_metadata_.unknown_fields()   : _internal_metadata_.default_instance()));
   }
+  // string path = 1;
+  if (this->path().size() > 0) {
+    total_size += 1 +
+      ::google::protobuf::internal::WireFormatLite::StringSize(
+        this->path());
+  }
+
   int cached_size = ::google::protobuf::internal::ToCachedSize(total_size);
   SetCachedSize(cached_size);
   return total_size;
@@ -3007,6 +3129,10 @@ void ReqLoadChain::MergeFrom(const ReqLoadChain& from) {
   ::google::protobuf::uint32 cached_has_bits = 0;
   (void) cached_has_bits;
 
+  if (from.path().size() > 0) {
+
+    path_.AssignWithDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), from.path_);
+  }
 }
 
 void ReqLoadChain::CopyFrom(const ::google::protobuf::Message& from) {
@@ -3033,6 +3159,8 @@ void ReqLoadChain::Swap(ReqLoadChain* other) {
 }
 void ReqLoadChain::InternalSwap(ReqLoadChain* other) {
   using std::swap;
+  path_.Swap(&other->path_, &::google::protobuf::internal::GetEmptyStringAlreadyInited(),
+    GetArenaNoVirtual());
   _internal_metadata_.Swap(&other->_internal_metadata_);
 }
 

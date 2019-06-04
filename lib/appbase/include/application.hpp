@@ -25,12 +25,13 @@ class ProgramOptions;
 enum class RunningMode : int { NONE = -1, DEFAULT = 0, MONITOR = 1 };
 
 struct ApplicationStatus {
-    bool user_setup;
-    bool user_login;
+  bool load_world;
+  bool user_setup;
+  bool user_login;
 
-    RunningMode run_mode;
+  RunningMode run_mode;
 
-    ApplicationStatus() : user_setup(false), user_login(false), run_mode(RunningMode::NONE) {}
+  ApplicationStatus() : load_world(false), user_setup(false), user_login(false), run_mode(RunningMode::NONE) {}
 };
 
 class Application {
@@ -88,13 +89,19 @@ public:
     }
   }
 
+  void setWorldId(string_view _id);
   void setId(string_view _id);
-  void setRunFlag();
+
+  const string &getWorldId() const;
   const string &getId() const;
+
+  void setRunFlag();
 
   bool isAppRunning();
   bool isUserSignedIn();
+  bool isWorldLoaded();
 
+  void completeLoadWorld();
   void completeUserSetup();
   void completeUserSignedIn();
 
@@ -104,7 +111,7 @@ public:
     return *io_context_ptr;
   }
 
-  AbstractPlugin* getPlugin(const string &name) const;
+  AbstractPlugin *getPlugin(const string &name) const;
 
   static Application &instance();
 
@@ -140,6 +147,7 @@ private:
 
   unique_ptr<ProgramOptions> program_options;
 
+  string world_id;
   string id;
 
   bool running = false;
@@ -154,7 +162,6 @@ private:
   void registerErrorSignalHandlers();
 
   ApplicationStatus application_status;
-
 };
 
 Application &app();
