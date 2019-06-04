@@ -24,4 +24,15 @@ public:
     return make_pair(true, "");
   }
 };
+
+template <>
+class AdminMiddleware<LoadWorldService> {
+public:
+  pair<bool, error_message> next() {
+    if (app().isAppRunning())
+      return make_pair(false, "If you want to join the world, stop node and then load different world");
+
+    return make_pair(true, "");
+  }
+};
 } // namespace gruut::admin_plugin
