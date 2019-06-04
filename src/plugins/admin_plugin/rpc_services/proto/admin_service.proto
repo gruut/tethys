@@ -51,7 +51,7 @@ message ResStatus {
 }
 
 message ReqLoadWorld {
-
+    string path = 1;
 }
 
 message ResLoadWorld {
@@ -60,7 +60,7 @@ message ResLoadWorld {
 }
 
 message ReqLoadChain {
-
+    string path = 1;
 }
 
 message ResLoadChain {

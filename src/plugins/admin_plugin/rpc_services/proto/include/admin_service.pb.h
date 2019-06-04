@@ -1116,10 +1116,25 @@ class ReqLoadWorld : public ::google::protobuf::Message /* @@protoc_insertion_po
 
   // accessors -------------------------------------------------------
 
+  // string path = 1;
+  void clear_path();
+  static const int kPathFieldNumber = 1;
+  const ::std::string& path() const;
+  void set_path(const ::std::string& value);
+  #if LANG_CXX11
+  void set_path(::std::string&& value);
+  #endif
+  void set_path(const char* value);
+  void set_path(const char* value, size_t size);
+  ::std::string* mutable_path();
+  ::std::string* release_path();
+  void set_allocated_path(::std::string* path);
+
   // @@protoc_insertion_point(class_scope:grpc_admin.ReqLoadWorld)
  private:
 
   ::google::protobuf::internal::InternalMetadataWithArena _internal_metadata_;
+  ::google::protobuf::internal::ArenaStringPtr path_;
   mutable ::google::protobuf::internal::CachedSize _cached_size_;
   friend struct ::protobuf_admin_5fservice_2eproto::TableStruct;
 };
@@ -1330,10 +1345,25 @@ class ReqLoadChain : public ::google::protobuf::Message /* @@protoc_insertion_po
 
   // accessors -------------------------------------------------------
 
+  // string path = 1;
+  void clear_path();
+  static const int kPathFieldNumber = 1;
+  const ::std::string& path() const;
+  void set_path(const ::std::string& value);
+  #if LANG_CXX11
+  void set_path(::std::string&& value);
+  #endif
+  void set_path(const char* value);
+  void set_path(const char* value, size_t size);
+  ::std::string* mutable_path();
+  ::std::string* release_path();
+  void set_allocated_path(::std::string* path);
+
   // @@protoc_insertion_point(class_scope:grpc_admin.ReqLoadChain)
  private:
 
   ::google::protobuf::internal::InternalMetadataWithArena _internal_metadata_;
+  ::google::protobuf::internal::ArenaStringPtr path_;
   mutable ::google::protobuf::internal::CachedSize _cached_size_;
   friend struct ::protobuf_admin_5fservice_2eproto::TableStruct;
 };
@@ -1833,6 +1863,59 @@ inline void ResStatus::set_alive(bool value) {
 
 // ReqLoadWorld
 
+// string path = 1;
+inline void ReqLoadWorld::clear_path() {
+  path_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+}
+inline const ::std::string& ReqLoadWorld::path() const {
+  // @@protoc_insertion_point(field_get:grpc_admin.ReqLoadWorld.path)
+  return path_.GetNoArena();
+}
+inline void ReqLoadWorld::set_path(const ::std::string& value) {
+  
+  path_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), value);
+  // @@protoc_insertion_point(field_set:grpc_admin.ReqLoadWorld.path)
+}
+#if LANG_CXX11
+inline void ReqLoadWorld::set_path(::std::string&& value) {
+  
+  path_.SetNoArena(
+    &::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::move(value));
+  // @@protoc_insertion_point(field_set_rvalue:grpc_admin.ReqLoadWorld.path)
+}
+#endif
+inline void ReqLoadWorld::set_path(const char* value) {
+  GOOGLE_DCHECK(value != NULL);
+  
+  path_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::string(value));
+  // @@protoc_insertion_point(field_set_char:grpc_admin.ReqLoadWorld.path)
+}
+inline void ReqLoadWorld::set_path(const char* value, size_t size) {
+  
+  path_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(),
+      ::std::string(reinterpret_cast<const char*>(value), size));
+  // @@protoc_insertion_point(field_set_pointer:grpc_admin.ReqLoadWorld.path)
+}
+inline ::std::string* ReqLoadWorld::mutable_path() {
+  
+  // @@protoc_insertion_point(field_mutable:grpc_admin.ReqLoadWorld.path)
+  return path_.MutableNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+}
+inline ::std::string* ReqLoadWorld::release_path() {
+  // @@protoc_insertion_point(field_release:grpc_admin.ReqLoadWorld.path)
+  
+  return path_.ReleaseNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+}
+inline void ReqLoadWorld::set_allocated_path(::std::string* path) {
+  if (path != NULL) {
+    
+  } else {
+    
+  }
+  path_.SetAllocatedNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), path);
+  // @@protoc_insertion_point(field_set_allocated:grpc_admin.ReqLoadWorld.path)
+}
+
 // -------------------------------------------------------------------
 
 // ResLoadWorld
@@ -1907,6 +1990,59 @@ inline void ResLoadWorld::set_allocated_info(::std::string* info) {
 // -------------------------------------------------------------------
 
 // ReqLoadChain
+
+// string path = 1;
+inline void ReqLoadChain::clear_path() {
+  path_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+}
+inline const ::std::string& ReqLoadChain::path() const {
+  // @@protoc_insertion_point(field_get:grpc_admin.ReqLoadChain.path)
+  return path_.GetNoArena();
+}
+inline void ReqLoadChain::set_path(const ::std::string& value) {
+  
+  path_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), value);
+  // @@protoc_insertion_point(field_set:grpc_admin.ReqLoadChain.path)
+}
+#if LANG_CXX11
+inline void ReqLoadChain::set_path(::std::string&& value) {
+  
+  path_.SetNoArena(
+    &::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::move(value));
+  // @@protoc_insertion_point(field_set_rvalue:grpc_admin.ReqLoadChain.path)
+}
+#endif
+inline void ReqLoadChain::set_path(const char* value) {
+  GOOGLE_DCHECK(value != NULL);
+  
+  path_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::string(value));
+  // @@protoc_insertion_point(field_set_char:grpc_admin.ReqLoadChain.path)
+}
+inline void ReqLoadChain::set_path(const char* value, size_t size) {
+  
+  path_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(),
+      ::std::string(reinterpret_cast<const char*>(value), size));
+  // @@protoc_insertion_point(field_set_pointer:grpc_admin.ReqLoadChain.path)
+}
+inline ::std::string* ReqLoadChain::mutable_path() {
+  
+  // @@protoc_insertion_point(field_mutable:grpc_admin.ReqLoadChain.path)
+  return path_.MutableNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+}
+inline ::std::string* ReqLoadChain::release_path() {
+  // @@protoc_insertion_point(field_release:grpc_admin.ReqLoadChain.path)
+  
+  return path_.ReleaseNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+}
+inline void ReqLoadChain::set_allocated_path(::std::string* path) {
+  if (path != NULL) {
+    
+  } else {
+    
+  }
+  path_.SetAllocatedNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), path);
+  // @@protoc_insertion_point(field_set_allocated:grpc_admin.ReqLoadChain.path)
+}
 
 // -------------------------------------------------------------------
 

@@ -2,8 +2,8 @@
 // If you make any local change, they will be lost.
 // source: admin_service.proto
 
-#include "include/admin_service.grpc.pb.h"
 #include "include/admin_service.pb.h"
+#include "include/admin_service.grpc.pb.h"
 
 #include <grpcpp/impl/codegen/async_stream.h>
 #include <grpcpp/impl/codegen/async_unary_call.h>
