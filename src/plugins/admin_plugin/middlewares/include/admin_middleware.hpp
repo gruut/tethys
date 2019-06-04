@@ -25,7 +25,7 @@ public:
   }
 };
 
-template<>
+template <>
 class AdminMiddleware<SetupService> {
 public:
   pair<bool, error_message> next() {
@@ -46,4 +46,16 @@ public:
     return make_pair(true, "");
   }
 };
+
+template <>
+class AdminMiddleware<LoadChainService> {
+public:
+  pair<bool, error_message> next() {
+    if (app().isAppRunning())
+      return make_pair(false, "If you want to join a different local chain, stop node and then load different local chain");
+
+    return make_pair(true, "");
+  }
+};
 } // namespace tethys::admin_plugin
+

@@ -284,6 +284,8 @@ void StartService::proceed() {
 
   if (!app().isWorldLoaded())
     info = "World has not be loaded yet.";
+  else if(!app().isChainLoaded())
+    info = "Local chain has not be loaded yet.";
 
   if (!info.empty()) {
     logger::ERROR("[START] {}", info);
@@ -331,41 +333,98 @@ void StatusService::proceed() {
   sendFinishedMsg(res);
 }
 
+template <typename TRes>
+optional<nlohmann::json> loadJson(const string &path, TRes &return_res) {
+  fs::path info_path = path;
+  if (info_path.is_relative())
+    info_path = fs::current_path() / info_path;
+
+  if (!fs::exists(info_path)) {
+    string info = "Cannot find a file. path : " + info_path.string();
+    return_res.set_info(info);
+    return_res.set_success(false);
+
+    return {};
+  }
+  try {
+    ifstream i(info_path.make_preferred().string());
+    nlohmann::json state;
+    i >> state;
+
+    return state;
+
+  } catch (nlohmann::json::parse_error &e) {
+    string info = "Json parsing err : ";
+    info += e.what();
+    return_res.set_info(info);
+    return_res.set_success(false);
+  }
+
+  return {};
+}
+
 void LoadWorldService::proceed() {
   BEFORE_PROCEED(LoadWorldService, service, completion_queue);
   SET_MIDDLEWARE(LoadWorldService)
 
-  // TODO : in case of path is `url`, handle it different way
-  fs::path world_info_path = req.path();
-  if (world_info_path.is_relative())
-    world_info_path = fs::current_path() / world_info_path;
+  // TODO : in case of path is `url`, handle it differently
 
-  if (!fs::exists(world_info_path)) {
-    string info = "Can not find a world file. path :" + world_info_path.string();
-    logger::ERROR("[LOAD WORLD] {}", info);
+  auto world_state = loadJson(req.path(), res);
+  if (!world_state.has_value()) {
+    logger::ERROR("[LOAD WORLD] Fail to load world");
+
+    sendFinishedMsg(res);
+
+    return;
+  }
+
+  auto &chain = dynamic_cast<ChainPlugin *>(app().getPlugin("ChainPlugin"))->chain();
+  try {
+    chain.initWorld(world_state.value());
+    res.set_success(true);
+    logger::INFO("[LOAD WORLD] Success to load world");
+    app().completeLoadWorld();
+  } catch (...) {
+    string info = "Can not load world. please check world json file.";
     res.set_info(info);
     res.set_success(false);
-  } else {
-    ifstream i(world_info_path.make_preferred().string());
-    nlohmann::json world_state;
 
-    i >> world_state;
-
-    auto &chain = dynamic_cast<ChainPlugin *>(app().getPlugin("ChainPlugin"))->chain();
-    try {
-      chain.initWorld(world_state);
-      res.set_success(true);
-      logger::INFO("[LOAD WORLD] Success to load world");
-      app().completeLoadWorld();
-
-    } catch (...) {
-      string info = "Can not load world. please check world json file.";
-      res.set_info(info);
-      res.set_success(false);
-
-      logger::ERROR("[LOAD WORLD] Failed to load the world");
-    }
+    logger::ERROR("[LOAD WORLD] Fail to load world");
   }
+
+  sendFinishedMsg(res);
+}
+
+void LoadChainService::proceed() {
+  BEFORE_PROCEED(LoadChainService, service, completion_queue);
+  SET_MIDDLEWARE(LoadChainService)
+
+  // TODO : in case of path is `url`, handle it differently
+
+  auto chain_state = loadJson(req.path(), res);
+  if (!chain_state.has_value()) {
+    logger::ERROR("[LOAD CHAIN] Fail to load local chain");
+
+    sendFinishedMsg(res);
+
+    return;
+  }
+
+  auto &chain = dynamic_cast<ChainPlugin *>(app().getPlugin("ChainPlugin"))->chain();
+  try {
+    auto tracker_address = chain.initChain(chain_state.value());
+    //TODO : send tracker info to Net Plugin.
+    res.set_success(true);
+    logger::INFO("[LOAD CHAIN] Success to load chain");
+    app().completeLoadChain();
+  } catch (...) {
+    string info = "Can not load local chain. please check local chain json file.";
+    res.set_info(info);
+    res.set_success(false);
+
+    logger::ERROR("[LOAD CHAIN] Fail to load local chain");
+  }
+
   sendFinishedMsg(res);
 }
 
