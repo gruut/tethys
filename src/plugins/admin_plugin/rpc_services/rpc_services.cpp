@@ -362,6 +362,8 @@ void LoadWorldService::proceed() {
       string info = "Can not load world. please check world json file.";
       res.set_info(info);
       res.set_success(false);
+
+      logger::ERROR("[LOAD WORLD] Failed to load the world");
     }
   }
   sendFinishedMsg(res);

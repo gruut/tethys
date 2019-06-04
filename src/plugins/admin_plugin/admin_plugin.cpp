@@ -42,6 +42,7 @@ public:
     new LoginService(&admin_service, completion_queue.get());
     new StartService(&admin_service, completion_queue.get());
     new StatusService(&admin_service, completion_queue.get());
+    new LoadWorldService(&admin_service, completion_queue.get());
   }
 
   void start() {}
