@@ -42,7 +42,7 @@ char *intToBin(uint32_t num) {
 
 namespace gruut {
 
-StateNode::StateNode(user_ledger_type &user_ledger) {
+StateNode::StateNode(const user_ledger_type &user_ledger) {
   m_left = nullptr;
   m_right = nullptr;
 
@@ -65,7 +65,7 @@ void StateNode::makeValue(user_ledger_type &user_ledger) {
   makeValue(key);
 }
 
-StateNode::StateNode(contract_ledger_type &contract_ledger) {
+StateNode::StateNode(const contract_ledger_type &contract_ledger) {
   m_left = nullptr;
   m_right = nullptr;
   m_suffix = 0;
@@ -246,6 +246,18 @@ void StateTree::postOrder(shared_ptr<StateNode> node, bool isPrint) {
   }
   visit(node, isPrint);
 }
+
+template <typename T>
+void StateTree::setupTree(const T &ledger_list) {
+  for (auto &each_ledger : ledger_list) {
+    StateNode new_node(each_ledger);
+    this->addNode(TypeConverter::bytesToString(each_ledger.pid), new_node);
+  }
+}
+
+void StateTree::updateUserState(const map<string, user_ledger_type> &user_ledger_list) {}
+
+void StateTree::updateContractState(const map<string, contract_ledger_type> &contract_ledger_list) {}
 
 // TODO: DB 와 연동하여 완성한 이후에는 new_path 파라미터 제거
 void StateTree::addNode(uint32_t new_path, shared_ptr<StateNode> new_node) {

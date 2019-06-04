@@ -46,6 +46,8 @@ public:
   bool checkUnique();
   bool findUserFromRDB(string pid, user_ledger_type &user_ledger);
   bool findContractFromRDB(string pid, contract_ledger_type &contract_ledger);
+  vector<user_ledger_type> getAllUserLedger();
+  vector<contract_ledger_type> getAllContractLedger();
   int getVarType(string &key);
 };
 } // namespace gruut

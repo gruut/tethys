@@ -641,14 +641,15 @@ void Chain::setPool(const base64_type &last_block_id, block_height_type last_hei
 }
 
 void Chain::setupStateTree() {
-  // TODO: RDB에 있는 모든 엔트리를 불러와서 state tree를 작성
-  m_us_tree.addNode(entry);
-  m_cs_tree.addNode(entry);
+  m_us_tree.setupTree(rdb_controller->getAllUserLedger());
+  m_cs_tree.setupTree(rdb_controller->getAllContractLedger());
 }
 
 void Chain::updateStateTree(UnresolvedBlock &unresolved_block) {
   m_us_tree.updateUserState(unresolved_block.user_ledger_list);
   m_cs_tree.updateContractState(unresolved_block.contract_ledger_list);
+  // TODO: user cert나 contract 관련 사항들은 state tree에 반영할 필요는 없고, 그냥 ledger로써만 가지고 있으면 되나?
+  //  아니면 user_cert는 보류한다고 해도 contract는 직접적으로 연관되어 있으므로 반영을 해야 하는가?
 }
 
 user_ledger_type Chain::findUserLedgerFromHead(string key) {

@@ -508,6 +508,82 @@ bool RdbController::findContractFromRDB(string pid, gruut::contract_ledger_type 
   return true;
 }
 
+vector<user_ledger_type> RdbController::getAllUserLedger() {
+  vector<user_ledger_type> user_ledger_list;
+  try {
+    string var_name, var_value, var_owner, tag, pid;
+    short var_type;
+    long long up_time;
+    int up_block;
+
+    // clang-format off
+    soci::row result;
+    soci::session db_session(RdbController::pool());
+    soci::statement st = (db_session.prepare << "SELECT var_name, var_value, var_type, var_owner, up_time, up_block, tag, pid from user_scope", soci::into(result));
+    st.execute(true);
+    // clang-format on
+    do {
+      result >> var_name >> var_value >> var_type >> var_owner >> up_time >> up_block >> tag >> pid;
+
+      user_ledger_type user_ledger;
+      user_ledger.var_name = var_name;
+      user_ledger.var_val = var_value;
+      user_ledger.var_type = (int)var_type;
+      user_ledger.uid = var_owner;
+      user_ledger.up_time = (uint64_t)up_time;
+      user_ledger.up_block = (block_height_type)up_block;
+      user_ledger.tag = tag;
+      user_ledger.pid = TypeConverter::stringToBytes(pid);
+      user_ledger_list.emplace_back(user_ledger);
+    } while (st.fetch());
+  } catch (soci::mysql_soci_error const &e) {
+    logger::ERROR("MySQL error: {}", e.what());
+    return user_ledger_list;
+  } catch (...) {
+    logger::ERROR("Unexpected error at `getAllUserLedger`");
+    return user_ledger_list;
+  }
+  return user_ledger_list;
+}
+
+vector<contract_ledger_type> RdbController::getAllContractLedger() {
+  vector<contract_ledger_type> contract_ledger_list;
+  try {
+    string var_name, var_value, contract_id, var_info, pid;
+    short var_type;
+    long long up_time;
+    int up_block;
+
+    // clang-format off
+    soci::row result;
+    soci::session db_session(RdbController::pool());
+    soci::statement st = (db_session.prepare << "SELECT var_name, var_value, var_type, contract_id, up_time, up_block, var_info, pid from contract_scope", soci::into(result));
+    st.execute(true);
+    // clang-format on
+    do {
+      result >> var_name >> var_value >> var_type >> contract_id >> up_time >> up_block >> var_info >> pid;
+
+      contract_ledger_type contract_ledger;
+      contract_ledger.var_name = var_name;
+      contract_ledger.var_val = var_value;
+      contract_ledger.var_type = (int)var_type;
+      contract_ledger.cid = contract_id;
+      contract_ledger.up_time = (uint64_t)up_time;
+      contract_ledger.up_block = (block_height_type)up_block;
+      contract_ledger.var_info = var_info;
+      contract_ledger.pid = TypeConverter::stringToBytes(pid);
+      contract_ledger_list.emplace_back(contract_ledger);
+    } while (st.fetch());
+  } catch (soci::mysql_soci_error const &e) {
+    logger::ERROR("MySQL error: {}", e.what());
+    return contract_ledger_list;
+  } catch (...) {
+    logger::ERROR("Unexpected error at `getAllContractLedger`");
+    return contract_ledger_list;
+  }
+  return contract_ledger_list;
+} // namespace gruut
+
 int RdbController::getVarType(string &key) {
   try {
     // TODO: pid가 생략됐을 때의 검색도 구현해야 함
@@ -518,8 +594,7 @@ int RdbController::getVarType(string &key) {
     soci::session db_session(RdbController::pool());
     soci::statement st(db_session);
 
-    if(key.size() > 45)
-    {
+    if (key.size() > 45) {
       st = (db_session.prepare << "SELECT var_type from contract_scope WHERE pid = :pid", soci::use(pid, "pid"), soci::into(result));
     } else {
       st = (db_session.prepare << "SELECT var_type from user_scope WHERE pid = :pid", soci::use(pid, "pid"), soci::into(result));

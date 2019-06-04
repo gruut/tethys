@@ -279,6 +279,7 @@ public:
       // 테스트 시에는 임의로 block_input_test.json의 블록들을 저장하는것부터 시작.
       chain->setPool("11111111111111111111111111111111", 0, 0,
                      "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=", "11111111111111111111111111111111");
+      chain->setupStateTree();
 
       nlohmann::json input_block_json;
 

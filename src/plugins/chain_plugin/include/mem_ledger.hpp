@@ -7,6 +7,7 @@
 #include "../config/storage_type.hpp"
 
 #include <iomanip>
+#include <map>
 #include <memory>
 #include <mutex>
 #include <sstream>
@@ -52,8 +53,8 @@ private:
 
 public:
   StateNode() = default;
-  StateNode(user_ledger_type &user_ledger);
-  StateNode(contract_ledger_type &contract_ledger);
+  StateNode(const user_ledger_type &user_ledger);
+  StateNode(const contract_ledger_type &contract_ledger);
   void reHash();
   void reHash(string l_value, string r_value);
 
@@ -105,6 +106,10 @@ public:
     m_size = 0;
   }
 
+  template <typename T>
+  void setupTree(const T &ledger_list);
+  void updateUserState(const map<string, user_ledger_type> &user_ledger_list);
+  void updateContractState(const map<string, contract_ledger_type> &contract_ledger_list);
   void addNode(uint32_t new_path, shared_ptr<StateNode> node);
   void modifyNode(uint32_t path, LedgerRecord &data);
   void removeNode(uint32_t path);
