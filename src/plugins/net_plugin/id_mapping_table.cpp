@@ -1,6 +1,6 @@
 #include "include/id_mapping_table.hpp"
 
-namespace gruut::net_plugin {
+namespace tethys::net_plugin {
 void IdMappingTable::mapId(const b58_user_id_type &b58_user_id, const net_id_type &net_id) {
   {
     std::lock_guard<std::mutex> guard(id_map_mutex);
@@ -34,4 +34,4 @@ std::optional<hashed_net_id_type> IdMappingTable::get(const b58_user_id_type &id
   return {};
 }
 
-} // namespace gruut
+} // namespace tethys

@@ -11,7 +11,7 @@
 
 #include "include/routing.hpp"
 
-namespace gruut {
+namespace tethys {
 namespace net_plugin {
 
 using boost::multiprecision::cpp_int_backend;
@@ -205,4 +205,4 @@ std::vector<Node> RoutingTable::findNeighbors(hashed_net_id_type const &hashed_i
   }
 }
 } // namespace net_plugin
-} // namespace gruut
+} // namespace tethys

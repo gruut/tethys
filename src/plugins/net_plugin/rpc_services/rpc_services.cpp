@@ -1,13 +1,13 @@
 #include "include/rpc_services.hpp"
-#include "../../../../lib/gruut-utils/src/hmac.hpp"
-#include "../../../../lib/gruut-utils/src/time_util.hpp"
-#include "../../../../lib/gruut-utils/src/type_converter.hpp"
+#include "../../../../lib/tethys-utils/src/hmac.hpp"
+#include "../../../../lib/tethys-utils/src/time_util.hpp"
+#include "../../../../lib/tethys-utils/src/type_converter.hpp"
 #include "../../channel_interface/include/channel_interface.hpp"
 #include "../include/id_mapping_table.hpp"
 #include "../include/message_builder.hpp"
 #include "../include/message_packer.hpp"
 #include "../include/message_parser.hpp"
-#include "../include/signer_pool_manager.hpp"
+#include "../include/user_pool_manager.hpp"
 #include "application.hpp"
 
 #include <boost/algorithm/string.hpp>
@@ -21,7 +21,7 @@
 #include <thread>
 #include <type_traits>
 
-namespace gruut {
+namespace tethys {
 namespace net_plugin {
 
 using namespace appbase;
@@ -65,6 +65,9 @@ private:
   }
   bool validateEntry(MsgEntryType entry_type, const string &val) {
     switch (entry_type) {
+    case MsgEntryType::USER_MODE: {
+      return (val == "user" || val == "signer" || val == "all");
+    }
     case MsgEntryType::DECIMAL:
     case MsgEntryType::TIMESTAMP: {
       if (!all_of(val.begin(), val.end(), ::isdigit)) {
@@ -145,7 +148,7 @@ private:
       return MsgEntryType::BASE58_256;
     else if (key == "block" || key == "proof" || key == "output")
       return MsgEntryType::BASE64;
-    else if (key == "txroot" || key == "usroot" || key == "csroot" || key == "sgroot" || key == "hash" || key == "link")
+    else if (key == "txroot" || key == "usroot" || key == "csroot" || key == "sgroot" || key == "hash" || key == "link" || key == "un")
       return MsgEntryType::BASE64_256;
     else if (key == "sig")
       return MsgEntryType::BASE64_SIG;
@@ -159,6 +162,8 @@ private:
       return MsgEntryType::HEX_256;
     else if (key == "val" || key == "confirm")
       return MsgEntryType::BOOL;
+    else if (key == "mode")
+      return MsgEntryType::USER_MODE;
     else
       return MsgEntryType::NONE;
   }
@@ -196,7 +201,7 @@ public:
   MessageHandler() = default;
   explicit MessageHandler(ServerContext *server_context, shared_ptr<IdMappingTable> table)
       : context(server_context), id_mapping_table(table) {}
-  explicit MessageHandler(shared_ptr<SignerPoolManager> pool_manager) : signer_pool_manager(pool_manager) {}
+  explicit MessageHandler(shared_ptr<UserPoolManager> pool_manager) : user_pool_manager(pool_manager) {}
   optional<OutNetMsg> operator()(InNetMsg &msg) {
     return handle_message(msg);
   }
@@ -211,15 +216,15 @@ private:
 
     switch (msg.type) {
     case MessageType::MSG_TX:
-      app().getChannel<incoming::channels::transaction::channel_type>().publish(msg.body);
+      app().getChannel<incoming::channels::transaction>().publish(msg.body);
       return {};
     case MessageType::MSG_BLOCK:
-      app().getChannel<incoming::channels::block::channel_type>().publish(msg.body);
+      app().getChannel<incoming::channels::block>().publish(msg.body);
       return {};
     case MessageType::MSG_JOIN:
     case MessageType::MSG_RESPONSE_1:
     case MessageType::MSG_SUCCESS:
-      return signer_pool_manager->handleMsg(msg);
+      return user_pool_manager->handleMsg(msg);
     case MessageType::MSG_SSIG:
       // TODO : ssig message must be sent to `block producer`
     case MessageType::MSG_REQ_TX_CHECK:
@@ -241,36 +246,34 @@ private:
 
   ServerContext *context;
   shared_ptr<IdMappingTable> id_mapping_table;
-  shared_ptr<SignerPoolManager> signer_pool_manager;
+  shared_ptr<UserPoolManager> user_pool_manager;
 };
 
-void OpenChannelWithSigner::proceed() {
+void PushService::proceed() {
   switch (m_receive_status) {
   case RpcCallStatus::CREATE: {
     m_receive_status = RpcCallStatus::READ;
     m_context.AsyncNotifyWhenDone(this);
-    m_service->RequestOpenChannel(&m_context, &m_stream, m_completion_queue, m_completion_queue, this);
+    m_service->RequestPushService(&m_context, &m_request, &m_stream, m_completion_queue, m_completion_queue, this);
   } break;
 
   case RpcCallStatus::READ: {
-    new OpenChannelWithSigner(m_service, m_completion_queue, m_signer_conn_table, m_signer_pool_manager);
+    new PushService(m_service, m_completion_queue, m_user_conn_table, m_user_pool_manager);
     m_receive_status = RpcCallStatus::PROCESS;
-    m_stream.Read(&m_request, this);
+    m_user_id_b58 = m_request.sender();
   } break;
 
   case RpcCallStatus::PROCESS: {
-    m_signer_id_b58 = m_request.sender();
     m_receive_status = RpcCallStatus::WAIT;
-    m_signer_conn_table->setRpcInfo(m_signer_id_b58, &m_stream, this);
+    m_user_conn_table->setRpcInfo(m_user_id_b58, &m_stream, this);
 
   } break;
 
   case RpcCallStatus::WAIT: {
     if (m_context.IsCancelled()) {
-      m_signer_conn_table->eraseRpcInfo(m_signer_id_b58);
-      m_signer_pool_manager->removeSigner(m_signer_id_b58);
-      m_signer_pool_manager->removeTempSigner(m_signer_id_b58);
-      // TODO: signer leave event should be notified to `Block producer`
+      m_user_conn_table->eraseRpcInfo(m_user_id_b58);
+      m_user_pool_manager->removeUser(m_user_id_b58);
+      m_user_pool_manager->removeTempUser(m_user_id_b58);
 
       delete this;
     }
@@ -281,14 +284,11 @@ void OpenChannelWithSigner::proceed() {
   }
 }
 
-Status verifyHMAC(string_view packed_msg, vector<uint8_t> &hmac_key) {
+bool verifyHMAC(string_view packed_msg, vector<uint8_t> &hmac_key) {
   auto hmac_str = packed_msg.substr(packed_msg.length() - 32);
   vector<uint8_t> hmac(hmac_str.begin(), hmac_str.end());
   auto raw_msg = string(packed_msg.substr(0, packed_msg.length() - 32));
-  if (!Hmac::verifyHMAC(raw_msg, hmac, hmac_key)) {
-    return Status(StatusCode::UNAUTHENTICATED, "Bad request (Wrong HMAC)");
-  }
-  return Status::OK;
+  return Hmac::verifyHMAC(raw_msg, hmac, hmac_key);
 }
 
 void KeyExService::proceed() {
@@ -299,63 +299,70 @@ void KeyExService::proceed() {
   } break;
 
   case RpcCallStatus::PROCESS: {
-    new KeyExService(m_service, m_completion_queue, m_signer_pool_manager);
-    Status rpc_status;
+    new KeyExService(m_service, m_completion_queue, m_user_pool_manager);
+    string err_info;
+    if (app().runningMode() == RunningMode::MONITOR) {
+      err_info = "This node is running as a monitoring mode. Please contact other node.";
+      m_reply.set_err_info(err_info);
+      m_reply.set_status(Reply_Status_INTERNAL);
+      m_receive_status = RpcCallStatus::FINISH;
+      m_responder.Finish(m_reply, Status::OK, this);
+      break;
+    }
     try {
       string packed_msg = m_request.message();
       MessageParser msg_parser;
-      auto input_data = msg_parser.parseMessage(packed_msg, rpc_status);
+      auto input_data = msg_parser.parseMessage(packed_msg, err_info);
       if (input_data.has_value()) {
         auto msg_type = input_data.value().type;
-        auto signer_id_b58 = input_data.value().sender_id;
+        auto user_id_b58 = input_data.value().sender_id;
+
         MessageValidator msg_validator;
         if (!msg_validator.validate(input_data.value().body))
-          rpc_status = Status(StatusCode::INVALID_ARGUMENT, "Bad request (message validate fail");
+          err_info = "Bad request (message validate fail)";
 
-        if (rpc_status.ok() && (msg_type == MessageType::MSG_SSIG || msg_type == MessageType::MSG_SUCCESS)) {
-          auto hmac_key = msg_type == MessageType::MSG_SSIG ? m_signer_pool_manager->getHmacKey(signer_id_b58)
-                                                            : m_signer_pool_manager->getTempHmacKey(signer_id_b58);
-          if (hmac_key.has_value())
-            rpc_status = verifyHMAC(packed_msg, hmac_key.value());
-          else
-            rpc_status = Status(StatusCode::UNAUTHENTICATED, "Bad request (cannot find hmac key)");
+        if (err_info.empty() && msg_type == MessageType::MSG_SUCCESS) {
+          auto hmac_key = m_user_pool_manager->getTempHmacKey(user_id_b58).value_or(vector<uint8_t>());
+          if (!verifyHMAC(packed_msg, hmac_key))
+            err_info = "Bad request (fail to verify hmac )";
         }
-        if (rpc_status.ok()) {
-          MessageHandler msg_handler(m_signer_pool_manager);
+        if (err_info.empty()) {
+          MessageHandler msg_handler(m_user_pool_manager);
           auto reply_msg = msg_handler(input_data.value());
 
           if (reply_msg.has_value()) {
             auto reply_msg_type = reply_msg.value().type;
             string reply_packed_msg;
             if (reply_msg_type == MessageType::MSG_ACCEPT) {
-              auto hmac_key = m_signer_pool_manager->getHmacKey(signer_id_b58);
+              auto hmac_key = m_user_pool_manager->getHmacKey(user_id_b58);
               if (hmac_key.has_value())
                 reply_packed_msg = MessagePacker::packMessage<MACAlgorithmType::HMAC>(reply_msg.value(), hmac_key.value());
               else
-                rpc_status = Status(StatusCode::UNAUTHENTICATED, "Bad request (cannot find hmac key");
+                err_info = "Bad request (cannot find hmac key)";
+
             } else {
               reply_packed_msg = MessagePacker::packMessage<MACAlgorithmType::NONE>(reply_msg.value());
             }
             if (!reply_packed_msg.empty()) {
               m_reply.set_message(reply_packed_msg);
-              m_reply.set_status(Reply_Status_SUCCESS); // SUCCESS
-            } else {
-              m_reply.set_status(Reply_Status_INVALID);
+              m_reply.set_status(Reply_Status_SUCCESS);
             }
           }
-        } else {
-          m_reply.set_status(Reply_Status_INVALID);
         }
-      } else {
-        m_reply.set_status(Reply_Status_INVALID); // INVALID
       }
-    } catch (exception &e) { // INTERNAL
+      if (!err_info.empty()) {
+        m_reply.set_err_info(err_info);
+        m_reply.set_status(Reply_Status_INVALID);
+      }
+    } catch (exception &e) {
+      m_reply.set_err_info(e.what());
       m_reply.set_status(Reply_Status_INTERNAL);
-    } catch (ErrorMsgType err_msg_type) { // KEY EXCHANGE ERROR
+    } catch (ErrorMsgType err_msg_type) {
+      m_reply.set_err_info("ECDH Key exchange error");
       m_reply.set_status((Reply_Status)err_msg_type);
     }
     m_receive_status = RpcCallStatus::FINISH;
-    m_responder.Finish(m_reply, rpc_status, this);
+    m_responder.Finish(m_reply, Status::OK, this);
   } break;
 
   default: {
@@ -372,31 +379,28 @@ void UserService::proceed() {
     break;
   }
   case RpcCallStatus::PROCESS: {
-    new UserService(m_service, m_completion_queue, m_signer_pool_manager, m_routing_table);
-    Status rpc_status;
+    new UserService(m_service, m_completion_queue, m_user_pool_manager, m_routing_table);
+    string err_info;
     try {
       string packed_msg = m_request.message();
       MessageParser msg_parser;
-      auto input_data = msg_parser.parseMessage(packed_msg, rpc_status);
+      auto input_data = msg_parser.parseMessage(packed_msg, err_info);
       if (input_data.has_value()) {
-        auto signer_id_b58 = input_data.value().sender_id;
+        auto user_id_b58 = input_data.value().sender_id;
         MessageValidator msg_validator;
-        if (!msg_validator.validate(input_data.value().body)) {
-          rpc_status = Status(StatusCode::INVALID_ARGUMENT, "Bad request (message validation fail)");
-        }
-        if (rpc_status.ok()) {
-          auto hmac_key = m_signer_pool_manager->getHmacKey(signer_id_b58);
-          if (hmac_key.has_value())
-            rpc_status = verifyHMAC(packed_msg, hmac_key.value());
-          else
-            rpc_status = Status(StatusCode::UNAUTHENTICATED, "Bad request (cannot find hmac key)");
-          if (rpc_status.ok()) {
+        if (!msg_validator.validate(input_data.value().body))
+          err_info = "Bad request (message validation fail)";
+
+        if (err_info.empty()) {
+          auto hmac_key = m_user_pool_manager->getHmacKey(user_id_b58).value_or(vector<uint8_t>());
+
+          if (verifyHMAC(packed_msg, hmac_key)) {
             MessageHandler msg_handler;
             msg_handler(input_data.value());
             m_reply.set_status(Reply_Status_SUCCESS);
 
             auto msg_type = input_data.value().type;
-            if (msg_type == MessageType::MSG_TX) {
+            if (msg_type == MessageType::MSG_TX) { // forwarding TX message to other nodes
               grpc_merger::RequestMsg request;
 
               OutNetMsg out_msg;
@@ -417,23 +421,77 @@ void UserService::proceed() {
                 if (!bucket.empty()) {
                   auto nodes = bucket.selectRandomAliveNodes(PARALLELISM_ALPHA);
                   for (auto &n : nodes) {
-                    auto stub = GruutMergerService::NewStub(n.getChannelPtr());
+                    auto stub = TethysMergerService::NewStub(n.getChannelPtr());
                     stub->MergerService(&context, request, &msg_status);
                   }
                 }
               }
             }
-          } else
-            m_reply.set_status(Reply_Status_INVALID);
+          } else {
+            err_info = "Bad request (fail to verify hmac)";
+          }
         }
-      } else {
+      }
+      if (!err_info.empty()) {
+        m_reply.set_err_info(err_info);
         m_reply.set_status(Reply_Status_INVALID);
       }
     } catch (exception &e) {
+      m_reply.set_err_info(e.what());
       m_reply.set_status(Reply_Status_INTERNAL);
     }
     m_receive_status = RpcCallStatus::FINISH;
-    m_responder.Finish(m_reply, rpc_status, this);
+    m_responder.Finish(m_reply, Status::OK, this);
+    break;
+  }
+  default: {
+    delete this;
+    break;
+  }
+  }
+}
+
+void SignerService::proceed() {
+  switch (m_receive_status) {
+  case RpcCallStatus::CREATE: {
+    m_receive_status = RpcCallStatus::PROCESS;
+    m_service->RequestUserService(&m_context, &m_request, &m_responder, m_completion_queue, m_completion_queue, this);
+    break;
+  }
+  case RpcCallStatus::PROCESS: {
+    new SignerService(m_service, m_completion_queue, m_user_pool_manager);
+    string err_info;
+    try {
+      string packed_msg = m_request.message();
+      MessageParser msg_parser;
+      auto input_data = msg_parser.parseMessage(packed_msg, err_info);
+      if (input_data.has_value()) {
+        auto user_id_b58 = input_data.value().sender_id;
+        MessageValidator msg_validator;
+        if (!msg_validator.validate(input_data.value().body))
+          err_info = "Bad request (message validation fail)";
+
+        if (err_info.empty()) {
+          auto hmac_key = m_user_pool_manager->getHmacKey(user_id_b58).value_or(vector<uint8_t>());
+          if (verifyHMAC(packed_msg, hmac_key)) {
+            MessageHandler msg_handler;
+            msg_handler(input_data.value());
+            m_reply.set_status(Reply_Status_SUCCESS);
+          } else {
+            err_info = "Bad request (fail to verify hmac)";
+          }
+        }
+      }
+      if (!err_info.empty()) {
+        m_reply.set_err_info(err_info);
+        m_reply.set_status(Reply_Status_INVALID);
+      }
+    } catch (exception &e) {
+      m_reply.set_err_info(e.what());
+      m_reply.set_status(Reply_Status_INTERNAL);
+    }
+    m_receive_status = RpcCallStatus::FINISH;
+    m_responder.Finish(m_reply, Status::OK, this);
     break;
   }
   default: {
@@ -452,18 +510,17 @@ void MergerService::proceed() {
 
   case RpcCallStatus::PROCESS: {
     new MergerService(m_service, m_completion_queue, m_routing_table, m_broadcast_check_table, id_mapping_table);
-    Status rpc_status;
-
+    string err_info;
     try {
       string packed_msg = m_request.message();
       MessageParser msg_parser;
-      auto input_data = msg_parser.parseMessage(packed_msg, rpc_status);
+      auto input_data = msg_parser.parseMessage(packed_msg, err_info);
       if (input_data.has_value()) {
         MessageValidator msg_validator;
         if (!msg_validator.validate(input_data.value().body))
-          rpc_status = Status(StatusCode::INVALID_ARGUMENT, "Bad request (message validate fail");
+          err_info = "Bad request (message validate fail)";
       }
-      if (rpc_status.ok()) {
+      if (err_info.empty()) {
         // Forwarding message to other nodes
         if (m_request.broadcast()) {
           string msg_id = m_request.message_id();
@@ -472,7 +529,7 @@ void MergerService::proceed() {
             m_reply.set_status(grpc_merger::MsgStatus_Status_DUPLICATED);
             m_reply.set_message("duplicate message");
             m_receive_status = RpcCallStatus::FINISH;
-            m_responder.Finish(m_reply, rpc_status, this);
+            m_responder.Finish(m_reply, Status::OK, this);
             break;
           }
           uint64_t now = TimeUtil::nowBigInt();
@@ -492,27 +549,27 @@ void MergerService::proceed() {
             if (!bucket.empty()) {
               auto nodes = bucket.selectRandomAliveNodes(PARALLELISM_ALPHA);
               for (auto &n : nodes) {
-                auto stub = GruutMergerService::NewStub(n.getChannelPtr());
+                auto stub = TethysMergerService::NewStub(n.getChannelPtr());
                 stub->MergerService(&context, request, &msg_status);
               }
             }
           }
         }
-        m_reply.set_status(grpc_merger::MsgStatus_Status_SUCCESS); // SUCCESS
-        m_reply.set_message("OK");
-
-        MessageHandler msg_handler(&m_context, id_mapping_table);
-        msg_handler(input_data.value());
+        if (app().runningMode() != RunningMode::MONITOR || input_data.value().type != MessageType::MSG_TX) {
+          MessageHandler msg_handler(&m_context, id_mapping_table);
+          msg_handler(input_data.value());
+        }
+        m_reply.set_status(grpc_merger::MsgStatus_Status_SUCCESS);
       } else {
-        m_reply.set_status(grpc_merger::MsgStatus_Status_INVALID); // INVALID
-        m_reply.set_message(rpc_status.error_message());
+        m_reply.set_status(grpc_merger::MsgStatus_Status_INVALID);
+        m_reply.set_message(err_info);
       }
-    } catch (exception &e) { // INTERNAL
+    } catch (exception &e) {
       m_reply.set_status(grpc_merger::MsgStatus_Status_INTERNAL);
-      m_reply.set_message("Merger internal error");
+      m_reply.set_message(e.what());
     }
     m_receive_status = RpcCallStatus::FINISH;
-    m_responder.Finish(m_reply, rpc_status, this);
+    m_responder.Finish(m_reply, Status::OK, this);
 
   } break;
 
@@ -557,4 +614,4 @@ void FindNode::proceed() {
 }
 
 } // namespace net_plugin
-} // namespace gruut
+} // namespace tethys

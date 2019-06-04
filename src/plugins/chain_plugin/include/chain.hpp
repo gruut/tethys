@@ -13,7 +13,7 @@
 #include <utility>
 #include <vector>
 
-namespace gruut {
+namespace tethys {
 
 using namespace std;
 
@@ -32,7 +32,7 @@ public:
   Chain(const Chain &&) = delete;
   Chain &operator=(const Chain &) = delete;
 
-  void startup(nlohmann::json &genesis_state);
+  void initWorld(nlohmann::json &world_state);
 
   // RDB functions
   string getUserCert(const base58_type &user_id);
@@ -55,7 +55,7 @@ public:
   void saveSelfInfo(self_info_type &self_info);
   vector<Block> getBlocksByHeight(int from, int to);
   block_height_type getLatestResolvedHeight();
-  string getValueByKey(DataType what, const string &base_keys);
+  string getValueByKey(string what, const string &base_keys);
 
   // Unresolved block pool functions
   bool queryUserJoin(UnresolvedBlock &UR_block, nlohmann::json &option, result_query_info_type &result_info);
@@ -103,4 +103,4 @@ public:
   bytes getUserStateRoot();
   bytes getContractStateRoot();
 };
-} // namespace gruut
+} // namespace tethys

@@ -11,5 +11,7 @@ class CreateContractScope < ActiveRecord::Migration[5.2]
       t.integer :up_block
       t.column :pid, 'char(44)', index: { unique: true }
     end
+
+    add_index :contract_scope, [:contract_id, :var_name], unique: true
   end
 end

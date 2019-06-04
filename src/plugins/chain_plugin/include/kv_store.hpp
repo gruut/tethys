@@ -14,10 +14,11 @@
 #include <leveldb/write_batch.h>
 
 #include <iostream>
+#include <unordered_map>
 
 using namespace std;
 
-namespace gruut {
+namespace tethys {
 
 class KvController {
 private:
@@ -27,15 +28,8 @@ private:
   leveldb::WriteOptions m_write_options;
   leveldb::ReadOptions m_read_options;
 
-  leveldb::DB *m_kv_world;
-  leveldb::DB *m_kv_chain;
-  leveldb::DB *m_kv_backup;
-  leveldb::DB *m_kv_self_info;
-
-  leveldb::WriteBatch m_batch_world;
-  leveldb::WriteBatch m_batch_chain;
-  leveldb::WriteBatch m_batch_backup;
-  leveldb::WriteBatch m_batch_self_info;
+  unordered_map<string, leveldb::DB *> db_map;
+  unordered_map<string, leveldb::WriteBatch> write_batch_map;
 
 public:
   KvController();
@@ -46,7 +40,7 @@ public:
   bool saveBackup(UnresolvedBlock &block_info);
   bool saveSelfInfo(self_info_type &self_info);
 
-  string getValueByKey(DataType what, const string &base_keys);
+  string getValueByKey(string what, const string &base_keys);
 
   std::string readBackup(const std::string &key);
   void flushBackup();
@@ -57,12 +51,12 @@ public:
 
 private:
   bool errorOnCritical(const leveldb::Status &status);
-  bool addBatch(DataType what, const string &base_key, const string &value);
+  bool addBatch(string what, const string &key, const string &value);
   void commitBatchAll();
   void rollbackBatchAll();
   void clearBatchAll();
 
   string parseCertContent(std::vector<string> &cert);
 };
-} // namespace gruut
+} // namespace tethys
 #endif

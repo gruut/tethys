@@ -6,10 +6,17 @@
 #include <string>
 #include <vector>
 
-namespace gruut {
+using namespace std;
+
+namespace tethys {
 
 enum class QueryType : int { INSERT, UPDATE, DELETE };
-enum class DataType : int { WORLD, CHAIN, BACKUP, SELF_INFO };
+struct DataType {
+  inline static const string WORLD = "world";
+  inline static const string CHAIN = "chain";
+  inline static const string BACKUP = "backup";
+  inline static const string SELF_INFO = "self_info";
+};
 
 using string = std::string;
 using bytes = std::vector<uint8_t>;
@@ -40,8 +47,10 @@ using local_chain_type = struct LocalChainState {
 
   // creator
   base58_type creator_id;
-  std::vector<string> creator_cert;
+  vector<string> creator_cert;
   string creator_sig;
+
+  vector<string> tracker_addresses;
 };
 
 using world_type = struct WorldState {
@@ -61,8 +70,6 @@ using world_type = struct WorldState {
   bool allow_anonymous_user;
   string join_fee;
 
-  LocalChainState local_chain_state;
-
   // authority
   string authority_id;
   std::vector<string> authority_cert;
@@ -71,6 +78,8 @@ using world_type = struct WorldState {
   base58_type creator_id;
   std::vector<string> creator_cert;
   string creator_sig;
+
+  string eden_sig;
 };
 
 using proof_type = struct _proof_type {
@@ -119,6 +128,7 @@ using result_query_info_type = struct _result_query_info_type {
 using self_info_type = struct SelfInfo {
   string enc_sk;
   string cert;
+  string id;
   // TODO : may need more info
 };
 
@@ -206,5 +216,5 @@ using contract_type = struct Contract {
   string sigma;
 };
 
-} // namespace gruut
+} // namespace tethys
 #endif

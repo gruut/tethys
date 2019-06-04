@@ -26,10 +26,10 @@ class ServerContext;
 
 namespace grpc_merger {
 
-class GruutMergerService final {
+class TethysMergerService final {
  public:
   static constexpr char const* service_full_name() {
-    return "grpc_merger.GruutMergerService";
+    return "grpc_merger.TethysMergerService";
   }
   class StubInterface {
    public:

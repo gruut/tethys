@@ -1,6 +1,6 @@
 #pragma once
-#include "../../../../lib/gruut-utils/src/lz4_compressor.hpp"
-#include "../../../../lib/gruut-utils/src/type_converter.hpp"
+#include "../../../../lib/tethys-utils/src/lz4_compressor.hpp"
+#include "../../../../lib/tethys-utils/src/type_converter.hpp"
 #include "../../../../lib/json/include/json.hpp"
 #include "../config/include/message.hpp"
 #include "msg_schema.hpp"
@@ -9,7 +9,7 @@
 #include <string>
 #include <string_view>
 
-namespace gruut {
+namespace tethys {
 namespace net_plugin {
 
 using namespace std;
@@ -17,11 +17,11 @@ using namespace grpc;
 
 class MessageParser {
 public:
-  optional<InNetMsg> parseMessage(string_view packed_msg, Status &return_rpc_status) {
+  optional<InNetMsg> parseMessage(string_view packed_msg, string &return_err_info) {
     const string raw_header(packed_msg.begin(), packed_msg.begin() + HEADER_LENGTH);
     auto msg_header = parseHeader(raw_header);
     if (!validateMsgHdrFormat(msg_header)) {
-      return_rpc_status = Status(StatusCode::INVALID_ARGUMENT, "Bad request (Invalid parameter)");
+      return_err_info = "Bad request (Invalid message header format)";
       return {};
     }
     auto body_size = convertU8ToU32BE(msg_header.total_length) - HEADER_LENGTH;
@@ -29,11 +29,9 @@ public:
     auto json_body = getJson(msg_header.serialization_algo_type, msg_raw_body);
 
     if (!JsonValidator::validateSchema(json_body, msg_header.message_type)) {
-      return_rpc_status = Status(StatusCode::INVALID_ARGUMENT, "Bad request (Json schema error)");
+      return_err_info = "Bad request (Json schema error)";
       return {};
     }
-
-    return_rpc_status = Status::OK;
 
     InNetMsg in_msg;
     in_msg.type = msg_header.message_type;

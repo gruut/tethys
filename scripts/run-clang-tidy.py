@@ -254,7 +254,7 @@ def main():
     new_files = []
     for file_name in files:
         if (
-                not ("gruut/include" in file_name)
+                not ("tethys/include" in file_name)
                 and not ("grpc.pb.cc" in file_name)
                 and not ("grpc.pb.h" in file_name)
                 and not (".proto" in file_name)):

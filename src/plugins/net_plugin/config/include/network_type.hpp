@@ -4,14 +4,8 @@
 #include <string>
 #include <unordered_map>
 
-namespace gruut {
+namespace tethys {
 namespace net_plugin {
-
-enum class NetControlType : int{
-  SETUP,
-  START,
-  STOP
-};
 
 struct IpEndpoint {
   std::string address;
@@ -29,4 +23,4 @@ using hashed_net_id_type = Hash160; // Network hashed virtual id type
 
 using BroadcastMsgTable = std::unordered_map<std::string, uint64_t>;
 } // namespace net_plugin
-} // namespace gruut
+} // namespace tethys

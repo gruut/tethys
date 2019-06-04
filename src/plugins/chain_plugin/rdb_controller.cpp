@@ -1,9 +1,10 @@
 #include "include/rdb_controller.hpp"
+#include "mysql/soci-mysql.h"
 #include <ags.hpp>
 
 using namespace std;
 
-namespace gruut {
+namespace tethys {
 
 RdbController::RdbController(string_view dbms, string_view table_name, string_view db_user_id, string_view db_password)
     : m_dbms(dbms), m_table_name(table_name), m_db_user_id(db_user_id), m_db_password(db_password),
@@ -333,10 +334,10 @@ bool RdbController::applyContractToRDB(const map<base58_type, contract_type> &co
 vector<Block> RdbController::getBlocks(const string &condition) {
   try {
     soci::session db_session(RdbController::pool());
-    soci::rowset<soci::row> rs = (db_session.prepare << "select * from blocks where " + condition);
 
+    soci::rowset<> rs(db_session.prepare << "select * from blocks where " + condition);
     vector<Block> blocks;
-    blocks.reserve(distance(rs.begin(), rs.end()));
+
     for (auto it = rs.begin(); it != rs.end(); ++it) {
       soci::row const &row = *it;
       Block block = rowToBlock(row);
@@ -474,7 +475,7 @@ bool RdbController::findUserFromRDB(string pid, user_ledger_type &user_ledger) {
   return true;
 }
 
-bool RdbController::findContractFromRDB(string pid, gruut::contract_ledger_type &contract_ledger) {
+bool RdbController::findContractFromRDB(string pid, tethys::contract_ledger_type &contract_ledger) {
   try {
     string var_name, var_value, contract_id, var_info, pid;
     short var_type;
@@ -582,7 +583,7 @@ vector<contract_ledger_type> RdbController::getAllContractLedger() {
     return contract_ledger_list;
   }
   return contract_ledger_list;
-} // namespace gruut
+}
 
 int RdbController::getVarType(string &key) {
   try {
@@ -613,4 +614,4 @@ int RdbController::getVarType(string &key) {
   }
 }
 
-} // namespace gruut
+} // namespace tethys

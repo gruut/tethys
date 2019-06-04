@@ -40,7 +40,7 @@ char *intToBin(uint32_t num) {
 //    return os;
 //}
 
-namespace gruut {
+namespace tethys {
 
 StateNode::StateNode(const user_ledger_type &user_ledger) {
   m_left = nullptr;
@@ -578,4 +578,4 @@ stack<shared_ptr<StateNode>> StateTree::getStack() {
   return stk;
 }
 
-} // namespace gruut
+} // namespace tethys

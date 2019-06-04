@@ -8,6 +8,7 @@ file(GLOB HEADERS
         "include/*.hpp"
         "rpc_services/proto/include/*.h"
         "rpc_services/include/*.hpp"
+        "middlewares/include/*.hpp"
         )
 
 file(GLOB SOURCES
@@ -22,6 +23,14 @@ add_library(admin_plugin
 
 set(LIB_PREFIX "/usr/local/lib")
 set(BOTAN_LIB "${LIB_PREFIX}/libbotan-2.a")
+
+find_package(Soci)
+if (SOCI_FOUND)
+    target_link_libraries(admin_plugin ${SOCI_LIBRARY} ${SOCI_mysql_PLUGIN})
+    target_include_directories(admin_plugin PUBLIC ${SOCI_INCLUDE_DIR})
+else (SOCI_FOUND)
+    message(WARNING "SOCI NOT FOUND")
+endif (SOCI_FOUND)
 
 target_link_libraries(admin_plugin
         appbase

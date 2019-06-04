@@ -5,7 +5,6 @@
 #include "../config/storage_config.hpp"
 #include "../config/storage_type.hpp"
 #include "../structure/block.hpp"
-#include "mysql/soci-mysql.h"
 #include "soci.h"
 #include "unresolved_block_pool.hpp"
 
@@ -13,7 +12,7 @@
 
 using namespace std;
 
-namespace gruut {
+namespace tethys {
 
 class RdbController {
 private:
@@ -50,5 +49,5 @@ public:
   vector<contract_ledger_type> getAllContractLedger();
   int getVarType(string &key);
 };
-} // namespace gruut
+} // namespace tethys
 #endif

@@ -1,27 +1,25 @@
 #pragma once
 
 #include "../../../net_plugin/rpc_services/protos/include/user_service.grpc.pb.h"
+#include "../../../chain_plugin/include/chain.hpp"
+#include "../../include/admin_type.hpp"
 #include "../proto/include/admin_service.grpc.pb.h"
 #include <atomic>
 #include <future>
 #include <grpc/support/log.h>
 #include <grpcpp/grpcpp.h>
+#include <optional>
 
 #include "../../../channel_interface/include/channel_interface.hpp"
 
-namespace gruut {
+namespace tethys {
 namespace admin_plugin {
 
 using namespace grpc;
 using namespace grpc_user;
 using namespace grpc_admin;
 
-struct MergerStatus {
-  atomic<bool> user_setup{false};
-  atomic<bool> is_running{false};
-};
-
-class SetupService final : public GruutUserService::Service {
+class SetupService final : public TethysUserService::Service {
 public:
   SetupService() = default;
   Status UserService(ServerContext *context, const Request *request, Reply *response) override;
@@ -37,56 +35,103 @@ enum class AdminRpcCallStatus { CREATE, PROCESS, FINISH };
 
 class CallService {
 public:
-  CallService(GruutAdminService::AsyncService *admin_service, ServerCompletionQueue *cq, shared_ptr<MergerStatus> m_status)
-      : merger_status(m_status) {
-    service = admin_service;
-    completion_queue = cq;
-  }
-
   virtual void proceed() = 0;
-
-protected:
-  shared_ptr<MergerStatus> merger_status;
-  GruutAdminService::AsyncService *service;
-  ServerCompletionQueue *completion_queue;
-  ServerContext context;
-  AdminRpcCallStatus receive_status{AdminRpcCallStatus::CREATE};
 };
 
 template <typename Request, typename Response>
-class AdminService final : public CallService {
+class AdminService : public CallService {
 public:
-  AdminService(GruutAdminService::AsyncService *admin_service, ServerCompletionQueue *cq, shared_ptr<MergerStatus> m_status)
-      : CallService(admin_service, cq, m_status), responder(&context) {
-    proceed();
+  AdminService(TethysAdminService::AsyncService *admin_service, ServerCompletionQueue *cq)
+      : service(admin_service), completion_queue(cq), responder(&context) {
+    call_status = AdminRpcCallStatus::PROCESS;
   }
-  void proceed() override;
 
-private:
+  void proceed() override {}
+
+  void sendFinishedMsg(const Response &res) {
+    responder.Finish(res, Status::OK, this);
+
+    call_status = AdminRpcCallStatus::FINISH;
+  }
+
+protected:
   Request req;
   Response res;
   ServerAsyncResponseWriter<Response> responder;
+
+  TethysAdminService::AsyncService *service;
+  ServerCompletionQueue *completion_queue;
+
+  ServerContext context;
+
+  AdminRpcCallStatus call_status{AdminRpcCallStatus::CREATE};
 };
 
-template <>
-class AdminService<ReqSetup, ResSetup> final : public CallService {
+class SetupKeyService final : public AdminService<ReqSetupKey, ResSetupKey> {
+  using super = AdminService<ReqSetupKey, ResSetupKey>;
+
 public:
-  AdminService(GruutAdminService::AsyncService *admin_service, ServerCompletionQueue *cq, shared_ptr<MergerStatus> m_status,
-               const string &setup_port)
-      : CallService(admin_service, cq, m_status), responder(&context), port(setup_port) {
-    proceed();
+  SetupKeyService(TethysAdminService::AsyncService *admin_service, ServerCompletionQueue *cq, string_view setup_port)
+      : super(admin_service, cq), default_setup_port(setup_port) {
+    service->RequestSetupKey(&context, &req, &responder, completion_queue, completion_queue, this);
   }
   void proceed() override;
 
 private:
-  string port;
-  ReqSetup req;
-  ResSetup res;
-  ServerAsyncResponseWriter<ResSetup> responder;
+  unique_ptr<Server> initSetup(shared_ptr<SetupService> setup_service, const string &port);
   optional<nlohmann::json> runSetup(shared_ptr<SetupService> setup_service);
-  unique_ptr<Server> initSetup(shared_ptr<SetupService> setup_service);
+  optional<string> getIdFromCert(const string &cert_pem);
+
+  pair<bool, string> verifyUserKeyInfo(string_view enc_sk_pem, const string &);
+  bool isAlreadySetup(Chain &chain);
+  optional<nlohmann::json> waitForUserKeyInfo();
+
+  string default_setup_port;
+};
+
+class LoginService final : public AdminService<ReqLogin, ResLogin> {
+  using super = AdminService<ReqLogin, ResLogin>;
+
+public:
+  LoginService(TethysAdminService::AsyncService *admin_service, ServerCompletionQueue *cq) : super(admin_service, cq) {
+    service->RequestLogin(&context, &req, &responder, completion_queue, completion_queue, this);
+  }
+
+  void proceed() override;
+
+private:
   bool checkPassword(const string &enc_sk_pem, const string &pass);
 };
 
+class StartService final : public AdminService<ReqStart, ResStart> {
+  using super = AdminService<ReqStart, ResStart>;
+
+public:
+  StartService(TethysAdminService::AsyncService *admin_service, ServerCompletionQueue *cq) : super(admin_service, cq) {
+    service->RequestStart(&context, &req, &responder, completion_queue, completion_queue, this);
+  }
+  void proceed() override;
+};
+
+class StatusService final : public AdminService<ReqStatus, ResStatus> {
+  using super = AdminService<ReqStatus, ResStatus>;
+
+public:
+  StatusService(TethysAdminService::AsyncService *admin_service, ServerCompletionQueue *cq) : super(admin_service, cq) {
+    service->RequestCheckStatus(&context, &req, &responder, completion_queue, completion_queue, this);
+  }
+  void proceed() override;
+};
+
+class LoadWorldService final : public AdminService<ReqLoadWorld, ResLoadWorld> {
+  using super = AdminService<ReqLoadWorld, ResLoadWorld>;
+
+public:
+  LoadWorldService(TethysAdminService::AsyncService *admin_service, ServerCompletionQueue *cq) : super(admin_service, cq) {
+    service->RequestLoadWorld(&context, &req, &responder, completion_queue, completion_queue, this);
+  }
+  void proceed() override;
+};
+
 } // namespace admin_plugin
-} // namespace gruut
+} // namespace tethys

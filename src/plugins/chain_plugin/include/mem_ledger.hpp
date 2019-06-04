@@ -16,7 +16,7 @@
 #include <string>
 #include <vector>
 
-namespace gruut {
+namespace tethys {
 
 // TODO: define 값 변경
 #define _TREE_DEPTH 16
@@ -128,6 +128,6 @@ public:
   stack<shared_ptr<StateNode>> getStack();
 };
 
-} // namespace gruut
+} // namespace tethys
 
 #endif

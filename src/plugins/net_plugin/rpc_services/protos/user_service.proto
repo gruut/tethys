@@ -1,15 +1,16 @@
 syntax = "proto3";
 
 option java_multiple_files = true;
-option java_package = "com.gruutnetworks.gruutuser";
-option java_outer_classname = "GruutNetwork";
+option java_package = "io.tethys.tethyswallet";
+option java_outer_classname = "Tethys";
 
 package grpc_user;
 
-service GruutUserService {
-    rpc OpenChannel(stream Identity) returns (stream Message) {}
+service TethysUserService {
+    rpc PushService (Identity) returns (stream Message) {}
     rpc KeyExService (Request) returns (Reply) {}
     rpc UserService (Request) returns (Reply) {}
+    rpc SignerService (Request) returns (Reply) {}
 }
 message Identity {
     bytes sender = 1;
@@ -37,4 +38,5 @@ message Reply {
     }
     Status status = 1;
     bytes message = 2;
+    string err_info = 3;
 }

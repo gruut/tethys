@@ -24,7 +24,7 @@ TEST_CASE("json::is_empty") {
 TEST_CASE("json::get") {
   auto sample_json = R"(
         {
-            "content":"gruut",
+            "content":"tethys",
             "check" : true,
             "int_num" : -123456,
             "time_stamp" : 1543323592
@@ -33,7 +33,7 @@ TEST_CASE("json::get") {
 
   SECTION("it should get string from json obj safely") {
     REQUIRE(json::get<std::string>(sample_json, "content").has_value());
-    REQUIRE(json::get<std::string>(sample_json, "content").value() == "gruut");
+    REQUIRE(json::get<std::string>(sample_json, "content").value() == "tethys");
     REQUIRE(!json::get<std::string>(sample_json, "no-content").has_value());
   }
   SECTION("it should get boolean from json obj safely") {

@@ -4,7 +4,7 @@
 
 #include <boost/asio/steady_timer.hpp>
 
-namespace gruut {
+namespace tethys {
 using namespace std;
 using namespace admin_plugin;
 
@@ -12,9 +12,7 @@ const auto ADMIN_REQ_CHECK_PERIOD = std::chrono::milliseconds(100);
 
 class AdminPluginImpl {
 public:
-  std::shared_ptr<MergerStatus> merger_status;
-
-  GruutAdminService::AsyncService admin_service;
+  TethysAdminService::AsyncService admin_service;
 
   unique_ptr<Server> admin_server;
   unique_ptr<ServerCompletionQueue> completion_queue;
@@ -34,21 +32,20 @@ public:
   void initialize() {
     initializeAdminServer();
     registerService();
-
-    merger_status = make_shared<MergerStatus>();
     admin_req_check_timer = make_unique<boost::asio::steady_timer>(app().getIoContext());
+
+    monitorCompletionQueue();
   }
 
   void registerService() {
-    new AdminService<ReqSetup, ResSetup>(&admin_service, completion_queue.get(), merger_status, setup_port);
-    new AdminService<ReqStart, ResStart>(&admin_service, completion_queue.get(), merger_status);
-    new AdminService<ReqStop, ResStop>(&admin_service, completion_queue.get(), merger_status);
-    new AdminService<ReqStatus, ResStatus>(&admin_service, completion_queue.get(), merger_status);
+    new SetupKeyService(&admin_service, completion_queue.get(), setup_port);
+    new LoginService(&admin_service, completion_queue.get());
+    new StartService(&admin_service, completion_queue.get());
+    new StatusService(&admin_service, completion_queue.get());
+    new LoadWorldService(&admin_service, completion_queue.get());
   }
 
-  void start() {
-    monitorCompletionQueue();
-  }
+  void start() {}
 
   void initializeAdminServer() {
     ServerBuilder builder;
@@ -74,7 +71,7 @@ public:
 
         auto queue_state = completion_queue->AsyncNext(&tag, &ok, deadline);
         if (ok && queue_state == CompletionQueue::NextStatus::GOT_EVENT) {
-          static_cast<CallService *>(tag)->proceed();
+          static_cast <CallService *>(tag)->proceed();
         }
       } else {
         logger::ERROR("Error from admin_req_check_timer: {}", ec.message());
@@ -121,4 +118,4 @@ AdminPlugin::~AdminPlugin() {
   impl.reset();
 }
 
-} // namespace gruut
+} // namespace tethys

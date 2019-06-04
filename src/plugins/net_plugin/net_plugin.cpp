@@ -1,5 +1,6 @@
 #include "include/net_plugin.hpp"
 #include "../../../lib/json/include/json.hpp"
+#include "../admin_plugin/include/admin_type.hpp"
 #include "config/include/network_config.hpp"
 #include "include/http_client.hpp"
 #include "include/id_mapping_table.hpp"
@@ -7,11 +8,11 @@
 #include "include/message_packer.hpp"
 #include "rpc_services/include/rpc_services.hpp"
 
-#include "../../../lib/gruut-utils/src/hmac.hpp"
-#include "../../../lib/gruut-utils/src/random_number_generator.hpp"
-#include "../../../lib/gruut-utils/src/sha256.hpp"
-#include "../../../lib/gruut-utils/src/time_util.hpp"
-#include "../../../lib/gruut-utils/src/type_converter.hpp"
+#include "../../../lib/tethys-utils/src/hmac.hpp"
+#include "../../../lib/tethys-utils/src/random_number_generator.hpp"
+#include "../../../lib/tethys-utils/src/sha256.hpp"
+#include "../../../lib/tethys-utils/src/time_util.hpp"
+#include "../../../lib/tethys-utils/src/type_converter.hpp"
 
 #include <atomic>
 #include <boost/asio/steady_timer.hpp>
@@ -20,9 +21,10 @@
 #include <stdexcept>
 #include <unordered_map>
 
-namespace gruut {
+namespace tethys {
 using namespace std;
 using namespace net_plugin;
+using namespace admin_plugin;
 
 const auto CONNECTION_CHECK_PERIOD = std::chrono::seconds(30);
 const auto NET_MESSAGE_CHECK_PERIOD = std::chrono::milliseconds(1);
@@ -34,8 +36,8 @@ constexpr auto FIND_NODE_TIMEOUT = std::chrono::milliseconds(100);
 
 class NetPluginImpl {
 public:
-  GruutMergerService::AsyncService merger_service;
-  GruutUserService::AsyncService user_service;
+  TethysMergerService::AsyncService merger_service;
+  TethysUserService::AsyncService user_service;
   KademliaService::AsyncService kademlia_service;
 
   string p2p_address;
@@ -45,8 +47,8 @@ public:
   unique_ptr<Server> server;
   unique_ptr<ServerCompletionQueue> completion_queue;
 
-  shared_ptr<SignerPoolManager> signer_pool_manager;
-  shared_ptr<SignerConnTable> signer_conn_table;
+  shared_ptr<UserPoolManager> user_pool_manager;
+  shared_ptr<UserConnTable> user_conn_table;
   shared_ptr<RoutingTable> routing_table;
   shared_ptr<IdMappingTable> id_mapping_table;
   shared_ptr<BroadcastMsgTable> broadcast_check_table;
@@ -56,8 +58,6 @@ public:
 
   outgoing::channels::network::channel_type::Handle out_channel_subscription;
   incoming::channels::net_control::channel_type::Handle net_control_channel_subscription;
-
-  atomic<bool> user_setup_flag{false};
 
   ~NetPluginImpl() {
     if (server != nullptr)
@@ -74,9 +74,6 @@ public:
 
     connection_check_timer = make_unique<boost::asio::steady_timer>(app().getIoContext());
     net_message_check_timer = make_unique<boost::asio::steady_timer>(app().getIoContext());
-
-    // TODO: GA로부터 ID 받아올 때까지 임시로 ID 지정
-    app().setId(MY_ID_BASE58);
   }
 
   void initializeRoutingTable() {
@@ -101,14 +98,15 @@ public:
   }
 
   void registerServices() {
-    signer_pool_manager = make_shared<SignerPoolManager>();
-    signer_conn_table = make_shared<SignerConnTable>();
+    user_pool_manager = make_shared<UserPoolManager>();
+    user_conn_table = make_shared<UserConnTable>();
     broadcast_check_table = make_shared<BroadcastMsgTable>();
     id_mapping_table = make_shared<IdMappingTable>();
 
-    new OpenChannelWithSigner(&user_service, completion_queue.get(), signer_conn_table, signer_pool_manager);
-    new KeyExService(&user_service, completion_queue.get(), signer_pool_manager);
-    new UserService(&user_service, completion_queue.get(), signer_pool_manager, routing_table);
+    new PushService(&user_service, completion_queue.get(), user_conn_table, user_pool_manager);
+    new KeyExService(&user_service, completion_queue.get(), user_pool_manager);
+    new SignerService(&user_service, completion_queue.get(), user_pool_manager);
+    new UserService(&user_service, completion_queue.get(), user_pool_manager, routing_table);
     new MergerService(&merger_service, completion_queue.get(), routing_table, broadcast_check_table, id_mapping_table);
     new FindNode(&kademlia_service, completion_queue.get(), routing_table);
   }
@@ -116,6 +114,7 @@ public:
   void start() {
     monitorCompletionQueue();
     startConnectionMonitors();
+    getPeersFromTracker();
   }
 
   void monitorCompletionQueue() {
@@ -324,7 +323,7 @@ public:
           if (!bucket.empty()) {
             auto nodes = bucket.selectRandomAliveNodes(PARALLELISM_ALPHA);
             for (auto &n : nodes) {
-              auto stub = genStub<GruutMergerService::Stub, GruutMergerService>(n.getChannelPtr());
+              auto stub = genStub<TethysMergerService::Stub, TethysMergerService>(n.getChannelPtr());
               auto status = stub->MergerService(&context, request, &msg_status);
             }
           }
@@ -337,7 +336,7 @@ public:
             auto node = routing_table->findNode(hashed_net_id.value());
 
             if (node.has_value()) {
-              auto stub = genStub<GruutMergerService::Stub, GruutMergerService>(node.value().getChannelPtr());
+              auto stub = genStub<TethysMergerService::Stub, TethysMergerService>(node.value().getChannelPtr());
               auto status = stub->MergerService(&context, request, &msg_status);
             } else {
               id_mapping_table->unmapId(b58_receiver_id);
@@ -347,40 +346,34 @@ public:
       }
     } else if (checkUserMsgType(out_msg.type)) {
       for (auto &b58_receiver_id : out_msg.receivers) {
-        SignerRpcInfo signer_rpc_info = signer_conn_table->getRpcInfo(b58_receiver_id);
-        if (signer_rpc_info.send_msg == nullptr)
+        UserRpcInfo user_rpc_info = user_conn_table->getRpcInfo(b58_receiver_id);
+        if (user_rpc_info.sender == nullptr)
           continue;
 
         string packed_msg;
-        auto hmac_key = signer_pool_manager->getHmacKey(b58_receiver_id);
+        auto hmac_key = user_pool_manager->getHmacKey(b58_receiver_id);
         if (!hmac_key.has_value())
           continue;
         packed_msg = MessagePacker::packMessage<MACAlgorithmType::HMAC>(out_msg, hmac_key.value());
 
-        auto tag = static_cast<Identity *>(signer_rpc_info.tag_identity);
+        auto tag = static_cast<Identity *>(user_rpc_info.tag_identity);
         Message msg;
         msg.set_message(packed_msg);
-        signer_rpc_info.send_msg->Write(msg, tag);
+        user_rpc_info.sender->Write(msg, tag);
       }
     }
   }
 
-  void controlNet(NetControlType &control_type) {
+  void controlNet(nlohmann::json &control_info) {
+    int control_type_int = json::get<int>(control_info, "type").value();
+    auto control_type = static_cast<ControlType>(control_type_int);
+
     switch (control_type) {
-    case NetControlType::SETUP: {
-      if(!user_setup_flag) {
-        user_setup_flag = true;
-        getPeersFromTracker();
-        //TODO : do something more
+    case ControlType::LOGIN: {
+      if (!app().isUserSignedIn()) {
+        app().completeUserSignedIn();
+        user_pool_manager->setSelfKeyInfo(control_info);
       }
-      break;
-    }
-    case NetControlType::START: {
-      // TODO : do something
-      break;
-    }
-    case NetControlType::STOP: {
-      // TODO : do something
       break;
     }
     }
@@ -392,6 +385,10 @@ public:
 
   bool checkUserMsgType(MessageType msg_type) {
     return (msg_type == MessageType::MSG_REQ_SSIG || msg_type == MessageType::MSG_RES_TX_CHECK || msg_type == MessageType::MSG_RESULT);
+  }
+
+  shared_ptr<UserPoolManager> getUserPoolManager() const {
+    return user_pool_manager;
   }
 };
 
@@ -417,10 +414,10 @@ void NetPlugin::pluginInitialize(const variables_map &options) {
     impl->tracker_address = tracker_address;
   }
 
-  auto &out_channel = app().getChannel<outgoing::channels::network::channel_type>();
+  auto &out_channel = app().getChannel<outgoing::channels::network>();
   impl->out_channel_subscription = out_channel.subscribe([this](auto data) { impl->sendMessage(data); });
 
-  auto &net_control_channel = app().getChannel<incoming::channels::net_control::channel_type>();
+  auto &net_control_channel = app().getChannel<incoming::channels::net_control>();
   impl->net_control_channel_subscription = net_control_channel.subscribe([this](auto data) { impl->controlNet(data); });
 
   impl->initialize();
@@ -432,7 +429,11 @@ void NetPlugin::pluginStart() {
   impl->start();
 }
 
+shared_ptr<UserPoolManager> NetPlugin::getUserPoolManager() {
+  return impl->getUserPoolManager();
+}
+
 NetPlugin::~NetPlugin() {
   impl.reset();
 }
-} // namespace gruut
+} // namespace tethys

@@ -82,6 +82,12 @@ bool Application::parseProgramOptions(int argc, char **argv) {
 void Application::initializePlugins() {
   auto plugin_names = program_options->options_map.at("plugin").as<vector<string>>();
 
+  auto result = find(plugin_names.begin(), plugin_names.end(), "AdminPlugin");
+  if (result == plugin_names.end()) {
+    logger::ERROR("'AdminPlugin' is necessarily required. Please make sure that 'AdminPlugin' is configured in the configuration file.");
+
+    exit(1);
+  }
   for_each(begin(plugin_names), end(plugin_names), [this](const string &plugin_name) {
     auto it = app_plugins_map.find(plugin_name);
     if (it != app_plugins_map.end()) {
@@ -93,36 +99,48 @@ void Application::initializePlugins() {
 }
 
 void Application::start() {
+  thread proactor([this](){io_context_ptr->run();});
+
+  startInitializedPlugins();
+
+  registerErrorSignalHandlers();
+
+  proactor.join();
+
+  shutdown();
+}
+
+void Application::startInitializedPlugins() {
+  while(!app().isAppRunning());
+
   for (auto &[_, plugin_ptr] : app_plugins_map) {
     if(plugin_ptr->getState() == AbstractPlugin::plugin_state::initialized) {
       plugin_ptr->start();
     }
   }
+}
 
+void Application::registerErrorSignalHandlers() {
   shared_ptr<boost::asio::signal_set> sigint_set(new boost::asio::signal_set(*io_context_ptr, SIGINT));
   sigint_set->async_wait([sigint_set, this](const boost::system::error_code &err, int num) {
-    logger::ERROR("SIGINT Received: {}", err.message());
-    sigint_set->cancel();
-    quit();
+      logger::ERROR("SIGINT Received: {}", err.message());
+      sigint_set->cancel();
+      quit();
   });
 
   shared_ptr<boost::asio::signal_set> sigterm_set(new boost::asio::signal_set(*io_context_ptr, SIGTERM));
   sigterm_set->async_wait([sigterm_set, this](const boost::system::error_code &err, int num) {
-    logger::ERROR("SIGTERM Received: {}", err.message());
-    sigterm_set->cancel();
-    quit();
+      logger::ERROR("SIGTERM Received: {}", err.message());
+      sigterm_set->cancel();
+      quit();
   });
 
   shared_ptr<boost::asio::signal_set> sigpipe_set(new boost::asio::signal_set(*io_context_ptr, SIGPIPE));
   sigpipe_set->async_wait([sigpipe_set, this](const boost::system::error_code &err, int num) {
-    logger::ERROR("SIGPIPE Received: {}", err.message());
-    sigpipe_set->cancel();
-    quit();
+      logger::ERROR("SIGPIPE Received: {}", err.message());
+      sigpipe_set->cancel();
+      quit();
   });
-
-  io_context_ptr->run();
-
-  shutdown();
 }
 
 void Application::quit() {
@@ -148,12 +166,52 @@ AbstractPlugin* Application::getPlugin(const string &name) const {
   }
 }
 
+void Application::setWorldId(string_view _id){
+  world_id = _id;
+}
+
 void Application::setId(string_view _id){
   id = _id;
 }
 
+const string &Application::getWorldId() const {
+  return world_id;
+}
+
 const string &Application::getId() const {
   return id;
+}
+
+void Application::setRunFlag(){
+  running = true;
+}
+
+bool Application::isAppRunning() {
+  return running;
+}
+
+bool Application::isUserSignedIn() {
+  return application_status.user_login;
+}
+
+bool Application::isWorldLoaded() {
+  return application_status.load_world;
+}
+
+void Application::completeLoadWorld() {
+  application_status.load_world = true;
+}
+
+void Application::completeUserSetup() {
+  application_status.user_setup = true;
+}
+
+void Application::completeUserSignedIn() {
+  application_status.user_login = true;
+}
+
+RunningMode &Application::runningMode() {
+  return application_status.run_mode;
 }
 
 Application &app() {

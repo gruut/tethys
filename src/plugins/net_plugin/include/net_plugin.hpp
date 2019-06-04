@@ -7,13 +7,14 @@
 #include "../../channel_interface/include/channel_interface.hpp"
 #include "application.hpp"
 #include "plugin.hpp"
+#include "user_pool_manager.hpp"
 
 #include "../../../../lib/log/include/log.hpp"
 
 using namespace appbase;
 using namespace boost::program_options;
 
-namespace gruut {
+namespace tethys {
 class NetPlugin : public Plugin<NetPlugin> {
 public:
   PLUGIN_REQUIRES()
@@ -32,7 +33,9 @@ public:
 
   void setProgramOptions(options_description &cfg) override;
 
+  shared_ptr<UserPoolManager> getUserPoolManager();
+
 private:
   std::unique_ptr<class NetPluginImpl> impl;
 };
-} // namespace gruut
+} // namespace tethys

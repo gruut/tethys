@@ -1,6 +1,6 @@
 #include "include/chain_plugin.hpp"
 
-namespace gruut {
+namespace tethys {
 
 namespace fs = boost::filesystem;
 
@@ -148,7 +148,13 @@ public:
     chain = make_unique<Chain>(dbms, table_name, db_user_id, db_password);
     transaction_pool = make_unique<TransactionPool>();
 
-    chain->startup(genesis_state);
+    // TODO : If storage(leveldb) have world and local chain info,
+    // set world id and local chain id.
+    // Now, cannot load info(world/chain) from level db because no way to know `key`
+
+    auto self_id = chain->getValueByKey(DataType::SELF_INFO, "self_id");
+    if (!self_id.empty())
+      app().setId(self_id);
   }
 
   void pushTransaction(const nlohmann::json &transaction_json) {
@@ -294,7 +300,8 @@ public:
       std::vector<Block> blocks;
       blocks.resize(10);
 
-      for (int i = 0; i < 8; ++i) {
+      const int input_block_num = 8;
+      for (int i = 0; i < input_block_num; ++i) {
         blocks[i].initialize(input_block_json[i]);
 
         ubp_push_result_type push_result = chain->pushBlock(blocks[i]);
@@ -327,7 +334,7 @@ public:
     if (!verifyBlock(block))
       return false;
 
-    vector<Transaction> transactions = block.getTransactions();
+    vector<Transaction> &transactions = block.getTransactions();
     for (auto &each_transaction : transactions) {
       TransactionMessageVerifier tx_verifier;
       if (!tx_verifier(each_transaction, block.getWorldId(), block.getChainId()))
@@ -481,24 +488,6 @@ ChainPlugin::ChainPlugin() : impl(make_unique<ChainPluginImpl>()) {}
 void ChainPlugin::pluginInitialize(const boost::program_options::variables_map &options) {
   logger::INFO("ChainPlugin Initialize");
 
-  if (options.count("world-create") > 0) {
-    fs::path config_path = options.at("world-create").as<std::string>();
-
-    if (config_path.is_relative())
-      config_path = fs::current_path() / config_path;
-
-    if (!fs::exists(config_path)) {
-      logger::ERROR("Can't find a world create file. (path: {})", config_path.string());
-      throw std::invalid_argument("Cannot find a world_create.json"s);
-    }
-
-    std::ifstream i(config_path.make_preferred().string());
-
-    i >> impl->genesis_state;
-  } else {
-    throw std::invalid_argument("world create file does not exist"s);
-  }
-
   if (options.count("dbms")) {
     impl->dbms = options.at("dbms").as<string>();
   } else {
@@ -529,11 +518,11 @@ void ChainPlugin::pluginInitialize(const boost::program_options::variables_map &
     throw std::invalid_argument("the input of block input path is empty"s);
   }
 
-  auto &transaction_channel = app().getChannel<incoming::channels::transaction::channel_type>();
+  auto &transaction_channel = app().getChannel<incoming::channels::transaction>();
   impl->incoming_transaction_subscription =
       transaction_channel.subscribe([this](const nlohmann::json &transaction) { impl->pushTransaction(transaction); });
 
-  auto &block_channel = app().getChannel<incoming::channels::block::channel_type>();
+  auto &block_channel = app().getChannel<incoming::channels::block>();
   impl->incoming_block_subscription = block_channel.subscribe([this](const nlohmann::json &block) { impl->pushBlock(block); });
 
   auto &SCE_result_channel = app().getChannel<incoming::channels::SCE_result::channel_type>();
@@ -545,8 +534,7 @@ void ChainPlugin::pluginInitialize(const boost::program_options::variables_map &
 
 // clang-format off
 void ChainPlugin::setProgramOptions(options_description &cfg) {
-  cfg.add_options()("world-create", boost::program_options::value<string>()->composing(), "the location of a world_create.json file")
-  ("dbms", boost::program_options::value<string>()->composing(), "DBMS (MYSQL)")("table-name", boost::program_options::value<string>()->composing(), "table name")
+  cfg.add_options()("dbms", boost::program_options::value<string>()->composing(), "DBMS (MYSQL)")("table-name", boost::program_options::value<string>()->composing(), "table name")
   ("database-user", boost::program_options::value<string>()->composing(), "database user id")
   ("database-password", boost::program_options::value<string>()->composing(), "database password")
   ("block-input-path", boost::program_options::value<string>()->composing(), "block input json path");
@@ -555,7 +543,7 @@ void ChainPlugin::setProgramOptions(options_description &cfg) {
 
 void ChainPlugin::asyncFetchTransactionsFromPool() {
   auto transactions = impl->getTransactions();
-  app().getChannel<incoming::channels::transaction_pool::channel_type>().publish(transactions);
+  app().getChannel<incoming::channels::transaction_pool>().publish(transactions);
 }
 
 Chain &ChainPlugin::chain() {
@@ -571,4 +559,4 @@ void ChainPlugin::pluginStart() {
 ChainPlugin::~ChainPlugin() {
   impl.reset();
 }
-} // namespace gruut
+} // namespace tethys

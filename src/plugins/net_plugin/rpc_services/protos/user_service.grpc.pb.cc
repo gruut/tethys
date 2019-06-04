@@ -2,8 +2,8 @@
 // If you make any local change, they will be lost.
 // source: user_service.proto
 
-#include "include/user_service.grpc.pb.h"
 #include "include/user_service.pb.h"
+#include "include/user_service.grpc.pb.h"
 
 #include <grpcpp/impl/codegen/async_stream.h>
 #include <grpcpp/impl/codegen/async_unary_call.h>
@@ -15,95 +15,122 @@
 #include <grpcpp/impl/codegen/sync_stream.h>
 namespace grpc_user {
 
-static const char* GruutUserService_method_names[] = {
-  "/grpc_user.GruutUserService/OpenChannel",
-  "/grpc_user.GruutUserService/KeyExService",
-  "/grpc_user.GruutUserService/UserService",
+static const char* TethysUserService_method_names[] = {
+  "/grpc_user.TethysUserService/PushService",
+  "/grpc_user.TethysUserService/KeyExService",
+  "/grpc_user.TethysUserService/UserService",
+  "/grpc_user.TethysUserService/SignerService",
 };
 
-std::unique_ptr< GruutUserService::Stub> GruutUserService::NewStub(const std::shared_ptr< ::grpc::ChannelInterface>& channel, const ::grpc::StubOptions& options) {
+std::unique_ptr< TethysUserService::Stub> TethysUserService::NewStub(const std::shared_ptr< ::grpc::ChannelInterface>& channel, const ::grpc::StubOptions& options) {
   (void)options;
-  std::unique_ptr< GruutUserService::Stub> stub(new GruutUserService::Stub(channel));
+  std::unique_ptr< TethysUserService::Stub> stub(new TethysUserService::Stub(channel));
   return stub;
 }
 
-GruutUserService::Stub::Stub(const std::shared_ptr< ::grpc::ChannelInterface>& channel)
-  : channel_(channel), rpcmethod_OpenChannel_(GruutUserService_method_names[0], ::grpc::internal::RpcMethod::BIDI_STREAMING, channel)
-  , rpcmethod_KeyExService_(GruutUserService_method_names[1], ::grpc::internal::RpcMethod::NORMAL_RPC, channel)
-  , rpcmethod_UserService_(GruutUserService_method_names[2], ::grpc::internal::RpcMethod::NORMAL_RPC, channel)
+TethysUserService::Stub::Stub(const std::shared_ptr< ::grpc::ChannelInterface>& channel)
+  : channel_(channel), rpcmethod_PushService_(TethysUserService_method_names[0], ::grpc::internal::RpcMethod::SERVER_STREAMING, channel)
+  , rpcmethod_KeyExService_(TethysUserService_method_names[1], ::grpc::internal::RpcMethod::NORMAL_RPC, channel)
+  , rpcmethod_UserService_(TethysUserService_method_names[2], ::grpc::internal::RpcMethod::NORMAL_RPC, channel)
+  , rpcmethod_SignerService_(TethysUserService_method_names[3], ::grpc::internal::RpcMethod::NORMAL_RPC, channel)
   {}
 
-::grpc::ClientReaderWriter< ::grpc_user::Identity, ::grpc_user::Message>* GruutUserService::Stub::OpenChannelRaw(::grpc::ClientContext* context) {
-  return ::grpc::internal::ClientReaderWriterFactory< ::grpc_user::Identity, ::grpc_user::Message>::Create(channel_.get(), rpcmethod_OpenChannel_, context);
+::grpc::ClientReader< ::grpc_user::Message>* TethysUserService::Stub::PushServiceRaw(::grpc::ClientContext* context, const ::grpc_user::Identity& request) {
+  return ::grpc::internal::ClientReaderFactory< ::grpc_user::Message>::Create(channel_.get(), rpcmethod_PushService_, context, request);
 }
 
-::grpc::ClientAsyncReaderWriter< ::grpc_user::Identity, ::grpc_user::Message>* GruutUserService::Stub::AsyncOpenChannelRaw(::grpc::ClientContext* context, ::grpc::CompletionQueue* cq, void* tag) {
-  return ::grpc::internal::ClientAsyncReaderWriterFactory< ::grpc_user::Identity, ::grpc_user::Message>::Create(channel_.get(), cq, rpcmethod_OpenChannel_, context, true, tag);
+::grpc::ClientAsyncReader< ::grpc_user::Message>* TethysUserService::Stub::AsyncPushServiceRaw(::grpc::ClientContext* context, const ::grpc_user::Identity& request, ::grpc::CompletionQueue* cq, void* tag) {
+  return ::grpc::internal::ClientAsyncReaderFactory< ::grpc_user::Message>::Create(channel_.get(), cq, rpcmethod_PushService_, context, request, true, tag);
 }
 
-::grpc::ClientAsyncReaderWriter< ::grpc_user::Identity, ::grpc_user::Message>* GruutUserService::Stub::PrepareAsyncOpenChannelRaw(::grpc::ClientContext* context, ::grpc::CompletionQueue* cq) {
-  return ::grpc::internal::ClientAsyncReaderWriterFactory< ::grpc_user::Identity, ::grpc_user::Message>::Create(channel_.get(), cq, rpcmethod_OpenChannel_, context, false, nullptr);
+::grpc::ClientAsyncReader< ::grpc_user::Message>* TethysUserService::Stub::PrepareAsyncPushServiceRaw(::grpc::ClientContext* context, const ::grpc_user::Identity& request, ::grpc::CompletionQueue* cq) {
+  return ::grpc::internal::ClientAsyncReaderFactory< ::grpc_user::Message>::Create(channel_.get(), cq, rpcmethod_PushService_, context, request, false, nullptr);
 }
 
-::grpc::Status GruutUserService::Stub::KeyExService(::grpc::ClientContext* context, const ::grpc_user::Request& request, ::grpc_user::Reply* response) {
+::grpc::Status TethysUserService::Stub::KeyExService(::grpc::ClientContext* context, const ::grpc_user::Request& request, ::grpc_user::Reply* response) {
   return ::grpc::internal::BlockingUnaryCall(channel_.get(), rpcmethod_KeyExService_, context, request, response);
 }
 
-::grpc::ClientAsyncResponseReader< ::grpc_user::Reply>* GruutUserService::Stub::AsyncKeyExServiceRaw(::grpc::ClientContext* context, const ::grpc_user::Request& request, ::grpc::CompletionQueue* cq) {
+::grpc::ClientAsyncResponseReader< ::grpc_user::Reply>* TethysUserService::Stub::AsyncKeyExServiceRaw(::grpc::ClientContext* context, const ::grpc_user::Request& request, ::grpc::CompletionQueue* cq) {
   return ::grpc::internal::ClientAsyncResponseReaderFactory< ::grpc_user::Reply>::Create(channel_.get(), cq, rpcmethod_KeyExService_, context, request, true);
 }
 
-::grpc::ClientAsyncResponseReader< ::grpc_user::Reply>* GruutUserService::Stub::PrepareAsyncKeyExServiceRaw(::grpc::ClientContext* context, const ::grpc_user::Request& request, ::grpc::CompletionQueue* cq) {
+::grpc::ClientAsyncResponseReader< ::grpc_user::Reply>* TethysUserService::Stub::PrepareAsyncKeyExServiceRaw(::grpc::ClientContext* context, const ::grpc_user::Request& request, ::grpc::CompletionQueue* cq) {
   return ::grpc::internal::ClientAsyncResponseReaderFactory< ::grpc_user::Reply>::Create(channel_.get(), cq, rpcmethod_KeyExService_, context, request, false);
 }
 
-::grpc::Status GruutUserService::Stub::UserService(::grpc::ClientContext* context, const ::grpc_user::Request& request, ::grpc_user::Reply* response) {
+::grpc::Status TethysUserService::Stub::UserService(::grpc::ClientContext* context, const ::grpc_user::Request& request, ::grpc_user::Reply* response) {
   return ::grpc::internal::BlockingUnaryCall(channel_.get(), rpcmethod_UserService_, context, request, response);
 }
 
-::grpc::ClientAsyncResponseReader< ::grpc_user::Reply>* GruutUserService::Stub::AsyncUserServiceRaw(::grpc::ClientContext* context, const ::grpc_user::Request& request, ::grpc::CompletionQueue* cq) {
+::grpc::ClientAsyncResponseReader< ::grpc_user::Reply>* TethysUserService::Stub::AsyncUserServiceRaw(::grpc::ClientContext* context, const ::grpc_user::Request& request, ::grpc::CompletionQueue* cq) {
   return ::grpc::internal::ClientAsyncResponseReaderFactory< ::grpc_user::Reply>::Create(channel_.get(), cq, rpcmethod_UserService_, context, request, true);
 }
 
-::grpc::ClientAsyncResponseReader< ::grpc_user::Reply>* GruutUserService::Stub::PrepareAsyncUserServiceRaw(::grpc::ClientContext* context, const ::grpc_user::Request& request, ::grpc::CompletionQueue* cq) {
+::grpc::ClientAsyncResponseReader< ::grpc_user::Reply>* TethysUserService::Stub::PrepareAsyncUserServiceRaw(::grpc::ClientContext* context, const ::grpc_user::Request& request, ::grpc::CompletionQueue* cq) {
   return ::grpc::internal::ClientAsyncResponseReaderFactory< ::grpc_user::Reply>::Create(channel_.get(), cq, rpcmethod_UserService_, context, request, false);
 }
 
-GruutUserService::Service::Service() {
-  AddMethod(new ::grpc::internal::RpcServiceMethod(
-      GruutUserService_method_names[0],
-      ::grpc::internal::RpcMethod::BIDI_STREAMING,
-      new ::grpc::internal::BidiStreamingHandler< GruutUserService::Service, ::grpc_user::Identity, ::grpc_user::Message>(
-          std::mem_fn(&GruutUserService::Service::OpenChannel), this)));
-  AddMethod(new ::grpc::internal::RpcServiceMethod(
-      GruutUserService_method_names[1],
-      ::grpc::internal::RpcMethod::NORMAL_RPC,
-      new ::grpc::internal::RpcMethodHandler< GruutUserService::Service, ::grpc_user::Request, ::grpc_user::Reply>(
-          std::mem_fn(&GruutUserService::Service::KeyExService), this)));
-  AddMethod(new ::grpc::internal::RpcServiceMethod(
-      GruutUserService_method_names[2],
-      ::grpc::internal::RpcMethod::NORMAL_RPC,
-      new ::grpc::internal::RpcMethodHandler< GruutUserService::Service, ::grpc_user::Request, ::grpc_user::Reply>(
-          std::mem_fn(&GruutUserService::Service::UserService), this)));
+::grpc::Status TethysUserService::Stub::SignerService(::grpc::ClientContext* context, const ::grpc_user::Request& request, ::grpc_user::Reply* response) {
+  return ::grpc::internal::BlockingUnaryCall(channel_.get(), rpcmethod_SignerService_, context, request, response);
 }
 
-GruutUserService::Service::~Service() {
+::grpc::ClientAsyncResponseReader< ::grpc_user::Reply>* TethysUserService::Stub::AsyncSignerServiceRaw(::grpc::ClientContext* context, const ::grpc_user::Request& request, ::grpc::CompletionQueue* cq) {
+  return ::grpc::internal::ClientAsyncResponseReaderFactory< ::grpc_user::Reply>::Create(channel_.get(), cq, rpcmethod_SignerService_, context, request, true);
 }
 
-::grpc::Status GruutUserService::Service::OpenChannel(::grpc::ServerContext* context, ::grpc::ServerReaderWriter< ::grpc_user::Message, ::grpc_user::Identity>* stream) {
+::grpc::ClientAsyncResponseReader< ::grpc_user::Reply>* TethysUserService::Stub::PrepareAsyncSignerServiceRaw(::grpc::ClientContext* context, const ::grpc_user::Request& request, ::grpc::CompletionQueue* cq) {
+  return ::grpc::internal::ClientAsyncResponseReaderFactory< ::grpc_user::Reply>::Create(channel_.get(), cq, rpcmethod_SignerService_, context, request, false);
+}
+
+TethysUserService::Service::Service() {
+  AddMethod(new ::grpc::internal::RpcServiceMethod(
+      TethysUserService_method_names[0],
+      ::grpc::internal::RpcMethod::SERVER_STREAMING,
+      new ::grpc::internal::ServerStreamingHandler< TethysUserService::Service, ::grpc_user::Identity, ::grpc_user::Message>(
+          std::mem_fn(&TethysUserService::Service::PushService), this)));
+  AddMethod(new ::grpc::internal::RpcServiceMethod(
+      TethysUserService_method_names[1],
+      ::grpc::internal::RpcMethod::NORMAL_RPC,
+      new ::grpc::internal::RpcMethodHandler< TethysUserService::Service, ::grpc_user::Request, ::grpc_user::Reply>(
+          std::mem_fn(&TethysUserService::Service::KeyExService), this)));
+  AddMethod(new ::grpc::internal::RpcServiceMethod(
+      TethysUserService_method_names[2],
+      ::grpc::internal::RpcMethod::NORMAL_RPC,
+      new ::grpc::internal::RpcMethodHandler< TethysUserService::Service, ::grpc_user::Request, ::grpc_user::Reply>(
+          std::mem_fn(&TethysUserService::Service::UserService), this)));
+  AddMethod(new ::grpc::internal::RpcServiceMethod(
+      TethysUserService_method_names[3],
+      ::grpc::internal::RpcMethod::NORMAL_RPC,
+      new ::grpc::internal::RpcMethodHandler< TethysUserService::Service, ::grpc_user::Request, ::grpc_user::Reply>(
+          std::mem_fn(&TethysUserService::Service::SignerService), this)));
+}
+
+TethysUserService::Service::~Service() {
+}
+
+::grpc::Status TethysUserService::Service::PushService(::grpc::ServerContext* context, const ::grpc_user::Identity* request, ::grpc::ServerWriter< ::grpc_user::Message>* writer) {
   (void) context;
-  (void) stream;
+  (void) request;
+  (void) writer;
   return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
 }
 
-::grpc::Status GruutUserService::Service::KeyExService(::grpc::ServerContext* context, const ::grpc_user::Request* request, ::grpc_user::Reply* response) {
+::grpc::Status TethysUserService::Service::KeyExService(::grpc::ServerContext* context, const ::grpc_user::Request* request, ::grpc_user::Reply* response) {
   (void) context;
   (void) request;
   (void) response;
   return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
 }
 
-::grpc::Status GruutUserService::Service::UserService(::grpc::ServerContext* context, const ::grpc_user::Request* request, ::grpc_user::Reply* response) {
+::grpc::Status TethysUserService::Service::UserService(::grpc::ServerContext* context, const ::grpc_user::Request* request, ::grpc_user::Reply* response) {
+  (void) context;
+  (void) request;
+  (void) response;
+  return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
+}
+
+::grpc::Status TethysUserService::Service::SignerService(::grpc::ServerContext* context, const ::grpc_user::Request* request, ::grpc_user::Reply* response) {
   (void) context;
   (void) request;
   (void) response;

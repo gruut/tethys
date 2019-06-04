@@ -4,9 +4,9 @@
 #include "../../../../lib/json/include/json.hpp"
 #include "../../../../lib/log/include/log.hpp"
 
-#include "../../../../lib/gruut-utils/src/bytes_builder.hpp"
-#include "../../../../lib/gruut-utils/src/sha256.hpp"
-#include "../../../../lib/gruut-utils/src/type_converter.hpp"
+#include "../../../../lib/tethys-utils/src/bytes_builder.hpp"
+#include "../../../../lib/tethys-utils/src/sha256.hpp"
+#include "../../../../lib/tethys-utils/src/type_converter.hpp"
 #include "../config/storage_type.hpp"
 #include "endorser.hpp"
 
@@ -15,7 +15,7 @@
 #include <string>
 #include <vector>
 
-namespace gruut {
+namespace tethys {
 class Transaction {
 private:
   base58_type m_txid;
@@ -49,7 +49,7 @@ public:
       m_txid = msg_tx_json["/txid"_json_pointer];
       m_world = msg_tx_json["/world"_json_pointer];
       m_chain = msg_tx_json["/chain"_json_pointer];
-      m_tx_time = static_cast<gruut::timestamp_t>(stoll(json::get<string>(msg_tx_json, "time").value()));
+      m_tx_time = static_cast<tethys::timestamp_t>(stoll(json::get<string>(msg_tx_json, "time").value()));
 
       m_contract_id = msg_tx_json["body/cid"_json_pointer];
       m_receiver_id = msg_tx_json["body/receiver"_json_pointer];
@@ -92,7 +92,7 @@ public:
   bool inputMsgTxAgg(const nlohmann::json &tx_json) {
     try {
       m_txid = json::get<string>(tx_json, "txid").value();
-      m_tx_time = static_cast<gruut::timestamp_t>(stoll(json::get<string>(tx_json, "time").value()));
+      m_tx_time = static_cast<tethys::timestamp_t>(stoll(json::get<string>(tx_json, "time").value()));
 
       m_contract_id = json::get<string>(tx_json["body"], "cid").value();
       m_receiver_id = json::get<string>(tx_json["body"], "receiver").value();
@@ -217,5 +217,5 @@ public:
     return m_tx_pos;
   }
 };
-} // namespace gruut
+} // namespace tethys
 #endif

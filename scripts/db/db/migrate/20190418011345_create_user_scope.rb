@@ -11,5 +11,7 @@ class CreateUserScope < ActiveRecord::Migration[5.2]
       t.mediumtext :tag
       t.column :pid, 'char(44)'
     end
+
+    add_index :user_scope, :pid, unique: true
   end
 end

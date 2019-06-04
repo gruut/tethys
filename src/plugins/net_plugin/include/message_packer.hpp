@@ -1,10 +1,10 @@
 #pragma once
 
-#include "../../../lib/gruut-utils/src/hmac.hpp"
-#include "../../../lib/gruut-utils/src/lz4_compressor.hpp"
+#include "../../../lib/tethys-utils/src/hmac.hpp"
+#include "../../../lib/tethys-utils/src/lz4_compressor.hpp"
 #include "../config/include/message.hpp"
 
-namespace gruut {
+namespace tethys {
 namespace net_plugin {
 
 using namespace std;
@@ -51,10 +51,12 @@ private:
     serialized_header.insert(serialized_header.end(), begin(total_length), end(total_length));
     serialized_header.insert(serialized_header.end(), begin(WORLD_ID), end(WORLD_ID));
     serialized_header.insert(serialized_header.end(), begin(LOCAL_CHAIN_ID), end(LOCAL_CHAIN_ID));
-    serialized_header.insert(serialized_header.end(), begin(MY_ID), end(MY_ID));
+
+    auto &my_id = app().getId();
+    serialized_header.insert(serialized_header.end(), my_id.begin(), my_id.end());
     return serialized_header;
   }
 };
 
 } // namespace net_plugin
-} // namespace gruut
+} // namespace tethys

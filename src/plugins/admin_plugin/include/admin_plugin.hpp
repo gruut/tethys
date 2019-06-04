@@ -13,7 +13,7 @@
 using namespace appbase;
 using namespace boost::program_options;
 
-namespace gruut {
+namespace tethys {
 
 class AdminPlugin : public Plugin<AdminPlugin> {
 public:
@@ -34,4 +34,4 @@ public:
 private:
   std::unique_ptr<class AdminPluginImpl> impl;
 };
-} // namespace gruut
+} // namespace tethys

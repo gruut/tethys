@@ -22,6 +22,18 @@ namespace po = boost::program_options;
 
 class ProgramOptions;
 
+enum class RunningMode : int { NONE = -1, DEFAULT = 0, MONITOR = 1 };
+
+struct ApplicationStatus {
+  bool load_world;
+  bool user_setup;
+  bool user_login;
+
+  RunningMode run_mode;
+
+  ApplicationStatus() : load_world(false), user_setup(false), user_login(false), run_mode(RunningMode::NONE) {}
+};
+
 class Application {
 public:
   ~Application();
@@ -53,14 +65,14 @@ public:
 
   void shutdown();
 
-  template <typename ChannelType>
+  template <typename Channel>
   auto &getChannel() {
-    auto key = type_index(typeid(ChannelType));
+    auto key = type_index(typeid(Channel));
 
-    auto [channel_it, _] = channels.try_emplace(key, std::make_shared<ChannelType>(io_context_ptr));
+    auto [channel_it, _] = channels.try_emplace(key, std::make_shared<typename Channel::channel_type>(io_context_ptr));
 
     auto channel_ptr = channel_it->second.get();
-    return *dynamic_cast<ChannelType *>(channel_ptr);
+    return *dynamic_cast<typename Channel::channel_type *>(channel_ptr);
   }
 
   template <typename Plugin>
@@ -77,14 +89,29 @@ public:
     }
   }
 
+  void setWorldId(string_view _id);
   void setId(string_view _id);
+
+  const string &getWorldId() const;
   const string &getId() const;
+
+  void setRunFlag();
+
+  bool isAppRunning();
+  bool isUserSignedIn();
+  bool isWorldLoaded();
+
+  void completeLoadWorld();
+  void completeUserSetup();
+  void completeUserSignedIn();
+
+  RunningMode &runningMode();
 
   auto &getIoContext() {
     return *io_context_ptr;
   }
 
-  AbstractPlugin* getPlugin(const string &name) const;
+  AbstractPlugin *getPlugin(const string &name) const;
 
   static Application &instance();
 
@@ -120,12 +147,21 @@ private:
 
   unique_ptr<ProgramOptions> program_options;
 
+  string world_id;
   string id;
+
+  bool running = false;
 
 private:
   bool parseProgramOptions(int argc, char **argv);
 
   void initializePlugins();
+
+  void startInitializedPlugins();
+
+  void registerErrorSignalHandlers();
+
+  ApplicationStatus application_status;
 };
 
 Application &app();

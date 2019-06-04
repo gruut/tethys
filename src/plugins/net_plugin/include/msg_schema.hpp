@@ -5,7 +5,7 @@
 #include <map>
 #include <vector>
 
-namespace gruut {
+namespace tethys {
 namespace net_plugin {
 
 using nlohmann::json_schema_draft4::json_validator;
@@ -536,6 +536,9 @@ static SchemaMap schema_map = {{MessageType::MSG_PING,
     "user": {
       "type": "string"
     },
+    "mode": {
+      "type": "string"
+    },
     "val": {
       "type": "boolean"
     }
@@ -543,6 +546,7 @@ static SchemaMap schema_map = {{MessageType::MSG_PING,
   "required": [
     "time",
     "user",
+    "mode",
     "val"
   ]
 })"_json},
@@ -801,4 +805,4 @@ public:
 };
 
 } // namespace net_plugin
-} // namespace gruut
+} // namespace tethys

@@ -5,15 +5,17 @@
 #include "../../../../lib/log/include/log.hpp"
 #include "../../channel_interface/include/channel_interface.hpp"
 #include "../../chain_plugin/include/chain_plugin.hpp"
+#include "../../net_plugin/include/net_plugin.hpp"
+
 #include "application.hpp"
 #include "plugin.hpp"
 
 using namespace appbase;
 
-namespace gruut {
+namespace tethys {
 class BlockProducerPlugin : public Plugin<BlockProducerPlugin> {
 public:
-  PLUGIN_REQUIRES((ChainPlugin))
+  PLUGIN_REQUIRES((ChainPlugin)(NetPlugin))
 
   BlockProducerPlugin();
   ~BlockProducerPlugin();
@@ -33,4 +35,4 @@ public:
 private:
   std::unique_ptr<class BlockProducerPluginImpl> impl;
 };
-} // namespace gruut
+} // namespace tethys

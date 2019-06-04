@@ -26,20 +26,27 @@ class ServerContext;
 
 namespace grpc_admin {
 
-class GruutAdminService final {
+class TethysAdminService final {
  public:
   static constexpr char const* service_full_name() {
-    return "grpc_admin.GruutAdminService";
+    return "grpc_admin.TethysAdminService";
   }
   class StubInterface {
    public:
     virtual ~StubInterface() {}
-    virtual ::grpc::Status Setup(::grpc::ClientContext* context, const ::grpc_admin::ReqSetup& request, ::grpc_admin::ResSetup* response) = 0;
-    std::unique_ptr< ::grpc::ClientAsyncResponseReaderInterface< ::grpc_admin::ResSetup>> AsyncSetup(::grpc::ClientContext* context, const ::grpc_admin::ReqSetup& request, ::grpc::CompletionQueue* cq) {
-      return std::unique_ptr< ::grpc::ClientAsyncResponseReaderInterface< ::grpc_admin::ResSetup>>(AsyncSetupRaw(context, request, cq));
+    virtual ::grpc::Status SetupKey(::grpc::ClientContext* context, const ::grpc_admin::ReqSetupKey& request, ::grpc_admin::ResSetupKey* response) = 0;
+    std::unique_ptr< ::grpc::ClientAsyncResponseReaderInterface< ::grpc_admin::ResSetupKey>> AsyncSetupKey(::grpc::ClientContext* context, const ::grpc_admin::ReqSetupKey& request, ::grpc::CompletionQueue* cq) {
+      return std::unique_ptr< ::grpc::ClientAsyncResponseReaderInterface< ::grpc_admin::ResSetupKey>>(AsyncSetupKeyRaw(context, request, cq));
     }
-    std::unique_ptr< ::grpc::ClientAsyncResponseReaderInterface< ::grpc_admin::ResSetup>> PrepareAsyncSetup(::grpc::ClientContext* context, const ::grpc_admin::ReqSetup& request, ::grpc::CompletionQueue* cq) {
-      return std::unique_ptr< ::grpc::ClientAsyncResponseReaderInterface< ::grpc_admin::ResSetup>>(PrepareAsyncSetupRaw(context, request, cq));
+    std::unique_ptr< ::grpc::ClientAsyncResponseReaderInterface< ::grpc_admin::ResSetupKey>> PrepareAsyncSetupKey(::grpc::ClientContext* context, const ::grpc_admin::ReqSetupKey& request, ::grpc::CompletionQueue* cq) {
+      return std::unique_ptr< ::grpc::ClientAsyncResponseReaderInterface< ::grpc_admin::ResSetupKey>>(PrepareAsyncSetupKeyRaw(context, request, cq));
+    }
+    virtual ::grpc::Status Login(::grpc::ClientContext* context, const ::grpc_admin::ReqLogin& request, ::grpc_admin::ResLogin* response) = 0;
+    std::unique_ptr< ::grpc::ClientAsyncResponseReaderInterface< ::grpc_admin::ResLogin>> AsyncLogin(::grpc::ClientContext* context, const ::grpc_admin::ReqLogin& request, ::grpc::CompletionQueue* cq) {
+      return std::unique_ptr< ::grpc::ClientAsyncResponseReaderInterface< ::grpc_admin::ResLogin>>(AsyncLoginRaw(context, request, cq));
+    }
+    std::unique_ptr< ::grpc::ClientAsyncResponseReaderInterface< ::grpc_admin::ResLogin>> PrepareAsyncLogin(::grpc::ClientContext* context, const ::grpc_admin::ReqLogin& request, ::grpc::CompletionQueue* cq) {
+      return std::unique_ptr< ::grpc::ClientAsyncResponseReaderInterface< ::grpc_admin::ResLogin>>(PrepareAsyncLoginRaw(context, request, cq));
     }
     virtual ::grpc::Status Start(::grpc::ClientContext* context, const ::grpc_admin::ReqStart& request, ::grpc_admin::ResStart* response) = 0;
     std::unique_ptr< ::grpc::ClientAsyncResponseReaderInterface< ::grpc_admin::ResStart>> AsyncStart(::grpc::ClientContext* context, const ::grpc_admin::ReqStart& request, ::grpc::CompletionQueue* cq) {
@@ -48,12 +55,19 @@ class GruutAdminService final {
     std::unique_ptr< ::grpc::ClientAsyncResponseReaderInterface< ::grpc_admin::ResStart>> PrepareAsyncStart(::grpc::ClientContext* context, const ::grpc_admin::ReqStart& request, ::grpc::CompletionQueue* cq) {
       return std::unique_ptr< ::grpc::ClientAsyncResponseReaderInterface< ::grpc_admin::ResStart>>(PrepareAsyncStartRaw(context, request, cq));
     }
-    virtual ::grpc::Status Stop(::grpc::ClientContext* context, const ::grpc_admin::ReqStop& request, ::grpc_admin::ResStop* response) = 0;
-    std::unique_ptr< ::grpc::ClientAsyncResponseReaderInterface< ::grpc_admin::ResStop>> AsyncStop(::grpc::ClientContext* context, const ::grpc_admin::ReqStop& request, ::grpc::CompletionQueue* cq) {
-      return std::unique_ptr< ::grpc::ClientAsyncResponseReaderInterface< ::grpc_admin::ResStop>>(AsyncStopRaw(context, request, cq));
+    virtual ::grpc::Status LoadWorld(::grpc::ClientContext* context, const ::grpc_admin::ReqLoadWorld& request, ::grpc_admin::ResLoadWorld* response) = 0;
+    std::unique_ptr< ::grpc::ClientAsyncResponseReaderInterface< ::grpc_admin::ResLoadWorld>> AsyncLoadWorld(::grpc::ClientContext* context, const ::grpc_admin::ReqLoadWorld& request, ::grpc::CompletionQueue* cq) {
+      return std::unique_ptr< ::grpc::ClientAsyncResponseReaderInterface< ::grpc_admin::ResLoadWorld>>(AsyncLoadWorldRaw(context, request, cq));
     }
-    std::unique_ptr< ::grpc::ClientAsyncResponseReaderInterface< ::grpc_admin::ResStop>> PrepareAsyncStop(::grpc::ClientContext* context, const ::grpc_admin::ReqStop& request, ::grpc::CompletionQueue* cq) {
-      return std::unique_ptr< ::grpc::ClientAsyncResponseReaderInterface< ::grpc_admin::ResStop>>(PrepareAsyncStopRaw(context, request, cq));
+    std::unique_ptr< ::grpc::ClientAsyncResponseReaderInterface< ::grpc_admin::ResLoadWorld>> PrepareAsyncLoadWorld(::grpc::ClientContext* context, const ::grpc_admin::ReqLoadWorld& request, ::grpc::CompletionQueue* cq) {
+      return std::unique_ptr< ::grpc::ClientAsyncResponseReaderInterface< ::grpc_admin::ResLoadWorld>>(PrepareAsyncLoadWorldRaw(context, request, cq));
+    }
+    virtual ::grpc::Status LoadChain(::grpc::ClientContext* context, const ::grpc_admin::ReqLoadChain& request, ::grpc_admin::ResLoadChain* response) = 0;
+    std::unique_ptr< ::grpc::ClientAsyncResponseReaderInterface< ::grpc_admin::ResLoadChain>> AsyncLoadChain(::grpc::ClientContext* context, const ::grpc_admin::ReqLoadChain& request, ::grpc::CompletionQueue* cq) {
+      return std::unique_ptr< ::grpc::ClientAsyncResponseReaderInterface< ::grpc_admin::ResLoadChain>>(AsyncLoadChainRaw(context, request, cq));
+    }
+    std::unique_ptr< ::grpc::ClientAsyncResponseReaderInterface< ::grpc_admin::ResLoadChain>> PrepareAsyncLoadChain(::grpc::ClientContext* context, const ::grpc_admin::ReqLoadChain& request, ::grpc::CompletionQueue* cq) {
+      return std::unique_ptr< ::grpc::ClientAsyncResponseReaderInterface< ::grpc_admin::ResLoadChain>>(PrepareAsyncLoadChainRaw(context, request, cq));
     }
     virtual ::grpc::Status CheckStatus(::grpc::ClientContext* context, const ::grpc_admin::ReqStatus& request, ::grpc_admin::ResStatus* response) = 0;
     std::unique_ptr< ::grpc::ClientAsyncResponseReaderInterface< ::grpc_admin::ResStatus>> AsyncCheckStatus(::grpc::ClientContext* context, const ::grpc_admin::ReqStatus& request, ::grpc::CompletionQueue* cq) {
@@ -63,24 +77,35 @@ class GruutAdminService final {
       return std::unique_ptr< ::grpc::ClientAsyncResponseReaderInterface< ::grpc_admin::ResStatus>>(PrepareAsyncCheckStatusRaw(context, request, cq));
     }
   private:
-    virtual ::grpc::ClientAsyncResponseReaderInterface< ::grpc_admin::ResSetup>* AsyncSetupRaw(::grpc::ClientContext* context, const ::grpc_admin::ReqSetup& request, ::grpc::CompletionQueue* cq) = 0;
-    virtual ::grpc::ClientAsyncResponseReaderInterface< ::grpc_admin::ResSetup>* PrepareAsyncSetupRaw(::grpc::ClientContext* context, const ::grpc_admin::ReqSetup& request, ::grpc::CompletionQueue* cq) = 0;
+    virtual ::grpc::ClientAsyncResponseReaderInterface< ::grpc_admin::ResSetupKey>* AsyncSetupKeyRaw(::grpc::ClientContext* context, const ::grpc_admin::ReqSetupKey& request, ::grpc::CompletionQueue* cq) = 0;
+    virtual ::grpc::ClientAsyncResponseReaderInterface< ::grpc_admin::ResSetupKey>* PrepareAsyncSetupKeyRaw(::grpc::ClientContext* context, const ::grpc_admin::ReqSetupKey& request, ::grpc::CompletionQueue* cq) = 0;
+    virtual ::grpc::ClientAsyncResponseReaderInterface< ::grpc_admin::ResLogin>* AsyncLoginRaw(::grpc::ClientContext* context, const ::grpc_admin::ReqLogin& request, ::grpc::CompletionQueue* cq) = 0;
+    virtual ::grpc::ClientAsyncResponseReaderInterface< ::grpc_admin::ResLogin>* PrepareAsyncLoginRaw(::grpc::ClientContext* context, const ::grpc_admin::ReqLogin& request, ::grpc::CompletionQueue* cq) = 0;
     virtual ::grpc::ClientAsyncResponseReaderInterface< ::grpc_admin::ResStart>* AsyncStartRaw(::grpc::ClientContext* context, const ::grpc_admin::ReqStart& request, ::grpc::CompletionQueue* cq) = 0;
     virtual ::grpc::ClientAsyncResponseReaderInterface< ::grpc_admin::ResStart>* PrepareAsyncStartRaw(::grpc::ClientContext* context, const ::grpc_admin::ReqStart& request, ::grpc::CompletionQueue* cq) = 0;
-    virtual ::grpc::ClientAsyncResponseReaderInterface< ::grpc_admin::ResStop>* AsyncStopRaw(::grpc::ClientContext* context, const ::grpc_admin::ReqStop& request, ::grpc::CompletionQueue* cq) = 0;
-    virtual ::grpc::ClientAsyncResponseReaderInterface< ::grpc_admin::ResStop>* PrepareAsyncStopRaw(::grpc::ClientContext* context, const ::grpc_admin::ReqStop& request, ::grpc::CompletionQueue* cq) = 0;
+    virtual ::grpc::ClientAsyncResponseReaderInterface< ::grpc_admin::ResLoadWorld>* AsyncLoadWorldRaw(::grpc::ClientContext* context, const ::grpc_admin::ReqLoadWorld& request, ::grpc::CompletionQueue* cq) = 0;
+    virtual ::grpc::ClientAsyncResponseReaderInterface< ::grpc_admin::ResLoadWorld>* PrepareAsyncLoadWorldRaw(::grpc::ClientContext* context, const ::grpc_admin::ReqLoadWorld& request, ::grpc::CompletionQueue* cq) = 0;
+    virtual ::grpc::ClientAsyncResponseReaderInterface< ::grpc_admin::ResLoadChain>* AsyncLoadChainRaw(::grpc::ClientContext* context, const ::grpc_admin::ReqLoadChain& request, ::grpc::CompletionQueue* cq) = 0;
+    virtual ::grpc::ClientAsyncResponseReaderInterface< ::grpc_admin::ResLoadChain>* PrepareAsyncLoadChainRaw(::grpc::ClientContext* context, const ::grpc_admin::ReqLoadChain& request, ::grpc::CompletionQueue* cq) = 0;
     virtual ::grpc::ClientAsyncResponseReaderInterface< ::grpc_admin::ResStatus>* AsyncCheckStatusRaw(::grpc::ClientContext* context, const ::grpc_admin::ReqStatus& request, ::grpc::CompletionQueue* cq) = 0;
     virtual ::grpc::ClientAsyncResponseReaderInterface< ::grpc_admin::ResStatus>* PrepareAsyncCheckStatusRaw(::grpc::ClientContext* context, const ::grpc_admin::ReqStatus& request, ::grpc::CompletionQueue* cq) = 0;
   };
   class Stub final : public StubInterface {
    public:
     Stub(const std::shared_ptr< ::grpc::ChannelInterface>& channel);
-    ::grpc::Status Setup(::grpc::ClientContext* context, const ::grpc_admin::ReqSetup& request, ::grpc_admin::ResSetup* response) override;
-    std::unique_ptr< ::grpc::ClientAsyncResponseReader< ::grpc_admin::ResSetup>> AsyncSetup(::grpc::ClientContext* context, const ::grpc_admin::ReqSetup& request, ::grpc::CompletionQueue* cq) {
-      return std::unique_ptr< ::grpc::ClientAsyncResponseReader< ::grpc_admin::ResSetup>>(AsyncSetupRaw(context, request, cq));
+    ::grpc::Status SetupKey(::grpc::ClientContext* context, const ::grpc_admin::ReqSetupKey& request, ::grpc_admin::ResSetupKey* response) override;
+    std::unique_ptr< ::grpc::ClientAsyncResponseReader< ::grpc_admin::ResSetupKey>> AsyncSetupKey(::grpc::ClientContext* context, const ::grpc_admin::ReqSetupKey& request, ::grpc::CompletionQueue* cq) {
+      return std::unique_ptr< ::grpc::ClientAsyncResponseReader< ::grpc_admin::ResSetupKey>>(AsyncSetupKeyRaw(context, request, cq));
     }
-    std::unique_ptr< ::grpc::ClientAsyncResponseReader< ::grpc_admin::ResSetup>> PrepareAsyncSetup(::grpc::ClientContext* context, const ::grpc_admin::ReqSetup& request, ::grpc::CompletionQueue* cq) {
-      return std::unique_ptr< ::grpc::ClientAsyncResponseReader< ::grpc_admin::ResSetup>>(PrepareAsyncSetupRaw(context, request, cq));
+    std::unique_ptr< ::grpc::ClientAsyncResponseReader< ::grpc_admin::ResSetupKey>> PrepareAsyncSetupKey(::grpc::ClientContext* context, const ::grpc_admin::ReqSetupKey& request, ::grpc::CompletionQueue* cq) {
+      return std::unique_ptr< ::grpc::ClientAsyncResponseReader< ::grpc_admin::ResSetupKey>>(PrepareAsyncSetupKeyRaw(context, request, cq));
+    }
+    ::grpc::Status Login(::grpc::ClientContext* context, const ::grpc_admin::ReqLogin& request, ::grpc_admin::ResLogin* response) override;
+    std::unique_ptr< ::grpc::ClientAsyncResponseReader< ::grpc_admin::ResLogin>> AsyncLogin(::grpc::ClientContext* context, const ::grpc_admin::ReqLogin& request, ::grpc::CompletionQueue* cq) {
+      return std::unique_ptr< ::grpc::ClientAsyncResponseReader< ::grpc_admin::ResLogin>>(AsyncLoginRaw(context, request, cq));
+    }
+    std::unique_ptr< ::grpc::ClientAsyncResponseReader< ::grpc_admin::ResLogin>> PrepareAsyncLogin(::grpc::ClientContext* context, const ::grpc_admin::ReqLogin& request, ::grpc::CompletionQueue* cq) {
+      return std::unique_ptr< ::grpc::ClientAsyncResponseReader< ::grpc_admin::ResLogin>>(PrepareAsyncLoginRaw(context, request, cq));
     }
     ::grpc::Status Start(::grpc::ClientContext* context, const ::grpc_admin::ReqStart& request, ::grpc_admin::ResStart* response) override;
     std::unique_ptr< ::grpc::ClientAsyncResponseReader< ::grpc_admin::ResStart>> AsyncStart(::grpc::ClientContext* context, const ::grpc_admin::ReqStart& request, ::grpc::CompletionQueue* cq) {
@@ -89,12 +114,19 @@ class GruutAdminService final {
     std::unique_ptr< ::grpc::ClientAsyncResponseReader< ::grpc_admin::ResStart>> PrepareAsyncStart(::grpc::ClientContext* context, const ::grpc_admin::ReqStart& request, ::grpc::CompletionQueue* cq) {
       return std::unique_ptr< ::grpc::ClientAsyncResponseReader< ::grpc_admin::ResStart>>(PrepareAsyncStartRaw(context, request, cq));
     }
-    ::grpc::Status Stop(::grpc::ClientContext* context, const ::grpc_admin::ReqStop& request, ::grpc_admin::ResStop* response) override;
-    std::unique_ptr< ::grpc::ClientAsyncResponseReader< ::grpc_admin::ResStop>> AsyncStop(::grpc::ClientContext* context, const ::grpc_admin::ReqStop& request, ::grpc::CompletionQueue* cq) {
-      return std::unique_ptr< ::grpc::ClientAsyncResponseReader< ::grpc_admin::ResStop>>(AsyncStopRaw(context, request, cq));
+    ::grpc::Status LoadWorld(::grpc::ClientContext* context, const ::grpc_admin::ReqLoadWorld& request, ::grpc_admin::ResLoadWorld* response) override;
+    std::unique_ptr< ::grpc::ClientAsyncResponseReader< ::grpc_admin::ResLoadWorld>> AsyncLoadWorld(::grpc::ClientContext* context, const ::grpc_admin::ReqLoadWorld& request, ::grpc::CompletionQueue* cq) {
+      return std::unique_ptr< ::grpc::ClientAsyncResponseReader< ::grpc_admin::ResLoadWorld>>(AsyncLoadWorldRaw(context, request, cq));
     }
-    std::unique_ptr< ::grpc::ClientAsyncResponseReader< ::grpc_admin::ResStop>> PrepareAsyncStop(::grpc::ClientContext* context, const ::grpc_admin::ReqStop& request, ::grpc::CompletionQueue* cq) {
-      return std::unique_ptr< ::grpc::ClientAsyncResponseReader< ::grpc_admin::ResStop>>(PrepareAsyncStopRaw(context, request, cq));
+    std::unique_ptr< ::grpc::ClientAsyncResponseReader< ::grpc_admin::ResLoadWorld>> PrepareAsyncLoadWorld(::grpc::ClientContext* context, const ::grpc_admin::ReqLoadWorld& request, ::grpc::CompletionQueue* cq) {
+      return std::unique_ptr< ::grpc::ClientAsyncResponseReader< ::grpc_admin::ResLoadWorld>>(PrepareAsyncLoadWorldRaw(context, request, cq));
+    }
+    ::grpc::Status LoadChain(::grpc::ClientContext* context, const ::grpc_admin::ReqLoadChain& request, ::grpc_admin::ResLoadChain* response) override;
+    std::unique_ptr< ::grpc::ClientAsyncResponseReader< ::grpc_admin::ResLoadChain>> AsyncLoadChain(::grpc::ClientContext* context, const ::grpc_admin::ReqLoadChain& request, ::grpc::CompletionQueue* cq) {
+      return std::unique_ptr< ::grpc::ClientAsyncResponseReader< ::grpc_admin::ResLoadChain>>(AsyncLoadChainRaw(context, request, cq));
+    }
+    std::unique_ptr< ::grpc::ClientAsyncResponseReader< ::grpc_admin::ResLoadChain>> PrepareAsyncLoadChain(::grpc::ClientContext* context, const ::grpc_admin::ReqLoadChain& request, ::grpc::CompletionQueue* cq) {
+      return std::unique_ptr< ::grpc::ClientAsyncResponseReader< ::grpc_admin::ResLoadChain>>(PrepareAsyncLoadChainRaw(context, request, cq));
     }
     ::grpc::Status CheckStatus(::grpc::ClientContext* context, const ::grpc_admin::ReqStatus& request, ::grpc_admin::ResStatus* response) override;
     std::unique_ptr< ::grpc::ClientAsyncResponseReader< ::grpc_admin::ResStatus>> AsyncCheckStatus(::grpc::ClientContext* context, const ::grpc_admin::ReqStatus& request, ::grpc::CompletionQueue* cq) {
@@ -106,17 +138,23 @@ class GruutAdminService final {
 
    private:
     std::shared_ptr< ::grpc::ChannelInterface> channel_;
-    ::grpc::ClientAsyncResponseReader< ::grpc_admin::ResSetup>* AsyncSetupRaw(::grpc::ClientContext* context, const ::grpc_admin::ReqSetup& request, ::grpc::CompletionQueue* cq) override;
-    ::grpc::ClientAsyncResponseReader< ::grpc_admin::ResSetup>* PrepareAsyncSetupRaw(::grpc::ClientContext* context, const ::grpc_admin::ReqSetup& request, ::grpc::CompletionQueue* cq) override;
+    ::grpc::ClientAsyncResponseReader< ::grpc_admin::ResSetupKey>* AsyncSetupKeyRaw(::grpc::ClientContext* context, const ::grpc_admin::ReqSetupKey& request, ::grpc::CompletionQueue* cq) override;
+    ::grpc::ClientAsyncResponseReader< ::grpc_admin::ResSetupKey>* PrepareAsyncSetupKeyRaw(::grpc::ClientContext* context, const ::grpc_admin::ReqSetupKey& request, ::grpc::CompletionQueue* cq) override;
+    ::grpc::ClientAsyncResponseReader< ::grpc_admin::ResLogin>* AsyncLoginRaw(::grpc::ClientContext* context, const ::grpc_admin::ReqLogin& request, ::grpc::CompletionQueue* cq) override;
+    ::grpc::ClientAsyncResponseReader< ::grpc_admin::ResLogin>* PrepareAsyncLoginRaw(::grpc::ClientContext* context, const ::grpc_admin::ReqLogin& request, ::grpc::CompletionQueue* cq) override;
     ::grpc::ClientAsyncResponseReader< ::grpc_admin::ResStart>* AsyncStartRaw(::grpc::ClientContext* context, const ::grpc_admin::ReqStart& request, ::grpc::CompletionQueue* cq) override;
     ::grpc::ClientAsyncResponseReader< ::grpc_admin::ResStart>* PrepareAsyncStartRaw(::grpc::ClientContext* context, const ::grpc_admin::ReqStart& request, ::grpc::CompletionQueue* cq) override;
-    ::grpc::ClientAsyncResponseReader< ::grpc_admin::ResStop>* AsyncStopRaw(::grpc::ClientContext* context, const ::grpc_admin::ReqStop& request, ::grpc::CompletionQueue* cq) override;
-    ::grpc::ClientAsyncResponseReader< ::grpc_admin::ResStop>* PrepareAsyncStopRaw(::grpc::ClientContext* context, const ::grpc_admin::ReqStop& request, ::grpc::CompletionQueue* cq) override;
+    ::grpc::ClientAsyncResponseReader< ::grpc_admin::ResLoadWorld>* AsyncLoadWorldRaw(::grpc::ClientContext* context, const ::grpc_admin::ReqLoadWorld& request, ::grpc::CompletionQueue* cq) override;
+    ::grpc::ClientAsyncResponseReader< ::grpc_admin::ResLoadWorld>* PrepareAsyncLoadWorldRaw(::grpc::ClientContext* context, const ::grpc_admin::ReqLoadWorld& request, ::grpc::CompletionQueue* cq) override;
+    ::grpc::ClientAsyncResponseReader< ::grpc_admin::ResLoadChain>* AsyncLoadChainRaw(::grpc::ClientContext* context, const ::grpc_admin::ReqLoadChain& request, ::grpc::CompletionQueue* cq) override;
+    ::grpc::ClientAsyncResponseReader< ::grpc_admin::ResLoadChain>* PrepareAsyncLoadChainRaw(::grpc::ClientContext* context, const ::grpc_admin::ReqLoadChain& request, ::grpc::CompletionQueue* cq) override;
     ::grpc::ClientAsyncResponseReader< ::grpc_admin::ResStatus>* AsyncCheckStatusRaw(::grpc::ClientContext* context, const ::grpc_admin::ReqStatus& request, ::grpc::CompletionQueue* cq) override;
     ::grpc::ClientAsyncResponseReader< ::grpc_admin::ResStatus>* PrepareAsyncCheckStatusRaw(::grpc::ClientContext* context, const ::grpc_admin::ReqStatus& request, ::grpc::CompletionQueue* cq) override;
-    const ::grpc::internal::RpcMethod rpcmethod_Setup_;
+    const ::grpc::internal::RpcMethod rpcmethod_SetupKey_;
+    const ::grpc::internal::RpcMethod rpcmethod_Login_;
     const ::grpc::internal::RpcMethod rpcmethod_Start_;
-    const ::grpc::internal::RpcMethod rpcmethod_Stop_;
+    const ::grpc::internal::RpcMethod rpcmethod_LoadWorld_;
+    const ::grpc::internal::RpcMethod rpcmethod_LoadChain_;
     const ::grpc::internal::RpcMethod rpcmethod_CheckStatus_;
   };
   static std::unique_ptr<Stub> NewStub(const std::shared_ptr< ::grpc::ChannelInterface>& channel, const ::grpc::StubOptions& options = ::grpc::StubOptions());
@@ -125,29 +163,51 @@ class GruutAdminService final {
    public:
     Service();
     virtual ~Service();
-    virtual ::grpc::Status Setup(::grpc::ServerContext* context, const ::grpc_admin::ReqSetup* request, ::grpc_admin::ResSetup* response);
+    virtual ::grpc::Status SetupKey(::grpc::ServerContext* context, const ::grpc_admin::ReqSetupKey* request, ::grpc_admin::ResSetupKey* response);
+    virtual ::grpc::Status Login(::grpc::ServerContext* context, const ::grpc_admin::ReqLogin* request, ::grpc_admin::ResLogin* response);
     virtual ::grpc::Status Start(::grpc::ServerContext* context, const ::grpc_admin::ReqStart* request, ::grpc_admin::ResStart* response);
-    virtual ::grpc::Status Stop(::grpc::ServerContext* context, const ::grpc_admin::ReqStop* request, ::grpc_admin::ResStop* response);
+    virtual ::grpc::Status LoadWorld(::grpc::ServerContext* context, const ::grpc_admin::ReqLoadWorld* request, ::grpc_admin::ResLoadWorld* response);
+    virtual ::grpc::Status LoadChain(::grpc::ServerContext* context, const ::grpc_admin::ReqLoadChain* request, ::grpc_admin::ResLoadChain* response);
     virtual ::grpc::Status CheckStatus(::grpc::ServerContext* context, const ::grpc_admin::ReqStatus* request, ::grpc_admin::ResStatus* response);
   };
   template <class BaseClass>
-  class WithAsyncMethod_Setup : public BaseClass {
+  class WithAsyncMethod_SetupKey : public BaseClass {
    private:
     void BaseClassMustBeDerivedFromService(const Service *service) {}
    public:
-    WithAsyncMethod_Setup() {
+    WithAsyncMethod_SetupKey() {
       ::grpc::Service::MarkMethodAsync(0);
     }
-    ~WithAsyncMethod_Setup() override {
+    ~WithAsyncMethod_SetupKey() override {
       BaseClassMustBeDerivedFromService(this);
     }
     // disable synchronous version of this method
-    ::grpc::Status Setup(::grpc::ServerContext* context, const ::grpc_admin::ReqSetup* request, ::grpc_admin::ResSetup* response) override {
+    ::grpc::Status SetupKey(::grpc::ServerContext* context, const ::grpc_admin::ReqSetupKey* request, ::grpc_admin::ResSetupKey* response) override {
       abort();
       return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
     }
-    void RequestSetup(::grpc::ServerContext* context, ::grpc_admin::ReqSetup* request, ::grpc::ServerAsyncResponseWriter< ::grpc_admin::ResSetup>* response, ::grpc::CompletionQueue* new_call_cq, ::grpc::ServerCompletionQueue* notification_cq, void *tag) {
+    void RequestSetupKey(::grpc::ServerContext* context, ::grpc_admin::ReqSetupKey* request, ::grpc::ServerAsyncResponseWriter< ::grpc_admin::ResSetupKey>* response, ::grpc::CompletionQueue* new_call_cq, ::grpc::ServerCompletionQueue* notification_cq, void *tag) {
       ::grpc::Service::RequestAsyncUnary(0, context, request, response, new_call_cq, notification_cq, tag);
+    }
+  };
+  template <class BaseClass>
+  class WithAsyncMethod_Login : public BaseClass {
+   private:
+    void BaseClassMustBeDerivedFromService(const Service *service) {}
+   public:
+    WithAsyncMethod_Login() {
+      ::grpc::Service::MarkMethodAsync(1);
+    }
+    ~WithAsyncMethod_Login() override {
+      BaseClassMustBeDerivedFromService(this);
+    }
+    // disable synchronous version of this method
+    ::grpc::Status Login(::grpc::ServerContext* context, const ::grpc_admin::ReqLogin* request, ::grpc_admin::ResLogin* response) override {
+      abort();
+      return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
+    }
+    void RequestLogin(::grpc::ServerContext* context, ::grpc_admin::ReqLogin* request, ::grpc::ServerAsyncResponseWriter< ::grpc_admin::ResLogin>* response, ::grpc::CompletionQueue* new_call_cq, ::grpc::ServerCompletionQueue* notification_cq, void *tag) {
+      ::grpc::Service::RequestAsyncUnary(1, context, request, response, new_call_cq, notification_cq, tag);
     }
   };
   template <class BaseClass>
@@ -156,7 +216,7 @@ class GruutAdminService final {
     void BaseClassMustBeDerivedFromService(const Service *service) {}
    public:
     WithAsyncMethod_Start() {
-      ::grpc::Service::MarkMethodAsync(1);
+      ::grpc::Service::MarkMethodAsync(2);
     }
     ~WithAsyncMethod_Start() override {
       BaseClassMustBeDerivedFromService(this);
@@ -167,27 +227,47 @@ class GruutAdminService final {
       return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
     }
     void RequestStart(::grpc::ServerContext* context, ::grpc_admin::ReqStart* request, ::grpc::ServerAsyncResponseWriter< ::grpc_admin::ResStart>* response, ::grpc::CompletionQueue* new_call_cq, ::grpc::ServerCompletionQueue* notification_cq, void *tag) {
-      ::grpc::Service::RequestAsyncUnary(1, context, request, response, new_call_cq, notification_cq, tag);
+      ::grpc::Service::RequestAsyncUnary(2, context, request, response, new_call_cq, notification_cq, tag);
     }
   };
   template <class BaseClass>
-  class WithAsyncMethod_Stop : public BaseClass {
+  class WithAsyncMethod_LoadWorld : public BaseClass {
    private:
     void BaseClassMustBeDerivedFromService(const Service *service) {}
    public:
-    WithAsyncMethod_Stop() {
-      ::grpc::Service::MarkMethodAsync(2);
+    WithAsyncMethod_LoadWorld() {
+      ::grpc::Service::MarkMethodAsync(3);
     }
-    ~WithAsyncMethod_Stop() override {
+    ~WithAsyncMethod_LoadWorld() override {
       BaseClassMustBeDerivedFromService(this);
     }
     // disable synchronous version of this method
-    ::grpc::Status Stop(::grpc::ServerContext* context, const ::grpc_admin::ReqStop* request, ::grpc_admin::ResStop* response) override {
+    ::grpc::Status LoadWorld(::grpc::ServerContext* context, const ::grpc_admin::ReqLoadWorld* request, ::grpc_admin::ResLoadWorld* response) override {
       abort();
       return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
     }
-    void RequestStop(::grpc::ServerContext* context, ::grpc_admin::ReqStop* request, ::grpc::ServerAsyncResponseWriter< ::grpc_admin::ResStop>* response, ::grpc::CompletionQueue* new_call_cq, ::grpc::ServerCompletionQueue* notification_cq, void *tag) {
-      ::grpc::Service::RequestAsyncUnary(2, context, request, response, new_call_cq, notification_cq, tag);
+    void RequestLoadWorld(::grpc::ServerContext* context, ::grpc_admin::ReqLoadWorld* request, ::grpc::ServerAsyncResponseWriter< ::grpc_admin::ResLoadWorld>* response, ::grpc::CompletionQueue* new_call_cq, ::grpc::ServerCompletionQueue* notification_cq, void *tag) {
+      ::grpc::Service::RequestAsyncUnary(3, context, request, response, new_call_cq, notification_cq, tag);
+    }
+  };
+  template <class BaseClass>
+  class WithAsyncMethod_LoadChain : public BaseClass {
+   private:
+    void BaseClassMustBeDerivedFromService(const Service *service) {}
+   public:
+    WithAsyncMethod_LoadChain() {
+      ::grpc::Service::MarkMethodAsync(4);
+    }
+    ~WithAsyncMethod_LoadChain() override {
+      BaseClassMustBeDerivedFromService(this);
+    }
+    // disable synchronous version of this method
+    ::grpc::Status LoadChain(::grpc::ServerContext* context, const ::grpc_admin::ReqLoadChain* request, ::grpc_admin::ResLoadChain* response) override {
+      abort();
+      return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
+    }
+    void RequestLoadChain(::grpc::ServerContext* context, ::grpc_admin::ReqLoadChain* request, ::grpc::ServerAsyncResponseWriter< ::grpc_admin::ResLoadChain>* response, ::grpc::CompletionQueue* new_call_cq, ::grpc::ServerCompletionQueue* notification_cq, void *tag) {
+      ::grpc::Service::RequestAsyncUnary(4, context, request, response, new_call_cq, notification_cq, tag);
     }
   };
   template <class BaseClass>
@@ -196,7 +276,7 @@ class GruutAdminService final {
     void BaseClassMustBeDerivedFromService(const Service *service) {}
    public:
     WithAsyncMethod_CheckStatus() {
-      ::grpc::Service::MarkMethodAsync(3);
+      ::grpc::Service::MarkMethodAsync(5);
     }
     ~WithAsyncMethod_CheckStatus() override {
       BaseClassMustBeDerivedFromService(this);
@@ -207,23 +287,40 @@ class GruutAdminService final {
       return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
     }
     void RequestCheckStatus(::grpc::ServerContext* context, ::grpc_admin::ReqStatus* request, ::grpc::ServerAsyncResponseWriter< ::grpc_admin::ResStatus>* response, ::grpc::CompletionQueue* new_call_cq, ::grpc::ServerCompletionQueue* notification_cq, void *tag) {
-      ::grpc::Service::RequestAsyncUnary(3, context, request, response, new_call_cq, notification_cq, tag);
+      ::grpc::Service::RequestAsyncUnary(5, context, request, response, new_call_cq, notification_cq, tag);
     }
   };
-  typedef WithAsyncMethod_Setup<WithAsyncMethod_Start<WithAsyncMethod_Stop<WithAsyncMethod_CheckStatus<Service > > > > AsyncService;
+  typedef WithAsyncMethod_SetupKey<WithAsyncMethod_Login<WithAsyncMethod_Start<WithAsyncMethod_LoadWorld<WithAsyncMethod_LoadChain<WithAsyncMethod_CheckStatus<Service > > > > > > AsyncService;
   template <class BaseClass>
-  class WithGenericMethod_Setup : public BaseClass {
+  class WithGenericMethod_SetupKey : public BaseClass {
    private:
     void BaseClassMustBeDerivedFromService(const Service *service) {}
    public:
-    WithGenericMethod_Setup() {
+    WithGenericMethod_SetupKey() {
       ::grpc::Service::MarkMethodGeneric(0);
     }
-    ~WithGenericMethod_Setup() override {
+    ~WithGenericMethod_SetupKey() override {
       BaseClassMustBeDerivedFromService(this);
     }
     // disable synchronous version of this method
-    ::grpc::Status Setup(::grpc::ServerContext* context, const ::grpc_admin::ReqSetup* request, ::grpc_admin::ResSetup* response) override {
+    ::grpc::Status SetupKey(::grpc::ServerContext* context, const ::grpc_admin::ReqSetupKey* request, ::grpc_admin::ResSetupKey* response) override {
+      abort();
+      return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
+    }
+  };
+  template <class BaseClass>
+  class WithGenericMethod_Login : public BaseClass {
+   private:
+    void BaseClassMustBeDerivedFromService(const Service *service) {}
+   public:
+    WithGenericMethod_Login() {
+      ::grpc::Service::MarkMethodGeneric(1);
+    }
+    ~WithGenericMethod_Login() override {
+      BaseClassMustBeDerivedFromService(this);
+    }
+    // disable synchronous version of this method
+    ::grpc::Status Login(::grpc::ServerContext* context, const ::grpc_admin::ReqLogin* request, ::grpc_admin::ResLogin* response) override {
       abort();
       return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
     }
@@ -234,7 +331,7 @@ class GruutAdminService final {
     void BaseClassMustBeDerivedFromService(const Service *service) {}
    public:
     WithGenericMethod_Start() {
-      ::grpc::Service::MarkMethodGeneric(1);
+      ::grpc::Service::MarkMethodGeneric(2);
     }
     ~WithGenericMethod_Start() override {
       BaseClassMustBeDerivedFromService(this);
@@ -246,18 +343,35 @@ class GruutAdminService final {
     }
   };
   template <class BaseClass>
-  class WithGenericMethod_Stop : public BaseClass {
+  class WithGenericMethod_LoadWorld : public BaseClass {
    private:
     void BaseClassMustBeDerivedFromService(const Service *service) {}
    public:
-    WithGenericMethod_Stop() {
-      ::grpc::Service::MarkMethodGeneric(2);
+    WithGenericMethod_LoadWorld() {
+      ::grpc::Service::MarkMethodGeneric(3);
     }
-    ~WithGenericMethod_Stop() override {
+    ~WithGenericMethod_LoadWorld() override {
       BaseClassMustBeDerivedFromService(this);
     }
     // disable synchronous version of this method
-    ::grpc::Status Stop(::grpc::ServerContext* context, const ::grpc_admin::ReqStop* request, ::grpc_admin::ResStop* response) override {
+    ::grpc::Status LoadWorld(::grpc::ServerContext* context, const ::grpc_admin::ReqLoadWorld* request, ::grpc_admin::ResLoadWorld* response) override {
+      abort();
+      return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
+    }
+  };
+  template <class BaseClass>
+  class WithGenericMethod_LoadChain : public BaseClass {
+   private:
+    void BaseClassMustBeDerivedFromService(const Service *service) {}
+   public:
+    WithGenericMethod_LoadChain() {
+      ::grpc::Service::MarkMethodGeneric(4);
+    }
+    ~WithGenericMethod_LoadChain() override {
+      BaseClassMustBeDerivedFromService(this);
+    }
+    // disable synchronous version of this method
+    ::grpc::Status LoadChain(::grpc::ServerContext* context, const ::grpc_admin::ReqLoadChain* request, ::grpc_admin::ResLoadChain* response) override {
       abort();
       return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
     }
@@ -268,7 +382,7 @@ class GruutAdminService final {
     void BaseClassMustBeDerivedFromService(const Service *service) {}
    public:
     WithGenericMethod_CheckStatus() {
-      ::grpc::Service::MarkMethodGeneric(3);
+      ::grpc::Service::MarkMethodGeneric(5);
     }
     ~WithGenericMethod_CheckStatus() override {
       BaseClassMustBeDerivedFromService(this);
@@ -280,23 +394,43 @@ class GruutAdminService final {
     }
   };
   template <class BaseClass>
-  class WithRawMethod_Setup : public BaseClass {
+  class WithRawMethod_SetupKey : public BaseClass {
    private:
     void BaseClassMustBeDerivedFromService(const Service *service) {}
    public:
-    WithRawMethod_Setup() {
+    WithRawMethod_SetupKey() {
       ::grpc::Service::MarkMethodRaw(0);
     }
-    ~WithRawMethod_Setup() override {
+    ~WithRawMethod_SetupKey() override {
       BaseClassMustBeDerivedFromService(this);
     }
     // disable synchronous version of this method
-    ::grpc::Status Setup(::grpc::ServerContext* context, const ::grpc_admin::ReqSetup* request, ::grpc_admin::ResSetup* response) override {
+    ::grpc::Status SetupKey(::grpc::ServerContext* context, const ::grpc_admin::ReqSetupKey* request, ::grpc_admin::ResSetupKey* response) override {
       abort();
       return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
     }
-    void RequestSetup(::grpc::ServerContext* context, ::grpc::ByteBuffer* request, ::grpc::ServerAsyncResponseWriter< ::grpc::ByteBuffer>* response, ::grpc::CompletionQueue* new_call_cq, ::grpc::ServerCompletionQueue* notification_cq, void *tag) {
+    void RequestSetupKey(::grpc::ServerContext* context, ::grpc::ByteBuffer* request, ::grpc::ServerAsyncResponseWriter< ::grpc::ByteBuffer>* response, ::grpc::CompletionQueue* new_call_cq, ::grpc::ServerCompletionQueue* notification_cq, void *tag) {
       ::grpc::Service::RequestAsyncUnary(0, context, request, response, new_call_cq, notification_cq, tag);
+    }
+  };
+  template <class BaseClass>
+  class WithRawMethod_Login : public BaseClass {
+   private:
+    void BaseClassMustBeDerivedFromService(const Service *service) {}
+   public:
+    WithRawMethod_Login() {
+      ::grpc::Service::MarkMethodRaw(1);
+    }
+    ~WithRawMethod_Login() override {
+      BaseClassMustBeDerivedFromService(this);
+    }
+    // disable synchronous version of this method
+    ::grpc::Status Login(::grpc::ServerContext* context, const ::grpc_admin::ReqLogin* request, ::grpc_admin::ResLogin* response) override {
+      abort();
+      return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
+    }
+    void RequestLogin(::grpc::ServerContext* context, ::grpc::ByteBuffer* request, ::grpc::ServerAsyncResponseWriter< ::grpc::ByteBuffer>* response, ::grpc::CompletionQueue* new_call_cq, ::grpc::ServerCompletionQueue* notification_cq, void *tag) {
+      ::grpc::Service::RequestAsyncUnary(1, context, request, response, new_call_cq, notification_cq, tag);
     }
   };
   template <class BaseClass>
@@ -305,7 +439,7 @@ class GruutAdminService final {
     void BaseClassMustBeDerivedFromService(const Service *service) {}
    public:
     WithRawMethod_Start() {
-      ::grpc::Service::MarkMethodRaw(1);
+      ::grpc::Service::MarkMethodRaw(2);
     }
     ~WithRawMethod_Start() override {
       BaseClassMustBeDerivedFromService(this);
@@ -316,27 +450,47 @@ class GruutAdminService final {
       return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
     }
     void RequestStart(::grpc::ServerContext* context, ::grpc::ByteBuffer* request, ::grpc::ServerAsyncResponseWriter< ::grpc::ByteBuffer>* response, ::grpc::CompletionQueue* new_call_cq, ::grpc::ServerCompletionQueue* notification_cq, void *tag) {
-      ::grpc::Service::RequestAsyncUnary(1, context, request, response, new_call_cq, notification_cq, tag);
+      ::grpc::Service::RequestAsyncUnary(2, context, request, response, new_call_cq, notification_cq, tag);
     }
   };
   template <class BaseClass>
-  class WithRawMethod_Stop : public BaseClass {
+  class WithRawMethod_LoadWorld : public BaseClass {
    private:
     void BaseClassMustBeDerivedFromService(const Service *service) {}
    public:
-    WithRawMethod_Stop() {
-      ::grpc::Service::MarkMethodRaw(2);
+    WithRawMethod_LoadWorld() {
+      ::grpc::Service::MarkMethodRaw(3);
     }
-    ~WithRawMethod_Stop() override {
+    ~WithRawMethod_LoadWorld() override {
       BaseClassMustBeDerivedFromService(this);
     }
     // disable synchronous version of this method
-    ::grpc::Status Stop(::grpc::ServerContext* context, const ::grpc_admin::ReqStop* request, ::grpc_admin::ResStop* response) override {
+    ::grpc::Status LoadWorld(::grpc::ServerContext* context, const ::grpc_admin::ReqLoadWorld* request, ::grpc_admin::ResLoadWorld* response) override {
       abort();
       return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
     }
-    void RequestStop(::grpc::ServerContext* context, ::grpc::ByteBuffer* request, ::grpc::ServerAsyncResponseWriter< ::grpc::ByteBuffer>* response, ::grpc::CompletionQueue* new_call_cq, ::grpc::ServerCompletionQueue* notification_cq, void *tag) {
-      ::grpc::Service::RequestAsyncUnary(2, context, request, response, new_call_cq, notification_cq, tag);
+    void RequestLoadWorld(::grpc::ServerContext* context, ::grpc::ByteBuffer* request, ::grpc::ServerAsyncResponseWriter< ::grpc::ByteBuffer>* response, ::grpc::CompletionQueue* new_call_cq, ::grpc::ServerCompletionQueue* notification_cq, void *tag) {
+      ::grpc::Service::RequestAsyncUnary(3, context, request, response, new_call_cq, notification_cq, tag);
+    }
+  };
+  template <class BaseClass>
+  class WithRawMethod_LoadChain : public BaseClass {
+   private:
+    void BaseClassMustBeDerivedFromService(const Service *service) {}
+   public:
+    WithRawMethod_LoadChain() {
+      ::grpc::Service::MarkMethodRaw(4);
+    }
+    ~WithRawMethod_LoadChain() override {
+      BaseClassMustBeDerivedFromService(this);
+    }
+    // disable synchronous version of this method
+    ::grpc::Status LoadChain(::grpc::ServerContext* context, const ::grpc_admin::ReqLoadChain* request, ::grpc_admin::ResLoadChain* response) override {
+      abort();
+      return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
+    }
+    void RequestLoadChain(::grpc::ServerContext* context, ::grpc::ByteBuffer* request, ::grpc::ServerAsyncResponseWriter< ::grpc::ByteBuffer>* response, ::grpc::CompletionQueue* new_call_cq, ::grpc::ServerCompletionQueue* notification_cq, void *tag) {
+      ::grpc::Service::RequestAsyncUnary(4, context, request, response, new_call_cq, notification_cq, tag);
     }
   };
   template <class BaseClass>
@@ -345,7 +499,7 @@ class GruutAdminService final {
     void BaseClassMustBeDerivedFromService(const Service *service) {}
    public:
     WithRawMethod_CheckStatus() {
-      ::grpc::Service::MarkMethodRaw(3);
+      ::grpc::Service::MarkMethodRaw(5);
     }
     ~WithRawMethod_CheckStatus() override {
       BaseClassMustBeDerivedFromService(this);
@@ -356,28 +510,48 @@ class GruutAdminService final {
       return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
     }
     void RequestCheckStatus(::grpc::ServerContext* context, ::grpc::ByteBuffer* request, ::grpc::ServerAsyncResponseWriter< ::grpc::ByteBuffer>* response, ::grpc::CompletionQueue* new_call_cq, ::grpc::ServerCompletionQueue* notification_cq, void *tag) {
-      ::grpc::Service::RequestAsyncUnary(3, context, request, response, new_call_cq, notification_cq, tag);
+      ::grpc::Service::RequestAsyncUnary(5, context, request, response, new_call_cq, notification_cq, tag);
     }
   };
   template <class BaseClass>
-  class WithStreamedUnaryMethod_Setup : public BaseClass {
+  class WithStreamedUnaryMethod_SetupKey : public BaseClass {
    private:
     void BaseClassMustBeDerivedFromService(const Service *service) {}
    public:
-    WithStreamedUnaryMethod_Setup() {
+    WithStreamedUnaryMethod_SetupKey() {
       ::grpc::Service::MarkMethodStreamed(0,
-        new ::grpc::internal::StreamedUnaryHandler< ::grpc_admin::ReqSetup, ::grpc_admin::ResSetup>(std::bind(&WithStreamedUnaryMethod_Setup<BaseClass>::StreamedSetup, this, std::placeholders::_1, std::placeholders::_2)));
+        new ::grpc::internal::StreamedUnaryHandler< ::grpc_admin::ReqSetupKey, ::grpc_admin::ResSetupKey>(std::bind(&WithStreamedUnaryMethod_SetupKey<BaseClass>::StreamedSetupKey, this, std::placeholders::_1, std::placeholders::_2)));
     }
-    ~WithStreamedUnaryMethod_Setup() override {
+    ~WithStreamedUnaryMethod_SetupKey() override {
       BaseClassMustBeDerivedFromService(this);
     }
     // disable regular version of this method
-    ::grpc::Status Setup(::grpc::ServerContext* context, const ::grpc_admin::ReqSetup* request, ::grpc_admin::ResSetup* response) override {
+    ::grpc::Status SetupKey(::grpc::ServerContext* context, const ::grpc_admin::ReqSetupKey* request, ::grpc_admin::ResSetupKey* response) override {
       abort();
       return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
     }
     // replace default version of method with streamed unary
-    virtual ::grpc::Status StreamedSetup(::grpc::ServerContext* context, ::grpc::ServerUnaryStreamer< ::grpc_admin::ReqSetup,::grpc_admin::ResSetup>* server_unary_streamer) = 0;
+    virtual ::grpc::Status StreamedSetupKey(::grpc::ServerContext* context, ::grpc::ServerUnaryStreamer< ::grpc_admin::ReqSetupKey,::grpc_admin::ResSetupKey>* server_unary_streamer) = 0;
+  };
+  template <class BaseClass>
+  class WithStreamedUnaryMethod_Login : public BaseClass {
+   private:
+    void BaseClassMustBeDerivedFromService(const Service *service) {}
+   public:
+    WithStreamedUnaryMethod_Login() {
+      ::grpc::Service::MarkMethodStreamed(1,
+        new ::grpc::internal::StreamedUnaryHandler< ::grpc_admin::ReqLogin, ::grpc_admin::ResLogin>(std::bind(&WithStreamedUnaryMethod_Login<BaseClass>::StreamedLogin, this, std::placeholders::_1, std::placeholders::_2)));
+    }
+    ~WithStreamedUnaryMethod_Login() override {
+      BaseClassMustBeDerivedFromService(this);
+    }
+    // disable regular version of this method
+    ::grpc::Status Login(::grpc::ServerContext* context, const ::grpc_admin::ReqLogin* request, ::grpc_admin::ResLogin* response) override {
+      abort();
+      return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
+    }
+    // replace default version of method with streamed unary
+    virtual ::grpc::Status StreamedLogin(::grpc::ServerContext* context, ::grpc::ServerUnaryStreamer< ::grpc_admin::ReqLogin,::grpc_admin::ResLogin>* server_unary_streamer) = 0;
   };
   template <class BaseClass>
   class WithStreamedUnaryMethod_Start : public BaseClass {
@@ -385,7 +559,7 @@ class GruutAdminService final {
     void BaseClassMustBeDerivedFromService(const Service *service) {}
    public:
     WithStreamedUnaryMethod_Start() {
-      ::grpc::Service::MarkMethodStreamed(1,
+      ::grpc::Service::MarkMethodStreamed(2,
         new ::grpc::internal::StreamedUnaryHandler< ::grpc_admin::ReqStart, ::grpc_admin::ResStart>(std::bind(&WithStreamedUnaryMethod_Start<BaseClass>::StreamedStart, this, std::placeholders::_1, std::placeholders::_2)));
     }
     ~WithStreamedUnaryMethod_Start() override {
@@ -400,24 +574,44 @@ class GruutAdminService final {
     virtual ::grpc::Status StreamedStart(::grpc::ServerContext* context, ::grpc::ServerUnaryStreamer< ::grpc_admin::ReqStart,::grpc_admin::ResStart>* server_unary_streamer) = 0;
   };
   template <class BaseClass>
-  class WithStreamedUnaryMethod_Stop : public BaseClass {
+  class WithStreamedUnaryMethod_LoadWorld : public BaseClass {
    private:
     void BaseClassMustBeDerivedFromService(const Service *service) {}
    public:
-    WithStreamedUnaryMethod_Stop() {
-      ::grpc::Service::MarkMethodStreamed(2,
-        new ::grpc::internal::StreamedUnaryHandler< ::grpc_admin::ReqStop, ::grpc_admin::ResStop>(std::bind(&WithStreamedUnaryMethod_Stop<BaseClass>::StreamedStop, this, std::placeholders::_1, std::placeholders::_2)));
+    WithStreamedUnaryMethod_LoadWorld() {
+      ::grpc::Service::MarkMethodStreamed(3,
+        new ::grpc::internal::StreamedUnaryHandler< ::grpc_admin::ReqLoadWorld, ::grpc_admin::ResLoadWorld>(std::bind(&WithStreamedUnaryMethod_LoadWorld<BaseClass>::StreamedLoadWorld, this, std::placeholders::_1, std::placeholders::_2)));
     }
-    ~WithStreamedUnaryMethod_Stop() override {
+    ~WithStreamedUnaryMethod_LoadWorld() override {
       BaseClassMustBeDerivedFromService(this);
     }
     // disable regular version of this method
-    ::grpc::Status Stop(::grpc::ServerContext* context, const ::grpc_admin::ReqStop* request, ::grpc_admin::ResStop* response) override {
+    ::grpc::Status LoadWorld(::grpc::ServerContext* context, const ::grpc_admin::ReqLoadWorld* request, ::grpc_admin::ResLoadWorld* response) override {
       abort();
       return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
     }
     // replace default version of method with streamed unary
-    virtual ::grpc::Status StreamedStop(::grpc::ServerContext* context, ::grpc::ServerUnaryStreamer< ::grpc_admin::ReqStop,::grpc_admin::ResStop>* server_unary_streamer) = 0;
+    virtual ::grpc::Status StreamedLoadWorld(::grpc::ServerContext* context, ::grpc::ServerUnaryStreamer< ::grpc_admin::ReqLoadWorld,::grpc_admin::ResLoadWorld>* server_unary_streamer) = 0;
+  };
+  template <class BaseClass>
+  class WithStreamedUnaryMethod_LoadChain : public BaseClass {
+   private:
+    void BaseClassMustBeDerivedFromService(const Service *service) {}
+   public:
+    WithStreamedUnaryMethod_LoadChain() {
+      ::grpc::Service::MarkMethodStreamed(4,
+        new ::grpc::internal::StreamedUnaryHandler< ::grpc_admin::ReqLoadChain, ::grpc_admin::ResLoadChain>(std::bind(&WithStreamedUnaryMethod_LoadChain<BaseClass>::StreamedLoadChain, this, std::placeholders::_1, std::placeholders::_2)));
+    }
+    ~WithStreamedUnaryMethod_LoadChain() override {
+      BaseClassMustBeDerivedFromService(this);
+    }
+    // disable regular version of this method
+    ::grpc::Status LoadChain(::grpc::ServerContext* context, const ::grpc_admin::ReqLoadChain* request, ::grpc_admin::ResLoadChain* response) override {
+      abort();
+      return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
+    }
+    // replace default version of method with streamed unary
+    virtual ::grpc::Status StreamedLoadChain(::grpc::ServerContext* context, ::grpc::ServerUnaryStreamer< ::grpc_admin::ReqLoadChain,::grpc_admin::ResLoadChain>* server_unary_streamer) = 0;
   };
   template <class BaseClass>
   class WithStreamedUnaryMethod_CheckStatus : public BaseClass {
@@ -425,7 +619,7 @@ class GruutAdminService final {
     void BaseClassMustBeDerivedFromService(const Service *service) {}
    public:
     WithStreamedUnaryMethod_CheckStatus() {
-      ::grpc::Service::MarkMethodStreamed(3,
+      ::grpc::Service::MarkMethodStreamed(5,
         new ::grpc::internal::StreamedUnaryHandler< ::grpc_admin::ReqStatus, ::grpc_admin::ResStatus>(std::bind(&WithStreamedUnaryMethod_CheckStatus<BaseClass>::StreamedCheckStatus, this, std::placeholders::_1, std::placeholders::_2)));
     }
     ~WithStreamedUnaryMethod_CheckStatus() override {
@@ -439,9 +633,9 @@ class GruutAdminService final {
     // replace default version of method with streamed unary
     virtual ::grpc::Status StreamedCheckStatus(::grpc::ServerContext* context, ::grpc::ServerUnaryStreamer< ::grpc_admin::ReqStatus,::grpc_admin::ResStatus>* server_unary_streamer) = 0;
   };
-  typedef WithStreamedUnaryMethod_Setup<WithStreamedUnaryMethod_Start<WithStreamedUnaryMethod_Stop<WithStreamedUnaryMethod_CheckStatus<Service > > > > StreamedUnaryService;
+  typedef WithStreamedUnaryMethod_SetupKey<WithStreamedUnaryMethod_Login<WithStreamedUnaryMethod_Start<WithStreamedUnaryMethod_LoadWorld<WithStreamedUnaryMethod_LoadChain<WithStreamedUnaryMethod_CheckStatus<Service > > > > > > StreamedUnaryService;
   typedef Service SplitStreamedService;
-  typedef WithStreamedUnaryMethod_Setup<WithStreamedUnaryMethod_Start<WithStreamedUnaryMethod_Stop<WithStreamedUnaryMethod_CheckStatus<Service > > > > StreamedService;
+  typedef WithStreamedUnaryMethod_SetupKey<WithStreamedUnaryMethod_Login<WithStreamedUnaryMethod_Start<WithStreamedUnaryMethod_LoadWorld<WithStreamedUnaryMethod_LoadChain<WithStreamedUnaryMethod_CheckStatus<Service > > > > > > StreamedService;
 };
 
 }  // namespace grpc_admin
