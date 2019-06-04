@@ -1,6 +1,6 @@
 #include "include/chain_plugin.hpp"
 
-namespace gruut {
+namespace tethys {
 
 namespace fs = boost::filesystem;
 
@@ -487,4 +487,4 @@ void ChainPlugin::pluginStart() {
 ChainPlugin::~ChainPlugin() {
   impl.reset();
 }
-} // namespace gruut
+} // namespace tethys

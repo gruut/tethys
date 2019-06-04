@@ -12,7 +12,7 @@
 
 #include "../../../channel_interface/include/channel_interface.hpp"
 
-namespace gruut {
+namespace tethys {
 namespace admin_plugin {
 
 using namespace grpc;
@@ -41,7 +41,7 @@ public:
 template <typename Request, typename Response>
 class AdminService : public CallService {
 public:
-  AdminService(GruutAdminService::AsyncService *admin_service, ServerCompletionQueue *cq)
+  AdminService(TethysAdminService::AsyncService *admin_service, ServerCompletionQueue *cq)
       : service(admin_service), completion_queue(cq), responder(&context) {
     call_status = AdminRpcCallStatus::PROCESS;
   }
@@ -59,7 +59,7 @@ protected:
   Response res;
   ServerAsyncResponseWriter<Response> responder;
 
-  GruutAdminService::AsyncService *service;
+  TethysAdminService::AsyncService *service;
   ServerCompletionQueue *completion_queue;
 
   ServerContext context;
@@ -71,7 +71,7 @@ class SetupKeyService final : public AdminService<ReqSetupKey, ResSetupKey> {
   using super = AdminService<ReqSetupKey, ResSetupKey>;
 
 public:
-  SetupKeyService(GruutAdminService::AsyncService *admin_service, ServerCompletionQueue *cq, string_view setup_port)
+  SetupKeyService(TethysAdminService::AsyncService *admin_service, ServerCompletionQueue *cq, string_view setup_port)
       : super(admin_service, cq), default_setup_port(setup_port) {
     service->RequestSetupKey(&context, &req, &responder, completion_queue, completion_queue, this);
   }
@@ -93,7 +93,7 @@ class LoginService final : public AdminService<ReqLogin, ResLogin> {
   using super = AdminService<ReqLogin, ResLogin>;
 
 public:
-  LoginService(GruutAdminService::AsyncService *admin_service, ServerCompletionQueue *cq) : super(admin_service, cq) {
+  LoginService(TethysAdminService::AsyncService *admin_service, ServerCompletionQueue *cq) : super(admin_service, cq) {
     service->RequestLogin(&context, &req, &responder, completion_queue, completion_queue, this);
   }
 
@@ -107,7 +107,7 @@ class StartService final : public AdminService<ReqStart, ResStart> {
   using super = AdminService<ReqStart, ResStart>;
 
 public:
-  StartService(GruutAdminService::AsyncService *admin_service, ServerCompletionQueue *cq) : super(admin_service, cq) {
+  StartService(TethysAdminService::AsyncService *admin_service, ServerCompletionQueue *cq) : super(admin_service, cq) {
     service->RequestStart(&context, &req, &responder, completion_queue, completion_queue, this);
   }
   void proceed() override;
@@ -117,7 +117,7 @@ class StatusService final : public AdminService<ReqStatus, ResStatus> {
   using super = AdminService<ReqStatus, ResStatus>;
 
 public:
-  StatusService(GruutAdminService::AsyncService *admin_service, ServerCompletionQueue *cq) : super(admin_service, cq) {
+  StatusService(TethysAdminService::AsyncService *admin_service, ServerCompletionQueue *cq) : super(admin_service, cq) {
     service->RequestCheckStatus(&context, &req, &responder, completion_queue, completion_queue, this);
   }
   void proceed() override;
@@ -127,11 +127,11 @@ class LoadWorldService final : public AdminService<ReqLoadWorld, ResLoadWorld> {
   using super = AdminService<ReqLoadWorld, ResLoadWorld>;
 
 public:
-  LoadWorldService(GruutAdminService::AsyncService *admin_service, ServerCompletionQueue *cq) : super(admin_service, cq) {
+  LoadWorldService(TethysAdminService::AsyncService *admin_service, ServerCompletionQueue *cq) : super(admin_service, cq) {
     service->RequestLoadWorld(&context, &req, &responder, completion_queue, completion_queue, this);
   }
   void proceed() override;
 };
 
 } // namespace admin_plugin
-} // namespace gruut
+} // namespace tethys

@@ -2,10 +2,10 @@
 
 #include "../../../../include/json.hpp"
 #include "../../../../lib/appbase/include/application.hpp"
-#include "../../../../lib/gruut-utils/src/ags.hpp"
-#include "../../../../lib/gruut-utils/src/bytes_builder.hpp"
-#include "../../../../lib/gruut-utils/src/sha256.hpp"
-#include "../../../../lib/gruut-utils/src/type_converter.hpp"
+#include "../../../../lib/tethys-utils/src/ags.hpp"
+#include "../../../../lib/tethys-utils/src/bytes_builder.hpp"
+#include "../../../../lib/tethys-utils/src/sha256.hpp"
+#include "../../../../lib/tethys-utils/src/type_converter.hpp"
 #include "../../../../lib/log/include/log.hpp"
 #include "../../channel_interface/include/channel_interface.hpp"
 #include "../structure/block.hpp"
@@ -22,7 +22,7 @@
 
 using namespace appbase;
 
-namespace gruut {
+namespace tethys {
 class ChainPlugin : public Plugin<ChainPlugin> {
 public:
   PLUGIN_REQUIRES()
@@ -47,4 +47,4 @@ public:
 private:
   std::unique_ptr<class ChainPluginImpl> impl;
 };
-} // namespace gruut
+} // namespace tethys

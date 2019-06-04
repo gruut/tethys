@@ -2,7 +2,7 @@ syntax = "proto3";
 
 package grpc_merger;
 
-service GruutMergerService {
+service TethysMergerService {
     rpc MergerService (RequestMsg) returns (MsgStatus) {}
 }
 

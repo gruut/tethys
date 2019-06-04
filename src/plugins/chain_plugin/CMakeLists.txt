@@ -8,9 +8,10 @@ file(GLOB HEADERS
         include/*.hpp
         config/*.hpp
         structure/*.hpp
+        "${CMAKE_CURRENT_SOURCE_DIR}/../../../lib/tethys-utils/src/ags.hpp"
         )
 file(GLOB SOURCES
-        "${CMAKE_CURRENT_SOURCE_DIR}/../../../lib/gruut-utils/src/ags.cpp"
+        "${CMAKE_CURRENT_SOURCE_DIR}/../../../lib/tethys-utils/src/ags.cpp"
         *.cpp
         )
 add_library(chain_plugin
@@ -55,5 +56,5 @@ target_include_directories(
         "${SOCI_INCLUDE_DIR}"
         "${CMAKE_CURRENT_SOURCE_DIR}/../../../lib/appbase"
         "${CMAKE_CURRENT_SOURCE_DIR}/../../../lib/log"
-        "${CMAKE_CURRENT_SOURCE_DIR}/../../../lib/gruut-utils/src"
+        "${CMAKE_CURRENT_SOURCE_DIR}/../../../lib/tethys-utils/src"
         )

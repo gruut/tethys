@@ -3,7 +3,7 @@
 SOURCE_DIR=$(pwd)
 BUILD_DIR="${SOURCE_DIR}/build"
 CMAKE_BUILD_TYPE=Debug
-INSTALL_PREFIX="/usr/local/gruut"
+INSTALL_PREFIX="/usr/local/tethys"
 CMAKE=$(command -v cmake)
 ARCH=$(uname)
 

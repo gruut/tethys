@@ -44,7 +44,7 @@ target_link_libraries(net_plugin
 target_include_directories(net_plugin PUBLIC
         "${CMAKE_CURRENT_SOURCE_DIR}/../../../lib/appbase"
         "${CMAKE_CURRENT_SOURCE_DIR}/../../../lib/log"
-        "${CMAKE_CURRENT_SOURCE_DIR}/../../../lib/gruut-utils/src"
+        "${CMAKE_CURRENT_SOURCE_DIR}/../../../lib/tethys-utils/src"
         "${CMAKE_CURRNET_SOURCE_DIR}/../../../lib/json"
         "${GRUUT_INSTALL_DIR}/include"
         )

@@ -1,7 +1,7 @@
 #include "include/rpc_services.hpp"
-#include "../../../../lib/gruut-utils/src/hmac.hpp"
-#include "../../../../lib/gruut-utils/src/time_util.hpp"
-#include "../../../../lib/gruut-utils/src/type_converter.hpp"
+#include "../../../../lib/tethys-utils/src/hmac.hpp"
+#include "../../../../lib/tethys-utils/src/time_util.hpp"
+#include "../../../../lib/tethys-utils/src/type_converter.hpp"
 #include "../../channel_interface/include/channel_interface.hpp"
 #include "../include/id_mapping_table.hpp"
 #include "../include/message_builder.hpp"
@@ -21,7 +21,7 @@
 #include <thread>
 #include <type_traits>
 
-namespace gruut {
+namespace tethys {
 namespace net_plugin {
 
 using namespace appbase;
@@ -421,7 +421,7 @@ void UserService::proceed() {
                 if (!bucket.empty()) {
                   auto nodes = bucket.selectRandomAliveNodes(PARALLELISM_ALPHA);
                   for (auto &n : nodes) {
-                    auto stub = GruutMergerService::NewStub(n.getChannelPtr());
+                    auto stub = TethysMergerService::NewStub(n.getChannelPtr());
                     stub->MergerService(&context, request, &msg_status);
                   }
                 }
@@ -549,7 +549,7 @@ void MergerService::proceed() {
             if (!bucket.empty()) {
               auto nodes = bucket.selectRandomAliveNodes(PARALLELISM_ALPHA);
               for (auto &n : nodes) {
-                auto stub = GruutMergerService::NewStub(n.getChannelPtr());
+                auto stub = TethysMergerService::NewStub(n.getChannelPtr());
                 stub->MergerService(&context, request, &msg_status);
               }
             }
@@ -614,4 +614,4 @@ void FindNode::proceed() {
 }
 
 } // namespace net_plugin
-} // namespace gruut
+} // namespace tethys

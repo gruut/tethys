@@ -14,7 +14,7 @@
 using namespace appbase;
 using namespace boost::program_options;
 
-namespace gruut {
+namespace tethys {
 class NetPlugin : public Plugin<NetPlugin> {
 public:
   PLUGIN_REQUIRES()
@@ -38,4 +38,4 @@ public:
 private:
   std::unique_ptr<class NetPluginImpl> impl;
 };
-} // namespace gruut
+} // namespace tethys

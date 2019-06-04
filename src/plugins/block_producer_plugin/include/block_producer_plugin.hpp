@@ -12,7 +12,7 @@
 
 using namespace appbase;
 
-namespace gruut {
+namespace tethys {
 class BlockProducerPlugin : public Plugin<BlockProducerPlugin> {
 public:
   PLUGIN_REQUIRES((ChainPlugin)(NetPlugin))
@@ -35,4 +35,4 @@ public:
 private:
   std::unique_ptr<class BlockProducerPluginImpl> impl;
 };
-} // namespace gruut
+} // namespace tethys

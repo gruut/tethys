@@ -4,17 +4,17 @@
 #include <map>
 #include <vector>
 
-#include "../../../../lib/gruut-utils/src/bytes_builder.hpp"
-#include "../../../../lib/gruut-utils/src/sha256.hpp"
-#include "../../../../lib/gruut-utils/src/type_converter.hpp"
+#include "../../../../lib/tethys-utils/src/bytes_builder.hpp"
+#include "../../../../lib/tethys-utils/src/sha256.hpp"
+#include "../../../../lib/tethys-utils/src/type_converter.hpp"
 #include "../config/storage_config.hpp"
 #include "../config/storage_type.hpp"
 #include "../structure/transaction.hpp"
 
 using namespace std;
-using namespace gruut::config;
+using namespace tethys::config;
 
-namespace gruut {
+namespace tethys {
 
 // clang-format off
 const std::map<std::string, std::string> HASH_LOOKUP_B64 = {
@@ -147,6 +147,6 @@ private:
     }
   }
 };
-} // namespace gruut
+} // namespace tethys
 
 #endif

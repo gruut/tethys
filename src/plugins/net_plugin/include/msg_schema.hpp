@@ -5,7 +5,7 @@
 #include <map>
 #include <vector>
 
-namespace gruut {
+namespace tethys {
 namespace net_plugin {
 
 using nlohmann::json_schema_draft4::json_validator;
@@ -805,4 +805,4 @@ public:
 };
 
 } // namespace net_plugin
-} // namespace gruut
+} // namespace tethys

@@ -15,44 +15,44 @@
 #include <grpcpp/impl/codegen/sync_stream.h>
 namespace grpc_merger {
 
-static const char* GruutMergerService_method_names[] = {
-  "/grpc_merger.GruutMergerService/MergerService",
+static const char* TethysMergerService_method_names[] = {
+  "/grpc_merger.TethysMergerService/MergerService",
 };
 
-std::unique_ptr< GruutMergerService::Stub> GruutMergerService::NewStub(const std::shared_ptr< ::grpc::ChannelInterface>& channel, const ::grpc::StubOptions& options) {
+std::unique_ptr< TethysMergerService::Stub> TethysMergerService::NewStub(const std::shared_ptr< ::grpc::ChannelInterface>& channel, const ::grpc::StubOptions& options) {
   (void)options;
-  std::unique_ptr< GruutMergerService::Stub> stub(new GruutMergerService::Stub(channel));
+  std::unique_ptr< TethysMergerService::Stub> stub(new TethysMergerService::Stub(channel));
   return stub;
 }
 
-GruutMergerService::Stub::Stub(const std::shared_ptr< ::grpc::ChannelInterface>& channel)
-  : channel_(channel), rpcmethod_MergerService_(GruutMergerService_method_names[0], ::grpc::internal::RpcMethod::NORMAL_RPC, channel)
+TethysMergerService::Stub::Stub(const std::shared_ptr< ::grpc::ChannelInterface>& channel)
+  : channel_(channel), rpcmethod_MergerService_(TethysMergerService_method_names[0], ::grpc::internal::RpcMethod::NORMAL_RPC, channel)
   {}
 
-::grpc::Status GruutMergerService::Stub::MergerService(::grpc::ClientContext* context, const ::grpc_merger::RequestMsg& request, ::grpc_merger::MsgStatus* response) {
+::grpc::Status TethysMergerService::Stub::MergerService(::grpc::ClientContext* context, const ::grpc_merger::RequestMsg& request, ::grpc_merger::MsgStatus* response) {
   return ::grpc::internal::BlockingUnaryCall(channel_.get(), rpcmethod_MergerService_, context, request, response);
 }
 
-::grpc::ClientAsyncResponseReader< ::grpc_merger::MsgStatus>* GruutMergerService::Stub::AsyncMergerServiceRaw(::grpc::ClientContext* context, const ::grpc_merger::RequestMsg& request, ::grpc::CompletionQueue* cq) {
+::grpc::ClientAsyncResponseReader< ::grpc_merger::MsgStatus>* TethysMergerService::Stub::AsyncMergerServiceRaw(::grpc::ClientContext* context, const ::grpc_merger::RequestMsg& request, ::grpc::CompletionQueue* cq) {
   return ::grpc::internal::ClientAsyncResponseReaderFactory< ::grpc_merger::MsgStatus>::Create(channel_.get(), cq, rpcmethod_MergerService_, context, request, true);
 }
 
-::grpc::ClientAsyncResponseReader< ::grpc_merger::MsgStatus>* GruutMergerService::Stub::PrepareAsyncMergerServiceRaw(::grpc::ClientContext* context, const ::grpc_merger::RequestMsg& request, ::grpc::CompletionQueue* cq) {
+::grpc::ClientAsyncResponseReader< ::grpc_merger::MsgStatus>* TethysMergerService::Stub::PrepareAsyncMergerServiceRaw(::grpc::ClientContext* context, const ::grpc_merger::RequestMsg& request, ::grpc::CompletionQueue* cq) {
   return ::grpc::internal::ClientAsyncResponseReaderFactory< ::grpc_merger::MsgStatus>::Create(channel_.get(), cq, rpcmethod_MergerService_, context, request, false);
 }
 
-GruutMergerService::Service::Service() {
+TethysMergerService::Service::Service() {
   AddMethod(new ::grpc::internal::RpcServiceMethod(
-      GruutMergerService_method_names[0],
+      TethysMergerService_method_names[0],
       ::grpc::internal::RpcMethod::NORMAL_RPC,
-      new ::grpc::internal::RpcMethodHandler< GruutMergerService::Service, ::grpc_merger::RequestMsg, ::grpc_merger::MsgStatus>(
-          std::mem_fn(&GruutMergerService::Service::MergerService), this)));
+      new ::grpc::internal::RpcMethodHandler< TethysMergerService::Service, ::grpc_merger::RequestMsg, ::grpc_merger::MsgStatus>(
+          std::mem_fn(&TethysMergerService::Service::MergerService), this)));
 }
 
-GruutMergerService::Service::~Service() {
+TethysMergerService::Service::~Service() {
 }
 
-::grpc::Status GruutMergerService::Service::MergerService(::grpc::ServerContext* context, const ::grpc_merger::RequestMsg* request, ::grpc_merger::MsgStatus* response) {
+::grpc::Status TethysMergerService::Service::MergerService(::grpc::ServerContext* context, const ::grpc_merger::RequestMsg* request, ::grpc_merger::MsgStatus* response) {
   (void) context;
   (void) request;
   (void) response;

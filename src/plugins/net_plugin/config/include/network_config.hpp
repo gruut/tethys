@@ -4,7 +4,7 @@
 #include <cstddef>
 #include <string>
 
-namespace gruut {
+namespace tethys {
 namespace net_plugin {
 
 constexpr unsigned int PARALLELISM_ALPHA = 3;
@@ -14,4 +14,4 @@ constexpr auto GENERAL_SERVICE_TIMEOUT = std::chrono::milliseconds(100);
 const std::string LOCAL_CHAIN_ID = "LCHAINID"; // 8bytes
 const std::string WORLD_ID = "WORLD-ID";       // 8bytes
 } // namespace net_plugin
-} // namespace gruut
+} // namespace tethys

@@ -12,7 +12,7 @@
 #include <random>
 #include <vector>
 
-namespace gruut {
+namespace tethys {
 namespace net_plugin {
 
 using namespace boost::multiprecision;
@@ -199,4 +199,4 @@ std::ostream &operator<<(std::ostream &out, KBucket const &kb) {
   return out;
 }
 } // namespace net_plugin
-} // namespace gruut
+} // namespace tethys

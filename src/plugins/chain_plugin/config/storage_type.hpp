@@ -6,7 +6,7 @@
 
 using namespace std;
 
-namespace gruut {
+namespace tethys {
 
 enum class LedgerType : bool { USERSCOPE = true, CONTRACTSCOPE = false };
 struct DataType {
@@ -112,5 +112,5 @@ using self_info_type = struct SelfInfo {
   // TODO : may need more info
 };
 
-} // namespace gruut
+} // namespace tethys
 #endif

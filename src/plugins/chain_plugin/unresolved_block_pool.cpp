@@ -1,6 +1,6 @@
 #include "include/unresolved_block_pool.hpp"
 
-namespace gruut {
+namespace tethys {
 
 UnresolvedBlockPool::UnresolvedBlockPool() {
   logger::INFO("Unresolved block pool is created");
@@ -810,4 +810,4 @@ void UnresolvedBlockPool::invalidateCaches() {}
 void UnresolvedBlockPool::backupPool() {}
 nlohmann::json UnresolvedBlockPool::readBackupIds() {}
 
-} // namespace gruut
+} // namespace tethys

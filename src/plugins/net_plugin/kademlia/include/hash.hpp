@@ -21,7 +21,7 @@
 #include <botan-2/botan/base64.h>
 #include <botan-2/botan/hash.h>
 
-namespace gruut {
+namespace tethys {
 namespace net_plugin {
 template <unsigned int BITS>
 class Hash {
@@ -271,4 +271,4 @@ using Hash256 = Hash<256>; // 32 bytes
 using Hash160 = Hash<160>; // 20 bytes
 
 } // namespace net_plugin
-} // namespace gruut
+} // namespace tethys

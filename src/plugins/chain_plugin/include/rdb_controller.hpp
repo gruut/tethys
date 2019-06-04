@@ -11,7 +11,7 @@
 
 using namespace std;
 
-namespace gruut {
+namespace tethys {
 
 class RdbController {
 private:
@@ -34,5 +34,5 @@ public:
   Block getBlock(const string &condition);
   string getUserCert(const base58_type &user_id);
 };
-} // namespace gruut
+} // namespace tethys
 #endif

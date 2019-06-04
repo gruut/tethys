@@ -1,12 +1,12 @@
 #!/bin/bash
 
-../build/gruut -c ../config1.ini &
-../build/gruut -c ../config2.ini &
-../build/gruut -c ../config3.ini &
-../build/gruut -c ../config4.ini &
-../build/gruut -c ../config5.ini &
-../build/gruut -c ../config6.ini &
-../build/gruut -c ../config7.ini &
-../build/gruut -c ../config8.ini &
-../build/gruut -c ../config9.ini &
-../build/gruut -c ../config10.ini &
+../build/tethys -c ../config1.ini &
+../build/tethys -c ../config2.ini &
+../build/tethys -c ../config3.ini &
+../build/tethys -c ../config4.ini &
+../build/tethys -c ../config5.ini &
+../build/tethys -c ../config6.ini &
+../build/tethys -c ../config7.ini &
+../build/tethys -c ../config8.ini &
+../build/tethys -c ../config9.ini &
+../build/tethys -c ../config10.ini &

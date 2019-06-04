@@ -3,7 +3,7 @@
 
 using namespace std;
 
-namespace gruut {
+namespace tethys {
 
 RdbController::RdbController(string_view dbms, string_view table_name, string_view db_user_id, string_view db_password)
     : m_dbms(dbms), m_table_name(table_name), m_db_user_id(db_user_id), m_db_password(db_password),
@@ -60,7 +60,7 @@ bool RdbController::insertBlockData(Block &block) {
   return true;
 }
 
-bool RdbController::insertTransactionData(gruut::Block &block) {
+bool RdbController::insertTransactionData(tethys::Block &block) {
   logger::INFO("insert Transaction Data");
 
   soci::row result;
@@ -203,4 +203,4 @@ string RdbController::getUserCert(const base58_type &user_id) {
 //  }
 //}
 
-} // namespace gruut
+} // namespace tethys

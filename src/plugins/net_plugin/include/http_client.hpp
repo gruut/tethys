@@ -6,7 +6,7 @@
 
 using namespace std;
 
-namespace gruut {
+namespace tethys {
 class HttpClient {
 public:
   HttpClient(const string, const string);
@@ -18,4 +18,4 @@ private:
 
   boost::asio::io_context ioc;
 };
-} // namespace gruut
+} // namespace tethys

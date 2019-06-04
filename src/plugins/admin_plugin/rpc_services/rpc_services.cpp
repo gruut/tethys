@@ -1,7 +1,7 @@
 #include "include/rpc_services.hpp"
 #include "../../../../lib/json/include/json.hpp"
 #include "../../../lib/appbase/include/application.hpp"
-#include "../../../lib/gruut-utils/src/ecdsa.hpp"
+#include "../../../lib/tethys-utils/src/ecdsa.hpp"
 #include "../../../plugins/net_plugin/include/message_parser.hpp"
 #include "../../chain_plugin/include/chain_plugin.hpp"
 #include "../include/command_delegator.hpp"
@@ -34,7 +34,7 @@
     return;                                                                                                                                \
   }
 
-namespace gruut {
+namespace tethys {
 namespace admin_plugin {
 
 namespace fs = boost::filesystem;
@@ -368,4 +368,4 @@ void LoadWorldService::proceed() {
 }
 
 } // namespace admin_plugin
-} // namespace gruut
+} // namespace tethys

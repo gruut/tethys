@@ -4,7 +4,7 @@
 #include <boost/asio/steady_timer.hpp>
 #include <chrono>
 
-namespace gruut {
+namespace tethys {
 
 using namespace std;
 
@@ -215,4 +215,4 @@ BlockProducerPlugin::BlockProducerPlugin() : impl(make_unique<BlockProducerPlugi
 BlockProducerPlugin::~BlockProducerPlugin() {
   impl.reset();
 }
-} // namespace gruut
+} // namespace tethys

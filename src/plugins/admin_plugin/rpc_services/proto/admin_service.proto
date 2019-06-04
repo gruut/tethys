@@ -2,7 +2,7 @@ syntax = "proto3";
 
 package grpc_admin;
 
-service GruutAdminService {
+service TethysAdminService {
     rpc SetupKey (ReqSetupKey) returns (ResSetupKey) {}
     rpc Login (ReqLogin) returns (ResLogin) {}
     rpc Start (ReqStart) returns (ResStart) {}

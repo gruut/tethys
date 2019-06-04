@@ -17,7 +17,7 @@
 #include "../../config/include/network_config.hpp"
 #include "node.hpp"
 
-namespace gruut {
+namespace tethys {
 namespace net_plugin {
 
 constexpr unsigned int KEYSIZE_BITS = 160;
@@ -149,4 +149,4 @@ private:
 std::ostream &operator<<(std::ostream &out, KBucket const &kb);
 
 } // namespace net_plugin
-} // namespace gruut
+} // namespace tethys
