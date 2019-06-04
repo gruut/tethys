@@ -179,6 +179,10 @@ void StateNode::overwriteNode(shared_ptr<StateNode> node) {
   node.reset();
 }
 
+bytes StateNode::getPid() {
+  return m_pid;
+}
+
 shared_ptr<StateNode> StateNode::getLeft() {
   return m_left;
 }
@@ -255,7 +259,12 @@ void StateTree::setupTree(const T &ledger_list) {
   }
 }
 
-void StateTree::updateUserState(const map<string, user_ledger_type> &user_ledger_list) {}
+void StateTree::updateUserState(const map<string, user_ledger_type> &user_ledger_list) {
+  for (auto &each_ledger : user_ledger_list) {
+    StateNode new_node(each_ledger.second);
+    this->addNode(TypeConverter::bytesToString(each_ledger.second.pid), new_node);
+  }
+}
 
 void StateTree::updateContractState(const map<string, contract_ledger_type> &contract_ledger_list) {}
 
@@ -320,6 +329,9 @@ void StateTree::addNode(uint32_t new_path, shared_ptr<StateNode> new_node) {
     old_node = node;
     old_path = old_node->getDebugPath();
 
+    if(old_node->getPid() == new_node->getPid())
+      modifyNode(new_node);
+
     // 먼저 충돌난 곳에 dummy 노드 생성해서 연결
     dummy = make_shared<StateNode>();
     stk.push(dummy);
@@ -378,10 +390,8 @@ void StateTree::addNode(uint32_t new_path, shared_ptr<StateNode> new_node) {
   ++m_size;
 }
 
-void StateTree::modifyNode(uint32_t path, LedgerRecord &data) {
-  shared_ptr<StateNode> node = getMerkleNode(path);
-
-  node->setNodeInfo(data);
+void StateTree::modifyNode(shared_ptr<StateNode> node) {
+  node->setNodeInfo(node);
 
   // 머클 루트까지 re-hashing
   while (!stk.empty()) {
@@ -532,8 +542,8 @@ void StateTree::printTreePostOrder() {
   postOrder(root, isPrint);
 
   if (isPrint) {
-    printf("root Value: %s\n", TypeConverter::encodeBase<64>(TypeConverter::bytesToString(root->getValue()));
-    printf("*********** finish traversal ***********\n");
+//    printf("root Value: %s\n", TypeConverter::encodeBase<64>(TypeConverter::bytesToString(root->getValue())));
+//    printf("*********** finish traversal ***********\n");
   }
 }
 

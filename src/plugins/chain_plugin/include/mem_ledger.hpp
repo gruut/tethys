@@ -34,6 +34,7 @@ ostream &operator<<(ostream &os, vector<uint8_t> &value);
 
 class StateNode {
 private:
+  bytes m_pid;
   shared_ptr<StateNode> m_left;
   shared_ptr<StateNode> m_right;
   vector<uint8_t> m_hash_value;
@@ -72,6 +73,7 @@ public:
   void setNodeInfo(LedgerRecord &data);
   void overwriteNode(shared_ptr<StateNode> node);
 
+  bytes getPid();
   shared_ptr<StateNode> getLeft();
   shared_ptr<StateNode> getRight();
   uint32_t getSuffix();
@@ -110,8 +112,8 @@ public:
   void setupTree(const T &ledger_list);
   void updateUserState(const map<string, user_ledger_type> &user_ledger_list);
   void updateContractState(const map<string, contract_ledger_type> &contract_ledger_list);
-  void addNode(uint32_t new_path, shared_ptr<StateNode> node);
-  void modifyNode(uint32_t path, LedgerRecord &data);
+  void addNode(uint32_t new_path, shared_ptr<StateNode> new_node);
+  void modifyNode(shared_ptr<StateNode> node);
   void removeNode(uint32_t path);
   shared_ptr<StateNode> getMerkleNode(uint32_t _path);
   vector<vector<uint8_t>> getSiblings(uint32_t _path);
