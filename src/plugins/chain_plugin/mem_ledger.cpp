@@ -525,4 +525,20 @@ void StateTree::printTreePostOrder() {
   }
 }
 
+uint64_t StateTree::getSize() {
+  return m_size;
+}
+
+vector<uint8_t> StateTree::getRootValue() {
+  return root->getValue();
+}
+
+shared_ptr<StateNode> StateTree::getRoot() {
+  return root;
+}
+
+stack<shared_ptr<StateNode>> StateTree::getStack() {
+  return stk;
+}
+
 } // namespace gruut

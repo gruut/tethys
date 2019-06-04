@@ -28,13 +28,13 @@ private:
 public:
   RdbController(string_view dbms, string_view table_name, string_view db_user_id, string_view db_password);
   soci::connection_pool &pool();
-  bool applyBlock(Block &block);
-  bool applyTransaction(Block &block);
-  bool applyUserLedger(std::map<string, user_ledger_type> &user_ledger_list);
-  bool applyContractLedger(std::map<string, contract_ledger_type> &contract_ledger_list);
-  bool applyUserAttribute(std::map<base58_type, user_attribute_type> &user_attribute_list);
-  bool applyUserCert(std::map<base58_type, user_cert_type> &user_cert_list);
-  bool applyContract(std::map<base58_type, contract_type> &contract_list);
+  bool applyBlockToRDB(const Block &block);
+  bool applyTransactionToRDB(const Block &block);
+  bool applyUserLedgerToRDB(const map<string, user_ledger_type> &user_ledger_list);
+  bool applyContractLedgerToRDB(const map<string, contract_ledger_type> &contract_ledger_list);
+  bool applyUserAttributeToRDB(const map<base58_type, user_attribute_type> &user_attribute_list);
+  bool applyUserCertToRDB(const map<base58_type, user_cert_type> &user_cert_list);
+  bool applyContractToRDB(const map<base58_type, contract_type> &contract_list);
 
   vector<Block> getBlocks(const string &condition);
   Block getBlock(const string &condition);

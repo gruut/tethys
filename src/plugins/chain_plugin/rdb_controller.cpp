@@ -19,7 +19,7 @@ soci::connection_pool &RdbController::pool() {
   return m_db_pool;
 }
 
-bool RdbController::applyBlock(Block &block) {
+bool RdbController::applyBlockToRDB(const Block &block) {
   logger::INFO("insert Block Data");
 
   soci::row result;
@@ -54,13 +54,13 @@ bool RdbController::applyBlock(Block &block) {
     logger::ERROR("MySQL error: {}", e.what());
     return false;
   } catch (...) {
-    logger::ERROR("Unexpected error at `applyBlock`");
+    logger::ERROR("Unexpected error at `applyBlockToRDB`");
     return false;
   }
   return true;
 }
 
-bool RdbController::applyTransaction(Block &block) {
+bool RdbController::applyTransactionToRDB(const Block &block) {
   logger::INFO("insert Transaction Data");
 
   soci::row result;
@@ -90,13 +90,13 @@ bool RdbController::applyTransaction(Block &block) {
       logger::ERROR("MySQL error: {}", e.what());
       return false;
     } catch (...) {
-      logger::ERROR("Unexpected error at `applyTransaction`");
+      logger::ERROR("Unexpected error at `applyTransactionToRDB`");
       return false;
     }
   return true;
 }
 
-bool RdbController::applyUserLedger(std::map<string, user_ledger_type> &user_ledger_list) {
+bool RdbController::applyUserLedgerToRDB(const map<string, user_ledger_type> &user_ledger_list) {
   try {
     string var_name;
     string var_val;
@@ -129,7 +129,7 @@ bool RdbController::applyUserLedger(std::map<string, user_ledger_type> &user_led
                 soci::use(var_name, "var_name"), soci::use(var_val, "var_value"), soci::use(tag, "tag"),
                 soci::into(result));
       } else
-        logger::ERROR("Error at applyUserLedger");
+        logger::ERROR("Error at applyUserLedgerToRDB");
       // clang-format on
 
       st.execute(true);
@@ -138,13 +138,13 @@ bool RdbController::applyUserLedger(std::map<string, user_ledger_type> &user_led
     logger::ERROR("MySQL error: {}", e.what());
     return false;
   } catch (...) {
-    logger::ERROR("Unexpected error at applyUserLedger");
+    logger::ERROR("Unexpected error at applyUserLedgerToRDB");
     return false;
   }
   return true;
 }
 
-bool RdbController::applyContractLedger(std::map<string, contract_ledger_type> &contract_ledger_list) {
+bool RdbController::applyContractLedgerToRDB(const map<string, contract_ledger_type> &contract_ledger_list) {
   try {
     string var_name;
     string var_val;
@@ -177,7 +177,7 @@ bool RdbController::applyContractLedger(std::map<string, contract_ledger_type> &
             soci::use(var_name, "var_name"), soci::use(var_val, "var_value"), soci::use(tag, "tag"),
             soci::into(result));
       } else
-        logger::ERROR("Error at applyContractLedger");
+        logger::ERROR("Error at applyContractLedgerToRDB");
       // clang-format on
 
       st.execute(true);
@@ -186,13 +186,13 @@ bool RdbController::applyContractLedger(std::map<string, contract_ledger_type> &
     logger::ERROR("MySQL error: {}", e.what());
     return false;
   } catch (...) {
-    logger::ERROR("Unexpected error at applyContractLedger");
+    logger::ERROR("Unexpected error at applyContractLedgerToRDB");
     return false;
   }
   return true;
 }
 
-bool RdbController::applyUserAttribute(std::map<base58_type, user_attribute_type> &user_attribute_list) {
+bool RdbController::applyUserAttributeToRDB(const map<base58_type, user_attribute_type> &user_attribute_list) {
   try {
     base58_type uid;
     timestamp_t register_day;
@@ -224,7 +224,7 @@ bool RdbController::applyUserAttribute(std::map<base58_type, user_attribute_type
             soci::use(var_name, "var_name"), soci::use(var_val, "var_value"), soci::use(tag, "tag"),
             soci::into(result));
       } else
-        logger::ERROR("Error at applyUserAttribute");
+        logger::ERROR("Error at applyUserAttributeToRDB");
       // clang-format on
 
       st.execute(true);
@@ -233,13 +233,13 @@ bool RdbController::applyUserAttribute(std::map<base58_type, user_attribute_type
     logger::ERROR("MySQL error: {}", e.what());
     return false;
   } catch (...) {
-    logger::ERROR("Unexpected error at applyUserAttribute");
+    logger::ERROR("Unexpected error at applyUserAttributeToRDB");
     return false;
   }
   return true;
 }
 
-bool RdbController::applyUserCert(std::map<base58_type, user_cert_type> &user_cert_list) {
+bool RdbController::applyUserCertToRDB(const map<base58_type, user_cert_type> &user_cert_list) {
   try {
     base58_type uid;
     string sn;
@@ -267,7 +267,7 @@ bool RdbController::applyUserCert(std::map<base58_type, user_cert_type> &user_ce
             soci::use(var_name, "var_name"), soci::use(var_val, "var_value"), soci::use(tag, "tag"),
             soci::into(result));
       } else
-        logger::ERROR("Error at applyUserCert");
+        logger::ERROR("Error at applyUserCertToRDB");
       // clang-format on
 
       st.execute(true);
@@ -276,13 +276,13 @@ bool RdbController::applyUserCert(std::map<base58_type, user_cert_type> &user_ce
     logger::ERROR("MySQL error: {}", e.what());
     return false;
   } catch (...) {
-    logger::ERROR("Unexpected error at applyUserCert");
+    logger::ERROR("Unexpected error at applyUserCertToRDB");
     return false;
   }
   return true;
 }
 
-bool RdbController::applyContract(std::map<base58_type, contract_type> &contract_list) {
+bool RdbController::applyContractToRDB(const map<base58_type, contract_type> &contract_list) {
   try {
     contract_id_type cid;
     timestamp_t after;
@@ -315,7 +315,7 @@ bool RdbController::applyContract(std::map<base58_type, contract_type> &contract
             soci::use(var_name, "var_name"), soci::use(var_val, "var_value"), soci::use(tag, "tag"),
             soci::into(result));
       } else
-        logger::ERROR("Error at applyContract");
+        logger::ERROR("Error at applyContractToRDB");
       // clang-format on
 
       st.execute(true);
@@ -324,7 +324,7 @@ bool RdbController::applyContract(std::map<base58_type, contract_type> &contract
     logger::ERROR("MySQL error: {}", e.what());
     return false;
   } catch (...) {
-    logger::ERROR("Unexpected error at applyContract");
+    logger::ERROR("Unexpected error at applyContractToRDB");
     return false;
   }
   return true;

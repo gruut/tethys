@@ -97,8 +97,6 @@ private:
   // 반환 값이 false 면 left 방향이고 true 면 right 방향임
   bool getDirectionOf(uint32_t path, int pos);
   void visit(shared_ptr<StateNode> node, bool isPrint);
-
-  // tree post-order 순회 재귀함수
   void postOrder(shared_ptr<StateNode> node, bool isPrint = true);
 
 public:
@@ -113,23 +111,12 @@ public:
   shared_ptr<StateNode> getMerkleNode(uint32_t _path);
   vector<vector<uint8_t>> getSiblings(uint32_t _path);
 
-  // Debugging
   void printTreePostOrder();
-  // setter
-  // void setSize(uint64_t _size) { m_size = _size; }
 
-  uint64_t getSize() {
-    return m_size;
-  }
-  vector<uint8_t> getRootValue() {
-    return root->getValue();
-  }
-  shared_ptr<StateNode> getRoot() {
-    return root;
-  }
-  stack<shared_ptr<StateNode>> getStack() {
-    return stk;
-  }
+  uint64_t getSize();
+  vector<uint8_t> getRootValue();
+  shared_ptr<StateNode> getRoot();
+  stack<shared_ptr<StateNode>> getStack();
 };
 
 } // namespace gruut

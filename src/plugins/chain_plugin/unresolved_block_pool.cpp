@@ -16,8 +16,40 @@ void UnresolvedBlockPool::setPool(const base64_type &last_block_id, block_height
   m_latest_confirmed_prev_id = prev_block_id;
 }
 
+inline int32_t UnresolvedBlockPool::size() {
+  return m_block_pool.size();
+}
+
+inline bool UnresolvedBlockPool::empty() {
+  return m_block_pool.empty();
+}
+
+inline void UnresolvedBlockPool::clear() {
+  m_block_pool.clear();
+}
+
+base58_type UnresolvedBlockPool::getLatestConfirmedId() {
+  return m_latest_confirmed_id;
+}
+
+block_height_type UnresolvedBlockPool::getLatestConfirmedHeight() {
+  return m_latest_confirmed_height;
+}
+
+timestamp_t UnresolvedBlockPool::getLatestConfiremdTime() {
+  return m_latest_confirmed_time;
+}
+
+base64_type UnresolvedBlockPool::getLatestConfiremdHash() {
+  return m_latest_confirmed_hash;
+}
+
+base58_type UnresolvedBlockPool::getLatestConfiremdPrevId() {
+  return m_latest_confirmed_prev_id;
+}
+
 // 블록이 push될 때마다 실행되는 함수. pool이 되는 벡터를 resize 하는 등의 컨트롤을 한다.
-bool UnresolvedBlockPool::prepareBins(block_height_type t_height) {
+bool UnresolvedBlockPool::prepareDeque(block_height_type t_height) {
   std::lock_guard<std::recursive_mutex> guard(m_push_mutex);
   if (m_latest_confirmed_height >= t_height) {
     return false;
@@ -27,9 +59,9 @@ bool UnresolvedBlockPool::prepareBins(block_height_type t_height) {
     return false;
   }
 
-  int bin_pos = static_cast<int>(t_height - m_latest_confirmed_height) - 1; // deque에서 위치하는 인덱스. e.g., 0 = 2 - 1 - 1
-  if (m_block_pool.size() < bin_pos + 1) {
-    m_block_pool.resize(bin_pos + 1);
+  int deq_idx = static_cast<int>(t_height - m_latest_confirmed_height) - 1; // deque에서 위치하는 인덱스. e.g., 0 = 2 - 1 - 1
+  if (m_block_pool.size() < deq_idx + 1) {
+    m_block_pool.resize(deq_idx + 1);
   }
 
   return true;
@@ -46,11 +78,11 @@ ubp_push_result_type UnresolvedBlockPool::pushBlock(Block &block, bool is_restor
 
   block_height_type block_height = block.getHeight();
 
-  int bin_idx = static_cast<int>(block_height - m_latest_confirmed_height) - 1; // e.g., 0 = 2 - 1 - 1
-  if (!prepareBins(block_height))
+  int deq_idx = static_cast<int>(block_height - m_latest_confirmed_height) - 1; // e.g., 0 = 2 - 1 - 1
+  if (!prepareDeque(block_height))
     return ret_val;
 
-  for (auto &each_block : m_block_pool[bin_idx]) {
+  for (auto &each_block : m_block_pool[deq_idx]) {
     if (each_block.block == block) {
       ret_val.height = block_height;
       ret_val.duplicated = true;
@@ -58,40 +90,40 @@ ubp_push_result_type UnresolvedBlockPool::pushBlock(Block &block, bool is_restor
     }
   }
 
-  int prev_queue_idx = -1; // no previous
+  int prev_vec_idx = -1; // no previous
 
-  if (bin_idx > 0) { // if there is previous bin
+  if (deq_idx > 0) { // if there is previous bin
     int idx = 0;
-    for (auto &each_block : m_block_pool[bin_idx - 1]) {
+    for (auto &each_block : m_block_pool[deq_idx - 1]) {
       if (each_block.block.getBlockId() == block.getPrevBlockId()) {
-        prev_queue_idx = static_cast<int>(idx);
+        prev_vec_idx = static_cast<int>(idx);
         break;
       }
       ++idx;
     }
   } else { // no previous
     if (block.getPrevBlockId() == m_latest_confirmed_id) {
-      prev_queue_idx = 0;
+      prev_vec_idx = 0;
     } else {
       logger::ERROR("drop block -- this is not linkable block!");
       return ret_val;
     }
   }
 
-  int queue_idx = m_block_pool[bin_idx].size();
+  int vec_idx = m_block_pool[deq_idx].size();
 
-  m_block_pool[bin_idx].emplace_back(block, prev_queue_idx); // pool에 블록 추가
+  m_block_pool[deq_idx].emplace_back(block, prev_vec_idx); // pool에 블록 추가
 
   ret_val.height = block_height;
 
   if (!is_restore)
     backupPool();
 
-  if (bin_idx + 1 < m_block_pool.size()) { // if there is next bin
-    for (auto &each_block : m_block_pool[bin_idx + 1]) {
+  if (deq_idx + 1 < m_block_pool.size()) { // if there is next bin
+    for (auto &each_block : m_block_pool[deq_idx + 1]) {
       if (each_block.block.getPrevBlockId() == block.getBlockId()) {
         if (each_block.prev_vector_idx < 0) {
-          each_block.prev_vector_idx = queue_idx;
+          each_block.prev_vector_idx = vec_idx;
         }
       }
     }
@@ -110,128 +142,45 @@ UnresolvedBlock UnresolvedBlockPool::findBlock(const base58_type &block_id, cons
     }
   }
 
-  logger::ERROR("Cannot found block" + block_id + " " + to_string(block_height));
+  logger::ERROR("Cannot found block in pool " + block_id + " " + to_string(block_height));
   return UnresolvedBlock{};
 }
 
-UnresolvedBlock UnresolvedBlockPool::getBlock(int pool_deque_idx, int pool_vec_idx) {
-  return m_block_pool[pool_deque_idx][pool_vec_idx];
+UnresolvedBlock UnresolvedBlockPool::getBlock(int pool_deq_idx, int pool_vec_idx) {
+  return m_block_pool[pool_deq_idx][pool_vec_idx];
 }
 
-void UnresolvedBlockPool::moveHead(const base64_type &target_block_id_b64, const block_height_type target_block_height) {
-  if (!target_block_id_b64.empty()) {
-    // latest_confirmed의 height가 10이었고, 현재 옮기려는 타겟의 height가 12라면 m_block_pool[1]에 있어야 한다
-    int target_height = target_block_height;
-    int target_bin_idx = static_cast<int>(target_block_height - m_latest_confirmed_height) - 1;
-    int target_queue_idx = -1;
+vector<int> UnresolvedBlockPool::getLine(const base58_type &block_id, const block_height_type block_height) {
+  vector<int> line;
+  if (!block_id.empty()) {
+    // latest_confirmed의 height가 10이었고, 현재 line을 구하려는 블록의 height가 12라면 vector size는 2이다
+    int vec_size = static_cast<int>(block_height - m_latest_confirmed_height);
+    line.resize(vec_size, -1);
 
-    // new_head를 pool에서 어디에 있는지 찾음
-    for (int i = 0; i < m_block_pool[target_bin_idx].size(); ++i) {
-      if (target_block_id_b64 == m_block_pool[target_bin_idx][i].block.getBlockId()) {
-        target_queue_idx = static_cast<int>(i);
+    int current_deq_idx = static_cast<int>(block_height - m_latest_confirmed_height) - 1;
+    int current_vec_idx = -1;
+
+    for (int i = 0; i < m_block_pool[current_deq_idx].size(); ++i) {
+      if (block_id == m_block_pool[current_deq_idx][i].block.getBlockId()) {
+        current_vec_idx = static_cast<int>(i);
         break;
       }
     }
 
-    // 현재 head부터 confirmed까지의 경로 구함 -> vector를 resize해서 depth에 맞춰서 집어넣음
-    // latest_confirmed의 height가 10이었고, 현재 head의 height가 11이라면 m_block_pool[0]에 있어야 한다
-    int current_height = static_cast<int>(m_head_height);
-    int current_bin_idx = m_head_bin_idx;
-    int current_queue_idx = m_head_queue_idx;
+    line[current_deq_idx] = current_vec_idx;
 
-    if (target_queue_idx == -1 || current_queue_idx == -1) {
-      logger::ERROR("URBP, Something error in move_head() - Cannot find pool element");
-      return;
+    while (current_deq_idx > 0) {
+      current_vec_idx = m_block_pool[current_deq_idx][current_vec_idx].prev_vector_idx;
+      current_deq_idx--;
+
+      line[current_deq_idx] = current_vec_idx;
     }
 
-    // height가 높은 쪽을 아래로 가지고 내려오고, height가 같아지면 서로 하나씩 내려가며 비교
-    int back_count = 0;
-    int front_count = 0;
-    std::deque<pair<int, int>> where_to_go;
-    where_to_go.clear();
-
-    while (target_height != current_height) {
-      if (target_height > current_height) {
-        where_to_go.emplace_front(target_bin_idx, target_queue_idx);
-        target_queue_idx = m_block_pool[target_bin_idx][target_queue_idx].prev_vector_idx;
-        target_height--;
-        target_bin_idx--;
-
-        front_count++;
-      } else if (target_height < current_height) {
-        current_queue_idx = m_block_pool[current_bin_idx][current_queue_idx].prev_vector_idx;
-        current_height--;
-        current_bin_idx--;
-
-        back_count++;
-      }
+    if (m_block_pool[current_deq_idx][current_vec_idx].prev_vector_idx != 0) {
+      logger::ERROR("This block is not linked!");
+      line.resize(1, -1);
     }
-
-    while ((target_bin_idx != current_bin_idx) || (target_queue_idx != current_queue_idx)) {
-      where_to_go.emplace_front(target_bin_idx, target_queue_idx);
-      target_queue_idx = m_block_pool[target_bin_idx][target_queue_idx].prev_vector_idx;
-      target_height--;
-      target_bin_idx--;
-      front_count++;
-
-      current_queue_idx = m_block_pool[current_bin_idx][current_queue_idx].prev_vector_idx;
-      current_height--;
-      current_bin_idx--;
-      back_count++;
-
-      if (target_bin_idx < -1 || current_bin_idx < -1) {
-        logger::ERROR("URBP, Something error in move_head() - Find common ancestor(1)");
-        return; // 나중에 예외처리 한 번 더 살필 것
-      }
-    }
-
-    if (target_bin_idx == -1 && current_bin_idx == -1) {
-      if (target_queue_idx != 0 || current_queue_idx != 0) {
-        logger::ERROR("URBP, Something error in move_head() - Find common ancestor(2)");
-        return;
-      }
-    } else if (m_block_pool[target_bin_idx][target_queue_idx].block.getBlockId() !=
-               m_block_pool[current_bin_idx][current_queue_idx].block.getBlockId()) {
-      logger::ERROR("URBP, Something error in move_head() - Find common ancestor(2)");
-      return;
-    }
-
-    current_height = static_cast<int>(m_head_height);
-    current_bin_idx = m_head_bin_idx;
-    current_queue_idx = m_head_queue_idx;
-
-    for (int i = 0; i < back_count; i++) {
-      current_queue_idx = m_block_pool[current_bin_idx][current_queue_idx].prev_vector_idx;
-      current_bin_idx--;
-      current_height--;
-
-      // TODO: Something in ledger process, state tree process
-    }
-
-    for (auto &deque_front : where_to_go) {
-      if (current_bin_idx + 1 != deque_front.first) {
-        logger::ERROR("URBP, Something height error in move_head() - go front");
-        return;
-      }
-      current_bin_idx = deque_front.first;
-      current_queue_idx = deque_front.second;
-      current_height++; // = m_block_pool[current_bin_idx][current_queue_idx].block.getHeight()
-
-      m_block_pool[current_bin_idx][current_queue_idx];
-      // TODO: Something in ledger process, state tree process
-    }
-
-    m_head_id = m_block_pool[m_head_bin_idx][m_head_queue_idx].block.getBlockId();
-    m_head_height = current_height;
-    m_head_bin_idx = current_bin_idx;
-    m_head_queue_idx = current_queue_idx;
-
-    if (m_block_pool[m_head_bin_idx][m_head_queue_idx].block.getHeight() != m_head_height) {
-      logger::ERROR("URBP, Something error in move_head() - end part, check height");
-      return;
-    }
-
-    // TODO: missing link 등에 대한 예외처리를 추가해야 할 필요 있음
+    return line;
   }
 }
 
@@ -325,322 +274,7 @@ void UnresolvedBlockPool::updateTotalNumSSig() {
   }
 }
 
-void UnresolvedBlockPool::setupStateTree() {
-  // RDB에 있는 모든 엔트리를 불러와서 state tree를 작성
-  m_us_tree.addNode(entry);
-  m_cs_tree.addNode(entry);
-}
-
-bytes UnresolvedBlockPool::getUserStateRoot() {
-  return m_us_tree.getRootValue();
-}
-
-bytes UnresolvedBlockPool::getContractStateRoot() {
-  return m_cs_tree.getRootValue();
-}
-
-user_ledger_type UnresolvedBlockPool::findUserLedgerFromHead(string key) {
-  if (m_us_tree.getMerkleNode(stoi(key)) == nullptr) {
-    user_ledger_type empty_ledger;
-    empty_ledger.is_empty = true;
-    return empty_ledger;
-  } else
-    return m_us_tree.getMerkleNode(stoi(key))->getUserLedger();
-}
-
-contract_ledger_type UnresolvedBlockPool::findContractLedgerFromHead(string key) {
-  if (m_cs_tree.getMerkleNode(stoi(key)) == nullptr) {
-    contract_ledger_type empty_ledger;
-    empty_ledger.is_empty = true;
-    return empty_ledger;
-  } else
-    return m_cs_tree.getMerkleNode(stoi(key))->getContractLedger();
-}
-
 // ------------------------------------------------------------------
-//
-//// block 을 한줄씩 읽으며 데이터와 머클트리 갱신, m_current_layer 갱신
-// void KvController::parseBlockToLayer(Block block) {
-//  int res;
-//  Value value;
-//  cout << "parseBlockToLayer function..." << endl;
-//  for (auto transaction : block.m_transaction) {
-//    cout << transaction << endl;
-//    if (transaction["command"] == "add") {
-//      res = addCommand(transaction, value);
-//    } else if (transaction["command"] == "send") {
-//      res = sendCommand(transaction);
-//    } else if (transaction["command"] == "new") {
-//      res = newCommand(transaction);
-//    } else if (transaction["command"] == "del") {
-//      res = delCommand(transaction);
-//    } else {
-//      cout << "[ERROR] KvController::parseBlockToLayer - can't analyze transaction - " << transaction << endl;
-//      continue;
-//    }
-//
-//    // command 성공 시
-//    if (!res) {
-//      cout << transaction << " Success." << endl;
-//    } else if (res == COIN_VALUE) {
-//      cout << transaction << " Failed. command make value under zero." << endl;
-//    }
-//  }
-//  //            m_current_layer.m_layer_tree;
-//  //            m_current_layer.m_temporary_data;
-//  //            m_current_layer.transaction;
-//}
-//
-// int KvController::addCommand(json transaction, Value &val) {
-//  int status = SUCCESS;
-//  string block_id = transaction["block_id"];
-//  string to_user_id = transaction["to_user_id"];
-//  string to_var_type = transaction["to_var_type"];
-//  string to_var_name = transaction["to_var_name"];
-//  int value = transaction["value"];
-//  bool isCurrent = false;
-//
-//  Key key(block_id, to_user_id, to_var_type, to_var_name);
-//  map<Key, Value>::iterator it;
-//  int depth = checkLayer(key);
-//
-//  test_data modified_data;
-//
-//  if (depth == NO_DATA) {
-//    cout << "[ERROR] KvController::addCommand() - Can't find data" << endl;
-//    status = DATA_NOT_EXIST;
-//  } else {
-//    if (depth == DB_DATA) {
-//      // DB 연결해서 데이터 읽어온 뒤, add 명령어 반영한 데이터를 m_current_layer 에  저장
-//      cout << key << " in the DB" << endl;
-//      pair<int, vector<string>> data = m_server.selectAllUsingUserIdVarTypeVarName(to_user_id, to_var_type, to_var_name);
-//      val.var_value = data.second[VAR_VALUE];
-//      val.path = (uint32_t)stoul(data.second[PATH]);
-//      val.isDeleted = false;
-//    } else if (depth == CUR_DATA) {
-//      // m_current_layer 에 있는 데이터를 읽어온 뒤, add 명령어 반영한 데이터를 다시 m_current_layer 에 저장
-//      cout << key << " in the m_current_layer" << endl;
-//
-//      it = m_current_layer.m_temporary_data.find(key);
-//      val = it->second;
-//
-//      isCurrent = true;
-//
-//    } else {
-//      // m_layer[depth] 에 있는 데이터를 읽어온 뒤, add 명령어 반영한 데이터를 m_current_layer 에 저장
-//      cout << key << " in the m_layer[" << depth << "]" << endl;
-//
-//      it = m_layer[depth].m_temporary_data.find(key);
-//      val = it->second;
-//    }
-//    // Q. add 명령어이면 무조건 var_value 는 정수형인가?
-//    val.var_value = to_string(stoi(val.var_value) + value);
-//
-//    if (stoi(val.var_value) < 0) {
-//      val.var_value = to_string(stoi(val.var_value) - value);
-//      status = COIN_VALUE;
-//    } else {
-//      // modified_data.record_id = data.first;
-//      modified_data.user_id = key.user_id;
-//      modified_data.var_type = key.var_type;
-//      modified_data.var_name = key.var_name;
-//      modified_data.var_value = val.var_value;
-//
-//      m_tree.modifyNode(val.path, modified_data);         // merkle tree 의 노드 수정
-//      m_current_layer.transaction.push_back(transaction); // 반영된 transaction 보관
-//      if (isCurrent) // current layer 에 존재하던 데이터라면, current layer 의 데이터를 수정
-//        it->second.var_value = val.var_value;
-//      else // DB, m_layer[depth] 에 존재하던 데이터라면, current layer 에 수정된 데이터를 삽입
-//        m_current_layer.m_temporary_data.insert(make_pair(key, val));
-//    }
-//  }
-//
-//  return status;
-//}
-//
-// int KvController::sendCommand(json transaction) {
-//  int status = SUCCESS;
-//  string block_id = transaction["block_id"];
-//  string to_user_id = transaction["to_user_id"];
-//  string to_var_type = transaction["to_var_type"];
-//  string to_var_name = transaction["to_var_name"];
-//  string from_user_id = transaction["from_user_id"];
-//  string from_var_type = transaction["to_var_type"];
-//  string from_var_name = transaction["from_var_name"];
-//  int value = transaction["value"];
-//
-//  // send 명령어로 - 값 전송이 올 수 있나??
-//  if (value < 0) {
-//    cout << "[ERROR] KvController::sendCommand() - Value is under zero" << endl;
-//    return COIN_VALUE;
-//  }
-//
-//  Key to_key(to_user_id, to_var_type, to_var_name);
-//  Value to_val;
-//
-//  Key from_key(from_user_id, from_var_type, from_var_name);
-//  Value from_val;
-//
-//  int to_depth = checkLayer(to_key);
-//  int from_depth = checkLayer(from_key);
-//
-//  if (to_depth == NO_DATA) {
-//    cout << "[ERROR] KvController::sendCommand() - Can't find to_user data" << endl;
-//    status = DATA_NOT_EXIST;
-//  } else if (from_depth == NO_DATA) {
-//    cout << "[ERROR] KvController::sendCommand() - Can't find from_user data" << endl;
-//    status = DATA_NOT_EXIST;
-//  } else {
-//
-//    /* 직접 하는것 보다, addCommand 에 예외처리가 잘 되어있으므로
-//     * from user 에 대해서 add 호출, to user 에 대해서 add 호출이 나을 것 같음
-//     * (코드도 깔끔해지므로...) */
-//    json new_transaction;
-//
-//    // from 먼저
-//    new_transaction["command"] = "add";
-//    new_transaction["block_id"] = block_id;
-//    new_transaction["to_user_id"] = from_user_id;
-//    new_transaction["to_var_type"] = from_var_type;
-//    new_transaction["to_var_name"] = from_var_name;
-//    new_transaction["value"] = -value;
-//
-//    status = addCommand(new_transaction, from_val);
-//
-//    if (!status) {
-//      // from 성공하고 나면 to 수행
-//      new_transaction["command"] = "add";
-//      new_transaction["block_id"] = block_id;
-//      new_transaction["to_user_id"] = to_user_id;
-//      new_transaction["to_var_type"] = to_var_type;
-//      new_transaction["to_var_name"] = to_var_name;
-//      new_transaction["value"] = value;
-//
-//      status = addCommand(new_transaction, to_val);
-//    }
-//  }
-//
-//  return status;
-//}
-//
-// int KvController::newCommand(json transaction) {
-//  int status = SUCCESS;
-//  string block_id = transaction["block_id"];
-//  string user_id = transaction["user_id"];
-//  string var_type = transaction["var_type"];
-//  string var_name = transaction["var_name"];
-//  string value = transaction["var_value"];
-//
-//  if (var_type == "coin" && stoi(value) < 0) {
-//    cout << "[ERROR] KvController::newCommand() - Coin type can't minus value" << endl;
-//    status = COIN_VALUE;
-//  } else {
-//    Key key(block_id, user_id, var_type, var_name);
-//
-//    int depth = checkLayer(key);
-//
-//    if (depth == NO_DATA) {
-//      // new_layer 의 map 변수에 새로운 데이터 삽입
-//      uint32_t path = m_tree.getRoot()->makePath(user_id, var_type, var_name);
-//      Value val(value, path);
-//
-//      test_data new_data;
-//      new_data.user_id = user_id;
-//      new_data.var_type = var_type;
-//      new_data.var_name = var_name;
-//      new_data.var_value = value;
-//
-//      m_tree.addNode(path, new_data);
-//      m_current_layer.m_temporary_data.insert(make_pair(key, val));
-//      cout << key << ", " << val << endl;
-//    } else {
-//      cout << "[ERROR] KvController::newCommand() - Data already exist" << endl;
-//      status = DATA_DUPLICATE;
-//    }
-//  }
-//
-//  return status;
-//}
-//
-// int KvController::delCommand(json transaction) {
-//  int status = SUCCESS;
-//  string block_id = transaction["block_id"];
-//  string user_id = transaction["user_id"];
-//  string var_type = transaction["var_type"];
-//  string var_name = transaction["var_name"];
-//  bool isCurrent = false;
-//
-//  Key key(block_id, user_id, var_type, var_name);
-//  Value val;
-//  map<Key, Value>::iterator it;
-//
-//  int depth = checkLayer(key);
-//
-//  if (depth == NO_DATA) {
-//    cout << "[ERROR] KvController::delCommand() - Can't find data" << endl;
-//    status = DATA_NOT_EXIST;
-//    return status;
-//  } else if (depth == DB_DATA) {
-//    pair<int, vector<string>> data = m_server.selectAllUsingUserIdVarTypeVarName(user_id, var_type, var_name);
-//    val.var_value = data.second[VAR_VALUE];
-//    val.path = (uint32_t)stoul(data.second[PATH]);
-//  } else if (depth == CUR_DATA) {
-//    it = m_current_layer.m_temporary_data.find(key);
-//    val = it->second;
-//    isCurrent = true;
-//  } else {
-//    it = m_layer[depth].m_temporary_data.find(key);
-//    val = it->second;
-//  }
-//
-//  val.isDeleted = true;
-//  m_tree.removeNode(val.path);
-//  if (isCurrent) // current layer 에 존재할 경우, current layer 의 데이터 수정
-//    it->second.isDeleted = true;
-//  else // DB에 있거나 m_layer[depth] 에 존재했을 경우 -> current layer 에 삽입
-//    m_current_layer.m_temporary_data.insert(make_pair(key, val));
-//
-//  return status;
-//}
-//
-//// 현재 레이어부터 시작해서, 윗 레이어부터 살펴보며 데이터가 존재하면 존재하는 레이어 층을 반환함.
-//// 레이어에 없으면 마지막으로 DB를 살펴본 뒤, 존재하면 -1, 존재하지 않으면 -2 반환함.
-// int KvController::checkLayer(Key key) {
-//  int depth = _D_CUR_LAYER;
-//  map<Key, Value>::iterator it;
-//
-//  it = m_current_layer.m_temporary_data.find(key);
-//  if (it != m_current_layer.m_temporary_data.end()) {
-//    if (it->second.isDeleted) {
-//      return NO_DATA;
-//    } else {
-//      return CUR_DATA;
-//    }
-//  }
-//
-//  depth = (int)m_layer.size() - 1;
-//
-//  for (; depth >= 0; depth--) {
-//    it = m_layer[depth].m_temporary_data.find(key);
-//    if (it != m_layer[depth].m_temporary_data.end()) {
-//      if (it->second.isDeleted) {
-//        return NO_DATA;
-//      } else {
-//        break;
-//      }
-//    }
-//  }
-//  if (depth == DB_DATA) {
-//    // DB 체크
-//    if (m_server.checkUserIdVarTypeVarName(&key.user_id, &key.var_type, &key.var_name)) {
-//      // DB 에도 없으면 -2 반환
-//      depth = NO_DATA;
-//    } else {
-//      // 나중에 DB에 lifetime 이 추가되면, isDeleted 역할을 하는 것 처럼 사용할 수도 있을듯...
-//    }
-//  }
-//  return depth;
-//}
 //
 // void KvController::testBackward() {
 //  cout << "--------------- test Backward called -----------------" << endl;

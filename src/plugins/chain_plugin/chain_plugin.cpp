@@ -192,8 +192,8 @@ public:
     UnresolvedBlock resolved_block;
     bool resolve_result = chain->resolveBlock(input_block, resolved_block);
     if (resolve_result) {
-      chain->applyBlock(resolved_block.block);
-      chain->applyTransaction(resolved_block.block);
+      chain->applyBlockToRDB(resolved_block.block);
+      chain->applyTransactionToRDB(resolved_block.block);
     }
 
     return;
@@ -264,6 +264,8 @@ public:
         }
       }
     }
+
+    chain->updateStateTree(updated_UR_block);
   }
 
   vector<Transaction> getTransactions() {
@@ -307,13 +309,13 @@ public:
         UnresolvedBlock resolved_block;
         bool resolve_result = chain->resolveBlock(blocks[i], resolved_block);
         if (resolve_result) {
-          chain->applyBlock(resolved_block.block);
-          chain->applyTransaction(resolved_block.block);
-          chain->applyUserLedger(resolved_block.user_ledger_list);
-          chain->applyContractLedger(resolved_block.contract_ledger_list);
-          chain->applyUserAttribute(resolved_block.user_attribute_list);
-          chain->applyUserCert(resolved_block.user_cert_list);
-          chain->applyContract(resolved_block.contract_list);
+          chain->applyBlockToRDB(resolved_block.block);
+          chain->applyTransactionToRDB(resolved_block.block);
+          chain->applyUserLedgerToRDB(resolved_block.user_ledger_list);
+          chain->applyContractLedgerToRDB(resolved_block.contract_ledger_list);
+          chain->applyUserAttributeToRDB(resolved_block.user_attribute_list);
+          chain->applyUserCertToRDB(resolved_block.user_cert_list);
+          chain->applyContractToRDB(resolved_block.contract_list);
         }
       }
     } // test code end

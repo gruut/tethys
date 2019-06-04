@@ -88,32 +88,32 @@ string Chain::getUserCert(const base58_type &user_id) {
   return rdb_controller->getUserCert(user_id);
 }
 
-bool Chain::applyBlock(gruut::Block &block_info) {
-  return rdb_controller->applyBlock(block_info);
+bool Chain::applyBlockToRDB(const gruut::Block &block_info) {
+  return rdb_controller->applyBlockToRDB(block_info);
 }
 
-bool Chain::applyTransaction(gruut::Block &block_info) {
-  return rdb_controller->applyTransaction(block_info);
+bool Chain::applyTransactionToRDB(const gruut::Block &block_info) {
+  return rdb_controller->applyTransactionToRDB(block_info);
 }
 
-bool Chain::applyUserLedger(std::map<string, user_ledger_type> &user_ledger) {
-  return rdb_controller->applyUserLedger(user_ledger);
+bool Chain::applyUserLedgerToRDB(const std::map<string, user_ledger_type> &user_ledger) {
+  return rdb_controller->applyUserLedgerToRDB(user_ledger);
 }
 
-bool Chain::applyContractLedger(std::map<string, contract_ledger_type> &contract_ledger) {
-  return rdb_controller->applyContractLedger(contract_ledger);
+bool Chain::applyContractLedgerToRDB(const std::map<string, contract_ledger_type> &contract_ledger) {
+  return rdb_controller->applyContractLedgerToRDB(contract_ledger);
 }
 
-bool Chain::applyUserAttribute(std::map<base58_type, user_attribute_type> &user_attribute_list) {
-  return rdb_controller->applyUserAttribute(user_attribute_list);
+bool Chain::applyUserAttributeToRDB(const std::map<base58_type, user_attribute_type> &user_attribute_list) {
+  return rdb_controller->applyUserAttributeToRDB(user_attribute_list);
 }
 
-bool Chain::applyUserCert(std::map<base58_type, user_cert_type> &user_cert_list) {
-  return rdb_controller->applyUserCert(user_cert_list);
+bool Chain::applyUserCertToRDB(const std::map<base58_type, user_cert_type> &user_cert_list) {
+  return rdb_controller->applyUserCertToRDB(user_cert_list);
 }
 
-bool Chain::applyContract(std::map<base58_type, contract_type> &contract_list) {
-  return rdb_controller->applyContract(contract_list);
+bool Chain::applyContractToRDB(const std::map<base58_type, contract_type> &contract_list) {
+  return rdb_controller->applyContractToRDB(contract_list);
 }
 
 vector<Block> Chain::getBlocksByHeight(int from, int to) {
@@ -239,7 +239,7 @@ bool Chain::queryIncinerate(UnresolvedBlock &UR_block, nlohmann::json &option, r
   string pid = json::get<string>(option, "pid").value();
 
   // TODO: pointer로 인한 복사/접근 체크 다시 할 것. 복사되어야 함.
-  user_ledger_type found = unresolved_block_pool->findUserLedgerFromHead(pid);
+  user_ledger_type found = findUserLedgerFromHead(pid);
 
   if (found.is_empty)
     return false;
@@ -273,7 +273,7 @@ bool Chain::queryCreate(UnresolvedBlock &UR_block, nlohmann::json &option, resul
   user_ledger_type user_ledger(var_name, var_type, uid, tag);
   string pid = TypeConverter::bytesToString(user_ledger.pid);
 
-  user_ledger_type found = unresolved_block_pool->findUserLedgerFromHead(pid);
+  user_ledger_type found = findUserLedgerFromHead(pid);
 
   if (found.is_empty) {
     found.var_val = "";
@@ -318,7 +318,7 @@ bool Chain::queryTransfer(UnresolvedBlock &UR_block, nlohmann::json &option, res
       contract_ledger.pid = TypeConverter::stringToBytes(pid.value());
     }
 
-    contract_ledger_type found = unresolved_block_pool->findContractLedgerFromHead(key);
+    contract_ledger_type found = findContractLedgerFromHead(key);
 
     if (found.is_empty) {
       logger::ERROR("Not exist from's ledger");
@@ -355,7 +355,7 @@ bool Chain::queryTransfer(UnresolvedBlock &UR_block, nlohmann::json &option, res
       user_ledger.pid = TypeConverter::stringToBytes(pid.value());
     }
 
-    user_ledger_type found = unresolved_block_pool->findUserLedgerFromHead(key);
+    user_ledger_type found = findUserLedgerFromHead(key);
 
     if (found.is_empty) {
       logger::ERROR("Not exist from's ledger");
@@ -387,7 +387,7 @@ bool Chain::queryTransfer(UnresolvedBlock &UR_block, nlohmann::json &option, res
       contract_ledger.pid = TypeConverter::stringToBytes(pid.value());
     }
 
-    contract_ledger_type found = unresolved_block_pool->findContractLedgerFromHead(key);
+    contract_ledger_type found = findContractLedgerFromHead(key);
 
     if (found.var_val == "")
       contract_ledger.query_type = QueryType::INSERT;
@@ -408,7 +408,7 @@ bool Chain::queryTransfer(UnresolvedBlock &UR_block, nlohmann::json &option, res
       user_ledger.pid = TypeConverter::stringToBytes(pid.value());
     }
 
-    user_ledger_type found = unresolved_block_pool->findUserLedgerFromHead(key);
+    user_ledger_type found = findUserLedgerFromHead(key);
     if (found.uid != result_info.user)
       return false;
 
@@ -599,7 +599,8 @@ search_result_type Chain::findContractLedgerFromPoint(string key, block_height_t
   int pool_deque_idx = height - unresolved_block_pool->getLatestConfirmedHeight() - 1;
   int pool_vec_idx = vec_idx;
 
-  map<string, contract_ledger_type> current_contract_ledgers = unresolved_block_pool->getBlock(pool_deque_idx, pool_vec_idx).contract_ledger_list;
+  map<string, contract_ledger_type> current_contract_ledgers =
+      unresolved_block_pool->getBlock(pool_deque_idx, pool_vec_idx).contract_ledger_list;
   map<string, contract_ledger_type>::iterator it;
 
   while (1) {
@@ -634,21 +635,122 @@ bool Chain::resolveBlock(Block &block, UnresolvedBlock &resolved_result) {
   return unresolved_block_pool->resolveBlock(block, resolved_result);
 }
 
-base58_type Chain::getCurrentHeadId() {
-  return unresolved_block_pool->getCurrentHeadId();
-}
-
-bytes Chain::getUserStateRoot() {
-  return unresolved_block_pool->getUserStateRoot();
-}
-
-bytes Chain::getContractStateRoot() {
-  return unresolved_block_pool->getContractStateRoot();
-}
-
 void Chain::setPool(const base64_type &last_block_id, block_height_type last_height, timestamp_t last_time, const base64_type &last_hash,
                     const base64_type &prev_block_id) {
   return unresolved_block_pool->setPool(last_block_id, last_height, last_time, last_hash, prev_block_id);
+}
+
+void Chain::setupStateTree() {
+  // TODO: RDB에 있는 모든 엔트리를 불러와서 state tree를 작성
+  m_us_tree.addNode(entry);
+  m_cs_tree.addNode(entry);
+}
+
+void Chain::updateStateTree(UnresolvedBlock &unresolved_block) {
+  m_us_tree.updateUserState(unresolved_block.user_ledger_list);
+  m_cs_tree.updateContractState(unresolved_block.contract_ledger_list);
+}
+
+user_ledger_type Chain::findUserLedgerFromHead(string key) {
+  if (m_us_tree.getMerkleNode(stoi(key)) == nullptr) {
+    user_ledger_type empty_ledger;
+    empty_ledger.is_empty = true;
+    return empty_ledger;
+  } else
+    return m_us_tree.getMerkleNode(stoi(key))->getUserLedger();
+}
+
+contract_ledger_type Chain::findContractLedgerFromHead(string key) {
+  if (m_cs_tree.getMerkleNode(stoi(key)) == nullptr) {
+    contract_ledger_type empty_ledger;
+    empty_ledger.is_empty = true;
+    return empty_ledger;
+  } else
+    return m_cs_tree.getMerkleNode(stoi(key))->getContractLedger();
+}
+
+void Chain::moveHead(const base58_type &target_block_id, const block_height_type target_block_height) {
+  if (!target_block_id.empty()) {
+    // latest_confirmed의 height가 10이었고, 현재 head의 height가 11이라면 m_block_pool[0]에 있어야 한다
+    int current_deq_idx = m_head_deq_idx;
+    int current_vec_idx = m_head_vec_idx;
+    int current_height = static_cast<int>(m_head_height);
+
+    while (current_height > target_block_height) {
+      current_vec_idx = unresolved_block_pool->getBlock(current_deq_idx, current_vec_idx).prev_vector_idx;
+      --current_deq_idx;
+      --current_height;
+    }
+
+    vector<int> line = unresolved_block_pool->getLine(target_block_id, target_block_height);
+
+    while (current_vec_idx != line[current_deq_idx]) {
+      current_vec_idx = unresolved_block_pool->getBlock(current_deq_idx, current_vec_idx).prev_vector_idx;
+      --current_deq_idx;
+      --current_height;
+    }
+
+    int common_deq_idx = current_deq_idx;
+    int common_vec_idx = current_vec_idx;
+    int common_height = static_cast<int>(current_height);
+    int front_count = static_cast<int>(target_block_height) - common_height;
+    int back_count = static_cast<int>(m_head_height) - common_height;
+
+    if (common_deq_idx < 0) {
+      logger::ERROR("URBP, Something error in move_head() - Cannot find pool element");
+      return;
+    }
+
+    current_height = static_cast<int>(m_head_height);
+    current_deq_idx = m_head_deq_idx;
+    current_vec_idx = m_head_vec_idx;
+
+    for (int i = 0; i < back_count; i++) {
+      revertLedger(unresolved_block_pool->getBlock(current_deq_idx, current_vec_idx));
+
+      current_vec_idx = unresolved_block_pool->getBlock(current_deq_idx, current_vec_idx).prev_vector_idx;
+      current_deq_idx--;
+      current_height--;
+    }
+
+
+    for (int i = 0; i < front_count; i++) {
+      (unresolved_block_pool->getBlock(current_deq_idx, current_vec_idx).user_ledger_list);
+      (unresolved_block_pool->getBlock(current_deq_idx, current_vec_idx).contract_ledger_list);
+
+      current_vec_idx = line[current_deq_idx];
+      ++current_deq_idx;
+      ++current_height;
+    }
+
+    m_head_id = unresolved_block_pool->getBlock(m_head_deq_idx, m_head_vec_idx).block.getBlockId();
+    m_head_height = current_height;
+    m_head_deq_idx = current_deq_idx;
+    m_head_vec_idx = current_vec_idx;
+
+    if (unresolved_block_pool->getBlock(m_head_deq_idx, m_head_vec_idx).block.getHeight() != m_head_height) {
+      logger::ERROR("URBP, Something error in move_head() - end part, check height");
+      return;
+    }
+
+    // TODO: missing link 등에 대한 예외처리를 추가해야 할 필요 있음
+  }
+}
+
+base58_type Chain::getCurrentHeadId() {
+  return m_head_id;
+}
+
+block_height_type Chain::getCurrentHeadHeight() {
+  return m_head_height;
+}
+
+bytes Chain::getUserStateRoot() {
+  return m_us_tree.getRootValue();
+}
+
+bytes Chain::getContractStateRoot() {
+  return m_cs_tree.getRootValue();
 }
 
 } // namespace gruut

@@ -18,6 +18,12 @@ namespace gruut {
 using namespace std;
 
 class Chain {
+private:
+  unique_ptr<class ChainImpl> impl;
+  unique_ptr<RdbController> rdb_controller;
+  unique_ptr<KvController> kv_controller;
+  unique_ptr<UnresolvedBlockPool> unresolved_block_pool;
+
 public:
   Chain(string_view dbms, string_view table_name, string_view db_user_id, string_view db_password);
   ~Chain();
@@ -30,13 +36,13 @@ public:
 
   // RDB functions
   string getUserCert(const base58_type &user_id);
-  bool applyBlock(Block &block_info);
-  bool applyTransaction(Block &block_info);
-  bool applyUserLedger(std::map<string, user_ledger_type> &user_ledger);
-  bool applyContractLedger(std::map<string, contract_ledger_type> &contract_ledger);
-  bool applyUserAttribute(std::map<base58_type, user_attribute_type> &user_attribute_list);
-  bool applyUserCert(std::map<base58_type, user_cert_type> &user_cert_list);
-  bool applyContract(std::map<base58_type, contract_type> &contract_list);
+  bool applyBlockToRDB(const Block &block_info);
+  bool applyTransactionToRDB(const Block &block_info);
+  bool applyUserLedgerToRDB(const map<string, user_ledger_type> &user_ledger);
+  bool applyContractLedgerToRDB(const map<string, contract_ledger_type> &contract_ledger);
+  bool applyUserAttributeToRDB(const map<base58_type, user_attribute_type> &user_attribute_list);
+  bool applyUserCertToRDB(const map<base58_type, user_cert_type> &user_cert_list);
+  bool applyContractToRDB(const map<base58_type, contract_type> &contract_list);
 
   bool findUserFromRDB(string key, user_ledger_type &user_ledger);
   bool findContractFromRDB(string key, contract_ledger_type &contract_ledger);
@@ -72,16 +78,28 @@ public:
   ubp_push_result_type pushBlock(Block &block, bool is_restore = false);
   UnresolvedBlock findBlock(const base58_type &block_id, const block_height_type block_height);
   bool resolveBlock(Block &block, UnresolvedBlock &resolved_result);
-  base58_type getCurrentHeadId();
-  bytes getUserStateRoot();
-  bytes getContractStateRoot();
   void setPool(const base64_type &last_block_id, block_height_type last_height, timestamp_t last_time, const base64_type &last_hash,
                const base64_type &prev_block_id);
 
+  // State tree
 private:
-  unique_ptr<class ChainImpl> impl;
-  unique_ptr<RdbController> rdb_controller;
-  unique_ptr<KvController> kv_controller;
-  unique_ptr<UnresolvedBlockPool> unresolved_block_pool;
+  StateTree m_us_tree; // user scope state tree
+  StateTree m_cs_tree; // contract scope state tree
+  base64_type m_head_id;
+  block_height_type m_head_height;
+  int m_head_deq_idx;
+  int m_head_vec_idx;
+
+public:
+  void setupStateTree();
+  void updateStateTree(UnresolvedBlock &unresolved_block);
+
+  user_ledger_type findUserLedgerFromHead(string key);
+  contract_ledger_type findContractLedgerFromHead(string key);
+  void moveHead(const base58_type &target_block_id, const block_height_type target_block_height);
+  base58_type getCurrentHeadId();
+  block_height_type getCurrentHeadHeight();
+  bytes getUserStateRoot();
+  bytes getContractStateRoot();
 };
 } // namespace gruut
