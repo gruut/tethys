@@ -409,20 +409,20 @@ void AddDescriptorsImpl() {
       "\n\014ReqLoadWorld\022\014\n\004path\030\001 \001(\t\"-\n\014ResLoadW"
       "orld\022\017\n\007success\030\001 \001(\010\022\014\n\004info\030\002 \001(\t\"\034\n\014R"
       "eqLoadChain\022\014\n\004path\030\001 \001(\t\"-\n\014ResLoadChai"
-      "n\022\017\n\007success\030\001 \001(\010\022\014\n\004info\030\002 \001(\t2\206\003\n\021Gru"
-      "utAdminService\022>\n\010SetupKey\022\027.grpc_admin."
-      "ReqSetupKey\032\027.grpc_admin.ResSetupKey\"\000\0225"
-      "\n\005Login\022\024.grpc_admin.ReqLogin\032\024.grpc_adm"
-      "in.ResLogin\"\000\0225\n\005Start\022\024.grpc_admin.ReqS"
-      "tart\032\024.grpc_admin.ResStart\"\000\022A\n\tLoadWorl"
-      "d\022\030.grpc_admin.ReqLoadWorld\032\030.grpc_admin"
-      ".ResLoadWorld\"\000\022A\n\tLoadChain\022\030.grpc_admi"
-      "n.ReqLoadChain\032\030.grpc_admin.ResLoadChain"
-      "\"\000\022=\n\013CheckStatus\022\025.grpc_admin.ReqStatus"
-      "\032\025.grpc_admin.ResStatus\"\000b\006proto3"
+      "n\022\017\n\007success\030\001 \001(\010\022\014\n\004info\030\002 \001(\t2\207\003\n\022Tet"
+      "hysAdminService\022>\n\010SetupKey\022\027.grpc_admin"
+      ".ReqSetupKey\032\027.grpc_admin.ResSetupKey\"\000\022"
+      "5\n\005Login\022\024.grpc_admin.ReqLogin\032\024.grpc_ad"
+      "min.ResLogin\"\000\0225\n\005Start\022\024.grpc_admin.Req"
+      "Start\032\024.grpc_admin.ResStart\"\000\022A\n\tLoadWor"
+      "ld\022\030.grpc_admin.ReqLoadWorld\032\030.grpc_admi"
+      "n.ResLoadWorld\"\000\022A\n\tLoadChain\022\030.grpc_adm"
+      "in.ReqLoadChain\032\030.grpc_admin.ResLoadChai"
+      "n\"\000\022=\n\013CheckStatus\022\025.grpc_admin.ReqStatu"
+      "s\032\025.grpc_admin.ResStatus\"\000b\006proto3"
   };
   ::google::protobuf::DescriptorPool::InternalAddGeneratedFile(
-      descriptor, 913);
+      descriptor, 914);
   ::google::protobuf::MessageFactory::InternalRegisterGeneratedFile(
     "admin_service.proto", &protobuf_RegisterTypes);
 }
