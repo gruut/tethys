@@ -166,8 +166,16 @@ AbstractPlugin* Application::getPlugin(const string &name) const {
   }
 }
 
+void Application::setWorldId(string_view _id){
+  world_id = _id;
+}
+
 void Application::setId(string_view _id){
   id = _id;
+}
+
+const string &Application::getWorldId() const {
+  return world_id;
 }
 
 const string &Application::getId() const {
@@ -184,6 +192,14 @@ bool Application::isAppRunning() {
 
 bool Application::isUserSignedIn() {
   return application_status.user_login;
+}
+
+bool Application::isWorldLoaded() {
+  return application_status.load_world;
+}
+
+void Application::completeLoadWorld() {
+  application_status.load_world = true;
 }
 
 void Application::completeUserSetup() {

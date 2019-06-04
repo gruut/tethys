@@ -149,7 +149,9 @@ public:
     transaction_pool = make_unique<TransactionPool>();
     unresolved_block_pool = make_unique<UnresolvedBlockPool>();
 
-    chain->startup(genesis_state);
+    // TODO : If storage(leveldb) have world and local chain info,
+    // set world id and local chain id.
+    // Now, cannot load info(world/chain) from level db because no way to know `key`
 
     auto self_id = chain->getValueByKey(DataType::SELF_INFO, "self_id");
     if (!self_id.empty())
@@ -418,24 +420,6 @@ ChainPlugin::ChainPlugin() : impl(make_unique<ChainPluginImpl>()) {}
 void ChainPlugin::pluginInitialize(const boost::program_options::variables_map &options) {
   logger::INFO("ChainPlugin Initialize");
 
-  if (options.count("world-create") > 0) {
-    fs::path config_path = options.at("world-create").as<std::string>();
-
-    if (config_path.is_relative())
-      config_path = fs::current_path() / config_path;
-
-    if (!fs::exists(config_path)) {
-      logger::ERROR("Can't find a world create file. (path: {})", config_path.string());
-      throw std::invalid_argument("Cannot find a world_create.json"s);
-    }
-
-    std::ifstream i(config_path.make_preferred().string());
-
-    i >> impl->genesis_state;
-  } else {
-    throw std::invalid_argument("world create file does not exist"s);
-  }
-
   if (options.count("dbms")) {
     impl->dbms = options.at("dbms").as<string>();
   } else {
@@ -478,8 +462,7 @@ void ChainPlugin::pluginInitialize(const boost::program_options::variables_map &
 
 // clang-format off
 void ChainPlugin::setProgramOptions(options_description &cfg) {
-  cfg.add_options()("world-create", boost::program_options::value<string>()->composing(), "the location of a world_create.json file")
-  ("dbms", boost::program_options::value<string>()->composing(), "DBMS (MYSQL)")("table-name", boost::program_options::value<string>()->composing(), "table name")
+  cfg.add_options()("dbms", boost::program_options::value<string>()->composing(), "DBMS (MYSQL)")("table-name", boost::program_options::value<string>()->composing(), "table name")
   ("database-user", boost::program_options::value<string>()->composing(), "database user id")
   ("database-password", boost::program_options::value<string>()->composing(), "database password")
   ("block-input-path", boost::program_options::value<string>()->composing(), "block input json path");
