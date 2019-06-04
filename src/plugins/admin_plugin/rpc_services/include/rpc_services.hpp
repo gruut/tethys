@@ -1,6 +1,7 @@
 #pragma once
 
 #include "../../../net_plugin/rpc_services/protos/include/user_service.grpc.pb.h"
+#include "../../../chain_plugin/include/chain.hpp"
 #include "../../include/admin_type.hpp"
 #include "../proto/include/admin_service.grpc.pb.h"
 #include <atomic>
@@ -80,6 +81,10 @@ private:
   unique_ptr<Server> initSetup(shared_ptr<SetupService> setup_service, const string &port);
   optional<nlohmann::json> runSetup(shared_ptr<SetupService> setup_service);
   optional<string> getIdFromCert(const string &cert_pem);
+
+  pair<bool, string> verifyUserKeyInfo(string_view enc_sk_pem, const string &);
+  bool isAlreadySetup(Chain &chain);
+  optional<nlohmann::json> waitForUserKeyInfo();
 
   string default_setup_port;
 };

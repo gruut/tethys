@@ -25,6 +25,17 @@ public:
   }
 };
 
+template<>
+class AdminMiddleware<SetupService> {
+public:
+  pair<bool, error_message> next() {
+    if (app().isUserSignedIn())
+      return make_pair(false, "The node has already been setup");
+
+    return make_pair(true, "");
+  }
+};
+
 template <>
 class AdminMiddleware<LoadWorldService> {
 public:

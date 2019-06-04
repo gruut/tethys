@@ -104,27 +104,12 @@ optional<string> SetupKeyService::getIdFromCert(const string &cert_pem) {
 
 void SetupKeyService::proceed() {
   BEFORE_PROCEED(SetupKeyService, service, completion_queue, default_setup_port);
+  SET_MIDDLEWARE(SetupKeyService);
 
   thread([&]() {
-    if (app().isUserSignedIn()) {
-      string info = "You have been logged in";
-      res.set_info(info);
-
-      res.set_success(false);
-
-      sendFinishedMsg(res);
-
-      logger::INFO("[SETUP KEY] {}", info);
-
-      return;
-    }
-
     auto &chain = dynamic_cast<ChainPlugin *>(app().getPlugin("ChainPlugin"))->chain();
 
-    auto self_sk = chain.getValueByKey(DataType::SELF_INFO, "self_enc_sk");
-    auto self_cert = chain.getValueByKey(DataType::SELF_INFO, "self_cert");
-
-    if (!self_sk.empty() && !self_cert.empty()) {
+    if (isAlreadySetup(chain)) {
       string info = "Your key already exists in storage, Please login";
       logger::INFO("[SETUP KEY] {}", info);
 
@@ -132,66 +117,106 @@ void SetupKeyService::proceed() {
 
       res.set_success(false);
       res.set_info(info);
-    } else {
-      shared_ptr<SetupService> setup_service = make_shared<SetupService>();
 
-      auto setup_port = req.setup_port();
-      unique_ptr<Server> setup_server = initSetup(setup_service, setup_port);
-      logger::INFO("[SETUP KEY] Waiting for user key info");
+      sendFinishedMsg(res);
+      return;
+    }
 
-      auto user_key_info = runSetup(setup_service);
-      if (user_key_info.has_value()) {
-        auto enc_sk_pem = json::get<string>(user_key_info.value(), "enc_sk").value_or("");
-        auto cert = json::get<string>(user_key_info.value(), "cert").value_or("");
+    auto user_key_info = waitForUserKeyInfo();
+    if (user_key_info.has_value()) {
+      auto enc_sk_pem = json::get<string>(user_key_info.value(), "enc_sk").value_or("");
+      auto cert = json::get<string>(user_key_info.value(), "cert").value_or("");
 
-        if (enc_sk_pem.empty() || cert.empty()) {
-          string info = "(cert / sk) is empty";
-          logger::ERROR("[SETUP KEY] {}", info);
+      auto [valid, info] = verifyUserKeyInfo(enc_sk_pem, cert);
 
-          res.set_success(false);
-          res.set_info(info);
-        } else {
-          auto my_id_b58 = getIdFromCert(cert);
-          if (my_id_b58.has_value()) {
-            SelfInfo self_info;
-            self_info.enc_sk = enc_sk_pem;
-            self_info.cert = cert;
-
-            auto my_id = TypeConverter::decodeBase<58>(my_id_b58.value());
-            self_info.id = my_id;
-
-            chain.saveSelfInfo(self_info);
-
-            app().setId(my_id);
-            app().completeUserSetup();
-
-            res.set_success(true);
-
-            logger::INFO("[SETUP KEY] Success");
-          } else {
-            string info = "Could not find X509 common name field in Certificate";
-            res.set_info(info);
-
-            res.set_success(false);
-          }
-        }
-      } else {
-        string info = "Could not receive any info from user. please `SETUP KEY` again";
-        logger::ERROR("[SETUP KEY] {}", info);
-
+      if (!valid) {
         res.set_info(info);
-        res.set_success(false);
-      }
-      if (setup_server != nullptr)
-        setup_server->Shutdown();
+        res.set_success(valid);
 
-      setup_server.reset();
-      setup_service.reset();
+        sendFinishedMsg(res);
+
+        return;
+      }
+
+      SelfInfo self_info;
+      self_info.enc_sk = enc_sk_pem;
+      self_info.cert = cert;
+      chain.saveSelfInfo(self_info);
+
+      auto my_id_b58 = getIdFromCert(cert);
+      auto my_id = TypeConverter::decodeBase<58>(my_id_b58.value());
+      self_info.id = my_id;
+      app().setId(my_id);
+
+      app().completeUserSetup();
+
+      res.set_success(true);
+
+      logger::INFO("[SETUP KEY] Success");
+    } else {
+      string info = "Could not receive any info from user. please `SETUP KEY` again";
+      logger::ERROR("[SETUP KEY] {}", info);
+
+      res.set_info(info);
+      res.set_success(false);
     }
 
     sendFinishedMsg(res);
   }).detach();
+} // namespace admin_plugin
+
+bool SetupKeyService::isAlreadySetup(Chain &chain) {
+  auto self_sk = chain.getValueByKey(DataType::SELF_INFO, "self_enc_sk");
+  if (self_sk.empty())
+    return false;
+
+  auto self_cert = chain.getValueByKey(DataType::SELF_INFO, "self_cert");
+  if (self_cert.empty())
+    return false;
+
+  return true;
 }
+
+optional<nlohmann::json> SetupKeyService::waitForUserKeyInfo() {
+  shared_ptr<SetupService> setup_service = make_shared<SetupService>();
+
+  auto setup_port = req.setup_port();
+  unique_ptr<Server> setup_server = initSetup(setup_service, setup_port);
+
+  logger::INFO("[SETUP KEY] Waiting for user key info");
+
+  auto user_key_info = runSetup(setup_service);
+
+  if (setup_server != nullptr)
+    setup_server->Shutdown();
+
+  setup_server.reset();
+  setup_service.reset();
+
+  return user_key_info;
+}
+
+pair<bool, string> SetupKeyService::verifyUserKeyInfo(string_view enc_sk_pem, const string &cert) {
+  string info;
+
+  if (enc_sk_pem.empty() || cert.empty()) {
+    info = "(cert / sk) is empty";
+    logger::ERROR("[SETUP KEY] {}", info);
+
+    return make_pair(false, info);
+  }
+
+  auto my_id_b58 = getIdFromCert(cert);
+  if (!my_id_b58.has_value()) {
+    info = "Could not find X509 common name field in Certificate";
+    logger::ERROR("[SETUP KEY] {}", info);
+
+    return make_pair(false, info);
+  }
+
+  return make_pair(true, "");
+}
+
 void LoginService::proceed() {
   BEFORE_PROCEED(LoginService, service, completion_queue);
   SET_MIDDLEWARE(LoginService)
