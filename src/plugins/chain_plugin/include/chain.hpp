@@ -27,6 +27,7 @@ public:
   Chain &operator=(const Chain &) = delete;
 
   void initWorld(nlohmann::json &world_state);
+  vector<string> initChain(nlohmann::json &chain_state);
 
   // RDB functions
   void insertBlockData(Block &block_info);
