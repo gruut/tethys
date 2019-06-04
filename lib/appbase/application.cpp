@@ -99,7 +99,7 @@ void Application::initializePlugins() {
 }
 
 void Application::start() {
-  thread proactor([this](){io_context_ptr->run();});
+  thread proactor([this]() { io_context_ptr->run(); });
 
   startInitializedPlugins();
 
@@ -111,10 +111,10 @@ void Application::start() {
 }
 
 void Application::startInitializedPlugins() {
-  while(!app().isAppRunning());
+  while (!app().isAppRunning());
 
   for (auto &[_, plugin_ptr] : app_plugins_map) {
-    if(plugin_ptr->getState() == AbstractPlugin::plugin_state::initialized) {
+    if (plugin_ptr->getState() == AbstractPlugin::plugin_state::initialized) {
       plugin_ptr->start();
     }
   }
@@ -123,23 +123,23 @@ void Application::startInitializedPlugins() {
 void Application::registerErrorSignalHandlers() {
   shared_ptr<boost::asio::signal_set> sigint_set(new boost::asio::signal_set(*io_context_ptr, SIGINT));
   sigint_set->async_wait([sigint_set, this](const boost::system::error_code &err, int num) {
-      logger::ERROR("SIGINT Received: {}", err.message());
-      sigint_set->cancel();
-      quit();
+    logger::ERROR("SIGINT Received: {}", err.message());
+    sigint_set->cancel();
+    quit();
   });
 
   shared_ptr<boost::asio::signal_set> sigterm_set(new boost::asio::signal_set(*io_context_ptr, SIGTERM));
   sigterm_set->async_wait([sigterm_set, this](const boost::system::error_code &err, int num) {
-      logger::ERROR("SIGTERM Received: {}", err.message());
-      sigterm_set->cancel();
-      quit();
+    logger::ERROR("SIGTERM Received: {}", err.message());
+    sigterm_set->cancel();
+    quit();
   });
 
   shared_ptr<boost::asio::signal_set> sigpipe_set(new boost::asio::signal_set(*io_context_ptr, SIGPIPE));
   sigpipe_set->async_wait([sigpipe_set, this](const boost::system::error_code &err, int num) {
-      logger::ERROR("SIGPIPE Received: {}", err.message());
-      sigpipe_set->cancel();
-      quit();
+    logger::ERROR("SIGPIPE Received: {}", err.message());
+    sigpipe_set->cancel();
+    quit();
   });
 }
 
@@ -154,23 +154,27 @@ void Application::shutdown() {
   io_context_ptr->reset();
 }
 
-AbstractPlugin* Application::getPlugin(const string &name) const {
+AbstractPlugin *Application::getPlugin(const string &name) const {
   auto itr = app_plugins_map.find(name);
   if (itr == app_plugins_map.end())
     throw(std::runtime_error("unable to find plugin: " + name));
 
-  if(itr->second->getState() == AbstractPlugin::plugin_state::initialized) {
+  if (itr->second->getState() == AbstractPlugin::plugin_state::initialized) {
     return itr->second.get();
   } else {
     throw(std::runtime_error("The plugin had been registered, but not initialized: " + name));
   }
 }
 
-void Application::setWorldId(string_view _id){
+void Application::setWorldId(string_view _id) {
   world_id = _id;
 }
 
-void Application::setId(string_view _id){
+void Application::setChainId(string_view _id) {
+  chain_id = _id;
+}
+
+void Application::setId(string_view _id) {
   id = _id;
 }
 
@@ -178,11 +182,15 @@ const string &Application::getWorldId() const {
   return world_id;
 }
 
+const string &Application::getChainId() const {
+  return chain_id;
+}
+
 const string &Application::getId() const {
   return id;
 }
 
-void Application::setRunFlag(){
+void Application::setRunFlag() {
   running = true;
 }
 
@@ -198,8 +206,16 @@ bool Application::isWorldLoaded() {
   return application_status.load_world;
 }
 
+bool Application::isChainLoaded() {
+  return application_status.load_chain;
+}
+
 void Application::completeLoadWorld() {
   application_status.load_world = true;
+}
+
+void Application::completeLoadChain() {
+  application_status.load_chain = true;
 }
 
 void Application::completeUserSetup() {
