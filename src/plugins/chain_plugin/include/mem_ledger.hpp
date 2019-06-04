@@ -41,13 +41,13 @@ private:
   uint32_t m_suffix; // TODO: 비트 확장
   int m_suffix_len;
 
-  unique_ptr<user_ledger_type> m_user_ledger; // 각 leaf node는 하나의 ledger만을 가리킨다
-  unique_ptr<contract_ledger_type> m_contract_ledger;
+  shared_ptr<user_ledger_type> m_user_ledger; // 각 leaf node는 하나의 ledger만을 가리킨다
+  shared_ptr<contract_ledger_type> m_contract_ledger;
 
   uint32_t m_debug_path; // 노드 분기 시 필요할 것으로 예상됨
 
-  void makeValue(user_ledger_type &user_ledger);
-  void makeValue(contract_ledger_type &contract_ledger);
+  void makeValue(const user_ledger_type &user_ledger);
+  void makeValue(const contract_ledger_type &contract_ledger);
   void makeValue(string &key);
   uint32_t makePath(user_ledger_type &user_ledger);
   uint32_t makePath(contract_ledger_type &contract_ledger);
@@ -83,6 +83,8 @@ public:
 
   const user_ledger_type &getUserLedger() const;
   const contract_ledger_type &getContractLedger() const;
+  shared_ptr<user_ledger_type> getUserLedgerPtr() const;
+  shared_ptr<contract_ledger_type> getContractLedgerPtr() const;
 };
 
 class StateTree {
@@ -122,7 +124,7 @@ public:
 
   uint64_t getSize();
   vector<uint8_t> getRootValue();
-  shared_ptr<StateNode> getRoot();
+  shared_ptr<StateNode> getRootPtr();
   stack<shared_ptr<StateNode>> getStack();
 };
 

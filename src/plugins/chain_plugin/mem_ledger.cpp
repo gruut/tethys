@@ -53,16 +53,7 @@ StateNode::StateNode(const user_ledger_type &user_ledger) {
   m_debug_path = 0;
   m_suffix_len = -1;
 
-  m_user_ledger = make_unique<user_ledger_type>(user_ledger);
-}
-
-void StateNode::makeValue(user_ledger_type &user_ledger) {
-  BytesBuilder state_value_builder;
-  state_value_builder.append(user_ledger.pid);
-  state_value_builder.append(user_ledger.var_val);
-
-  string key = state_value_builder.getString();
-  makeValue(key);
+  m_user_ledger = make_shared<user_ledger_type>(user_ledger);
 }
 
 StateNode::StateNode(const contract_ledger_type &contract_ledger) {
@@ -75,10 +66,19 @@ StateNode::StateNode(const contract_ledger_type &contract_ledger) {
   m_debug_path = 0;
   m_suffix_len = -1;
 
-  m_contract_ledger = make_unique<contract_ledger_type>(contract_ledger);
+  m_contract_ledger = make_shared<contract_ledger_type>(contract_ledger);
 }
 
-void StateNode::makeValue(contract_ledger_type &contract_ledger) {
+void StateNode::makeValue(const user_ledger_type &user_ledger) {
+  BytesBuilder state_value_builder;
+  state_value_builder.append(user_ledger.pid);
+  state_value_builder.append(user_ledger.var_val);
+
+  string key = state_value_builder.getString();
+  makeValue(key);
+}
+
+void StateNode::makeValue(const contract_ledger_type &contract_ledger) {
   BytesBuilder state_value_builder;
   state_value_builder.append(contract_ledger.pid);
   state_value_builder.append(contract_ledger.var_val);
@@ -145,23 +145,25 @@ void StateNode::moveToParent() {
 bool StateNode::isDummy() {
   return (m_debug_path == 0);
 }
-// bool isLeaf()   { return ((m_debug_uid != -1) && (m_suffix_len == 0)); }
 
 void StateNode::setLeft(shared_ptr<StateNode> node) {
   m_left = make_shared<StateNode>(node);
 }
+
 void StateNode::setRight(shared_ptr<StateNode> node) {
   m_right = make_shared<StateNode>(node);
 }
-// void setNext(StateNode *node)  { m_next  = node;}
+
 void StateNode::setSuffix(uint32_t _path, int pos) {
   uint32_t mask = (uint32_t)(1 << pos) - 1;
   m_suffix = _path & mask;
   m_suffix_len = pos;
 }
+
 void StateNode::setDebugPath(uint32_t _path) {
   m_debug_path = _path;
 }
+
 void StateNode::setNodeInfo(LedgerRecord &data) {
   makeValue(data);
 }
@@ -170,10 +172,11 @@ void StateNode::overwriteNode(shared_ptr<StateNode> node) {
   m_left = nullptr;
   m_right = nullptr;
   m_hash_value = node->getValue();
-  // m_debug_uid = node->getDebugUid();
   m_suffix = node->getSuffix();
-  m_debug_path = node->getDebugPath();
   m_suffix_len = node->getSuffixLen();
+  m_debug_path = node->getDebugPath();
+  m_user_ledger = node->getUserLedgerPtr();
+  m_contract_ledger = node->getContractLedgerPtr();
   moveToParent(); // suffix, suffix_len, path 값 수정
 
   node.reset();
@@ -213,6 +216,14 @@ const user_ledger_type &StateNode::getUserLedger() const {
 
 const contract_ledger_type &StateNode::getContractLedger() const {
   return *m_contract_ledger.get();
+}
+
+shared_ptr<user_ledger_type> StateNode::getUserLedgerPtr() const {
+  return m_user_ledger;
+}
+
+shared_ptr<contract_ledger_type> StateNode::getContractLedgerPtr() const {
+  return m_contract_ledger;
 }
 
 // LSB 에서 pos 번째 bit 를 반환
@@ -266,9 +277,13 @@ void StateTree::updateUserState(const map<string, user_ledger_type> &user_ledger
   }
 }
 
-void StateTree::updateContractState(const map<string, contract_ledger_type> &contract_ledger_list) {}
+void StateTree::updateContractState(const map<string, contract_ledger_type> &contract_ledger_list) {
+  for (auto &each_ledger : contract_ledger_list) {
+    StateNode new_node(each_ledger.second);
+    this->addNode(TypeConverter::bytesToString(each_ledger.second.pid), new_node);
+  }
+}
 
-// TODO: DB 와 연동하여 완성한 이후에는 new_path 파라미터 제거
 void StateTree::addNode(uint32_t new_path, shared_ptr<StateNode> new_node) {
   new_node->setDebugPath(new_path);
   shared_ptr<StateNode> node = root;
@@ -555,7 +570,7 @@ vector<uint8_t> StateTree::getRootValue() {
   return root->getValue();
 }
 
-shared_ptr<StateNode> StateTree::getRoot() {
+shared_ptr<StateNode> StateTree::getRootPtr() {
   return root;
 }
 

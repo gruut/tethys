@@ -645,11 +645,15 @@ void Chain::setupStateTree() {
   m_cs_tree.setupTree(rdb_controller->getAllContractLedger());
 }
 
-void Chain::updateStateTree(UnresolvedBlock &unresolved_block) {
+void Chain::updateStateTree(const UnresolvedBlock &unresolved_block) {
   m_us_tree.updateUserState(unresolved_block.user_ledger_list);
   m_cs_tree.updateContractState(unresolved_block.contract_ledger_list);
   // TODO: user cert나 contract 관련 사항들은 state tree에 반영할 필요는 없고, 그냥 ledger로써만 가지고 있으면 되나?
   //  아니면 user_cert는 보류한다고 해도 contract는 직접적으로 연관되어 있으므로 반영을 해야 하는가?
+}
+
+void revertStateTree(const UnresolvedBlock &unresolved_block) {
+
 }
 
 user_ledger_type Chain::findUserLedgerFromHead(string key) {
@@ -714,10 +718,8 @@ void Chain::moveHead(const base58_type &target_block_id, const block_height_type
       current_height--;
     }
 
-
     for (int i = 0; i < front_count; i++) {
-      (unresolved_block_pool->getBlock(current_deq_idx, current_vec_idx).user_ledger_list);
-      (unresolved_block_pool->getBlock(current_deq_idx, current_vec_idx).contract_ledger_list);
+      updateStateTree(unresolved_block_pool->getBlock(current_deq_idx, current_vec_idx));
 
       current_vec_idx = line[current_deq_idx];
       ++current_deq_idx;

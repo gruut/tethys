@@ -92,7 +92,8 @@ private:
 
 public:
   void setupStateTree();
-  void updateStateTree(UnresolvedBlock &unresolved_block);
+  void updateStateTree(const UnresolvedBlock &unresolved_block);
+  void revertStateTree(const UnresolvedBlock &unresolved_block);
 
   user_ledger_type findUserLedgerFromHead(string key);
   contract_ledger_type findContractLedgerFromHead(string key);
