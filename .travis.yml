@@ -16,17 +16,17 @@ install:
 script:
   - docker exec build-env sh -c "
     mkdir -p workspace && cd workspace;
-    git clone --depth=50 --branch=$TRAVIS_BRANCH https://github.com/gruut/gruut.git;
-    cd gruut;
+    git clone --depth=50 --branch=$TRAVIS_BRANCH https://github.com/tethys/tethys.git;
+    cd tethys;
     git submodule update --init;
     mkdir -p build;
     "
   - docker exec build-env sh -c "
-    cd workspace/gruut;
-    ./gruut_install.sh
+    cd workspace/tethys;
+    ./tethys_install.sh
     "
   - docker exec build-env sh -c "
-    cd workspace/gruut/build;
+    cd workspace/tethys/build;
     cp ../scripts/run-clang-tidy.py run-clang-tidy.py;
     python3 run-clang-tidy.py;
     "

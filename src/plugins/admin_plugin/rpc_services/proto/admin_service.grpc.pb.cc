@@ -15,174 +15,174 @@
 #include <grpcpp/impl/codegen/sync_stream.h>
 namespace grpc_admin {
 
-static const char* GruutAdminService_method_names[] = {
-  "/grpc_admin.GruutAdminService/SetupKey",
-  "/grpc_admin.GruutAdminService/Login",
-  "/grpc_admin.GruutAdminService/Start",
-  "/grpc_admin.GruutAdminService/LoadWorld",
-  "/grpc_admin.GruutAdminService/LoadChain",
-  "/grpc_admin.GruutAdminService/CheckStatus",
+static const char* TethysAdminService_method_names[] = {
+  "/grpc_admin.TethysAdminService/SetupKey",
+  "/grpc_admin.TethysAdminService/Login",
+  "/grpc_admin.TethysAdminService/Start",
+  "/grpc_admin.TethysAdminService/LoadWorld",
+  "/grpc_admin.TethysAdminService/LoadChain",
+  "/grpc_admin.TethysAdminService/CheckStatus",
 };
 
-std::unique_ptr< GruutAdminService::Stub> GruutAdminService::NewStub(const std::shared_ptr< ::grpc::ChannelInterface>& channel, const ::grpc::StubOptions& options) {
+std::unique_ptr< TethysAdminService::Stub> TethysAdminService::NewStub(const std::shared_ptr< ::grpc::ChannelInterface>& channel, const ::grpc::StubOptions& options) {
   (void)options;
-  std::unique_ptr< GruutAdminService::Stub> stub(new GruutAdminService::Stub(channel));
+  std::unique_ptr< TethysAdminService::Stub> stub(new TethysAdminService::Stub(channel));
   return stub;
 }
 
-GruutAdminService::Stub::Stub(const std::shared_ptr< ::grpc::ChannelInterface>& channel)
-  : channel_(channel), rpcmethod_SetupKey_(GruutAdminService_method_names[0], ::grpc::internal::RpcMethod::NORMAL_RPC, channel)
-  , rpcmethod_Login_(GruutAdminService_method_names[1], ::grpc::internal::RpcMethod::NORMAL_RPC, channel)
-  , rpcmethod_Start_(GruutAdminService_method_names[2], ::grpc::internal::RpcMethod::NORMAL_RPC, channel)
-  , rpcmethod_LoadWorld_(GruutAdminService_method_names[3], ::grpc::internal::RpcMethod::NORMAL_RPC, channel)
-  , rpcmethod_LoadChain_(GruutAdminService_method_names[4], ::grpc::internal::RpcMethod::NORMAL_RPC, channel)
-  , rpcmethod_CheckStatus_(GruutAdminService_method_names[5], ::grpc::internal::RpcMethod::NORMAL_RPC, channel)
+TethysAdminService::Stub::Stub(const std::shared_ptr< ::grpc::ChannelInterface>& channel)
+  : channel_(channel), rpcmethod_SetupKey_(TethysAdminService_method_names[0], ::grpc::internal::RpcMethod::NORMAL_RPC, channel)
+  , rpcmethod_Login_(TethysAdminService_method_names[1], ::grpc::internal::RpcMethod::NORMAL_RPC, channel)
+  , rpcmethod_Start_(TethysAdminService_method_names[2], ::grpc::internal::RpcMethod::NORMAL_RPC, channel)
+  , rpcmethod_LoadWorld_(TethysAdminService_method_names[3], ::grpc::internal::RpcMethod::NORMAL_RPC, channel)
+  , rpcmethod_LoadChain_(TethysAdminService_method_names[4], ::grpc::internal::RpcMethod::NORMAL_RPC, channel)
+  , rpcmethod_CheckStatus_(TethysAdminService_method_names[5], ::grpc::internal::RpcMethod::NORMAL_RPC, channel)
   {}
 
-::grpc::Status GruutAdminService::Stub::SetupKey(::grpc::ClientContext* context, const ::grpc_admin::ReqSetupKey& request, ::grpc_admin::ResSetupKey* response) {
+::grpc::Status TethysAdminService::Stub::SetupKey(::grpc::ClientContext* context, const ::grpc_admin::ReqSetupKey& request, ::grpc_admin::ResSetupKey* response) {
   return ::grpc::internal::BlockingUnaryCall(channel_.get(), rpcmethod_SetupKey_, context, request, response);
 }
 
-::grpc::ClientAsyncResponseReader< ::grpc_admin::ResSetupKey>* GruutAdminService::Stub::AsyncSetupKeyRaw(::grpc::ClientContext* context, const ::grpc_admin::ReqSetupKey& request, ::grpc::CompletionQueue* cq) {
+::grpc::ClientAsyncResponseReader< ::grpc_admin::ResSetupKey>* TethysAdminService::Stub::AsyncSetupKeyRaw(::grpc::ClientContext* context, const ::grpc_admin::ReqSetupKey& request, ::grpc::CompletionQueue* cq) {
   return ::grpc::internal::ClientAsyncResponseReaderFactory< ::grpc_admin::ResSetupKey>::Create(channel_.get(), cq, rpcmethod_SetupKey_, context, request, true);
 }
 
-::grpc::ClientAsyncResponseReader< ::grpc_admin::ResSetupKey>* GruutAdminService::Stub::PrepareAsyncSetupKeyRaw(::grpc::ClientContext* context, const ::grpc_admin::ReqSetupKey& request, ::grpc::CompletionQueue* cq) {
+::grpc::ClientAsyncResponseReader< ::grpc_admin::ResSetupKey>* TethysAdminService::Stub::PrepareAsyncSetupKeyRaw(::grpc::ClientContext* context, const ::grpc_admin::ReqSetupKey& request, ::grpc::CompletionQueue* cq) {
   return ::grpc::internal::ClientAsyncResponseReaderFactory< ::grpc_admin::ResSetupKey>::Create(channel_.get(), cq, rpcmethod_SetupKey_, context, request, false);
 }
 
-::grpc::Status GruutAdminService::Stub::Login(::grpc::ClientContext* context, const ::grpc_admin::ReqLogin& request, ::grpc_admin::ResLogin* response) {
+::grpc::Status TethysAdminService::Stub::Login(::grpc::ClientContext* context, const ::grpc_admin::ReqLogin& request, ::grpc_admin::ResLogin* response) {
   return ::grpc::internal::BlockingUnaryCall(channel_.get(), rpcmethod_Login_, context, request, response);
 }
 
-::grpc::ClientAsyncResponseReader< ::grpc_admin::ResLogin>* GruutAdminService::Stub::AsyncLoginRaw(::grpc::ClientContext* context, const ::grpc_admin::ReqLogin& request, ::grpc::CompletionQueue* cq) {
+::grpc::ClientAsyncResponseReader< ::grpc_admin::ResLogin>* TethysAdminService::Stub::AsyncLoginRaw(::grpc::ClientContext* context, const ::grpc_admin::ReqLogin& request, ::grpc::CompletionQueue* cq) {
   return ::grpc::internal::ClientAsyncResponseReaderFactory< ::grpc_admin::ResLogin>::Create(channel_.get(), cq, rpcmethod_Login_, context, request, true);
 }
 
-::grpc::ClientAsyncResponseReader< ::grpc_admin::ResLogin>* GruutAdminService::Stub::PrepareAsyncLoginRaw(::grpc::ClientContext* context, const ::grpc_admin::ReqLogin& request, ::grpc::CompletionQueue* cq) {
+::grpc::ClientAsyncResponseReader< ::grpc_admin::ResLogin>* TethysAdminService::Stub::PrepareAsyncLoginRaw(::grpc::ClientContext* context, const ::grpc_admin::ReqLogin& request, ::grpc::CompletionQueue* cq) {
   return ::grpc::internal::ClientAsyncResponseReaderFactory< ::grpc_admin::ResLogin>::Create(channel_.get(), cq, rpcmethod_Login_, context, request, false);
 }
 
-::grpc::Status GruutAdminService::Stub::Start(::grpc::ClientContext* context, const ::grpc_admin::ReqStart& request, ::grpc_admin::ResStart* response) {
+::grpc::Status TethysAdminService::Stub::Start(::grpc::ClientContext* context, const ::grpc_admin::ReqStart& request, ::grpc_admin::ResStart* response) {
   return ::grpc::internal::BlockingUnaryCall(channel_.get(), rpcmethod_Start_, context, request, response);
 }
 
-::grpc::ClientAsyncResponseReader< ::grpc_admin::ResStart>* GruutAdminService::Stub::AsyncStartRaw(::grpc::ClientContext* context, const ::grpc_admin::ReqStart& request, ::grpc::CompletionQueue* cq) {
+::grpc::ClientAsyncResponseReader< ::grpc_admin::ResStart>* TethysAdminService::Stub::AsyncStartRaw(::grpc::ClientContext* context, const ::grpc_admin::ReqStart& request, ::grpc::CompletionQueue* cq) {
   return ::grpc::internal::ClientAsyncResponseReaderFactory< ::grpc_admin::ResStart>::Create(channel_.get(), cq, rpcmethod_Start_, context, request, true);
 }
 
-::grpc::ClientAsyncResponseReader< ::grpc_admin::ResStart>* GruutAdminService::Stub::PrepareAsyncStartRaw(::grpc::ClientContext* context, const ::grpc_admin::ReqStart& request, ::grpc::CompletionQueue* cq) {
+::grpc::ClientAsyncResponseReader< ::grpc_admin::ResStart>* TethysAdminService::Stub::PrepareAsyncStartRaw(::grpc::ClientContext* context, const ::grpc_admin::ReqStart& request, ::grpc::CompletionQueue* cq) {
   return ::grpc::internal::ClientAsyncResponseReaderFactory< ::grpc_admin::ResStart>::Create(channel_.get(), cq, rpcmethod_Start_, context, request, false);
 }
 
-::grpc::Status GruutAdminService::Stub::LoadWorld(::grpc::ClientContext* context, const ::grpc_admin::ReqLoadWorld& request, ::grpc_admin::ResLoadWorld* response) {
+::grpc::Status TethysAdminService::Stub::LoadWorld(::grpc::ClientContext* context, const ::grpc_admin::ReqLoadWorld& request, ::grpc_admin::ResLoadWorld* response) {
   return ::grpc::internal::BlockingUnaryCall(channel_.get(), rpcmethod_LoadWorld_, context, request, response);
 }
 
-::grpc::ClientAsyncResponseReader< ::grpc_admin::ResLoadWorld>* GruutAdminService::Stub::AsyncLoadWorldRaw(::grpc::ClientContext* context, const ::grpc_admin::ReqLoadWorld& request, ::grpc::CompletionQueue* cq) {
+::grpc::ClientAsyncResponseReader< ::grpc_admin::ResLoadWorld>* TethysAdminService::Stub::AsyncLoadWorldRaw(::grpc::ClientContext* context, const ::grpc_admin::ReqLoadWorld& request, ::grpc::CompletionQueue* cq) {
   return ::grpc::internal::ClientAsyncResponseReaderFactory< ::grpc_admin::ResLoadWorld>::Create(channel_.get(), cq, rpcmethod_LoadWorld_, context, request, true);
 }
 
-::grpc::ClientAsyncResponseReader< ::grpc_admin::ResLoadWorld>* GruutAdminService::Stub::PrepareAsyncLoadWorldRaw(::grpc::ClientContext* context, const ::grpc_admin::ReqLoadWorld& request, ::grpc::CompletionQueue* cq) {
+::grpc::ClientAsyncResponseReader< ::grpc_admin::ResLoadWorld>* TethysAdminService::Stub::PrepareAsyncLoadWorldRaw(::grpc::ClientContext* context, const ::grpc_admin::ReqLoadWorld& request, ::grpc::CompletionQueue* cq) {
   return ::grpc::internal::ClientAsyncResponseReaderFactory< ::grpc_admin::ResLoadWorld>::Create(channel_.get(), cq, rpcmethod_LoadWorld_, context, request, false);
 }
 
-::grpc::Status GruutAdminService::Stub::LoadChain(::grpc::ClientContext* context, const ::grpc_admin::ReqLoadChain& request, ::grpc_admin::ResLoadChain* response) {
+::grpc::Status TethysAdminService::Stub::LoadChain(::grpc::ClientContext* context, const ::grpc_admin::ReqLoadChain& request, ::grpc_admin::ResLoadChain* response) {
   return ::grpc::internal::BlockingUnaryCall(channel_.get(), rpcmethod_LoadChain_, context, request, response);
 }
 
-::grpc::ClientAsyncResponseReader< ::grpc_admin::ResLoadChain>* GruutAdminService::Stub::AsyncLoadChainRaw(::grpc::ClientContext* context, const ::grpc_admin::ReqLoadChain& request, ::grpc::CompletionQueue* cq) {
+::grpc::ClientAsyncResponseReader< ::grpc_admin::ResLoadChain>* TethysAdminService::Stub::AsyncLoadChainRaw(::grpc::ClientContext* context, const ::grpc_admin::ReqLoadChain& request, ::grpc::CompletionQueue* cq) {
   return ::grpc::internal::ClientAsyncResponseReaderFactory< ::grpc_admin::ResLoadChain>::Create(channel_.get(), cq, rpcmethod_LoadChain_, context, request, true);
 }
 
-::grpc::ClientAsyncResponseReader< ::grpc_admin::ResLoadChain>* GruutAdminService::Stub::PrepareAsyncLoadChainRaw(::grpc::ClientContext* context, const ::grpc_admin::ReqLoadChain& request, ::grpc::CompletionQueue* cq) {
+::grpc::ClientAsyncResponseReader< ::grpc_admin::ResLoadChain>* TethysAdminService::Stub::PrepareAsyncLoadChainRaw(::grpc::ClientContext* context, const ::grpc_admin::ReqLoadChain& request, ::grpc::CompletionQueue* cq) {
   return ::grpc::internal::ClientAsyncResponseReaderFactory< ::grpc_admin::ResLoadChain>::Create(channel_.get(), cq, rpcmethod_LoadChain_, context, request, false);
 }
 
-::grpc::Status GruutAdminService::Stub::CheckStatus(::grpc::ClientContext* context, const ::grpc_admin::ReqStatus& request, ::grpc_admin::ResStatus* response) {
+::grpc::Status TethysAdminService::Stub::CheckStatus(::grpc::ClientContext* context, const ::grpc_admin::ReqStatus& request, ::grpc_admin::ResStatus* response) {
   return ::grpc::internal::BlockingUnaryCall(channel_.get(), rpcmethod_CheckStatus_, context, request, response);
 }
 
-::grpc::ClientAsyncResponseReader< ::grpc_admin::ResStatus>* GruutAdminService::Stub::AsyncCheckStatusRaw(::grpc::ClientContext* context, const ::grpc_admin::ReqStatus& request, ::grpc::CompletionQueue* cq) {
+::grpc::ClientAsyncResponseReader< ::grpc_admin::ResStatus>* TethysAdminService::Stub::AsyncCheckStatusRaw(::grpc::ClientContext* context, const ::grpc_admin::ReqStatus& request, ::grpc::CompletionQueue* cq) {
   return ::grpc::internal::ClientAsyncResponseReaderFactory< ::grpc_admin::ResStatus>::Create(channel_.get(), cq, rpcmethod_CheckStatus_, context, request, true);
 }
 
-::grpc::ClientAsyncResponseReader< ::grpc_admin::ResStatus>* GruutAdminService::Stub::PrepareAsyncCheckStatusRaw(::grpc::ClientContext* context, const ::grpc_admin::ReqStatus& request, ::grpc::CompletionQueue* cq) {
+::grpc::ClientAsyncResponseReader< ::grpc_admin::ResStatus>* TethysAdminService::Stub::PrepareAsyncCheckStatusRaw(::grpc::ClientContext* context, const ::grpc_admin::ReqStatus& request, ::grpc::CompletionQueue* cq) {
   return ::grpc::internal::ClientAsyncResponseReaderFactory< ::grpc_admin::ResStatus>::Create(channel_.get(), cq, rpcmethod_CheckStatus_, context, request, false);
 }
 
-GruutAdminService::Service::Service() {
+TethysAdminService::Service::Service() {
   AddMethod(new ::grpc::internal::RpcServiceMethod(
-      GruutAdminService_method_names[0],
+      TethysAdminService_method_names[0],
       ::grpc::internal::RpcMethod::NORMAL_RPC,
-      new ::grpc::internal::RpcMethodHandler< GruutAdminService::Service, ::grpc_admin::ReqSetupKey, ::grpc_admin::ResSetupKey>(
-          std::mem_fn(&GruutAdminService::Service::SetupKey), this)));
+      new ::grpc::internal::RpcMethodHandler< TethysAdminService::Service, ::grpc_admin::ReqSetupKey, ::grpc_admin::ResSetupKey>(
+          std::mem_fn(&TethysAdminService::Service::SetupKey), this)));
   AddMethod(new ::grpc::internal::RpcServiceMethod(
-      GruutAdminService_method_names[1],
+      TethysAdminService_method_names[1],
       ::grpc::internal::RpcMethod::NORMAL_RPC,
-      new ::grpc::internal::RpcMethodHandler< GruutAdminService::Service, ::grpc_admin::ReqLogin, ::grpc_admin::ResLogin>(
-          std::mem_fn(&GruutAdminService::Service::Login), this)));
+      new ::grpc::internal::RpcMethodHandler< TethysAdminService::Service, ::grpc_admin::ReqLogin, ::grpc_admin::ResLogin>(
+          std::mem_fn(&TethysAdminService::Service::Login), this)));
   AddMethod(new ::grpc::internal::RpcServiceMethod(
-      GruutAdminService_method_names[2],
+      TethysAdminService_method_names[2],
       ::grpc::internal::RpcMethod::NORMAL_RPC,
-      new ::grpc::internal::RpcMethodHandler< GruutAdminService::Service, ::grpc_admin::ReqStart, ::grpc_admin::ResStart>(
-          std::mem_fn(&GruutAdminService::Service::Start), this)));
+      new ::grpc::internal::RpcMethodHandler< TethysAdminService::Service, ::grpc_admin::ReqStart, ::grpc_admin::ResStart>(
+          std::mem_fn(&TethysAdminService::Service::Start), this)));
   AddMethod(new ::grpc::internal::RpcServiceMethod(
-      GruutAdminService_method_names[3],
+      TethysAdminService_method_names[3],
       ::grpc::internal::RpcMethod::NORMAL_RPC,
-      new ::grpc::internal::RpcMethodHandler< GruutAdminService::Service, ::grpc_admin::ReqLoadWorld, ::grpc_admin::ResLoadWorld>(
-          std::mem_fn(&GruutAdminService::Service::LoadWorld), this)));
+      new ::grpc::internal::RpcMethodHandler< TethysAdminService::Service, ::grpc_admin::ReqLoadWorld, ::grpc_admin::ResLoadWorld>(
+          std::mem_fn(&TethysAdminService::Service::LoadWorld), this)));
   AddMethod(new ::grpc::internal::RpcServiceMethod(
-      GruutAdminService_method_names[4],
+      TethysAdminService_method_names[4],
       ::grpc::internal::RpcMethod::NORMAL_RPC,
-      new ::grpc::internal::RpcMethodHandler< GruutAdminService::Service, ::grpc_admin::ReqLoadChain, ::grpc_admin::ResLoadChain>(
-          std::mem_fn(&GruutAdminService::Service::LoadChain), this)));
+      new ::grpc::internal::RpcMethodHandler< TethysAdminService::Service, ::grpc_admin::ReqLoadChain, ::grpc_admin::ResLoadChain>(
+          std::mem_fn(&TethysAdminService::Service::LoadChain), this)));
   AddMethod(new ::grpc::internal::RpcServiceMethod(
-      GruutAdminService_method_names[5],
+      TethysAdminService_method_names[5],
       ::grpc::internal::RpcMethod::NORMAL_RPC,
-      new ::grpc::internal::RpcMethodHandler< GruutAdminService::Service, ::grpc_admin::ReqStatus, ::grpc_admin::ResStatus>(
-          std::mem_fn(&GruutAdminService::Service::CheckStatus), this)));
+      new ::grpc::internal::RpcMethodHandler< TethysAdminService::Service, ::grpc_admin::ReqStatus, ::grpc_admin::ResStatus>(
+          std::mem_fn(&TethysAdminService::Service::CheckStatus), this)));
 }
 
-GruutAdminService::Service::~Service() {
+TethysAdminService::Service::~Service() {
 }
 
-::grpc::Status GruutAdminService::Service::SetupKey(::grpc::ServerContext* context, const ::grpc_admin::ReqSetupKey* request, ::grpc_admin::ResSetupKey* response) {
+::grpc::Status TethysAdminService::Service::SetupKey(::grpc::ServerContext* context, const ::grpc_admin::ReqSetupKey* request, ::grpc_admin::ResSetupKey* response) {
   (void) context;
   (void) request;
   (void) response;
   return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
 }
 
-::grpc::Status GruutAdminService::Service::Login(::grpc::ServerContext* context, const ::grpc_admin::ReqLogin* request, ::grpc_admin::ResLogin* response) {
+::grpc::Status TethysAdminService::Service::Login(::grpc::ServerContext* context, const ::grpc_admin::ReqLogin* request, ::grpc_admin::ResLogin* response) {
   (void) context;
   (void) request;
   (void) response;
   return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
 }
 
-::grpc::Status GruutAdminService::Service::Start(::grpc::ServerContext* context, const ::grpc_admin::ReqStart* request, ::grpc_admin::ResStart* response) {
+::grpc::Status TethysAdminService::Service::Start(::grpc::ServerContext* context, const ::grpc_admin::ReqStart* request, ::grpc_admin::ResStart* response) {
   (void) context;
   (void) request;
   (void) response;
   return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
 }
 
-::grpc::Status GruutAdminService::Service::LoadWorld(::grpc::ServerContext* context, const ::grpc_admin::ReqLoadWorld* request, ::grpc_admin::ResLoadWorld* response) {
+::grpc::Status TethysAdminService::Service::LoadWorld(::grpc::ServerContext* context, const ::grpc_admin::ReqLoadWorld* request, ::grpc_admin::ResLoadWorld* response) {
   (void) context;
   (void) request;
   (void) response;
   return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
 }
 
-::grpc::Status GruutAdminService::Service::LoadChain(::grpc::ServerContext* context, const ::grpc_admin::ReqLoadChain* request, ::grpc_admin::ResLoadChain* response) {
+::grpc::Status TethysAdminService::Service::LoadChain(::grpc::ServerContext* context, const ::grpc_admin::ReqLoadChain* request, ::grpc_admin::ResLoadChain* response) {
   (void) context;
   (void) request;
   (void) response;
   return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
 }
 
-::grpc::Status GruutAdminService::Service::CheckStatus(::grpc::ServerContext* context, const ::grpc_admin::ReqStatus* request, ::grpc_admin::ResStatus* response) {
+::grpc::Status TethysAdminService::Service::CheckStatus(::grpc::ServerContext* context, const ::grpc_admin::ReqStatus* request, ::grpc_admin::ResStatus* response) {
   (void) context;
   (void) request;
   (void) response;

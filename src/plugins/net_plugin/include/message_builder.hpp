@@ -1,8 +1,8 @@
 #pragma once
 
 #include "../../../../lib/appbase/include/application.hpp"
-#include "../../../../lib/gruut-utils/src/hmac_key_maker.hpp"
-#include "../../../../lib/gruut-utils/src/time_util.hpp"
+#include "../../../../lib/tethys-utils/src/hmac_key_maker.hpp"
+#include "../../../../lib/tethys-utils/src/time_util.hpp"
 #include "../../../../lib/json/include/json.hpp"
 #include "../../channel_interface/include/channel_interface.hpp"
 #include "../config/include/network_config.hpp"
@@ -16,7 +16,7 @@ using namespace grpc;
 using namespace std;
 using namespace appbase;
 
-namespace gruut {
+namespace tethys {
 namespace net_plugin {
 
 class MessageBuilder {
@@ -76,4 +76,4 @@ public:
 };
 
 } // namespace net_plugin
-} // namespace gruut
+} // namespace tethys

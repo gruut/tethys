@@ -8,11 +8,11 @@
 #include "include/message_packer.hpp"
 #include "rpc_services/include/rpc_services.hpp"
 
-#include "../../../lib/gruut-utils/src/hmac.hpp"
-#include "../../../lib/gruut-utils/src/random_number_generator.hpp"
-#include "../../../lib/gruut-utils/src/sha256.hpp"
-#include "../../../lib/gruut-utils/src/time_util.hpp"
-#include "../../../lib/gruut-utils/src/type_converter.hpp"
+#include "../../../lib/tethys-utils/src/hmac.hpp"
+#include "../../../lib/tethys-utils/src/random_number_generator.hpp"
+#include "../../../lib/tethys-utils/src/sha256.hpp"
+#include "../../../lib/tethys-utils/src/time_util.hpp"
+#include "../../../lib/tethys-utils/src/type_converter.hpp"
 
 #include <atomic>
 #include <boost/asio/steady_timer.hpp>
@@ -21,7 +21,7 @@
 #include <stdexcept>
 #include <unordered_map>
 
-namespace gruut {
+namespace tethys {
 using namespace std;
 using namespace net_plugin;
 using namespace admin_plugin;
@@ -36,7 +36,7 @@ constexpr auto FIND_NODE_TIMEOUT = std::chrono::milliseconds(100);
 
 class NetPluginImpl {
 public:
-  GruutMergerService::AsyncService merger_service;
+  TethysMergerService::AsyncService merger_service;
   TethysUserService::AsyncService user_service;
   KademliaService::AsyncService kademlia_service;
 
@@ -323,7 +323,7 @@ public:
           if (!bucket.empty()) {
             auto nodes = bucket.selectRandomAliveNodes(PARALLELISM_ALPHA);
             for (auto &n : nodes) {
-              auto stub = genStub<GruutMergerService::Stub, GruutMergerService>(n.getChannelPtr());
+              auto stub = genStub<TethysMergerService::Stub, TethysMergerService>(n.getChannelPtr());
               auto status = stub->MergerService(&context, request, &msg_status);
             }
           }
@@ -336,7 +336,7 @@ public:
             auto node = routing_table->findNode(hashed_net_id.value());
 
             if (node.has_value()) {
-              auto stub = genStub<GruutMergerService::Stub, GruutMergerService>(node.value().getChannelPtr());
+              auto stub = genStub<TethysMergerService::Stub, TethysMergerService>(node.value().getChannelPtr());
               auto status = stub->MergerService(&context, request, &msg_status);
             } else {
               id_mapping_table->unmapId(b58_receiver_id);
@@ -436,4 +436,4 @@ shared_ptr<UserPoolManager> NetPlugin::getUserPoolManager() {
 NetPlugin::~NetPlugin() {
   impl.reset();
 }
-} // namespace gruut
+} // namespace tethys

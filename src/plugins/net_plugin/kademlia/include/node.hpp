@@ -17,7 +17,7 @@
 #include "../../config/include/network_type.hpp"
 #include "hash.hpp"
 
-namespace gruut {
+namespace tethys {
 namespace net_plugin {
 
 constexpr int MAX_TRY_CONN_COUNT = 3;
@@ -155,4 +155,4 @@ inline bool operator!=(Node &lhs, Node &rhs) {
   return !(lhs == rhs);
 }
 } // namespace net_plugin
-} // namespace gruut
+} // namespace tethys

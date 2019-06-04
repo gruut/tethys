@@ -1,7 +1,7 @@
 #ifndef GRUUT_PUBLIC_MERGER_STATE_MERKLE_TREE_HPP
 #define GRUUT_PUBLIC_MERGER_STATE_MERKLE_TREE_HPP
 
-#include "../../../../lib/gruut-utils/src/sha256.hpp"
+#include "../../../../lib/tethys-utils/src/sha256.hpp"
 
 #include <iomanip>
 #include <sstream>
@@ -37,7 +37,7 @@ vector<uint8_t> getHash(string l_value, string r_value);
 
 ostream &operator<<(ostream &os, vector<uint8_t> &value);
 
-namespace gruut {
+namespace tethys {
 
 class StateMerkleNode {
 private:
@@ -158,6 +158,6 @@ public:
     return stk;
   }
 };
-} // namespace gruut
+} // namespace tethys
 
 #endif // WORKSPACE_MERKLE_LIB_HPP

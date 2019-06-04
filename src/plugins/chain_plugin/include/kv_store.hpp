@@ -18,7 +18,7 @@
 
 using namespace std;
 
-namespace gruut {
+namespace tethys {
 
 class KvController {
 private:
@@ -58,5 +58,5 @@ private:
 
   string parseCertContent(std::vector<string> &cert);
 };
-} // namespace gruut
+} // namespace tethys
 #endif

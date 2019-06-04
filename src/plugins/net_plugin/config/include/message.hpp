@@ -9,7 +9,7 @@
 #include <unordered_map>
 #include <vector>
 
-namespace gruut {
+namespace tethys {
 namespace net_plugin {
 
 enum class MACAlgorithmType : uint8_t { HMAC = 0xF1, SHA256 = 0xF2, NONE = 0xFF };
@@ -128,4 +128,4 @@ enum class MsgEntryType {
 enum class MsgEntryLength : int { NOT_LIMITED = 0, BASE64_256 = 44, BASE58_256 = 44, ALPHA_64 = 8, HEX_256 = 64 };
 
 } // namespace net_plugin
-} // namespace gruut
+} // namespace tethys

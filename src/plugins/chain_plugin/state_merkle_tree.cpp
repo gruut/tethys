@@ -40,7 +40,7 @@ char *intToBin(uint num) {
 //    return os;
 //}
 
-namespace gruut {
+namespace tethys {
 
 void StateMerkleNode::makeValue(test_data data) {
   // string key = to_string(data.record_id) + data.user_id + data.var_name + data.var_type + data.var_value;
@@ -486,4 +486,4 @@ void StateMerkleTree::printTreePostOrder() {
 
 // setter
 // void setSize(ullint _size) { m_size = _size; }
-} // namespace gruut
+} // namespace tethys

@@ -122,7 +122,7 @@ void AddDescriptorsImpl() {
       "-\n\006status\030\001 \001(\0162\035.grpc_merger.MsgStatus."
       "Status\022\017\n\007message\030\002 \001(\t\"@\n\006Status\022\013\n\007SUC"
       "CESS\020\000\022\013\n\007INVALID\020\001\022\014\n\010INTERNAL\020\002\022\016\n\nDUP"
-      "LICATED\020\0032X\n\022GruutMergerService\022B\n\rMerge"
+      "LICATED\020\0032X\n\022TethysMergerService\022B\n\rMerge"
       "rService\022\027.grpc_merger.RequestMsg\032\026.grpc"
       "_merger.MsgStatus\"\000b\006proto3"
   };

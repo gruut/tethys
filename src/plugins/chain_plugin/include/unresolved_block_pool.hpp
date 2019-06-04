@@ -5,8 +5,8 @@
 #include <deque>
 #include <time.h>
 
-#include "../../../../lib/gruut-utils/src/time_util.hpp"
-#include "../../../../lib/gruut-utils/src/type_converter.hpp"
+#include "../../../../lib/tethys-utils/src/time_util.hpp"
+#include "../../../../lib/tethys-utils/src/type_converter.hpp"
 #include "../../../../lib/log/include/log.hpp"
 #include "../config/storage_type.hpp"
 
@@ -14,7 +14,7 @@
 #include "mem_ledger.hpp"
 #include "state_merkle_tree.hpp"
 
-namespace gruut {
+namespace tethys {
 
 struct UnresolvedBlock {
   Block block;
@@ -100,6 +100,6 @@ private:
   nlohmann::json readBackupIds();
 };
 
-} // namespace gruut
+} // namespace tethys
 
 #endif // WORKSPACE_UNRESOLVED_BLOCK_POOL_HPP

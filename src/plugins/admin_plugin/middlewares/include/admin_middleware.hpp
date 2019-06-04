@@ -1,6 +1,6 @@
 #pragma once
 
-namespace gruut::admin_plugin {
+namespace tethys::admin_plugin {
 using namespace std;
 
 using error_message = string;
@@ -46,4 +46,4 @@ public:
     return make_pair(true, "");
   }
 };
-} // namespace gruut::admin_plugin
+} // namespace tethys::admin_plugin

@@ -2,7 +2,7 @@
 #define GRUUT_PUBLIC_MERGER_MEM_LEDGER_HPP
 
 #include "../config/storage_type.hpp"
-#include "../../../../lib/gruut-utils/src/bytes_builder.hpp"
+#include "../../../../lib/tethys-utils/src/bytes_builder.hpp"
 #include "../../../../lib/log/include/log.hpp"
 
 #include <list>
@@ -11,7 +11,7 @@
 #include <string>
 #include <vector>
 
-namespace gruut {
+namespace tethys {
 
 struct LedgerRecord {
   bool which_scope; // user scope와 contract scope를 구분하기 위한 변수. LedgerType::
@@ -80,6 +80,6 @@ public:
     return true;
   }
 };
-} // namespace gruut
+} // namespace tethys
 
 #endif

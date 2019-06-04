@@ -1,11 +1,11 @@
 #pragma once
 
-#include "../../../../lib/gruut-utils/src/bytes_builder.hpp"
-#include "../../../../lib/gruut-utils/src/ecdsa.hpp"
-#include "../../../../lib/gruut-utils/src/hmac_key_maker.hpp"
-#include "../../../../lib/gruut-utils/src/random_number_generator.hpp"
-#include "../../../../lib/gruut-utils/src/time_util.hpp"
-#include "../../../../lib/gruut-utils/src/type_converter.hpp"
+#include "../../../../lib/tethys-utils/src/bytes_builder.hpp"
+#include "../../../../lib/tethys-utils/src/ecdsa.hpp"
+#include "../../../../lib/tethys-utils/src/hmac_key_maker.hpp"
+#include "../../../../lib/tethys-utils/src/random_number_generator.hpp"
+#include "../../../../lib/tethys-utils/src/time_util.hpp"
+#include "../../../../lib/tethys-utils/src/type_converter.hpp"
 #include "../../../../lib/json/include/json.hpp"
 #include "../../../../lib/log/include/log.hpp"
 #include "../config/include/message.hpp"
@@ -21,7 +21,7 @@
 #include <unordered_map>
 #include <vector>
 
-namespace gruut {
+namespace tethys {
 
 using namespace net_plugin;
 using namespace std;
@@ -313,4 +313,4 @@ private:
   TempUserPool temp_user_pool;
 };
 
-} // namespace gruut
+} // namespace tethys

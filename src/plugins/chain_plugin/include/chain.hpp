@@ -13,7 +13,7 @@
 #include <utility>
 #include <vector>
 
-namespace gruut {
+namespace tethys {
 
 using namespace std;
 
@@ -47,4 +47,4 @@ private:
   unique_ptr<RdbController> rdb_controller;
   unique_ptr<KvController> kv_controller;
 };
-} // namespace gruut
+} // namespace tethys

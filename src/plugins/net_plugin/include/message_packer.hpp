@@ -1,10 +1,10 @@
 #pragma once
 
-#include "../../../lib/gruut-utils/src/hmac.hpp"
-#include "../../../lib/gruut-utils/src/lz4_compressor.hpp"
+#include "../../../lib/tethys-utils/src/hmac.hpp"
+#include "../../../lib/tethys-utils/src/lz4_compressor.hpp"
 #include "../config/include/message.hpp"
 
-namespace gruut {
+namespace tethys {
 namespace net_plugin {
 
 using namespace std;
@@ -59,4 +59,4 @@ private:
 };
 
 } // namespace net_plugin
-} // namespace gruut
+} // namespace tethys

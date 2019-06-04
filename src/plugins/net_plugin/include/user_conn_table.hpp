@@ -9,7 +9,7 @@
 #include <tuple>
 #include <unordered_map>
 
-namespace gruut {
+namespace tethys {
 using namespace grpc;
 using namespace grpc_user;
 using namespace std;
@@ -61,4 +61,4 @@ private:
   unordered_map<string, UserRpcInfo> user_conn_table;
   std::mutex table_mutex;
 };
-} // namespace gruut
+} // namespace tethys

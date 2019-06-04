@@ -1,6 +1,6 @@
 #pragma once
-#include "../../../../lib/gruut-utils/src/lz4_compressor.hpp"
-#include "../../../../lib/gruut-utils/src/type_converter.hpp"
+#include "../../../../lib/tethys-utils/src/lz4_compressor.hpp"
+#include "../../../../lib/tethys-utils/src/type_converter.hpp"
 #include "../../../../lib/json/include/json.hpp"
 #include "../config/include/message.hpp"
 #include "msg_schema.hpp"
@@ -9,7 +9,7 @@
 #include <string>
 #include <string_view>
 
-namespace gruut {
+namespace tethys {
 namespace net_plugin {
 
 using namespace std;

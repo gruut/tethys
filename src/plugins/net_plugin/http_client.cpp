@@ -13,8 +13,8 @@ using namespace std;
 using tcp = boost::asio::ip::tcp;
 namespace http = boost::beast::http;
 
-namespace gruut {
-gruut::HttpClient::HttpClient(const string _host, const string _port) : host(_host), port(_port) {}
+namespace tethys {
+tethys::HttpClient::HttpClient(const string _host, const string _port) : host(_host), port(_port) {}
 
 string HttpClient::get(const string target, const string query) {
   try {
@@ -51,4 +51,4 @@ string HttpClient::get(const string target, const string query) {
     return "";
   }
 }
-} // namespace gruut
+} // namespace tethys

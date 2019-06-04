@@ -4,7 +4,7 @@
 
 #include <boost/asio/steady_timer.hpp>
 
-namespace gruut {
+namespace tethys {
 using namespace std;
 using namespace admin_plugin;
 
@@ -12,7 +12,7 @@ const auto ADMIN_REQ_CHECK_PERIOD = std::chrono::milliseconds(100);
 
 class AdminPluginImpl {
 public:
-  GruutAdminService::AsyncService admin_service;
+  TethysAdminService::AsyncService admin_service;
 
   unique_ptr<Server> admin_server;
   unique_ptr<ServerCompletionQueue> completion_queue;
@@ -118,4 +118,4 @@ AdminPlugin::~AdminPlugin() {
   impl.reset();
 }
 
-} // namespace gruut
+} // namespace tethys

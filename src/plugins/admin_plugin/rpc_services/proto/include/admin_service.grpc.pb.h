@@ -26,10 +26,10 @@ class ServerContext;
 
 namespace grpc_admin {
 
-class GruutAdminService final {
+class TethysAdminService final {
  public:
   static constexpr char const* service_full_name() {
-    return "grpc_admin.GruutAdminService";
+    return "grpc_admin.TethysAdminService";
   }
   class StubInterface {
    public:

@@ -1,6 +1,6 @@
 #include "include/kv_store.hpp"
 
-namespace gruut {
+namespace tethys {
 
 KvController::KvController() {
   logger::INFO("KV store initialize");

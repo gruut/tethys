@@ -1,7 +1,7 @@
 #include "../../../lib/appbase/include/application.hpp"
 #include "include/chain.hpp"
 
-namespace gruut {
+namespace tethys {
 
 class ChainImpl {
 public:
@@ -64,11 +64,11 @@ Chain::~Chain() {
 }
 
 // RDB functions
-void Chain::insertBlockData(gruut::Block &block_info) {
+void Chain::insertBlockData(tethys::Block &block_info) {
   rdb_controller->insertBlockData(block_info);
 }
 
-void Chain::insertTransactionData(gruut::Block &block_info) {
+void Chain::insertTransactionData(tethys::Block &block_info) {
   rdb_controller->insertTransactionData(block_info);
 }
 
@@ -116,4 +116,4 @@ string Chain::getValueByKey(string what, const string &base_keys) {
   return kv_controller->getValueByKey(what, base_keys);
 }
 
-} // namespace gruut
+} // namespace tethys

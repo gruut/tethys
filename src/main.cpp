@@ -6,7 +6,7 @@
 #include <iostream>
 
 using namespace std;
-using namespace gruut;
+using namespace tethys;
 
 int main(int argc, char **argv) {
   if (!appbase::app().initialize<AdminPlugin, NetPlugin, ChainPlugin, BlockProducerPlugin>(argc, argv))

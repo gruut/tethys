@@ -1,6 +1,6 @@
 #pragma once
 
-namespace gruut {
+namespace tethys {
 namespace admin_plugin {
 
 template <typename T>

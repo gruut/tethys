@@ -5,14 +5,14 @@
 
 #include <string>
 
-namespace gruut {
+namespace tethys {
 namespace config {
 
 // clang-format off
 
 // APP INFO
 
-        const std::string APP_NAME = "Merger for Gruut Public Networks (C++)";
+        const std::string APP_NAME = "Merger for Tethys Public Networks (C++)";
         const std::string APP_CODE_NAME = "???";
         const std::string APP_BUILD_DATE = __DATE__;
         const std::string APP_BUILD_TIME = __TIME__;
@@ -51,5 +51,5 @@ namespace config {
 }
 // clang-format on
 
-} // namespace gruut
+} // namespace tethys
 #endif

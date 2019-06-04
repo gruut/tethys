@@ -23,7 +23,7 @@
 #include "../../config/include/network_config.hpp"
 #include "kbucket.hpp"
 
-namespace gruut {
+namespace tethys {
 namespace net_plugin {
 
 class RoutingTable {
@@ -136,4 +136,4 @@ private:
 std::ostream &operator<<(std::ostream &out, RoutingTable const &rt);
 
 } // namespace net_plugin
-} // namespace gruut
+} // namespace tethys

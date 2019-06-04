@@ -29,7 +29,7 @@
     }
   },
   "authority": {
-    "id": "GruutAuthority",
+    "id": "TethysAuthority",
     "cert": [
       "-----BEGIN CERTIFICATE-----",
       "MIIFEDCCAz+gAwIBAgIRAL2RcbL4kFwgq5ypdBQ8AxwwRgYJKoZIhvcNAQEKMDmg",

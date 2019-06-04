@@ -11,7 +11,7 @@
 
 using namespace std;
 
-namespace gruut {
+namespace tethys {
 
 class Block {
 private:
@@ -55,10 +55,10 @@ public:
     if (msg_block.empty())
       return false;
 
-    m_block_pub_time = static_cast<gruut::timestamp_t>(stoll(json::get<string>(msg_block, "btime").value()));
+    m_block_pub_time = static_cast<tethys::timestamp_t>(stoll(json::get<string>(msg_block, "btime").value()));
 
     m_block_id = json::get<string>(msg_block["block"], "id").value();
-    m_block_time = static_cast<gruut::timestamp_t>(stoll(json::get<string>(msg_block["block"], "time").value()));
+    m_block_time = static_cast<tethys::timestamp_t>(stoll(json::get<string>(msg_block["block"], "time").value()));
     m_world_id = json::get<string>(msg_block["block"], "world").value();
     m_chain_id = json::get<string>(msg_block["block"], "chain").value();
     m_block_height = stoi(json::get<string>(msg_block["block"], "height").value());
@@ -299,5 +299,5 @@ public:
     return m_block_certificate;
   }
 };
-} // namespace gruut
+} // namespace tethys
 #endif

@@ -21,7 +21,7 @@
 #include <optional>
 #include <string>
 
-namespace gruut {
+namespace tethys {
 namespace net_plugin {
 
 using namespace grpc;
@@ -135,7 +135,7 @@ private:
 
 class MergerService final : public CallData {
 public:
-  MergerService(GruutMergerService::AsyncService *service, ServerCompletionQueue *cq, shared_ptr<RoutingTable> routing_table,
+  MergerService(TethysMergerService::AsyncService *service, ServerCompletionQueue *cq, shared_ptr<RoutingTable> routing_table,
                 shared_ptr<BroadcastMsgTable> broadcast_check_table, shared_ptr<IdMappingTable> id_table)
       : m_responder(&m_context), m_routing_table(move(routing_table)), m_broadcast_check_table(move(broadcast_check_table)),
         id_mapping_table(id_table) {
@@ -148,7 +148,7 @@ public:
   }
 
 private:
-  GruutMergerService::AsyncService *m_service;
+  TethysMergerService::AsyncService *m_service;
   grpc_merger::RequestMsg m_request;
   grpc_merger::MsgStatus m_reply;
   ServerAsyncResponseWriter<grpc_merger::MsgStatus> m_responder;
@@ -182,4 +182,4 @@ private:
   void proceed() override;
 };
 } // namespace net_plugin
-} // namespace gruut
+} // namespace tethys
