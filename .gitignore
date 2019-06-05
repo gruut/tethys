@@ -61,7 +61,7 @@ cmake-build-debug
 # Config
 config.ini
 config*.ini
-config.yml
+scripts/db/db/config.yml
 
 # History
 .history
