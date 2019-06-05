@@ -15,8 +15,11 @@ public:
     self.saveWorld(world);
   }
 
-  vector<string> initChain(nlohmann::json &chain_state) {
+  optional<vector<string>> initChain(nlohmann::json &chain_state) {
     local_chain_type chain = unmarshalChainState(chain_state);
+
+    if (appbase::app().getWorldId() != chain.world_id)
+      return {};
 
     appbase::app().setChainId(chain.chain_id);
 
@@ -92,7 +95,7 @@ void Chain::initWorld(nlohmann::json &world_state) {
   impl->initWorld(world_state);
 }
 
-vector<string> Chain::initChain(nlohmann::json &chain_state) {
+optional<vector<string>> Chain::initChain(nlohmann::json &chain_state) {
   return impl->initChain(chain_state);
 }
 

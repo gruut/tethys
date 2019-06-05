@@ -284,7 +284,7 @@ void StartService::proceed() {
 
   if (!app().isWorldLoaded())
     info = "World has not be loaded yet.";
-  else if(!app().isChainLoaded())
+  else if (!app().isChainLoaded())
     info = "Local chain has not be loaded yet.";
 
   if (!info.empty()) {
@@ -412,11 +412,21 @@ void LoadChainService::proceed() {
 
   auto &chain = dynamic_cast<ChainPlugin *>(app().getPlugin("ChainPlugin"))->chain();
   try {
-    auto tracker_address = chain.initChain(chain_state.value());
-    //TODO : send tracker info to Net Plugin.
-    res.set_success(true);
-    logger::INFO("[LOAD CHAIN] Success to load chain");
-    app().completeLoadChain();
+    auto chain_info = chain.initChain(chain_state.value());
+    if (!chain_info.has_value()) {
+      string info = "This local chain is in another world. Please check World ID";
+      res.set_info(info);
+      res.set_success(false);
+
+      logger::ERROR("[LOAD CHAIN] Fail to load local chain");
+
+    } else {
+      auto tracker_addresses = chain_info.value();
+      // TODO : send tracker info to Net Plugin.
+      res.set_success(true);
+      logger::INFO("[LOAD CHAIN] Success to load chain");
+      app().completeLoadChain();
+    }
   } catch (...) {
     string info = "Can not load local chain. please check local chain json file.";
     res.set_info(info);

@@ -109,6 +109,13 @@ bool KvController::saveChain(local_chain_type &chain_info) {
   bool tmp_ahc = chain_info.allow_heavy_contract;
   addBatch(DataType::CHAIN, tmp_chid + "_ahc", to_string(tmp_ahc));
 
+  string tk_addr_list;
+  string delimiter = ",";
+  for(auto &tracker_addr : chain_info.tracker_addresses)
+    tk_addr_list += (tracker_addr + delimiter);
+  tk_addr_list.pop_back();
+  addBatch(DataType::CHAIN, tmp_chid + "_tk_addr", tk_addr_list);
+
   commitBatchAll();
 
   return true;
