@@ -422,7 +422,9 @@ void LoadChainService::proceed() {
 
     } else {
       auto tracker_addresses = chain_info.value();
-      // TODO : send tracker info to Net Plugin.
+      LoadChainCommandDelegator delegator(move(tracker_addresses));
+      delegator.delegate();
+
       res.set_success(true);
       logger::INFO("[LOAD CHAIN] Success to load chain");
       app().completeLoadChain();

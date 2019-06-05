@@ -81,5 +81,30 @@ private:
   RunningMode net_mode;
 };
 
+class LoadChainCommandDelegator : public CommandDelegator<ReqLoadChain> {
+public:
+  LoadChainCommandDelegator(vector<string> &&_tracker_addresses) : tracker_addresses(move(_tracker_addresses)) {}
+
+private:
+  nlohmann::json createControlCommand() override {
+    nlohmann::json control_command;
+
+    control_command["type"] = getControlType();
+    control_command["trackers"] = nlohmann::json(tracker_addresses);
+
+    return control_command;
+  }
+
+  void sendCommand(nlohmann::json control_command) override {
+    app().getChannel<incoming::channels::net_control>().publish(control_command);
+  }
+
+  void setControlType() override {
+    control_type = static_cast<int>(ControlType::LOAD_CHAIN);
+  }
+
+  vector<string> tracker_addresses;
+};
+
 } // namespace admin_plugin
-}
+} // namespace tethys
