@@ -49,8 +49,12 @@ private:
 
     auto total_length = TypeConverter::integerToBytes(HEADER_LENGTH + serialized_json_size);
     serialized_header.insert(serialized_header.end(), begin(total_length), end(total_length));
-    serialized_header.insert(serialized_header.end(), begin(WORLD_ID), end(WORLD_ID));
-    serialized_header.insert(serialized_header.end(), begin(LOCAL_CHAIN_ID), end(LOCAL_CHAIN_ID));
+
+    auto &world_id = app().getWorldId();
+    serialized_header.insert(serialized_header.end(), world_id.begin(), world_id.end());
+
+    auto &chain_id = app().getChainId();
+    serialized_header.insert(serialized_header.end(), chain_id.begin(), chain_id.end());
 
     auto &my_id = app().getId();
     serialized_header.insert(serialized_header.end(), my_id.begin(), my_id.end());

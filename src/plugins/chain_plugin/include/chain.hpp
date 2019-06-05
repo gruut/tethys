@@ -10,6 +10,7 @@
 
 #include <boost/program_options/variables_map.hpp>
 #include <memory>
+#include <optional>
 #include <utility>
 #include <vector>
 
@@ -27,6 +28,7 @@ public:
   Chain &operator=(const Chain &) = delete;
 
   void initWorld(nlohmann::json &world_state);
+  optional<vector<string>> initChain(nlohmann::json &chain_state);
 
   // RDB functions
   void insertBlockData(Block &block_info);
