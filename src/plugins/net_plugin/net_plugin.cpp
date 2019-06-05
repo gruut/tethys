@@ -42,7 +42,7 @@ public:
 
   string p2p_address;
 
-  string tracker_address;
+  vector<string> tracker_addresses;
 
   unique_ptr<Server> server;
   unique_ptr<ServerCompletionQueue> completion_queue;
@@ -142,28 +142,34 @@ public:
   }
 
   void getPeersFromTracker() {
-    if (!tracker_address.empty()) {
-      logger::INFO("Start to get peers list from tracker");
+    if (tracker_addresses.empty()) {
+      logger::ERROR("No tracker address");
+      return;
+    }
 
-      auto [addr, port] = getHostAndPort(tracker_address);
-      auto [my_host, my_port] = getHostAndPort(p2p_address);
+    logger::INFO("Start to get peers list from tracker");
+    auto [my_host, my_port] = getHostAndPort(p2p_address);
+
+    for (auto &tracker_addr : tracker_addresses) {
+      auto [addr, port] = getHostAndPort(tracker_addr);
 
       HttpClient http_client(addr, port);
 
       auto res = http_client.get("/announce", "port=" + my_port);
-      if (!res.empty()) {
-        logger::INFO("Get a response from a tracker : {}", res);
-        auto peers = json::parse(res);
+      if (res.empty())
+        continue;
 
-        if (!json::is_empty(peers)) {
-          for (auto &peer : peers) {
-            auto [peer_host, peer_port] = getHostAndPort(peer);
-            auto id = peer_host;
+      logger::INFO("Get a response from a tracker : {}", res);
+      auto peers = json::parse(res);
 
-            if (id != getMyNetId()) {
-              Node node = Node(Hash<160>::sha1(id), id, peer_host, peer_port);
-              routing_table->addPeer(move(node));
-            }
+      if (!json::is_empty(peers)) {
+        for (auto &peer : peers) {
+          auto [peer_host, peer_port] = getHostAndPort(peer);
+          auto id = peer_host;
+
+          if (id != getMyNetId()) {
+            Node node = Node(Hash<160>::sha1(id), id, peer_host, peer_port);
+            routing_table->addPeer(move(node));
           }
         }
       }
@@ -376,6 +382,14 @@ public:
       }
       break;
     }
+    case ControlType::LOAD_CHAIN: {
+      for (auto &tracker_addr : control_info["trackers"])
+        tracker_addresses.emplace_back(tracker_addr);
+
+      break;
+    }
+    default:
+      break;
     }
   }
 
@@ -396,7 +410,6 @@ NetPlugin::NetPlugin() : impl(new NetPluginImpl()) {}
 
 void NetPlugin::setProgramOptions(options_description &cfg) {
   cfg.add_options()("p2p-address", po::value<string>()->composing());
-  cfg.add_options()("tracker-address", po::value<string>()->composing());
 }
 
 void NetPlugin::pluginInitialize(const variables_map &options) {
@@ -406,12 +419,6 @@ void NetPlugin::pluginInitialize(const variables_map &options) {
     auto address = options["p2p-address"].as<string>();
 
     impl->p2p_address = address;
-  }
-
-  if (options.count("tracker-address")) {
-    auto tracker_address = options["tracker-address"].as<string>();
-
-    impl->tracker_address = tracker_address;
   }
 
   auto &out_channel = app().getChannel<outgoing::channels::network>();
