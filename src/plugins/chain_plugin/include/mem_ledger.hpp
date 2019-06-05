@@ -1,8 +1,8 @@
 #ifndef GRUUT_PUBLIC_MERGER_MEM_LEDGER_HPP
 #define GRUUT_PUBLIC_MERGER_MEM_LEDGER_HPP
 
-#include "../../../../lib/gruut-utils/src/bytes_builder.hpp"
-#include "../../../../lib/gruut-utils/src/sha256.hpp"
+#include "../../../../lib/tethys-utils/src/bytes_builder.hpp"
+#include "../../../../lib/tethys-utils/src/sha256.hpp"
 #include "../../../../lib/log/include/log.hpp"
 #include "../config/storage_type.hpp"
 
@@ -34,17 +34,17 @@ ostream &operator<<(ostream &os, vector<uint8_t> &value);
 
 class StateNode {
 private:
-  bytes m_pid;
+  string m_pid;
   shared_ptr<StateNode> m_left;
   shared_ptr<StateNode> m_right;
   vector<uint8_t> m_hash_value;
   uint32_t m_suffix; // TODO: 비트 확장
   int m_suffix_len;
 
-  shared_ptr<user_ledger_type> m_user_ledger; // 각 leaf node는 하나의 ledger만을 가리킨다
+  shared_ptr<user_ledger_type> m_user_ledger;
   shared_ptr<contract_ledger_type> m_contract_ledger;
 
-  uint32_t m_debug_path; // 노드 분기 시 필요할 것으로 예상됨
+  string m_debug_path;
 
   void makeValue(const user_ledger_type &user_ledger);
   void makeValue(const contract_ledger_type &contract_ledger);
@@ -69,16 +69,16 @@ public:
   void setLeft(shared_ptr<StateNode> node);
   void setRight(shared_ptr<StateNode> node);
   void setSuffix(uint32_t _path, int pos);
-  void setDebugPath(uint32_t _path);
+  void setDebugPath(string path);
   void setNodeInfo(LedgerRecord &data);
   void overwriteNode(shared_ptr<StateNode> node);
 
-  bytes getPid();
+  string getPid();
   shared_ptr<StateNode> getLeft();
   shared_ptr<StateNode> getRight();
   uint32_t getSuffix();
   vector<uint8_t> getValue();
-  uint32_t getDebugPath();
+  string getDebugPath();
   int getSuffixLen();
 
   const user_ledger_type &getUserLedger() const;
@@ -114,7 +114,7 @@ public:
   void setupTree(const T &ledger_list);
   void updateUserState(const map<string, user_ledger_type> &user_ledger_list);
   void updateContractState(const map<string, contract_ledger_type> &contract_ledger_list);
-  void addNode(uint32_t new_path, shared_ptr<StateNode> new_node);
+  void insertNode(string new_path, shared_ptr<StateNode> new_node);
   void modifyNode(shared_ptr<StateNode> node);
   void removeNode(uint32_t path);
   shared_ptr<StateNode> getMerkleNode(uint32_t _path);

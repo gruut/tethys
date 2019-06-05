@@ -12,7 +12,7 @@ namespace config {
 
 // APP INFO
 
-        const std::string APP_NAME = "Merger for Gruut Public Networks (C++)";
+        const std::string APP_NAME = "Merger for Tethys Public Networks (C++)";
         const std::string APP_CODE_NAME = "Amaranth Seed";
         const std::string APP_BUILD_DATE = __DATE__;
         const std::string APP_BUILD_TIME = __TIME__;

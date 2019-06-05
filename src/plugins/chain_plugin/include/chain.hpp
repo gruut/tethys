@@ -38,8 +38,8 @@ public:
   string getUserCert(const base58_type &user_id);
   bool applyBlockToRDB(const Block &block_info);
   bool applyTransactionToRDB(const Block &block_info);
-  bool applyUserLedgerToRDB(const map<string, user_ledger_type> &user_ledger);
-  bool applyContractLedgerToRDB(const map<string, contract_ledger_type> &contract_ledger);
+  bool applyUserLedgerToRDB(const map<string, user_ledger_type> &user_ledger_list);
+  bool applyContractLedgerToRDB(const map<string, contract_ledger_type> &contract_ledger_list);
   bool applyUserAttributeToRDB(const map<base58_type, user_attribute_type> &user_attribute_list);
   bool applyUserCertToRDB(const map<base58_type, user_cert_type> &user_cert_list);
   bool applyContractToRDB(const map<base58_type, contract_type> &contract_list);

@@ -1,6 +1,6 @@
 #include "include/rdb_controller.hpp"
 #include "mysql/soci-mysql.h"
-#include <ags.hpp>
+#include "../../../lib/tethys-utils/src/ags.hpp"
 
 using namespace std;
 
@@ -166,16 +166,16 @@ bool RdbController::applyContractLedgerToRDB(const map<string, contract_ledger_t
 
       // clang-format off
       if (each_ledger.second.query_type == QueryType::INSERT) {
-        st = (db_session.prepare << "INSERT INTO contract_scope (var_name, var_value, var_type, var_owner, up_time, up_block, tag, pid) VALUES (:var_name, :var_value, :var_type, :var_owner, :up_time, :up_block, :tag, :pid)",
-            soci::use(var_name, "var_name"), soci::use(var_val, "var_value"), soci::use(tag, "tag"),
+        st = (db_session.prepare << "INSERT INTO contract_scope (var_name, var_value, var_type, var_owner, up_time, up_block, var_info, pid) VALUES (:var_name, :var_value, :var_type, :var_owner, :up_time, :up_block, :var_info, :pid)",
+            soci::use(var_name, "var_name"), soci::use(var_val, "var_value"), soci::use(var_info, "var_info"),
             soci::into(result));
       } else if (each_ledger.second.query_type == QueryType::UPDATE) {
-        st = (db_session.prepare << "UPDATE contract_scope SET var_name = :var_name, var_value = :var_value, tag = :tag, WHERE pid = :pid",
-            soci::use(var_name, "var_name"), soci::use(var_val, "var_value"), soci::use(tag, "tag"),
+        st = (db_session.prepare << "UPDATE contract_scope SET var_name = :var_name, var_value = :var_value, var_info = :var_info, WHERE pid = :pid",
+            soci::use(var_name, "var_name"), soci::use(var_val, "var_value"), soci::use(var_info, "var_info"),
             soci::into(result));
       } else if ((each_ledger.second.query_type == QueryType::DELETE) && (each_ledger.second.var_val == "")) {
         st = (db_session.prepare << "DELETE FROM contract_scope WHERE ",
-            soci::use(var_name, "var_name"), soci::use(var_val, "var_value"), soci::use(tag, "tag"),
+            soci::use(var_name, "var_name"), soci::use(var_val, "var_value"), soci::use(var_info, "var_info"),
             soci::into(result));
       } else
         logger::ERROR("Error at applyContractLedgerToRDB");

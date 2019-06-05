@@ -112,7 +112,7 @@ ubp_push_result_type UnresolvedBlockPool::pushBlock(Block &block, bool is_restor
 
   int vec_idx = m_block_pool[deq_idx].size();
 
-  m_block_pool[deq_idx].emplace_back(block, prev_vec_idx); // pool에 블록 추가
+  m_block_pool[deq_idx].emplace_back(block, vec_idx, prev_vec_idx); // pool에 블록 추가
 
   ret_val.height = block_height;
 
@@ -122,8 +122,8 @@ ubp_push_result_type UnresolvedBlockPool::pushBlock(Block &block, bool is_restor
   if (deq_idx + 1 < m_block_pool.size()) { // if there is next bin
     for (auto &each_block : m_block_pool[deq_idx + 1]) {
       if (each_block.block.getPrevBlockId() == block.getBlockId()) {
-        if (each_block.prev_vector_idx < 0) {
-          each_block.prev_vector_idx = vec_idx;
+        if (each_block.prev_vec_idx < 0) {
+          each_block.prev_vec_idx = vec_idx;
         }
       }
     }
@@ -135,6 +135,7 @@ ubp_push_result_type UnresolvedBlockPool::pushBlock(Block &block, bool is_restor
 }
 
 UnresolvedBlock UnresolvedBlockPool::findBlock(const base58_type &block_id, const block_height_type block_height) {
+  // TODO: Refactoring. height와 cur_vec_idx를 이용하면 순회 안 하고도 찾을 수 있음
   for (auto &each_level : m_block_pool) {
     for (auto &each_block : each_level) {
       if ((each_block.block.getBlockId() == block_id) && (each_block.block.getHeight() == block_height))
@@ -170,13 +171,13 @@ vector<int> UnresolvedBlockPool::getLine(const base58_type &block_id, const bloc
     line[current_deq_idx] = current_vec_idx;
 
     while (current_deq_idx > 0) {
-      current_vec_idx = m_block_pool[current_deq_idx][current_vec_idx].prev_vector_idx;
+      current_vec_idx = m_block_pool[current_deq_idx][current_vec_idx].prev_vec_idx;
       current_deq_idx--;
 
       line[current_deq_idx] = current_vec_idx;
     }
 
-    if (m_block_pool[current_deq_idx][current_vec_idx].prev_vector_idx != 0) {
+    if (m_block_pool[current_deq_idx][current_vec_idx].prev_vec_idx != 0) {
       logger::ERROR("This block is not linked!");
       line.resize(1, -1);
     }
@@ -200,7 +201,7 @@ bool UnresolvedBlockPool::resolveBlock(Block &block, UnresolvedBlock &resolved_r
     int resolved_block_idx = -1;
 
     for (int i = 0; i < m_block_pool[0].size(); ++i) {
-      if (m_block_pool[0][i].prev_vector_idx == 0 && m_block_pool[0][i].ssig_sum > highest_total_ssig) {
+      if (m_block_pool[0][i].prev_vec_idx == 0 && m_block_pool[0][i].ssig_sum > highest_total_ssig) {
         highest_total_ssig = m_block_pool[0][i].ssig_sum;
         resolved_block_idx = i;
       }
@@ -212,7 +213,7 @@ bool UnresolvedBlockPool::resolveBlock(Block &block, UnresolvedBlock &resolved_r
 
     bool is_after = false;
     for (auto &each_block : m_block_pool[1]) {
-      if (each_block.prev_vector_idx == resolved_block_idx) { // some block links this block
+      if (each_block.prev_vec_idx == resolved_block_idx) { // some block links this block
         is_after = true;
         break;
       }
@@ -242,10 +243,10 @@ bool UnresolvedBlockPool::resolveBlock(Block &block, UnresolvedBlock &resolved_r
 
     for (auto &each_block : m_block_pool[0]) {
       if (each_block.block.getPrevBlockId() == m_latest_confirmed_id) {
-        each_block.prev_vector_idx = 0;
+        each_block.prev_vec_idx = 0;
       } else {
         // this block is unlinkable => to be deleted
-        each_block.prev_vector_idx = -1;
+        each_block.prev_vec_idx = -1;
       }
     }
     resolved_result = resolved_block;
@@ -267,8 +268,8 @@ void UnresolvedBlockPool::updateTotalNumSSig() {
 
   for (int i = (int)m_block_pool.size() - 1; i > 0; --i) {
     for (auto &each_block : m_block_pool[i]) { // for vector
-      if (each_block.prev_vector_idx >= 0 && m_block_pool[i - 1].size() > each_block.prev_vector_idx) {
-        m_block_pool[i - 1][each_block.prev_vector_idx].ssig_sum += each_block.ssig_sum;
+      if (each_block.prev_vec_idx >= 0 && m_block_pool[i - 1].size() > each_block.prev_vec_idx) {
+        m_block_pool[i - 1][each_block.prev_vec_idx].ssig_sum += each_block.ssig_sum;
       }
     }
   }
@@ -292,12 +293,12 @@ void UnresolvedBlockPool::updateTotalNumSSig() {
 //
 //    cout << key << ", " << value << endl;
 //
-//    // 지워진 데이터라면 addNode 를 호출하여 다시 트리에 삽입
+//    // 지워진 데이터라면 insertNode 를 호출하여 다시 트리에 삽입
 //    if (value.isDeleted) {
 //      rollback_data.var_value = value.var_value;
 //      path = value.path;
 //
-//      m_tree.addNode(path, rollback_data);
+//      m_tree.insertNode(path, rollback_data);
 //    } else {
 //      // 지워진 데이터가 아니라면 남은 레이어와 DB 에서 찾아봄
 //      int depth = checkLayer(key);

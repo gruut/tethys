@@ -3,13 +3,13 @@
 
 #include <atomic>
 #include <deque>
-#include <time.h>
-#include <memory>
 #include <map>
+#include <memory>
+#include <time.h>
 
+#include "../../../../lib/log/include/log.hpp"
 #include "../../../../lib/tethys-utils/src/time_util.hpp"
 #include "../../../../lib/tethys-utils/src/type_converter.hpp"
-#include "../../../../lib/log/include/log.hpp"
 #include "../config/storage_type.hpp"
 
 #include "../structure/block.hpp"
@@ -19,24 +19,18 @@ namespace tethys {
 
 struct UnresolvedBlock {
   Block block;
-  int32_t prev_vector_idx{-1};
+  int32_t cur_vec_idx{-1};
+  int32_t prev_vec_idx{-1};
   int32_t ssig_sum{0};
   std::map<string, user_ledger_type> user_ledger_list;
   std::map<string, contract_ledger_type> contract_ledger_list;
   std::map<base58_type, user_attribute_type> user_attribute_list;
   std::map<base58_type, user_cert_type> user_cert_list;
-  std::map<base58_type, contract_type> contract_list;
+  std::map<contract_id_type, contract_type> contract_list;
 
   UnresolvedBlock() = default;
-  UnresolvedBlock(Block &block_, int prev_queue_idx_) : block(block_), prev_vector_idx(prev_queue_idx_) {}
-};
-
-struct BlockPosPool {
-  int32_t height{0};
-  int32_t vector_idx{0};
-
-  BlockPosPool() = default;
-  BlockPosPool(int32_t height_, int32_t vector_idx_) : height(height_), vector_idx(vector_idx_) {}
+  UnresolvedBlock(Block &block_, int cur_vec_idx_, int prev_vec_idx_)
+      : block(block_), cur_vec_idx(cur_vec_idx_), prev_vec_idx(prev_vec_idx_) {}
 };
 
 class UnresolvedBlockPool {

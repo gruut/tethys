@@ -200,6 +200,11 @@ public:
     if (resolve_result) {
       chain->applyBlockToRDB(resolved_block.block);
       chain->applyTransactionToRDB(resolved_block.block);
+      chain->applyUserLedgerToRDB(resolved_block.user_ledger_list);
+      chain->applyContractLedgerToRDB(resolved_block.contract_ledger_list);
+      chain->applyUserAttributeToRDB(resolved_block.user_attribute_list);
+      chain->applyUserCertToRDB(resolved_block.user_cert_list);
+      chain->applyContractToRDB(resolved_block.contract_list);
     }
 
     return;

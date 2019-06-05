@@ -50,7 +50,7 @@ StateNode::StateNode(const user_ledger_type &user_ledger) {
   makeValue(user_ledger);
 
   // m_path = makePath(ledger);
-  m_debug_path = 0;
+  m_debug_path = "";
   m_suffix_len = -1;
 
   m_user_ledger = make_shared<user_ledger_type>(user_ledger);
@@ -63,7 +63,7 @@ StateNode::StateNode(const contract_ledger_type &contract_ledger) {
   makeValue(contract_ledger);
 
   // m_path = makePath(ledger);
-  m_debug_path = 0;
+  m_debug_path = "";
   m_suffix_len = -1;
 
   m_contract_ledger = make_shared<contract_ledger_type>(contract_ledger);
@@ -143,7 +143,7 @@ void StateNode::moveToParent() {
 }
 
 bool StateNode::isDummy() {
-  return (m_debug_path == 0);
+  return (m_debug_path == "");
 }
 
 void StateNode::setLeft(shared_ptr<StateNode> node) {
@@ -160,8 +160,8 @@ void StateNode::setSuffix(uint32_t _path, int pos) {
   m_suffix_len = pos;
 }
 
-void StateNode::setDebugPath(uint32_t _path) {
-  m_debug_path = _path;
+void StateNode::setDebugPath(string path) {
+  m_debug_path = path;
 }
 
 void StateNode::setNodeInfo(LedgerRecord &data) {
@@ -182,7 +182,7 @@ void StateNode::overwriteNode(shared_ptr<StateNode> node) {
   node.reset();
 }
 
-bytes StateNode::getPid() {
+string StateNode::getPid() {
   return m_pid;
 }
 
@@ -202,7 +202,7 @@ vector<uint8_t> StateNode::getValue() {
   return m_hash_value;
 }
 
-uint32_t StateNode::getDebugPath() {
+string StateNode::getDebugPath() {
   return m_debug_path;
 }
 
@@ -266,25 +266,25 @@ template <typename T>
 void StateTree::setupTree(const T &ledger_list) {
   for (auto &each_ledger : ledger_list) {
     StateNode new_node(each_ledger);
-    this->addNode(TypeConverter::bytesToString(each_ledger.pid), new_node);
+    this->insertNode(TypeConverter::bytesToString(each_ledger.pid), new_node);
   }
 }
 
 void StateTree::updateUserState(const map<string, user_ledger_type> &user_ledger_list) {
   for (auto &each_ledger : user_ledger_list) {
     StateNode new_node(each_ledger.second);
-    this->addNode(TypeConverter::bytesToString(each_ledger.second.pid), new_node);
+    this->insertNode(TypeConverter::bytesToString(each_ledger.second.pid), new_node);
   }
 }
 
 void StateTree::updateContractState(const map<string, contract_ledger_type> &contract_ledger_list) {
   for (auto &each_ledger : contract_ledger_list) {
     StateNode new_node(each_ledger.second);
-    this->addNode(TypeConverter::bytesToString(each_ledger.second.pid), new_node);
+    this->insertNode(TypeConverter::bytesToString(each_ledger.second.pid), new_node);
   }
 }
 
-void StateTree::addNode(uint32_t new_path, shared_ptr<StateNode> new_node) {
+void StateTree::insertNode(string new_path, shared_ptr<StateNode> new_node) {
   new_node->setDebugPath(new_path);
   shared_ptr<StateNode> node = root;
   shared_ptr<StateNode> prev_node = nullptr;
@@ -359,7 +359,7 @@ void StateTree::addNode(uint32_t new_path, shared_ptr<StateNode> new_node) {
     // 경로가 같은 횟수만큼 경로를 따라서 dummy 노드 생성 및 연결
     while (true) {
       if (depth > _TREE_DEPTH) {
-        printf("StateTree::addNode() collision unsolved.\n");
+        printf("StateTree::insertNode() collision unsolved.\n");
         break;
       }
 

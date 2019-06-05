@@ -1,8 +1,8 @@
-#ifndef GRUUT_PUBLIC_MERGER_TYPES_HPP
-#define GRUUT_PUBLIC_MERGER_TYPES_HPP
+#ifndef TETHYS_PUBLIC_MERGER_TYPES_HPP
+#define TETHYS_PUBLIC_MERGER_TYPES_HPP
 
-#include <bytes_builder.hpp>
-#include <sha256.hpp>
+#include "../../../../lib/tethys-utils/src/bytes_builder.hpp"
+#include "../../../../lib/tethys-utils/src/sha256.hpp"
 #include <string>
 #include <vector>
 

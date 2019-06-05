@@ -1,6 +1,6 @@
-#include "../../../lib/appbase/include/application.hpp"
 #include "include/chain.hpp"
-#include "../../../lib/gruut-utils/src/ags.hpp"
+#include "../../../lib/appbase/include/application.hpp"
+#include "../../../lib/tethys-utils/src/ags.hpp"
 
 namespace tethys {
 
@@ -78,12 +78,12 @@ bool Chain::applyTransactionToRDB(const tethys::Block &block_info) {
   return rdb_controller->applyTransactionToRDB(block_info);
 }
 
-bool Chain::applyUserLedgerToRDB(const std::map<string, user_ledger_type> &user_ledger) {
-  return rdb_controller->applyUserLedgerToRDB(user_ledger);
+bool Chain::applyUserLedgerToRDB(const std::map<string, user_ledger_type> &user_ledger_list) {
+  return rdb_controller->applyUserLedgerToRDB(user_ledger_list);
 }
 
-bool Chain::applyContractLedgerToRDB(const std::map<string, contract_ledger_type> &contract_ledger) {
-  return rdb_controller->applyContractLedgerToRDB(contract_ledger);
+bool Chain::applyContractLedgerToRDB(const std::map<string, contract_ledger_type> &contract_ledger_list) {
+  return rdb_controller->applyContractLedgerToRDB(contract_ledger_list);
 }
 
 bool Chain::applyUserAttributeToRDB(const std::map<base58_type, user_attribute_type> &user_attribute_list) {
@@ -562,7 +562,7 @@ search_result_type Chain::findUserLedgerFromPoint(string key, block_height_type 
       search_result.user_ledger = it->second;
       return search_result;
     }
-    pool_vec_idx = unresolved_block_pool->getBlock(pool_deque_idx, pool_vec_idx).prev_vector_idx;
+    pool_vec_idx = unresolved_block_pool->getBlock(pool_deque_idx, pool_vec_idx).prev_vec_idx;
     --pool_deque_idx;
 
     if (pool_deque_idx < 0) {
@@ -591,7 +591,7 @@ search_result_type Chain::findContractLedgerFromPoint(string key, block_height_t
       search_result.contract_ledger = it->second;
       return search_result;
     }
-    pool_vec_idx = unresolved_block_pool->getBlock(pool_deque_idx, pool_vec_idx).prev_vector_idx;
+    pool_vec_idx = unresolved_block_pool->getBlock(pool_deque_idx, pool_vec_idx).prev_vec_idx;
     --pool_deque_idx;
 
     if (pool_deque_idx < 0) {
@@ -634,8 +634,18 @@ void Chain::updateStateTree(const UnresolvedBlock &unresolved_block) {
   //  아니면 user_cert는 보류한다고 해도 contract는 직접적으로 연관되어 있으므로 반영을 해야 하는가?
 }
 
-void revertStateTree(const UnresolvedBlock &unresolved_block) {
+void Chain::revertStateTree(const UnresolvedBlock &unresolved_block) {
+  for (auto &each_user_ledger : unresolved_block.user_ledger_list) {
+    m_us_tree.insertNode(
+        findUserLedgerFromPoint(each_user_ledger.first, unresolved_block.block.getHeight(), unresolved_block.cur_vec_idx).user_ledger);
+  }
 
+  for (auto &each_contract_ledger : unresolved_block.contract_ledger_list) {
+    m_us_tree.insertNode(
+        findContractLedgerFromPoint(each_contract_ledger.first, unresolved_block.block.getHeight(), unresolved_block.cur_vec_idx)
+            .contract_ledger);
+  }
+  // TODO: user cert나 contract 등도 revert해야함
 }
 
 user_ledger_type Chain::findUserLedgerFromHead(string key) {
@@ -664,7 +674,7 @@ void Chain::moveHead(const base58_type &target_block_id, const block_height_type
     int current_height = static_cast<int>(m_head_height);
 
     while (current_height > target_block_height) {
-      current_vec_idx = unresolved_block_pool->getBlock(current_deq_idx, current_vec_idx).prev_vector_idx;
+      current_vec_idx = unresolved_block_pool->getBlock(current_deq_idx, current_vec_idx).prev_vec_idx;
       --current_deq_idx;
       --current_height;
     }
@@ -672,7 +682,7 @@ void Chain::moveHead(const base58_type &target_block_id, const block_height_type
     vector<int> line = unresolved_block_pool->getLine(target_block_id, target_block_height);
 
     while (current_vec_idx != line[current_deq_idx]) {
-      current_vec_idx = unresolved_block_pool->getBlock(current_deq_idx, current_vec_idx).prev_vector_idx;
+      current_vec_idx = unresolved_block_pool->getBlock(current_deq_idx, current_vec_idx).prev_vec_idx;
       --current_deq_idx;
       --current_height;
     }
@@ -693,9 +703,9 @@ void Chain::moveHead(const base58_type &target_block_id, const block_height_type
     current_vec_idx = m_head_vec_idx;
 
     for (int i = 0; i < back_count; i++) {
-      revertLedger(unresolved_block_pool->getBlock(current_deq_idx, current_vec_idx));
+      revertStateTree(unresolved_block_pool->getBlock(current_deq_idx, current_vec_idx));
 
-      current_vec_idx = unresolved_block_pool->getBlock(current_deq_idx, current_vec_idx).prev_vector_idx;
+      current_vec_idx = unresolved_block_pool->getBlock(current_deq_idx, current_vec_idx).prev_vec_idx;
       current_deq_idx--;
       current_height--;
     }
