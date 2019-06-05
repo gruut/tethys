@@ -5,6 +5,7 @@
 #include "../../../../lib/tethys-utils/src/sha256.hpp"
 #include <string>
 #include <vector>
+#include <bitset>
 
 using namespace std;
 
@@ -32,6 +33,7 @@ using base58_type = std::string;
 using base64_type = std::string;
 using contract_id_type = std::string; // 사용자 정의 식별자::사용자 아이디::로컬체인 이름::월드 이름
 using txagg_cbor_b64 = std::string;
+using path_type = std::bitset<256>;
 
 using local_chain_type = struct LocalChainState {
   // chain

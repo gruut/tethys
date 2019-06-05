@@ -16,24 +16,6 @@ string valueToStr(vector<uint8_t> value) {
   return str;
 }
 
-// uint32_t 값을 받아서 눈으로 볼 수 있게 binary string 으로 변환하는 함수
-char *intToBin(uint32_t num) {
-  char *ret = new char(_SHA256_SPLIT + 2);
-
-  int pos = 0;
-  for (int i = _SHA256_SPLIT; i >= 0; --i) {
-    if ((num & (1 << i)) == 0) {
-      ret[pos] = '0';
-    } else {
-      ret[pos] = '1';
-    }
-    ++pos;
-  }
-  ret[_SHA256_SPLIT + 1] = '\0';
-
-  return ret;
-}
-
 // ostream& operator<<(ostream &os, vector<uint8_t> &value)
 //{
 //    os << valueToStr(value);
@@ -45,13 +27,11 @@ namespace tethys {
 StateNode::StateNode(const user_ledger_type &user_ledger) {
   m_left = nullptr;
   m_right = nullptr;
-
   m_suffix = 0;
-  makeValue(user_ledger);
-
-  // m_path = makePath(ledger);
-  m_debug_path = "";
   m_suffix_len = -1;
+  m_bin_path = 0;
+  makeValue(user_ledger);
+  // m_path = makePath(ledger);
 
   m_user_ledger = make_shared<user_ledger_type>(user_ledger);
 }
@@ -60,11 +40,10 @@ StateNode::StateNode(const contract_ledger_type &contract_ledger) {
   m_left = nullptr;
   m_right = nullptr;
   m_suffix = 0;
-  makeValue(contract_ledger);
-
-  // m_path = makePath(ledger);
-  m_debug_path = "";
   m_suffix_len = -1;
+  m_bin_path = 0;
+  makeValue(contract_ledger);
+  // m_path = makePath(ledger);
 
   m_contract_ledger = make_shared<contract_ledger_type>(contract_ledger);
 }
@@ -136,32 +115,64 @@ void StateNode::moveToParent() {
     logger::ERROR("StateNode::moveToParent has some error");
     return;
   }
+  path_type tmp = m_bin_path;
+  tmp &= (1 << m_suffix_len);
 
-  bit = (m_debug_path & (1 << m_suffix_len)) != 0 ? 1 : 0;
-  m_suffix = m_suffix | (bit << m_suffix_len);
+  bit = tmp != 0 ? 1 : 0;
+  m_suffix |= (bit << m_suffix_len);
   ++m_suffix_len;
 }
 
 bool StateNode::isDummy() {
-  return (m_debug_path == "");
+  return (m_bin_path == 0);
+}
+
+path_type StateNode::calPathFromPid(const string &pid) {
+  vector<bool> bool_vector;
+  path_type bin_path;
+
+  for (auto i = pid.rbegin(); i != pid.rend(); ++i) {
+    if (i == pid.rbegin() && *i == 0)
+      continue;
+    bool_vector.emplace_back(*i & 0x01);
+    bool_vector.emplace_back(*i & 0x02);
+    bool_vector.emplace_back(*i & 0x04);
+    bool_vector.emplace_back(*i & 0x08);
+    bool_vector.emplace_back(*i & 0x10);
+    bool_vector.emplace_back(*i & 0x20);
+    bool_vector.emplace_back(*i & 0x40);
+    bool_vector.emplace_back(*i & 0x80);
+  }
+
+  for (int i = 0; i < bool_vector.size(); ++i) {
+    bin_path[i] = bool_vector[i];
+  }
+
+  return bin_path;
 }
 
 void StateNode::setLeft(shared_ptr<StateNode> node) {
-  m_left = make_shared<StateNode>(node);
+  m_left = node;
 }
 
 void StateNode::setRight(shared_ptr<StateNode> node) {
-  m_right = make_shared<StateNode>(node);
+  m_right = node;
 }
 
-void StateNode::setSuffix(uint32_t _path, int pos) {
-  uint32_t mask = (uint32_t)(1 << pos) - 1;
-  m_suffix = _path & mask;
+void StateNode::setSuffix(const path_type &path, int pos) {
+  path_type mask;
+  for (int i = 0; i < pos; ++i) {
+    mask[i] = 1;
+  }
+
+  path_type tmp = path;
+  tmp &= mask;
+  m_suffix = tmp;
   m_suffix_len = pos;
 }
 
-void StateNode::setDebugPath(string path) {
-  m_debug_path = path;
+void StateNode::setBinPath(const string &pid) {
+  m_bin_path = calPathFromPid(pid);
 }
 
 void StateNode::setNodeInfo(LedgerRecord &data) {
@@ -174,7 +185,7 @@ void StateNode::overwriteNode(shared_ptr<StateNode> node) {
   m_hash_value = node->getValue();
   m_suffix = node->getSuffix();
   m_suffix_len = node->getSuffixLen();
-  m_debug_path = node->getDebugPath();
+  m_bin_path = node->getBinPath();
   m_user_ledger = node->getUserLedgerPtr();
   m_contract_ledger = node->getContractLedgerPtr();
   moveToParent(); // suffix, suffix_len, path 값 수정
@@ -194,20 +205,20 @@ shared_ptr<StateNode> StateNode::getRight() {
   return m_right;
 }
 
-uint32_t StateNode::getSuffix() {
+path_type StateNode::getSuffix() {
   return m_suffix;
+}
+
+int StateNode::getSuffixLen() {
+  return m_suffix_len;
 }
 
 vector<uint8_t> StateNode::getValue() {
   return m_hash_value;
 }
 
-string StateNode::getDebugPath() {
-  return m_debug_path;
-}
-
-int StateNode::getSuffixLen() {
-  return m_suffix_len;
+path_type StateNode::getBinPath() {
+  return m_bin_path;
 }
 
 const user_ledger_type &StateNode::getUserLedger() const {
@@ -226,10 +237,11 @@ shared_ptr<contract_ledger_type> StateNode::getContractLedgerPtr() const {
   return m_contract_ledger;
 }
 
-// LSB 에서 pos 번째 bit 를 반환
-// 반환 값이 false 면 left 방향이고 true 면 right 방향임
-bool StateTree::getDirectionOf(uint32_t path, int pos) {
-  return (path & (1 << pos)) != 0;
+// false: left, true: right
+bool StateTree::getDirectionOf(const path_type &path, int pos) {
+  path_type tmp = path;
+  tmp &= (1 << pos);
+  return tmp != 0;
 }
 
 void StateTree::visit(shared_ptr<StateNode> node, bool isPrint) {
@@ -237,8 +249,8 @@ void StateTree::visit(shared_ptr<StateNode> node, bool isPrint) {
   if (!node->isDummy()) {
     if (isPrint) {
       printf("%s%s\t", _debug_str_dir.substr(0, _debug_depth).c_str(), str_dir.c_str());
-      printf("[path: %s] suffix_len: %d, suffix: %s,  hash_value: %s\n", intToBin(node->getDebugPath()), node->getSuffixLen(),
-             intToBin(node->getSuffix()), TypeConverter::encodeBase<64>(node->getValue()).c_str());
+      printf("[path: %s] suffix_len: %d, suffix: %s,  hash_value: %s\n", node->getBinPath(), node->getSuffixLen(),
+             node->getSuffix(), TypeConverter::encodeBase<64>(node->getValue()).c_str());
     }
     stk.push(node);
   }
@@ -270,22 +282,32 @@ void StateTree::setupTree(const T &ledger_list) {
   }
 }
 
+template <typename T>
+void StateTree::updateState(const T &ledger_list) {
+  for (auto &each_ledger : ledger_list) {
+    StateNode new_node(each_ledger.second);
+    this->insertNode(TypeConverter::bytesToString(each_ledger.second.pid), new_node);
+  }
+}
+
 void StateTree::updateUserState(const map<string, user_ledger_type> &user_ledger_list) {
   for (auto &each_ledger : user_ledger_list) {
     StateNode new_node(each_ledger.second);
-    this->insertNode(TypeConverter::bytesToString(each_ledger.second.pid), new_node);
+    this->insertNode(TypeConverter::bytesToString(each_ledger.second.pid), make_shared<StateNode>(new_node));
   }
 }
 
 void StateTree::updateContractState(const map<string, contract_ledger_type> &contract_ledger_list) {
   for (auto &each_ledger : contract_ledger_list) {
     StateNode new_node(each_ledger.second);
-    this->insertNode(TypeConverter::bytesToString(each_ledger.second.pid), new_node);
+    this->insertNode(TypeConverter::bytesToString(each_ledger.second.pid), make_shared<StateNode>(new_node));
   }
 }
 
-void StateTree::insertNode(string new_path, shared_ptr<StateNode> new_node) {
-  new_node->setDebugPath(new_path);
+void StateTree::insertNode(const string &pid, shared_ptr<StateNode> new_node) {
+  new_node->setBinPath(pid);
+  path_type new_path = new_node->getBinPath();
+
   shared_ptr<StateNode> node = root;
   shared_ptr<StateNode> prev_node = nullptr;
 
@@ -338,13 +360,13 @@ void StateTree::insertNode(string new_path, shared_ptr<StateNode> new_node) {
   // old_path : 기존 노드의 경로, new_path : 새 노드의 경로
   if (collision) {
     shared_ptr<StateNode> old_node;
-    uint32_t old_path;
+    path_type old_path;
     shared_ptr<StateNode> dummy;
 
     old_node = node;
-    old_path = old_node->getDebugPath();
+    old_path = old_node->getBinPath();
 
-    if(old_node->getPid() == new_node->getPid())
+    if (old_node->getPid() == new_node->getPid())
       modifyNode(new_node);
 
     // 먼저 충돌난 곳에 dummy 노드 생성해서 연결
@@ -417,11 +439,11 @@ void StateTree::modifyNode(shared_ptr<StateNode> node) {
   }
 }
 
-void StateTree::removeNode(uint32_t path) {
+void StateTree::removeNode(string &pid) {
   shared_ptr<StateNode> node;
   shared_ptr<StateNode> parent, left, right;
 
-  node = getMerkleNode(path);
+  node = getMerkleNode(pid);
   parent = stk.top();
   stk.pop();
 
@@ -474,8 +496,9 @@ void StateTree::removeNode(uint32_t path) {
   --m_size;
 }
 
-shared_ptr<StateNode> StateTree::getMerkleNode(uint32_t _path) {
+shared_ptr<StateNode> StateTree::getMerkleNode(string &pid) {
   shared_ptr<StateNode> ret = nullptr;
+  path_type path = ret->calPathFromPid(pid);
 
   while (!stk.empty()) {
     stk.pop(); // 스택 clear
@@ -494,7 +517,7 @@ shared_ptr<StateNode> StateTree::getMerkleNode(uint32_t _path) {
       break;
     }
     stk.push(node);
-    if (!getDirectionOf(_path, dir_pos)) {
+    if (!getDirectionOf(path, dir_pos)) {
       node = node->getLeft();
     } else {
       node = node->getRight();
@@ -504,8 +527,8 @@ shared_ptr<StateNode> StateTree::getMerkleNode(uint32_t _path) {
   return ret;
 }
 
-vector<vector<uint8_t>> StateTree::getSiblings(uint32_t _path) {
-  shared_ptr<StateNode> node = getMerkleNode(_path);
+vector<vector<uint8_t>> StateTree::getSiblings(string &pid) {
+  shared_ptr<StateNode> node = getMerkleNode(pid);
 
   vector<vector<uint8_t>> siblings;
   vector<uint8_t> value;
@@ -557,8 +580,8 @@ void StateTree::printTreePostOrder() {
   postOrder(root, isPrint);
 
   if (isPrint) {
-//    printf("root Value: %s\n", TypeConverter::encodeBase<64>(TypeConverter::bytesToString(root->getValue())));
-//    printf("*********** finish traversal ***********\n");
+        printf("root Value: %s\n", TypeConverter::encodeBase<64>(TypeConverter::bytesToString(root->getValue())));
+        printf("*********** finish traversal ***********\n");
   }
 }
 

@@ -628,8 +628,8 @@ void Chain::setupStateTree() {
 }
 
 void Chain::updateStateTree(const UnresolvedBlock &unresolved_block) {
-  m_us_tree.updateUserState(unresolved_block.user_ledger_list);
-  m_cs_tree.updateContractState(unresolved_block.contract_ledger_list);
+  m_us_tree.updateState(unresolved_block.user_ledger_list);
+  m_cs_tree.updateState(unresolved_block.contract_ledger_list);
   // TODO: user cert나 contract 관련 사항들은 state tree에 반영할 필요는 없고, 그냥 ledger로써만 가지고 있으면 되나?
   //  아니면 user_cert는 보류한다고 해도 contract는 직접적으로 연관되어 있으므로 반영을 해야 하는가?
 }
@@ -649,21 +649,21 @@ void Chain::revertStateTree(const UnresolvedBlock &unresolved_block) {
 }
 
 user_ledger_type Chain::findUserLedgerFromHead(string key) {
-  if (m_us_tree.getMerkleNode(stoi(key)) == nullptr) {
+  if (m_us_tree.getMerkleNode(key) == nullptr) {
     user_ledger_type empty_ledger;
     empty_ledger.is_empty = true;
     return empty_ledger;
   } else
-    return m_us_tree.getMerkleNode(stoi(key))->getUserLedger();
+    return m_us_tree.getMerkleNode(key)->getUserLedger();
 }
 
 contract_ledger_type Chain::findContractLedgerFromHead(string key) {
-  if (m_cs_tree.getMerkleNode(stoi(key)) == nullptr) {
+  if (m_cs_tree.getMerkleNode(key) == nullptr) {
     contract_ledger_type empty_ledger;
     empty_ledger.is_empty = true;
     return empty_ledger;
   } else
-    return m_cs_tree.getMerkleNode(stoi(key))->getContractLedger();
+    return m_cs_tree.getMerkleNode(key)->getContractLedger();
 }
 
 void Chain::moveHead(const base58_type &target_block_id, const block_height_type target_block_height) {
