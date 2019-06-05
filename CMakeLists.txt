@@ -10,7 +10,7 @@ else()
     set(GRUUT_INSTALL_DIR ${CMAKE_INSTALL_PREFIX})
 endif()
 
-project(tethys LANGUAGES CXX)
+project(tethys LANGUAGES C CXX)
 
 list(APPEND CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/CMakeModules")
 include(InstallDirectoryPermissions)
@@ -22,6 +22,7 @@ add_executable(
 
 add_subdirectory(lib)
 add_subdirectory(src/plugins)
+#add_subdirectory(src/contract)
 
 target_link_libraries(tethys
         appbase
