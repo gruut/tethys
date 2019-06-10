@@ -3,15 +3,28 @@
 
 #include "../../../../lib/tethys-utils/src/bytes_builder.hpp"
 #include "../../../../lib/tethys-utils/src/sha256.hpp"
+#include <bitset>
+#include <map>
 #include <string>
 #include <vector>
-#include <bitset>
 
 using namespace std;
 
 namespace tethys {
 
 enum class QueryType : int { INSERT, UPDATE, DELETE };
+//enum class WhichType : int {
+//  USERLEDGER,
+//  CONTRACTLEDGER,
+//  USERATTRIBUTE,
+//  USERCERT,
+//  CONTRACT,
+//  USERLEDGER_LIST,
+//  CONTRACTLEDGER_LIST,
+//  USERATTRIBUTE_LIST,
+//  USERCERT_LIST,
+//  CONTRACT_LIST
+//};
 struct DataType {
   inline static const string WORLD = "world";
   inline static const string CHAIN = "chain";
@@ -142,7 +155,7 @@ using user_ledger_type = struct UserLedger {
   timestamp_t up_time;
   block_height_type up_block;
   string tag;
-  hash_t pid;
+  string pid;
   QueryType query_type;
   bool is_empty{false};
 
@@ -150,10 +163,10 @@ using user_ledger_type = struct UserLedger {
   UserLedger(string var_name_, int var_type_, string uid_, string tag_) : var_name(var_name_), var_type(var_type_), uid(uid_), tag(tag_) {
     BytesBuilder bytes_builder;
     bytes_builder.append(var_name);
-    bytes_builder.append(var_type);
+    bytes_builder.appendDec(var_type);
     bytes_builder.appendBase<58>(uid);
     bytes_builder.append(tag);
-    pid = Sha256::hash(bytes_builder.getBytes());
+    pid = TypeConverter::bytesToString(Sha256::hash(bytes_builder.getBytes()));
   }
 };
 
@@ -165,7 +178,7 @@ using contract_ledger_type = struct ContractLedger {
   timestamp_t up_time;
   block_height_type up_block;
   string var_info;
-  hash_t pid;
+  string pid;
   QueryType query_type;
   bool is_empty{false};
 
@@ -174,10 +187,10 @@ using contract_ledger_type = struct ContractLedger {
       : var_name(var_name_), var_type(var_type_), cid(cid_), var_info(var_info_) {
     BytesBuilder bytes_builder;
     bytes_builder.append(var_name);
-    bytes_builder.append(var_type);
+    bytes_builder.appendDec(var_type);
     bytes_builder.append(cid);
     bytes_builder.append(var_info);
-    pid = Sha256::hash(bytes_builder.getBytes());
+    pid = TypeConverter::bytesToString(Sha256::hash(bytes_builder.getBytes()));
   }
 };
 
@@ -217,6 +230,20 @@ using contract_type = struct Contract {
   string desc;
   string sigma;
 };
+
+//using which_type = struct WhichData {
+//  user_ledger_type user_ledger;
+//  contract_ledger_type contract_ledger;
+//  user_attribute_type user_attribute;
+//  user_cert_type user_cert;
+//  contract_type contract;
+//
+//  map<string, user_ledger_type> user_ledger_list;
+//  map<string, contract_ledger_type> contract_ledger_list;
+//  WhichType which_type;
+//
+//  WhichData() = default;
+//};
 
 } // namespace tethys
 #endif

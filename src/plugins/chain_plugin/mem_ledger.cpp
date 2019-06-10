@@ -70,16 +70,14 @@ void StateNode::makeValue(string &key) {
   m_hash_value = Sha256::hash(key);
 }
 
-uint32_t StateNode::makePath(LedgerRecord &ledger) {
-  // TODO: pid가 주어지지 않았을 때 구현
-  // pid가 존재할 때
-  string value = valueToStr(Sha256::hash(ledger.pid));
-  value = value.substr(value.length() - _SHA256_SPLIT - 1, value.length());
-  uint32_t path = (uint32_t)strtoul(value.c_str(), 0, 16);
-  uint32_t mask = (1 << _TREE_DEPTH) - 1;
-
-  return path & mask;
-}
+// uint32_t StateNode::makePath(LedgerRecord &ledger) {
+//  string value = valueToStr(Sha256::hash(ledger.pid));
+//  value = value.substr(value.length() - _SHA256_SPLIT - 1, value.length());
+//  uint32_t path = (uint32_t)strtoul(value.c_str(), 0, 16);
+//  uint32_t mask = (1 << _TREE_DEPTH) - 1;
+//
+//  return path & mask;
+//}
 
 void StateNode::reHash() {
   string l_value = "", r_value = "";
@@ -175,8 +173,17 @@ void StateNode::setBinPath(const string &pid) {
   m_bin_path = calPathFromPid(pid);
 }
 
-void StateNode::setNodeInfo(LedgerRecord &data) {
-  makeValue(data);
+void StateNode::setNodeInfo(shared_ptr<StateNode> new_node) {
+  shared_ptr<user_ledger_type> new_user_ledger = new_node->getUserLedgerPtr();
+  shared_ptr<contract_ledger_type> new_contract_ledger = new_node->getContractLedgerPtr();
+
+  if (new_user_ledger != nullptr) {
+    m_user_ledger = new_user_ledger;
+    makeValue(new_node->getUserLedger());
+  } else if (new_contract_ledger != nullptr) {
+    m_contract_ledger = new_contract_ledger;
+    makeValue(new_node->getContractLedger());
+  }
 }
 
 void StateNode::overwriteNode(shared_ptr<StateNode> node) {
@@ -249,8 +256,8 @@ void StateTree::visit(shared_ptr<StateNode> node, bool isPrint) {
   if (!node->isDummy()) {
     if (isPrint) {
       printf("%s%s\t", _debug_str_dir.substr(0, _debug_depth).c_str(), str_dir.c_str());
-      printf("[path: %s] suffix_len: %d, suffix: %s,  hash_value: %s\n", node->getBinPath(), node->getSuffixLen(),
-             node->getSuffix(), TypeConverter::encodeBase<64>(node->getValue()).c_str());
+      printf("[path: %s] suffix_len: %d, suffix: %s,  hash_value: %s\n", node->getBinPath(), node->getSuffixLen(), node->getSuffix(),
+             TypeConverter::encodeBase<64>(node->getValue()).c_str());
     }
     stk.push(node);
   }
@@ -274,39 +281,38 @@ void StateTree::postOrder(shared_ptr<StateNode> node, bool isPrint) {
   visit(node, isPrint);
 }
 
-template <typename T>
-void StateTree::setupTree(const T &ledger_list) {
-  for (auto &each_ledger : ledger_list) {
-    StateNode new_node(each_ledger);
-    this->insertNode(TypeConverter::bytesToString(each_ledger.pid), new_node);
-  }
-}
-
-template <typename T>
-void StateTree::updateState(const T &ledger_list) {
-  for (auto &each_ledger : ledger_list) {
-    StateNode new_node(each_ledger.second);
-    this->insertNode(TypeConverter::bytesToString(each_ledger.second.pid), new_node);
+void StateTree::updateUserState(const vector<user_ledger_type> &user_ledger_list) {
+  for (auto &each_ledger : user_ledger_list) {
+    this->insertNode(each_ledger);
   }
 }
 
 void StateTree::updateUserState(const map<string, user_ledger_type> &user_ledger_list) {
   for (auto &each_ledger : user_ledger_list) {
-    StateNode new_node(each_ledger.second);
-    this->insertNode(TypeConverter::bytesToString(each_ledger.second.pid), make_shared<StateNode>(new_node));
+    this->insertNode(each_ledger.second);
+  }
+}
+
+void StateTree::updateContractState(const vector<contract_ledger_type> &contract_ledger_list) {
+  for (auto &each_ledger : contract_ledger_list) {
+    this->insertNode(each_ledger);
   }
 }
 
 void StateTree::updateContractState(const map<string, contract_ledger_type> &contract_ledger_list) {
   for (auto &each_ledger : contract_ledger_list) {
-    StateNode new_node(each_ledger.second);
-    this->insertNode(TypeConverter::bytesToString(each_ledger.second.pid), make_shared<StateNode>(new_node));
+    this->insertNode(each_ledger.second);
   }
 }
 
-void StateTree::insertNode(const string &pid, shared_ptr<StateNode> new_node) {
-  new_node->setBinPath(pid);
-  path_type new_path = new_node->getBinPath();
+template <typename T>
+void StateTree::insertNode(const T &ledger) {
+  string pid = ledger.pid;
+  StateNode new_node(ledger);
+  shared_ptr<StateNode> new_node_ptr = make_shared<StateNode>(new_node);
+
+  new_node_ptr->setBinPath(pid);
+  path_type new_path = new_node_ptr->getBinPath();
 
   shared_ptr<StateNode> node = root;
   shared_ptr<StateNode> prev_node = nullptr;
@@ -327,20 +333,20 @@ void StateTree::insertNode(const string &pid, shared_ptr<StateNode> new_node) {
       break;
     }
     // 노드 삽입 후 해당 노드에서 머클 루트까지 re-hashing 용도
-    stk.push(make_shared<StateNode>(node));
+    stk.push(node);
 
     // 내려가려는 위치의 노드가 nullptr 인 경우, 해당 위치에 노드를 삽입하고 탈출
     dir = getDirectionOf(new_path, dir_pos); // false: left, true: right
     if (!dir && (node->getLeft() == nullptr)) {
-      node->setLeft(new_node);
-      new_node->setSuffix(new_path, dir_pos);
+      node->setLeft(new_node_ptr);
+      new_node_ptr->setSuffix(new_path, dir_pos);
       break;
     } else if (dir && (node->getRight() == nullptr)) {
-      node->setRight(new_node);
-      new_node->setSuffix(new_path, dir_pos);
+      node->setRight(new_node_ptr);
+      new_node_ptr->setSuffix(new_path, dir_pos);
       break;
     }
-    // path 로 진행하는 방향에 노드가 존재하면 계속해서 내려감
+      // path 로 진행하는 방향에 노드가 존재하면 계속해서 내려감
     else {
       if (!dir) {
         prev_node = node;
@@ -366,8 +372,8 @@ void StateTree::insertNode(const string &pid, shared_ptr<StateNode> new_node) {
     old_node = node;
     old_path = old_node->getBinPath();
 
-    if (old_node->getPid() == new_node->getPid())
-      modifyNode(new_node);
+    if (old_node->getPid() == new_node_ptr->getPid())
+      modifyNode(old_node, new_node_ptr);
 
     // 먼저 충돌난 곳에 dummy 노드 생성해서 연결
     dummy = make_shared<StateNode>();
@@ -403,14 +409,14 @@ void StateTree::insertNode(const string &pid, shared_ptr<StateNode> new_node) {
     }
     // 경로가 다른 위치에서 기존 노드, 새 노드 각각 삽입
     if (!getDirectionOf(new_path, dir_pos)) {
-      prev_node->setLeft(new_node);
+      prev_node->setLeft(new_node_ptr);
       prev_node->setRight(old_node);
-      new_node->setSuffix(new_path, dir_pos);
+      new_node_ptr->setSuffix(new_path, dir_pos);
       old_node->setSuffix(old_path, dir_pos);
     } else {
-      prev_node->setRight(new_node);
+      prev_node->setRight(new_node_ptr);
       prev_node->setLeft(old_node);
-      new_node->setSuffix(new_path, dir_pos);
+      new_node_ptr->setSuffix(new_path, dir_pos);
       old_node->setSuffix(old_path, dir_pos);
     }
   } // collision 해결
@@ -427,15 +433,15 @@ void StateTree::insertNode(const string &pid, shared_ptr<StateNode> new_node) {
   ++m_size;
 }
 
-void StateTree::modifyNode(shared_ptr<StateNode> node) {
-  node->setNodeInfo(node);
+void StateTree::modifyNode(shared_ptr<StateNode> old_node, shared_ptr<StateNode> new_node) {
+  old_node->setNodeInfo(new_node);
 
   // 머클 루트까지 re-hashing
   while (!stk.empty()) {
-    node = stk.top();
+    old_node = stk.top();
     stk.pop();
 
-    node->reHash();
+    old_node->reHash();
   }
 }
 
@@ -558,10 +564,10 @@ void StateTree::printTreePostOrder() {
 
   if (isPrint) {
     uint64_t size = getSize();
-    printf("*********** print tree data by using post-order traversal... ************\n\n");
-    printf("node size: %lld\n\n", getSize());
+    cout << "*********** print tree data by using post-order traversal... ************\n" << endl;
+    cout << "node size: " << getSize() << endl;
     if (size == 0) {
-      printf("there is nothing to printing!!\n\n");
+      cout << "there is nothing to printing!!\n\n";
       return;
     }
     _debug_depth = -1;
@@ -580,8 +586,8 @@ void StateTree::printTreePostOrder() {
   postOrder(root, isPrint);
 
   if (isPrint) {
-        printf("root Value: %s\n", TypeConverter::encodeBase<64>(TypeConverter::bytesToString(root->getValue())));
-        printf("*********** finish traversal ***********\n");
+    cout << "root Value: " << TypeConverter::encodeBase<64>(root->getValue()) << endl;
+    cout << "*********** finish traversal ***********" << endl;
   }
 }
 

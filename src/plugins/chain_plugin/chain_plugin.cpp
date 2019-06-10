@@ -339,8 +339,8 @@ public:
     if (!verifyBlock(block))
       return false;
 
-    vector<Transaction> &transactions = block.getTransactions();
-    for (auto &each_transaction : transactions) {
+    const vector<Transaction> &transactions = block.getTransactions();
+    for (auto each_transaction : transactions) {
       TransactionMessageVerifier tx_verifier;
       if (!tx_verifier(each_transaction, block.getWorldId(), block.getChainId()))
         return false;
@@ -530,7 +530,7 @@ void ChainPlugin::pluginInitialize(const boost::program_options::variables_map &
   auto &block_channel = app().getChannel<incoming::channels::block>();
   impl->incoming_block_subscription = block_channel.subscribe([this](const nlohmann::json &block) { impl->pushBlock(block); });
 
-  auto &SCE_result_channel = app().getChannel<incoming::channels::SCE_result::channel_type>();
+  auto &SCE_result_channel = app().getChannel<incoming::channels::SCE_result>();
   impl->incoming_result_subscription =
       SCE_result_channel.subscribe([this](const nlohmann::json &result) { impl->processTxResult(result); });
 

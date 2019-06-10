@@ -1,6 +1,6 @@
 #include "include/rdb_controller.hpp"
-#include "mysql/soci-mysql.h"
 #include "../../../lib/tethys-utils/src/ags.hpp"
+#include "mysql/soci-mysql.h"
 
 using namespace std;
 
@@ -125,7 +125,7 @@ bool RdbController::applyUserLedgerToRDB(const map<string, user_ledger_type> &us
         st = (db_session.prepare << "UPDATE user_scope SET var_name = :var_name, var_value = :var_value, tag = :tag, WHERE pid = :pid",
                 soci::use(var_name, "var_name"), soci::use(var_val, "var_value"), soci::use(tag, "tag"),
                 soci::into(result));
-      } else if ((each_ledger.second.query_type == QueryType::DELETE) && (each_ledger.second.var_val == "")) {
+      } else if ((each_ledger.second.query_type == QueryType::DELETE) && (each_ledger.second.var_val == "0")) {
         st = (db_session.prepare << "DELETE FROM user_scope WHERE ",
                 soci::use(var_name, "var_name"), soci::use(var_val, "var_value"), soci::use(tag, "tag"),
                 soci::into(result));
@@ -173,7 +173,7 @@ bool RdbController::applyContractLedgerToRDB(const map<string, contract_ledger_t
         st = (db_session.prepare << "UPDATE contract_scope SET var_name = :var_name, var_value = :var_value, var_info = :var_info, WHERE pid = :pid",
             soci::use(var_name, "var_name"), soci::use(var_val, "var_value"), soci::use(var_info, "var_info"),
             soci::into(result));
-      } else if ((each_ledger.second.query_type == QueryType::DELETE) && (each_ledger.second.var_val == "")) {
+      } else if ((each_ledger.second.query_type == QueryType::DELETE) && (each_ledger.second.var_val == "0")) {
         st = (db_session.prepare << "DELETE FROM contract_scope WHERE ",
             soci::use(var_name, "var_name"), soci::use(var_val, "var_value"), soci::use(var_info, "var_info"),
             soci::into(result));
@@ -195,37 +195,27 @@ bool RdbController::applyContractLedgerToRDB(const map<string, contract_ledger_t
 
 bool RdbController::applyUserAttributeToRDB(const map<base58_type, user_attribute_type> &user_attribute_list) {
   try {
-    base58_type uid;
-    timestamp_t register_day;
-    string register_code;
-    int gender;
-    string isc_type;
-    string isc_code;
-    string location;
-    int age_limit;
-
-    // TODO: INSERT일수도, UPDATE일수도 있음. 구분 필요.
-
     for (auto &each_attribute : user_attribute_list) {
+      base58_type uid = each_attribute.second.uid;
+      timestamp_t register_day = each_attribute.second.register_day;
+      string register_code = each_attribute.second.register_code;
+      int gender = each_attribute.second.gender;
+      string isc_type = each_attribute.second.isc_type;
+      string isc_code = each_attribute.second.isc_code;
+      string location = each_attribute.second.location;
+      int age_limit = each_attribute.second.age_limit;
+
       soci::row result;
       soci::session db_session(RdbController::pool());
       soci::statement st(db_session);
 
       // clang-format off
-      if (each_attribute.second.query_type == QueryType::INSERT) {
-        st = (db_session.prepare << "INSERT INTO user_attributes (var_name, var_value, var_type, var_owner, up_time, up_block, tag, pid) VALUES (:var_name, :var_value, :var_type, :var_owner, :up_time, :up_block, :tag, :pid)",
-            soci::use(var_name, "var_name"), soci::use(var_val, "var_value"), soci::use(tag, "tag"),
-            soci::into(result));
-      } else if (each_attribute.second.query_type == QueryType::UPDATE) {
-        st = (db_session.prepare << "UPDATE user_attributes SET var_name = :var_name, var_value = :var_value, tag = :tag, WHERE pid = :pid",
-            soci::use(var_name, "var_name"), soci::use(var_val, "var_value"), soci::use(tag, "tag"),
-            soci::into(result));
-      } else if ((each_attribute.second.query_type == QueryType::DELETE) && (each_attribute.second.var_val == "")) {
-        st = (db_session.prepare << "DELETE FROM user_attributes WHERE ",
-            soci::use(var_name, "var_name"), soci::use(var_val, "var_value"), soci::use(tag, "tag"),
-            soci::into(result));
-      } else
-        logger::ERROR("Error at applyUserAttributeToRDB");
+      // TODO: INSERT일수도, UPDATE일수도 있음. 구분해서 구현 필요.
+      st = (db_session.prepare << "INSERT INTO user_attributes (uid, register_day, register_code, gender, isc_type, isc_code, location, age_limit) VALUES (:uid, :register_day, :register_code, :gender, :isc_type, :isc_code, :location, :age_limit)",
+          soci::use(uid, "uid"), soci::use(register_day, "register_day"), soci::use(register_code, "register_code"),
+          soci::use(gender, "gender"), soci::use(isc_type, "isc_type"), soci::use(isc_code, "isc_code"),
+          soci::use(location, "location"), soci::use(age_limit, "age_limit"),
+          soci::into(result));
       // clang-format on
 
       st.execute(true);
@@ -248,27 +238,16 @@ bool RdbController::applyUserCertToRDB(const map<base58_type, user_cert_type> &u
     timestamp_t nvafter;
     string x509;
 
-    // TODO: INSERT일수도, UPDATE일수도 있음. 구분 필요.
     for (auto &each_cert : user_cert_list) {
       soci::row result;
       soci::session db_session(RdbController::pool());
       soci::statement st(db_session);
 
       // clang-format off
-      if (each_cert.second.query_type == QueryType::INSERT) {
-        st = (db_session.prepare << "INSERT INTO user_certificates (var_name, var_value, var_type, var_owner, up_time, up_block, tag, pid) VALUES (:var_name, :var_value, :var_type, :var_owner, :up_time, :up_block, :tag, :pid)",
-            soci::use(var_name, "var_name"), soci::use(var_val, "var_value"), soci::use(tag, "tag"),
+      st = (db_session.prepare << "INSERT INTO user_certificates (uid, sn, nvbefore, nvafter, x509) VALUES (:uid, :sn, :nvbefore, :nvafter, :x509)",
+            soci::use(uid, "uid"), soci::use(sn, "sn"),
+            soci::use(nvbefore, "nvbefore"), soci::use(nvafter, "nvafter"), soci::use(x509, "x509"),
             soci::into(result));
-      } else if (each_cert.second.query_type == QueryType::UPDATE) {
-        st = (db_session.prepare << "UPDATE user_certificates SET var_name = :var_name, var_value = :var_value, tag = :tag, WHERE pid = :pid",
-            soci::use(var_name, "var_name"), soci::use(var_val, "var_value"), soci::use(tag, "tag"),
-            soci::into(result));
-      } else if ((each_cert.second.query_type == QueryType::DELETE) && (each_cert.second.var_val == "")) {
-        st = (db_session.prepare << "DELETE FROM user_certificates WHERE ",
-            soci::use(var_name, "var_name"), soci::use(var_val, "var_value"), soci::use(tag, "tag"),
-            soci::into(result));
-      } else
-        logger::ERROR("Error at applyUserCertToRDB");
       // clang-format on
 
       st.execute(true);
@@ -295,28 +274,17 @@ bool RdbController::applyContractToRDB(const map<base58_type, contract_type> &co
     string desc;
     string sigma;
 
-    // TODO: INSERT일수도, UPDATE일수도 있음. 구분 필요.
-
     for (auto &each_contract : contract_list) {
       soci::row result;
       soci::session db_session(RdbController::pool());
       soci::statement st(db_session);
 
       // clang-format off
-      if (each_contract.second.query_type == QueryType::INSERT) {
-        st = (db_session.prepare << "INSERT INTO contracts (var_name, var_value, var_type, var_owner, up_time, up_block, tag, pid) VALUES (:var_name, :var_value, :var_type, :var_owner, :up_time, :up_block, :tag, :pid)",
-            soci::use(var_name, "var_name"), soci::use(var_val, "var_value"), soci::use(tag, "tag"),
-            soci::into(result));
-      } else if (each_contract.second.query_type == QueryType::UPDATE) {
-        st = (db_session.prepare << "UPDATE contracts SET var_name = :var_name, var_value = :var_value, tag = :tag, WHERE pid = :pid",
-            soci::use(var_name, "var_name"), soci::use(var_val, "var_value"), soci::use(tag, "tag"),
-            soci::into(result));
-      } else if ((each_contract.second.query_type == QueryType::DELETE) && (each_contract.second.var_val == "")) {
-        st = (db_session.prepare << "DELETE FROM contracts WHERE ",
-            soci::use(var_name, "var_name"), soci::use(var_val, "var_value"), soci::use(tag, "tag"),
-            soci::into(result));
-      } else
-        logger::ERROR("Error at applyContractToRDB");
+      st = (db_session.prepare << "INSERT INTO contracts (cid, after, before, author, friends, contract, desc, sigma) VALUES (:cid, :after, :before, :author, :friends, :contract, :desc, :sigma)",
+          soci::use(cid, "cid"), soci::use(after, "after"), soci::use(before, "before"),
+          soci::use(author, "author"), soci::use(friends, "friends"), soci::use(contract, "contract"),
+          soci::use(desc, "desc"), soci::use(sigma, "sigma"),
+          soci::into(result));
       // clang-format on
 
       st.execute(true);
@@ -406,29 +374,30 @@ string RdbController::getUserCert(const base58_type &user_id) {
   }
 }
 
-bool RdbController::queryRunQuery(std::vector<LedgerRecord> &mem_ledger, nlohmann::json &option, result_query_info_type &result_info) {
-  string type = json::get<string>(option, "type").value();
-  nlohmann::json query = option["query"];
-  timestamp_t after = static_cast<uint64_t>(stoll(json::get<string>(option, "after").value()));
+// bool RdbController::queryRunQuery(std::vector<LedgerRecord> &mem_ledger, nlohmann::json &option, result_query_info_type &result_info) {
+//  string type = json::get<string>(option, "type").value();
+//  nlohmann::json query = option["query"];
+//  timestamp_t after = static_cast<uint64_t>(stoll(json::get<string>(option, "after").value()));
+//
+//  if ((type == "run.query") || (type == "user.cert")) {
+//    logger::ERROR("run.query cannot excute 'run.query' or 'user.cert'!");
+//    return false;
+//  }
+//  // TODO: Scheduler에게 지연 처리 요청 전송
+//  return true;
+//}
+//
+// bool RdbController::queryRunContract(std::vector<LedgerRecord> &mem_ledger, nlohmann::json &option, result_query_info_type &result_info)
+// {
+//  contract_id_type cid = json::get<string>(option, "cid").value();
+//  string input = json::get<string>(option, "input").value();
+//  timestamp_t after = static_cast<uint64_t>(stoll(json::get<string>(option, "after").value()));
+//
+//  // TODO: authority.user를 현재 user로 대체하여 Scheduler에게 요청 전송
+//  return true;
+//}
 
-  if ((type == "run.query") || (type == "user.cert")) {
-    logger::ERROR("run.query cannot excute 'run.query' or 'user.cert'!");
-    return false;
-  }
-  // TODO: Scheduler에게 지연 처리 요청 전송
-  return true;
-}
-
-bool RdbController::queryRunContract(std::vector<LedgerRecord> &mem_ledger, nlohmann::json &option, result_query_info_type &result_info) {
-  contract_id_type cid = json::get<string>(option, "cid").value();
-  string input = json::get<string>(option, "input").value();
-  timestamp_t after = static_cast<uint64_t>(stoll(json::get<string>(option, "after").value()));
-
-  // TODO: authority.user를 현재 user로 대체하여 Scheduler에게 요청 전송
-  return true;
-}
-
-bool RdbController::checkUnique() {
+bool RdbController::checkUnique(const string &pid) {
   soci::row result;
   soci::session db_session(RdbController::pool());
   soci::statement st = (db_session.prepare << "SELECT * from user_scope WHERE pid = :pid", soci::use(pid, "pid"), soci::into(result));
@@ -463,7 +432,7 @@ bool RdbController::findUserFromRDB(string pid, user_ledger_type &user_ledger) {
     user_ledger.up_time = (uint64_t)up_time;
     user_ledger.up_block = (block_height_type)up_block;
     user_ledger.tag = tag;
-    user_ledger.pid = TypeConverter::stringToBytes(pid);
+    user_ledger.pid = pid;
     // clang-format on
   } catch (soci::mysql_soci_error const &e) {
     logger::ERROR("MySQL error: {}", e.what());
@@ -497,7 +466,7 @@ bool RdbController::findContractFromRDB(string pid, tethys::contract_ledger_type
     contract_ledger.up_time = (uint64_t)up_time;
     contract_ledger.up_block = (block_height_type)up_block;
     contract_ledger.var_info = var_info;
-    contract_ledger.pid = TypeConverter::stringToBytes(pid);
+    contract_ledger.pid = pid;
     // clang-format on
   } catch (soci::mysql_soci_error const &e) {
     logger::ERROR("MySQL error: {}", e.what());
@@ -534,7 +503,7 @@ vector<user_ledger_type> RdbController::getAllUserLedger() {
       user_ledger.up_time = (uint64_t)up_time;
       user_ledger.up_block = (block_height_type)up_block;
       user_ledger.tag = tag;
-      user_ledger.pid = TypeConverter::stringToBytes(pid);
+      user_ledger.pid = pid;
       user_ledger_list.emplace_back(user_ledger);
     } while (st.fetch());
   } catch (soci::mysql_soci_error const &e) {
@@ -572,7 +541,7 @@ vector<contract_ledger_type> RdbController::getAllContractLedger() {
       contract_ledger.up_time = (uint64_t)up_time;
       contract_ledger.up_block = (block_height_type)up_block;
       contract_ledger.var_info = var_info;
-      contract_ledger.pid = TypeConverter::stringToBytes(pid);
+      contract_ledger.pid = pid;
       contract_ledger_list.emplace_back(contract_ledger);
     } while (st.fetch());
   } catch (soci::mysql_soci_error const &e) {

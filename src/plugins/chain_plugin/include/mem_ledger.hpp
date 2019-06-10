@@ -7,6 +7,7 @@
 #include "../config/storage_type.hpp"
 
 #include <iomanip>
+#include <iostream>
 #include <map>
 #include <memory>
 #include <mutex>
@@ -30,6 +31,7 @@ ostream &operator<<(ostream &os, vector<uint8_t> &value);
 
 class StateNode {
 private:
+  // TODO: 메모리 절약을 위해 최대한 멤버 변수를 줄일 것
   string m_pid;
   shared_ptr<StateNode> m_left;
   shared_ptr<StateNode> m_right;
@@ -44,8 +46,8 @@ private:
   void makeValue(const user_ledger_type &user_ledger);
   void makeValue(const contract_ledger_type &contract_ledger);
   void makeValue(string &key);
-  uint32_t makePath(user_ledger_type &user_ledger);
-  uint32_t makePath(contract_ledger_type &contract_ledger);
+//  uint32_t makePath(user_ledger_type &user_ledger);
+//  uint32_t makePath(contract_ledger_type &contract_ledger);
 
 public:
   StateNode() = default;
@@ -62,7 +64,7 @@ public:
   void setRight(shared_ptr<StateNode> node);
   void setSuffix(const path_type &path, int pos);
   void setBinPath(const string &pid);
-  void setNodeInfo(LedgerRecord &data);
+  void setNodeInfo(shared_ptr<StateNode> new_node);
   void overwriteNode(shared_ptr<StateNode> node);
 
   string getPid();
@@ -100,14 +102,13 @@ public:
     m_size = 0;
   }
 
-  template <typename T>
-  void setupTree(const T &ledger_list);
-  template <typename T>
-  void updateState(const T &ledger_list);
+  void updateUserState(const vector<user_ledger_type> &user_ledger_list);
   void updateUserState(const map<string, user_ledger_type> &user_ledger_list);
+  void updateContractState(const vector<contract_ledger_type> &contract_ledger_list);
   void updateContractState(const map<string, contract_ledger_type> &contract_ledger_list);
-  void insertNode(const string &pid, shared_ptr<StateNode> node);
-  void modifyNode(shared_ptr<StateNode> node);
+  template <typename T>
+  void insertNode(const T &ledger);   // TODO: user_ledger_type과 contract_ledger_type 두 가지로 template를 제한
+  void modifyNode(shared_ptr<StateNode> old_node, shared_ptr<StateNode> new_node);
   void removeNode(string &pid);
   shared_ptr<StateNode> getMerkleNode(string &pid);
   vector<vector<uint8_t>> getSiblings(string &pid);

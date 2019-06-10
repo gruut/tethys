@@ -297,7 +297,7 @@ bool Chain::queryTransfer(UnresolvedBlock &UR_block, nlohmann::json &option, res
 
     key = pidCheck(pid, unit, var_type, from);
     if (pid.has_value()) {
-      contract_ledger.pid = TypeConverter::stringToBytes(pid.value());
+      contract_ledger.pid = pid.value();
     }
 
     contract_ledger_type found = findContractLedgerFromHead(key);
@@ -334,7 +334,7 @@ bool Chain::queryTransfer(UnresolvedBlock &UR_block, nlohmann::json &option, res
 
     key = pidCheck(pid, unit, var_type, uid);
     if (pid.has_value()) {
-      user_ledger.pid = TypeConverter::stringToBytes(pid.value());
+      user_ledger.pid = pid.value();
     }
 
     user_ledger_type found = findUserLedgerFromHead(key);
@@ -366,7 +366,7 @@ bool Chain::queryTransfer(UnresolvedBlock &UR_block, nlohmann::json &option, res
 
     key = pidCheck(pid, unit, var_type, to);
     if (pid.has_value()) {
-      contract_ledger.pid = TypeConverter::stringToBytes(pid.value());
+      contract_ledger.pid = pid.value();
     }
 
     contract_ledger_type found = findContractLedgerFromHead(key);
@@ -387,7 +387,7 @@ bool Chain::queryTransfer(UnresolvedBlock &UR_block, nlohmann::json &option, res
 
     key = pidCheck(pid, unit, var_type, to);
     if (pid.has_value()) {
-      user_ledger.pid = TypeConverter::stringToBytes(pid.value());
+      user_ledger.pid = pid.value();
     }
 
     user_ledger_type found = findUserLedgerFromHead(key);
@@ -420,7 +420,7 @@ bool Chain::queryUserScope(UnresolvedBlock &UR_block, nlohmann::json &option, re
   string key;
   auto pid = json::get<string>(option, "pid");
   if (pid.has_value()) {
-    user_ledger.pid = TypeConverter::stringToBytes(pid.value());
+    user_ledger.pid = pid.value();
   } else {
     // TODO: var_name이 unique한지 검증하는 함수 추가
     //  var_name이 없으면 insert, 1개면 update, 2개 이상이면 false
@@ -536,11 +536,11 @@ string Chain::pidCheck(optional<string> pid, string var_name, int var_type, stri
   } else {
     BytesBuilder bytes_builder;
     bytes_builder.append(var_name);
-    bytes_builder.append(var_type);
+    bytes_builder.appendDec(var_type);
     bytes_builder.append(var_owner);
     key = TypeConverter::bytesToString(Sha256::hash(bytes_builder.getBytes()));
 
-    rdb_controller->checkUnique();
+    rdb_controller->checkUnique(key);
 
     // TODO: unique 확인을 위해 어떤 방법으로 체크할 것인지. key 일괄 통일과 관련되어있음.
   }
@@ -623,25 +623,24 @@ void Chain::setPool(const base64_type &last_block_id, block_height_type last_hei
 }
 
 void Chain::setupStateTree() {
-  m_us_tree.setupTree(rdb_controller->getAllUserLedger());
-  m_cs_tree.setupTree(rdb_controller->getAllContractLedger());
+  m_us_tree.updateUserState(rdb_controller->getAllUserLedger());
+  m_cs_tree.updateContractState(rdb_controller->getAllContractLedger());
 }
 
 void Chain::updateStateTree(const UnresolvedBlock &unresolved_block) {
-  m_us_tree.updateState(unresolved_block.user_ledger_list);
-  m_cs_tree.updateState(unresolved_block.contract_ledger_list);
-  // TODO: user cert나 contract 관련 사항들은 state tree에 반영할 필요는 없고, 그냥 ledger로써만 가지고 있으면 되나?
-  //  아니면 user_cert는 보류한다고 해도 contract는 직접적으로 연관되어 있으므로 반영을 해야 하는가?
+  m_us_tree.updateUserState(unresolved_block.user_ledger_list);
+  m_cs_tree.updateContractState(unresolved_block.contract_ledger_list);
+  // TODO: user cert나 contract 등도 update해야 함
 }
 
 void Chain::revertStateTree(const UnresolvedBlock &unresolved_block) {
   for (auto &each_user_ledger : unresolved_block.user_ledger_list) {
-    m_us_tree.insertNode(
+    m_us_tree.insertUserNode(
         findUserLedgerFromPoint(each_user_ledger.first, unresolved_block.block.getHeight(), unresolved_block.cur_vec_idx).user_ledger);
   }
 
   for (auto &each_contract_ledger : unresolved_block.contract_ledger_list) {
-    m_us_tree.insertNode(
+    m_us_tree.insertContractNode(
         findContractLedgerFromPoint(each_contract_ledger.first, unresolved_block.block.getHeight(), unresolved_block.cur_vec_idx)
             .contract_ledger);
   }
