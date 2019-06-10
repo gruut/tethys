@@ -152,6 +152,10 @@ public:
     auto world_id = chain->getValueByKey(DataType::WORLD, "latest_world_id");
     if (!world_id.empty()) {
       app().setWorldId(world_id);
+
+      auto auth_cert = chain->getValueByKey(DataType::WORLD, world_id + "_apk");
+      app().setAuthCert(auth_cert);
+
       app().completeLoadWorld();
     }
 

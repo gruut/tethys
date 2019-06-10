@@ -166,6 +166,10 @@ AbstractPlugin *Application::getPlugin(const string &name) const {
   }
 }
 
+void Application::setAuthCert(string_view _auth_cert) {
+  auth_cert = _auth_cert;
+}
+
 void Application::setWorldId(string_view _id) {
   world_id = _id;
 }
@@ -176,6 +180,10 @@ void Application::setChainId(string_view _id) {
 
 void Application::setId(string_view _id) {
   id = _id;
+}
+
+const string &Application::getAuthCert() const {
+  return auth_cert;
 }
 
 const string &Application::getWorldId() const {

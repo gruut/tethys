@@ -90,10 +90,12 @@ public:
     }
   }
 
+  void setAuthCert(string_view _auth_cert);
   void setWorldId(string_view _id);
   void setChainId(string_view _id);
   void setId(string_view _id);
 
+  const string &getAuthCert() const;
   const string &getWorldId() const;
   const string &getChainId() const;
   const string &getId() const;
@@ -152,6 +154,7 @@ private:
 
   unique_ptr<ProgramOptions> program_options;
 
+  string auth_cert;
   string world_id;
   string chain_id;
   string id;
