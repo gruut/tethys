@@ -218,6 +218,10 @@ bool Application::isChainLoaded() {
   return application_status.load_chain;
 }
 
+void Application::resetLoadChainState() {
+  application_status.load_chain = false;
+}
+
 void Application::completeLoadWorld() {
   application_status.load_world = true;
 }

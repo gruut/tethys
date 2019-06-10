@@ -107,6 +107,8 @@ public:
   bool isWorldLoaded();
   bool isChainLoaded();
 
+  void resetLoadChainState();
+
   void completeLoadWorld();
   void completeLoadChain();
   void completeUserSetup();
