@@ -10,6 +10,7 @@
 
 #include <boost/program_options/variables_map.hpp>
 #include <memory>
+#include <optional>
 #include <utility>
 #include <vector>
 
@@ -33,6 +34,7 @@ public:
   Chain &operator=(const Chain &) = delete;
 
   void initWorld(nlohmann::json &world_state);
+  optional<vector<string>> initChain(nlohmann::json &chain_state);
 
   // RDB functions
   string getUserCert(const base58_type &user_id);
@@ -49,6 +51,8 @@ public:
   int getVarType(string &key);
 
   // KV functions
+  void saveLatestWorldId(const alphanumeric_type &world_id);
+  void saveLatestChainId(const alphanumeric_type &chain_id);
   void saveWorld(world_type &world_info);
   void saveChain(local_chain_type &chain_info);
   void saveBackup(UnresolvedBlock &block_info);

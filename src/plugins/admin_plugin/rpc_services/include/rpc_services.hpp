@@ -1,7 +1,7 @@
 #pragma once
 
-#include "../../../net_plugin/rpc_services/protos/include/user_service.grpc.pb.h"
 #include "../../../chain_plugin/include/chain.hpp"
+#include "../../../net_plugin/rpc_services/protos/include/user_service.grpc.pb.h"
 #include "../../include/admin_type.hpp"
 #include "../proto/include/admin_service.grpc.pb.h"
 #include <atomic>
@@ -129,6 +129,16 @@ class LoadWorldService final : public AdminService<ReqLoadWorld, ResLoadWorld> {
 public:
   LoadWorldService(TethysAdminService::AsyncService *admin_service, ServerCompletionQueue *cq) : super(admin_service, cq) {
     service->RequestLoadWorld(&context, &req, &responder, completion_queue, completion_queue, this);
+  }
+  void proceed() override;
+};
+
+class LoadChainService final : public AdminService<ReqLoadChain, ResLoadChain> {
+  using super = AdminService<ReqLoadChain, ResLoadChain>;
+
+public:
+  LoadChainService(TethysAdminService::AsyncService *admin_service, ServerCompletionQueue *cq) : super(admin_service, cq) {
+    service->RequestLoadChain(&context, &req, &responder, completion_queue, completion_queue, this);
   }
   void proceed() override;
 };

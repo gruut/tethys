@@ -26,12 +26,13 @@ enum class RunningMode : int { NONE = -1, DEFAULT = 0, MONITOR = 1 };
 
 struct ApplicationStatus {
   bool load_world;
+  bool load_chain;
   bool user_setup;
   bool user_login;
 
   RunningMode run_mode;
 
-  ApplicationStatus() : load_world(false), user_setup(false), user_login(false), run_mode(RunningMode::NONE) {}
+  ApplicationStatus() : load_world(false), load_chain(false), user_setup(false), user_login(false), run_mode(RunningMode::NONE) {}
 };
 
 class Application {
@@ -90,9 +91,11 @@ public:
   }
 
   void setWorldId(string_view _id);
+  void setChainId(string_view _id);
   void setId(string_view _id);
 
   const string &getWorldId() const;
+  const string &getChainId() const;
   const string &getId() const;
 
   void setRunFlag();
@@ -100,8 +103,10 @@ public:
   bool isAppRunning();
   bool isUserSignedIn();
   bool isWorldLoaded();
+  bool isChainLoaded();
 
   void completeLoadWorld();
+  void completeLoadChain();
   void completeUserSetup();
   void completeUserSignedIn();
 
@@ -148,6 +153,7 @@ private:
   unique_ptr<ProgramOptions> program_options;
 
   string world_id;
+  string chain_id;
   string id;
 
   bool running = false;

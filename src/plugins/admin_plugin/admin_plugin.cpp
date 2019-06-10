@@ -43,6 +43,7 @@ public:
     new StartService(&admin_service, completion_queue.get());
     new StatusService(&admin_service, completion_queue.get());
     new LoadWorldService(&admin_service, completion_queue.get());
+    new LoadChainService(&admin_service, completion_queue.get());
   }
 
   void start() {}
@@ -71,7 +72,7 @@ public:
 
         auto queue_state = completion_queue->AsyncNext(&tag, &ok, deadline);
         if (ok && queue_state == CompletionQueue::NextStatus::GOT_EVENT) {
-          static_cast <CallService *>(tag)->proceed();
+          static_cast<CallService *>(tag)->proceed();
         }
       } else {
         logger::ERROR("Error from admin_req_check_timer: {}", ec.message());

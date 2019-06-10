@@ -38,6 +38,16 @@ bool KvController::errorOnCritical(const leveldb::Status &status) {
   }
 }
 
+bool KvController::saveLatestWorldId(const alphanumeric_type &world_id) {
+  addBatch(DataType::WORLD, "latest_world_id", world_id);
+  return true;
+}
+
+bool KvController::saveLatestChainId(const alphanumeric_type &chain_id) {
+  addBatch(DataType::CHAIN, "latest_chain_id", chain_id);
+  return true;
+}
+
 bool KvController::saveWorld(world_type &world_info) {
   // TODO: 리팩토링 필요
   alphanumeric_type tmp_wid = world_info.world_id;
@@ -108,6 +118,13 @@ bool KvController::saveChain(local_chain_type &chain_info) {
 
   bool tmp_ahc = chain_info.allow_heavy_contract;
   addBatch(DataType::CHAIN, tmp_chid + "_ahc", to_string(tmp_ahc));
+
+  string tk_addr_list;
+  string delimiter = ",";
+  for (auto &tracker_addr : chain_info.tracker_addresses)
+    tk_addr_list += (tracker_addr + delimiter);
+  tk_addr_list.pop_back();
+  addBatch(DataType::CHAIN, tmp_chid + "_tk_addr", tk_addr_list);
 
   commitBatchAll();
 

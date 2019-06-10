@@ -14,6 +14,21 @@ public:
     appbase::app().setWorldId(world.world_id);
 
     self.saveWorld(world);
+    self.saveLatestWorldId(world.world_id);
+  }
+
+  optional<vector<string>> initChain(nlohmann::json &chain_state) {
+    local_chain_type chain = unmarshalChainState(chain_state);
+
+    if (appbase::app().getWorldId() != chain.world_id)
+      return {};
+
+    appbase::app().setChainId(chain.chain_id);
+
+    self.saveChain(chain);
+    self.saveLatestChainId(chain.chain_id);
+
+    return chain.tracker_addresses;
   }
 
   world_type unmarshalWorldState(nlohmann::json &state) {
@@ -42,7 +57,36 @@ public:
 
       return world_state;
     } catch (nlohmann::json::parse_error &e) {
-      logger::ERROR("[LOAD WORLD] Failed to parse world_create.json: {}", e.what());
+      logger::ERROR("Failed to parse world json: {}", e.what());
+      throw e;
+    }
+  }
+
+  local_chain_type unmarshalChainState(nlohmann::json &state) {
+    try {
+      local_chain_type chain_state;
+
+      chain_state.chain_id = state["/chain/id"_json_pointer];
+      chain_state.world_id = state["/chain/world"_json_pointer];
+      chain_state.chain_created_time = state["/chain/after"_json_pointer];
+
+      chain_state.allow_custom_contract = state["/policy/allow_custom_contract"_json_pointer];
+      chain_state.allow_oracle = state["/policy/allow_oracle"_json_pointer];
+      chain_state.allow_tag = state["/policy/allow_tag"_json_pointer];
+      chain_state.allow_heavy_contract = state["/policy/allow_heavy_contract"_json_pointer];
+
+      chain_state.creator_id = state["/creator/id"_json_pointer];
+      chain_state.creator_cert = state["creator"]["cert"].get<vector<string>>();
+      chain_state.creator_sig = state["/creator/sig"_json_pointer];
+
+      for (auto &tracker_info : state["tracker"]) {
+        auto address = tracker_info["address"].get<string>();
+        chain_state.tracker_addresses.emplace_back(address);
+      }
+
+      return chain_state;
+    } catch (nlohmann::json::parse_error &e) {
+      logger::ERROR("Failed to parse local chain json: {}", e.what());
       throw e;
     }
   }
@@ -52,6 +96,10 @@ public:
 
 void Chain::initWorld(nlohmann::json &world_state) {
   impl->initWorld(world_state);
+}
+
+optional<vector<string>> Chain::initChain(nlohmann::json &chain_state) {
+  return impl->initChain(chain_state);
 }
 
 Chain::Chain(string_view dbms, string_view table_name, string_view db_user_id, string_view db_password) {
@@ -130,6 +178,14 @@ int Chain::getVarType(string &key) {
 }
 
 // KV functions
+void Chain::saveLatestWorldId(const alphanumeric_type &world_id) {
+  kv_controller->saveLatestWorldId(world_id);
+}
+
+void Chain::saveLatestChainId(const alphanumeric_type &chain_id) {
+  kv_controller->saveLatestChainId(chain_id);
+}
+
 void Chain::saveWorld(world_type &world_info) {
   kv_controller->saveWorld(world_info);
 }
@@ -635,12 +691,12 @@ void Chain::updateStateTree(const UnresolvedBlock &unresolved_block) {
 
 void Chain::revertStateTree(const UnresolvedBlock &unresolved_block) {
   for (auto &each_user_ledger : unresolved_block.user_ledger_list) {
-    m_us_tree.insertUserNode(
+    m_us_tree.insertNode(
         findUserLedgerFromPoint(each_user_ledger.first, unresolved_block.block.getHeight(), unresolved_block.cur_vec_idx).user_ledger);
   }
 
   for (auto &each_contract_ledger : unresolved_block.contract_ledger_list) {
-    m_us_tree.insertContractNode(
+    m_us_tree.insertNode(
         findContractLedgerFromPoint(each_contract_ledger.first, unresolved_block.block.getHeight(), unresolved_block.cur_vec_idx)
             .contract_ledger);
   }
