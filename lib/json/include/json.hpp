@@ -6,7 +6,7 @@
 
 using namespace std;
 
-namespace json {
+namespace tethys::json {
 static auto parse(const string &str) {
   return nlohmann::json::parse(str, nullptr, false);
 }

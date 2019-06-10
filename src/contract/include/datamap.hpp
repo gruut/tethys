@@ -1,45 +1,31 @@
 #ifndef TETHYS_SCE_DATAMAP_HPP
 #define TETHYS_SCE_DATAMAP_HPP
 
-#include <string>
 #include <unordered_map>
 #include <optional>
-#include "config.hpp"
+#include <string>
 
 namespace tethys::tsce {
 
-class Datamap {
-private:
-  std::unordered_map<std::string, std::string> m_storage;
+  class Datamap {
+  public:
+    void set(const std::string &key, const std::string &vv);
 
-public:
+    void clear();
 
-  void set(const std::string &key, const std::string &vv) {
-    if (key.empty())
-      return;
+    template<typename S = std::string>
+    std::optional<std::string> get(S &&key) {
+      auto map_it = m_storage.find(key);
+      if (map_it == m_storage.end())
+        return {};
 
-    auto ret = m_storage.insert({key, vv}); // as new
-    if (!ret.second) { // as update
-      ret.first->second = vv;
+      return map_it->second;
     }
-  }
 
-  template <typename S = std::string>
-  std::optional<std::string> get(S &&key) {
-    auto map_it = m_storage.find(key);
-    if(map_it == m_storage.end())
-      return {};
+  private:
+    std::unordered_map<std::string, std::string> m_storage;
 
-    return map_it->second;
-  }
-
-  void clear(){
-    m_storage.clear();
-  }
-
-
-};
-
+  };
 }
 
 #endif

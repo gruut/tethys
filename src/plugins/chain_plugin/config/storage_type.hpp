@@ -3,6 +3,7 @@
 
 #include <string>
 #include <vector>
+#include "../../../contract/include/types.hpp"
 
 using namespace std;
 
@@ -24,7 +25,6 @@ using timestamp_t = uint64_t;
 constexpr auto TRANSACTION_ID_TYPE_SIZE = 32;
 constexpr auto ALPHANUMERIC_ID_TYPE_SIZE = 8;
 
-using block_height_type = int32_t;
 using alphanumeric_type = std::string;
 using base58_type = std::string;
 using base64_type = std::string;

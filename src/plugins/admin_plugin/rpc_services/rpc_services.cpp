@@ -385,7 +385,7 @@ void LoadWorldService::proceed() {
     logger::INFO("[LOAD WORLD] Success to load world");
     app().completeLoadWorld();
   } catch (...) {
-    string info = "Can not load world. please check world json file.";
+    string info = "Cannot load world. please check the world json file.";
     res.set_info(info);
     res.set_success(false);
 
