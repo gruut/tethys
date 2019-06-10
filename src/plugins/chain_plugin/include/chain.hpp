@@ -36,6 +36,8 @@ public:
   string getUserCert(const base58_type &user_id);
 
   // KV functions
+  void saveLatestWorldId(const alphanumeric_type &world_id);
+  void saveLatestChainId(const alphanumeric_type &chain_id);
   void saveWorld(world_type &world_info);
   void saveChain(local_chain_type &chain_info);
   void saveBackup(UnresolvedBlock &block_info);

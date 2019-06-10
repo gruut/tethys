@@ -149,13 +149,23 @@ public:
     transaction_pool = make_unique<TransactionPool>();
     unresolved_block_pool = make_unique<UnresolvedBlockPool>();
 
-    // TODO : If storage(leveldb) have world and local chain info,
-    // set world id and local chain id.
-    // Now, cannot load info(world/chain) from level db because no way to know `key`
+    auto world_id = chain->getValueByKey(DataType::WORLD, "latest_world_id");
+    if (!world_id.empty()) {
+      app().setWorldId(world_id);
+      app().completeLoadWorld();
+    }
+
+    auto chain_id = chain->getValueByKey(DataType::CHAIN, "latest_chain_id");
+    if (!chain_id.empty()) {
+      app().setChainId(chain_id);
+      app().completeLoadChain();
+    }
 
     auto self_id = chain->getValueByKey(DataType::SELF_INFO, "self_id");
-    if (!self_id.empty())
+    if (!self_id.empty()) {
       app().setId(self_id);
+      app().completeUserSetup();
+    }
   }
 
   void pushTransaction(const nlohmann::json &transaction_json) {

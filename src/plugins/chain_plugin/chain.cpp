@@ -13,6 +13,7 @@ public:
     appbase::app().setWorldId(world.world_id);
 
     self.saveWorld(world);
+    self.saveLatestWorldId(world.world_id);
   }
 
   optional<vector<string>> initChain(nlohmann::json &chain_state) {
@@ -24,6 +25,7 @@ public:
     appbase::app().setChainId(chain.chain_id);
 
     self.saveChain(chain);
+    self.saveLatestChainId(chain.chain_id);
 
     return chain.tracker_addresses;
   }
@@ -142,6 +144,14 @@ string Chain::getUserCert(const base58_type &user_id) {
 }
 
 // KV functions
+void Chain::saveLatestWorldId(const alphanumeric_type &world_id) {
+  kv_controller->saveLatestWorldId(world_id);
+}
+
+void Chain::saveLatestChainId(const alphanumeric_type &chain_id) {
+  kv_controller->saveLatestChainId(chain_id);
+}
+
 void Chain::saveWorld(world_type &world_info) {
   kv_controller->saveWorld(world_info);
 }

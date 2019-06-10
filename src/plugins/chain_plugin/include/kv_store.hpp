@@ -35,6 +35,8 @@ public:
   KvController();
   ~KvController();
 
+  bool saveLatestWorldId(const alphanumeric_type &world_id);
+  bool saveLatestChainId(const alphanumeric_type &chain_id);
   bool saveWorld(world_type &world_info);
   bool saveChain(local_chain_type &chain_info);
   bool saveBackup(UnresolvedBlock &block_info);
