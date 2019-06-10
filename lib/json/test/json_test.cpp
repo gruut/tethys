@@ -4,6 +4,8 @@
 #include "../include/json.hpp"
 #include <iostream>
 
+using namespace tethys;
+
 TEST_CASE("json::parse") {
   SECTION("it should parse JSON string") {
     auto json_obj = json::parse("{ \"happy\": true, \"pi\": 3.141 }");

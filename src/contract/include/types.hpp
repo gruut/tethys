@@ -6,7 +6,7 @@
 
 #include <string>
 #include <unordered_map>
-#include <json.hpp>
+#include "../../../include/json.hpp"
 
 namespace tethys::tsce {
 
@@ -140,7 +140,7 @@ enum class SecondaryConditionType : int {
   UNKNOWN
 };
 
-std::map<std::string,std::string> TSCE_ERROR_MSG = {
+const std::unordered_map<std::string, std::string> TSCE_ERROR_MSG = {
     {"RUN_INPUT", "input is not met"},
     {"RUN_CONDITION", "condition is not met"},
     {"RUN_PERIOD", "runnable time period is not met"},
@@ -173,22 +173,6 @@ using txagg_cbor_b64 = std::string;
 using alphanumeric_type = std::string;
 using base58_type = std::string;
 using base64_type = std::string;
-
-using block_info_type = struct _block_info_type {
-  base64_type tx_agg_cbor;
-  base58_type block_id;
-  int tx_pos; // static_merkle_tree에서의 idx
-  base64_type tx_output;
-
-  _block_info_type() = default;
-  _block_info_type(base64_type tx_agg_cbor_, base58_type block_id_) : tx_agg_cbor(tx_agg_cbor_), block_id(block_id_) {
-    tx_pos = -1;
-    tx_output = "";
-  }
-  _block_info_type(base64_type tx_agg_cbor_, base58_type block_id_, int tx_pos_, base64_type tx_output_)
-    : tx_agg_cbor(tx_agg_cbor_), block_id(block_id_), tx_pos(tx_pos_), tx_output(tx_output_) {}
-};
-
 
 }
 

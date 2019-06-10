@@ -2,13 +2,14 @@
 #define TETHYS_SCE_VS_TOOL_HPP
 
 #include <string>
+#include <vector>
 #include <algorithm>
 #include <map>
 #include <chrono>
 #include <cctype>
 #include <locale>
 
-#include "date.hpp"
+#include "../../../include/date.hpp"
 
 class mt {
 public:
