@@ -39,11 +39,11 @@ public:
   bool saveLatestChainId(const alphanumeric_type &chain_id);
   bool saveWorld(world_type &world_info);
   bool saveChain(local_chain_type &chain_info);
-  bool saveBackup(UnresolvedBlock &block_info);
   bool saveSelfInfo(self_info_type &self_info);
 
   string getValueByKey(string what, const string &base_keys);
 
+  bool saveBackupBlock(const nlohmann::json &block_json);
   std::string readBackup(const std::string &key);
   void flushBackup();
   void clearBackup();

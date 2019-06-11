@@ -204,6 +204,7 @@ public:
       logger::ERROR("Block input fail: duplicated");
       return;
     }
+    chain->saveBackupBlock(block_json);
 
     UnresolvedBlock resolved_block;
     bool resolve_result = chain->resolveBlock(input_block, resolved_block);

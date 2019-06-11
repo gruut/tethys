@@ -131,13 +131,6 @@ bool KvController::saveChain(local_chain_type &chain_info) {
   return true;
 }
 
-bool KvController::saveBackup(UnresolvedBlock &block_info) {
-
-  commitBatchAll();
-
-  return true;
-}
-
 bool KvController::saveSelfInfo(self_info_type &self_info) {
   addBatch(DataType::SELF_INFO, "self_enc_sk", self_info.enc_sk);
   addBatch(DataType::SELF_INFO, "self_cert", self_info.cert);
@@ -180,6 +173,16 @@ string KvController::getValueByKey(string what, const string &key) {
   if (!status.ok())
     value = "";
   return value;
+}
+
+bool KvController::saveBackupBlock(const nlohmann::json &block_json) {
+  string serialized_block = TypeConverter::toString(nlohmann::json::to_cbor(block_json));
+  base58_type block_id = json::get<string>(block_json["block"], "id").value();
+  addBatch(DataType::BACKUP_BLOCK, block_id, serialized_block);
+
+  commitBatchAll();
+
+  return true;
 }
 
 void KvController::destroyDB() {

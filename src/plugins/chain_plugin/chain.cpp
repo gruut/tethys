@@ -194,8 +194,8 @@ void Chain::saveChain(local_chain_type &chain_info) {
   kv_controller->saveChain(chain_info);
 }
 
-void Chain::saveBackup(UnresolvedBlock &block_info) {
-  kv_controller->saveBackup(block_info);
+void Chain::saveBackupBlock(const nlohmann::json &block_json) {
+  kv_controller->saveBackupBlock(block_json);
 }
 
 void Chain::saveSelfInfo(self_info_type &self_info) {

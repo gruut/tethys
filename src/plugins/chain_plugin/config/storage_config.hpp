@@ -43,7 +43,7 @@ namespace config {
 
           names.emplace_back(DataType::WORLD);
           names.emplace_back(DataType::CHAIN);
-          names.emplace_back(DataType::BACKUP);
+          names.emplace_back(DataType::BACKUP_BLOCK);
           names.emplace_back(DataType::SELF_INFO);
 
           return names;

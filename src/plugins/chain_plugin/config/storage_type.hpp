@@ -28,7 +28,7 @@ enum class QueryType : int { INSERT, UPDATE, DELETE };
 struct DataType {
   inline static const string WORLD = "world";
   inline static const string CHAIN = "chain";
-  inline static const string BACKUP = "backup";
+  inline static const string BACKUP_BLOCK = "backup_block";
   inline static const string SELF_INFO = "self_info";
 };
 

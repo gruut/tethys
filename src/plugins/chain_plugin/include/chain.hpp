@@ -55,7 +55,7 @@ public:
   void saveLatestChainId(const alphanumeric_type &chain_id);
   void saveWorld(world_type &world_info);
   void saveChain(local_chain_type &chain_info);
-  void saveBackup(UnresolvedBlock &block_info);
+  void saveBackupBlock(const nlohmann::json &block_json);
   void saveSelfInfo(self_info_type &self_info);
   vector<Block> getBlocksByHeight(int from, int to);
   block_height_type getLatestResolvedHeight();
