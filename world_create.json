@@ -1,10 +1,10 @@
 {
   "world": {
-    "id": "GRUUTNET",
+    "id": "TETHYSNT",
     "after": "1556504053"
   },
   "key_currency": {
-    "name": "GRU",
+    "name": "THY",
     "initial_amount": "200000000000"
   },
   "mining_policy": {
@@ -18,7 +18,7 @@
   "eden" : {
     "chain": {
       "id": "TSTCHAIN",
-      "world": "GRUUTNET",
+      "world": "TETHYSNT",
       "after": "1556504053"
     },
     "policy": {

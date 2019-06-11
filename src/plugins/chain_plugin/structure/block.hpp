@@ -1,5 +1,5 @@
-#ifndef GRUUT_PUBLIC_MERGER_BLOCK_HPP
-#define GRUUT_PUBLIC_MERGER_BLOCK_HPP
+#ifndef TETHYS_PUBLIC_MERGER_BLOCK_HPP
+#define TETHYS_PUBLIC_MERGER_BLOCK_HPP
 
 #include "../config/storage_type.hpp"
 #include "../include/static_merkle_tree.hpp"
