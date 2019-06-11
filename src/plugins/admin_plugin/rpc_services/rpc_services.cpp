@@ -383,6 +383,7 @@ void LoadWorldService::proceed() {
     chain.initWorld(world_state.value());
     res.set_success(true);
     logger::INFO("[LOAD WORLD] Success to load world");
+    app().resetLoadChainState();
     app().completeLoadWorld();
   } catch (...) {
     string info = "Cannot load world. please check the world json file.";

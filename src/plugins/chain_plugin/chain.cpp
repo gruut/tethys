@@ -12,6 +12,16 @@ public:
 
     appbase::app().setWorldId(world.world_id);
 
+    string auth_cert;
+    int multiline_size = world.authority_cert.size() - 1;
+    for (int i = 0; i <= multiline_size; ++i) {
+      auth_cert += world.authority_cert[i];
+      if (i != multiline_size)
+        auth_cert += "\n";
+    }
+
+    appbase::app().setAuthCert(auth_cert);
+
     self.saveWorld(world);
     self.saveLatestWorldId(world.world_id);
   }
