@@ -600,6 +600,14 @@ void FindNode::proceed() {
       node->set_port(n.getEndpoint().port);
       node->set_node_id(n.getId());
     }
+
+    string sender_id = m_request.sender_id();
+    string sender_ip_addr = m_request.sender_address();
+    string sender_port = m_request.sender_port();
+
+    Node node(Hash<160>::sha1(sender_id), sender_id, sender_ip_addr, sender_port);
+    m_routing_table->addPeer(move(node));
+
     m_reply.set_time_stamp(TimeUtil::nowBigInt());
 
     Status rpc_status = Status::OK;

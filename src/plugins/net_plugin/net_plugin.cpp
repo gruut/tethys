@@ -86,7 +86,10 @@ public:
   void initializeServer() {
     ServerBuilder builder;
 
-    builder.AddListeningPort(p2p_address, grpc::InsecureServerCredentials());
+    auto [_, port] = getHostAndPort(p2p_address);
+    string listening_addr = "0.0.0.0:" + port;
+
+    builder.AddListeningPort(listening_addr, grpc::InsecureServerCredentials());
     builder.RegisterService(&user_service);
     builder.RegisterService(&merger_service);
     builder.RegisterService(&kademlia_service);
