@@ -5,6 +5,7 @@
 #include <botan-2/botan/x509cert.h>
 #include <botan-2/botan/ecdsa.h>
 #include "include/config.hpp"
+#include "../../lib/tethys-utils/src/cert_verifier.hpp"
 
 namespace tethys::tsce {
 
@@ -38,32 +39,6 @@ namespace tethys::tsce {
 
     //TODO : may be handled by type ( `PEM` / `DER` )
     //now just check `PEM`
-    try {
-      Botan::DataSource_Memory by_cert_datasource(by_val);
-      Botan::DataSource_Memory cert_datasource(pk);
-
-      Botan::X509_Certificate by_cert(by_cert_datasource);
-      Botan::X509_Certificate cert(cert_datasource);
-
-      std::string algo_name = Botan::OIDS::oid2str(by_cert.subject_public_key_algo().get_oid());
-
-      if (algo_name.size() < 3) {
-        return false;
-      }
-
-      ssize_t pos;
-      if ((pos = algo_name.find("RSA")) != std::string::npos && pos == 0) {
-        Botan::RSA_PublicKey by_pk(by_cert.subject_public_key_algo(), by_cert.subject_public_key_bitstring());
-        return cert.check_signature(by_pk);
-      } else if ((pos = algo_name.find("ECDSA")) != std::string::npos && pos == 0) {
-        Botan::ECDSA_PublicKey by_pk(by_cert.subject_public_key_algo(), by_cert.subject_public_key_bitstring());
-        return cert.check_signature(by_pk);
-      } else {
-        return false; // not supported!
-      }
-    }
-    catch (...) {
-      return false;
-    }
+    return CertVerifier::doVerify(pk, by_val);
   }
 }
