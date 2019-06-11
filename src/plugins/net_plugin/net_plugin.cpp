@@ -117,6 +117,7 @@ public:
   void start() {
     monitorCompletionQueue();
     startConnectionMonitors();
+    monitorBroadcastMsgTable();
     getPeersFromTracker();
   }
 
@@ -320,9 +321,7 @@ public:
       grpc_merger::MsgStatus msg_status;
 
       if (is_broadcast) {
-        // TODO : broadcast 확인을 위한 msg id를 정하는 방법이 없어 현재 임시.
-        int random_num = RandomNumGenerator::getRange(0, 1000);
-        auto vec_msg_id = Sha256::hash(TimeUtil::now() + to_string(random_num));
+        auto vec_msg_id = Sha256::hash(packed_msg);
         string str_hash_msg_id(vec_msg_id.begin(), vec_msg_id.end());
 
         broadcast_check_table->insert({str_hash_msg_id, TimeUtil::nowBigInt()});
