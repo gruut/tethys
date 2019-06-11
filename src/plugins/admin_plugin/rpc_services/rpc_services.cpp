@@ -381,10 +381,15 @@ void LoadWorldService::proceed() {
   auto &chain = dynamic_cast<ChainPlugin *>(app().getPlugin("ChainPlugin"))->chain();
   try {
     chain.initWorld(world_state.value());
+
+    string info = "Success to load the world";
     res.set_success(true);
-    logger::INFO("[LOAD WORLD] Success to load world");
+    res.set_info(info);
+
     app().resetLoadChainState();
     app().completeLoadWorld();
+
+    logger::INFO("[LOAD WORLD] " + info);
   } catch (...) {
     string info = "Cannot load world. please check the world json file.";
     res.set_info(info);
