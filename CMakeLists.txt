@@ -5,9 +5,9 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++17 -pthread")
 
 if(NOT DEFINED ${CMAKE_INSTALL_PREFIX})
     set(CMAKE_INSTALL_PREFIX "/usr/local")
-    set(GRUUT_INSTALL_DIR ${CMAKE_INSTALL_PREFIX}/tethys)
+    set(TETHYS_INSTALL_DIR ${CMAKE_INSTALL_PREFIX}/tethys)
 else()
-    set(GRUUT_INSTALL_DIR ${CMAKE_INSTALL_PREFIX})
+    set(TETHYS_INSTALL_DIR ${CMAKE_INSTALL_PREFIX})
 endif()
 
 project(tethys LANGUAGES C CXX)
@@ -38,8 +38,8 @@ target_include_directories(tethys
         "${CMAKE_INSTALL_PREFIX}/include"
         )
 
-install(DIRECTORY include/ DESTINATION ${GRUUT_INSTALL_DIR}/include)
-install_directory_permissions(DIRECTORY ${GRUUT_INSTALL_DIR}/include)
+install(DIRECTORY include/ DESTINATION ${TETHYS_INSTALL_DIR}/include)
+install_directory_permissions(DIRECTORY ${TETHYS_INSTALL_DIR}/include)
 
 IF (NOT $ENV{TRAVIS})
     add_custom_command(

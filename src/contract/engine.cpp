@@ -30,7 +30,7 @@ namespace tethys::tsce {
     if (!contract_runner.loadWorldChain())
       return std::nullopt;
 
-    for (auto &each_tx : block.getTransactions()) {
+    for (auto each_tx : block.getTransactions()) {
 
       auto txid = each_tx.getTxId();
       auto cid = each_tx.getContractId();

@@ -22,9 +22,9 @@ target_include_directories(log
 install(TARGETS
         log
 
-        RUNTIME DESTINATION ${GRUUT_INSTALL_DIR}/bin
-        LIBRARY DESTINATION ${GRUUT_INSTALL_DIR}/lib
-        ARCHIVE DESTINATION ${GRUUT_INSTALL_DIR}/lib
-        PUBLIC_HEADER DESTINATION ${GRUUT_INSTALL_DIR}/include/log
+        RUNTIME DESTINATION ${TETHYS_INSTALL_DIR}/bin
+        LIBRARY DESTINATION ${TETHYS_INSTALL_DIR}/lib
+        ARCHIVE DESTINATION ${TETHYS_INSTALL_DIR}/lib
+        PUBLIC_HEADER DESTINATION ${TETHYS_INSTALL_DIR}/include/log
         )
-install_directory_permissions(DIRECTORY ${GRUUT_INSTALL_DIR})
+install_directory_permissions(DIRECTORY ${TETHYS_INSTALL_DIR})
