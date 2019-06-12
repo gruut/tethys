@@ -19,10 +19,15 @@ endif()
 
 file(GLOB HEADERS
         "include/*.hpp"
+        "include/handler/*.hpp"
     )
 
+file(GLOB SOURCES
+        "*.cpp")
+
 add_library(contract
-        ${HEADERS})
+        ${HEADERS}
+        ${SOURCES})
 
 set_target_properties(contract PROPERTIES LINKER_LANGUAGE CXX)
 
@@ -31,4 +36,6 @@ target_link_libraries(contract
         ${BOTAN_LIBS}
         )
 
-target_include_directories(contract PUBLIC "${GRUUT_INSTALL_DIR}/include")
+target_include_directories(contract PUBLIC "${GRUUT_INSTALL_DIR}/include ${CMAKE_CURRENT_SOURCE_DIR}/include")
+
+add_subdirectory(test)

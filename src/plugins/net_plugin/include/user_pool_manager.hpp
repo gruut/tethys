@@ -1,13 +1,14 @@
 #pragma once
 
+#include "../../../../lib/json/include/json.hpp"
+#include "../../../../lib/log/include/log.hpp"
 #include "../../../../lib/tethys-utils/src/bytes_builder.hpp"
+#include "../../../../lib/tethys-utils/src/cert_verifier.hpp"
 #include "../../../../lib/tethys-utils/src/ecdsa.hpp"
 #include "../../../../lib/tethys-utils/src/hmac_key_maker.hpp"
 #include "../../../../lib/tethys-utils/src/random_number_generator.hpp"
 #include "../../../../lib/tethys-utils/src/time_util.hpp"
 #include "../../../../lib/tethys-utils/src/type_converter.hpp"
-#include "../../../../lib/json/include/json.hpp"
-#include "../../../../lib/log/include/log.hpp"
 #include "../config/include/message.hpp"
 #include "../config/include/network_config.hpp"
 #include "message_builder.hpp"
@@ -173,7 +174,14 @@ public:
         throw ErrorMsgType::ECDH_INVALID_SIG;
       }
 
-      temp_user_pool[msg.sender_id].user_pk = json::get<string>(msg.body["user"], "pk").value();
+      auto user_cert = json::get<string>(msg.body["user"], "pk").value();
+      auto auth_cert = app().getAuthCert();
+      if (!CertVerifier::doVerify(user_cert, auth_cert)) {
+        logger::ERROR("[ECDH] Invalid User Certificate");
+        throw ErrorMsgType::ECDH_INVALID_PK;
+      }
+
+      temp_user_pool[msg.sender_id].user_pk = user_cert;
 
       HmacKeyMaker key_maker;
       auto [dhx, dhy] = key_maker.getPublicKey();

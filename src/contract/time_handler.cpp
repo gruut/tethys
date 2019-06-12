@@ -1,16 +1,9 @@
-#ifndef TETHYS_SCE_HANDLER_TIME_HPP
-#define TETHYS_SCE_HANDLER_TIME_HPP
-
-#include "config.hpp"
-#include "base_condition_handler.hpp"
+#include "include/config.hpp"
+#include "include/handler/time_handler.hpp"
 
 namespace tethys::tsce {
 
-class TimeHandler : public BaseConditionHandler {
-public:
-  TimeHandler() = default;
-
-  bool evalue(tinyxml2::XMLElement* doc_node, DataManager &data_manager) override {
+  bool tsce::TimeHandler::evalue(tinyxml2::XMLElement *doc_node, DataManager &data_manager) {
 
     if(doc_node == nullptr)
       return false;
@@ -37,19 +30,15 @@ public:
     mt::trim(time_before);
 
     if(time_after.empty() && time_before.empty())
-        return false;
+      return false;
 
     if(time_before.empty())
-        return (mt::timestr2timestamp(time_after) < base_timestamp);
+      return (mt::timestr2timestamp(time_after) < base_timestamp);
 
     if(time_after.empty())
-        return (mt::timestr2timestamp(time_before) > base_timestamp);
+      return (mt::timestr2timestamp(time_before) > base_timestamp);
 
     return (mt::timestr2timestamp(time_after) < base_timestamp && base_timestamp < mt::timestr2timestamp(time_before));
 
   }
-};
-
 }
-
-#endif

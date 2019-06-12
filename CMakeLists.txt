@@ -22,7 +22,7 @@ add_executable(
 
 add_subdirectory(lib)
 add_subdirectory(src/plugins)
-#add_subdirectory(src/contract)
+add_subdirectory(src/contract)
 
 target_link_libraries(tethys
         appbase
