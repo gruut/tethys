@@ -28,7 +28,7 @@ namespace tethys::tsce {
 
     bool setContract(std::string &xml_doc);
 
-    bool setTransaction(Transaction &proc_tx, std::string &error);
+    bool setTransaction(const Transaction &proc_tx, std::string &error);
 
     bool readUserAttributes();
 
