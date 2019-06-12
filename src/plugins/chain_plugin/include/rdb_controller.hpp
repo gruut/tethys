@@ -1,5 +1,5 @@
-#ifndef GRUUT_PUBLIC_MERGER_DB_CONTROLLER_HPP
-#define GRUUT_PUBLIC_MERGER_DB_CONTROLLER_HPP
+#ifndef TETHYS_PUBLIC_MERGER_DB_CONTROLLER_HPP
+#define TETHYS_PUBLIC_MERGER_DB_CONTROLLER_HPP
 
 #include "../../../../lib/log/include/log.hpp"
 #include "../config/storage_config.hpp"

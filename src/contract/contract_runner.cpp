@@ -44,7 +44,6 @@ namespace tethys::tsce {
   }
 
   bool ContractRunner::setTransaction(Transaction &proc_tx, std::string &error) {
-
     m_proc_tx = proc_tx;
 
     auto time = proc_tx.getTxTime();
