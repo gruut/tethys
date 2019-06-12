@@ -186,7 +186,7 @@ public:
     logger::INFO("chain_plugin - pushBlock() Called");
 
     // TODO: 입력되는 블록 관련 메세지가 BONE이나 PING일 경우의 처리 추가 필요
-    // TODO: block 구조체 형태로 입력되는게 맞을지 재고려
+    // TODO: block을 구조체 형태로 유지할지 재고려
 
     Block input_block;
     input_block.initialize(block_json);
@@ -288,6 +288,7 @@ public:
     }
 
     chain->updateStateTree(updated_UR_block);
+    chain->saveBackupResult(updated_UR_block);
   }
 
   vector<Transaction> getTransactions() {

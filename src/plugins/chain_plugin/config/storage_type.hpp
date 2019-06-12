@@ -13,7 +13,7 @@ using namespace std;
 namespace tethys {
 
 enum class QueryType : int { INSERT, UPDATE, DELETE };
-//enum class WhichType : int {
+// enum class WhichType : int {
 //  USERLEDGER,
 //  CONTRACTLEDGER,
 //  USERATTRIBUTE,
@@ -25,12 +25,20 @@ enum class QueryType : int { INSERT, UPDATE, DELETE };
 //  USERCERT_LIST,
 //  CONTRACT_LIST
 //};
+
 struct DataType {
   inline static const string WORLD = "world";
   inline static const string CHAIN = "chain";
   inline static const string BACKUP_BLOCK = "backup_block";
+  inline static const string BACKUP_USER_LEDGER = "backup_user_ledger";
+  inline static const string BACKUP_CONTRACT_LEDGER = "backup_contract_ledger";
+  inline static const string BACKUP_USER_ATTRIBUTE = "backup_user_attribute";
+  inline static const string BACKUP_USER_CERT = "backup_user_cert";
+  inline static const string BACKUP_CONTRACT = "backup_contract";
   inline static const string SELF_INFO = "self_info";
 };
+
+const std::string UNRESOLVED_BLOCK_IDS_KEY = "UNRESOLVED_BLOCK_IDS_KEY";
 
 using string = std::string;
 using bytes = std::vector<uint8_t>;
@@ -231,7 +239,7 @@ using contract_type = struct Contract {
   string sigma;
 };
 
-//using which_type = struct WhichData {
+// using which_type = struct WhichData {
 //  user_ledger_type user_ledger;
 //  contract_ledger_type contract_ledger;
 //  user_attribute_type user_attribute;

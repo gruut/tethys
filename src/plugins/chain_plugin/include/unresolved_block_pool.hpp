@@ -63,19 +63,21 @@ public:
   ubp_push_result_type pushBlock(Block &block, bool is_restore = false);
   bool resolveBlock(Block &block, UnresolvedBlock &resolved_result);
 
-  void restorePool();
-
   UnresolvedBlock findBlock(const base58_type &block_id, const block_height_type block_height);
   UnresolvedBlock getBlock(int pool_deq_idx, int pool_vec_idx);
   vector<int> getLine(const base58_type &block_id, const block_height_type block_height);
 
   void invalidateCaches();
 
+  string serializeUserLedgerList(const UnresolvedBlock &unresolved_block);
+  string serializeContractLedgerList(const UnresolvedBlock &unresolved_block);
+  string serializeUserAttributeList(const UnresolvedBlock &unresolved_block);
+  string serializeUserCertList(const UnresolvedBlock &unresolved_block);
+  string serializeContractList(const UnresolvedBlock &unresolved_block);
+  void restorePool();
+
 private:
   void updateTotalNumSSig();
-
-  void backupPool();
-  nlohmann::json readBackupIds();
 };
 
 } // namespace tethys

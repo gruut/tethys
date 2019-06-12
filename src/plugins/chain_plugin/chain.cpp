@@ -198,6 +198,15 @@ void Chain::saveBackupBlock(const nlohmann::json &block_json) {
   kv_controller->saveBackupBlock(block_json);
 }
 
+void Chain::saveBackupResult(const UnresolvedBlock &UR_block) {
+  base58_type block_id = UR_block.block.getBlockId();
+  kv_controller->saveBackupUserLedgers(block_id, unresolved_block_pool->serializeUserLedgerList(UR_block));
+  kv_controller->saveBackupContractLedgers(block_id, unresolved_block_pool->serializeContractLedgerList(UR_block));
+  kv_controller->saveBackupUserAttributes(block_id, unresolved_block_pool->serializeUserAttributeList(UR_block));
+  kv_controller->saveBackupUserCerts(block_id, unresolved_block_pool->serializeUserCertList(UR_block));
+  kv_controller->saveBackupContracts(block_id, unresolved_block_pool->serializeContractList(UR_block));
+}
+
 void Chain::saveSelfInfo(self_info_type &self_info) {
   kv_controller->saveSelfInfo(self_info);
 }

@@ -134,57 +134,6 @@ ubp_push_result_type UnresolvedBlockPool::pushBlock(Block &block, bool is_restor
   return ret_val;
 }
 
-UnresolvedBlock UnresolvedBlockPool::findBlock(const base58_type &block_id, const block_height_type block_height) {
-  // TODO: Refactoring. height와 cur_vec_idx를 이용하면 순회 안 하고도 찾을 수 있음
-  for (auto &each_level : m_block_pool) {
-    for (auto &each_block : each_level) {
-      if ((each_block.block.getBlockId() == block_id) && (each_block.block.getHeight() == block_height))
-        return each_block;
-    }
-  }
-
-  logger::ERROR("Cannot found block in pool " + block_id + " " + to_string(block_height));
-  return UnresolvedBlock{};
-}
-
-UnresolvedBlock UnresolvedBlockPool::getBlock(int pool_deq_idx, int pool_vec_idx) {
-  return m_block_pool[pool_deq_idx][pool_vec_idx];
-}
-
-vector<int> UnresolvedBlockPool::getLine(const base58_type &block_id, const block_height_type block_height) {
-  vector<int> line;
-  if (!block_id.empty()) {
-    // latest_confirmed의 height가 10이었고, 현재 line을 구하려는 블록의 height가 12라면 vector size는 2이다
-    int vec_size = static_cast<int>(block_height - m_latest_confirmed_height);
-    line.resize(vec_size, -1);
-
-    int current_deq_idx = static_cast<int>(block_height - m_latest_confirmed_height) - 1;
-    int current_vec_idx = -1;
-
-    for (int i = 0; i < m_block_pool[current_deq_idx].size(); ++i) {
-      if (block_id == m_block_pool[current_deq_idx][i].block.getBlockId()) {
-        current_vec_idx = static_cast<int>(i);
-        break;
-      }
-    }
-
-    line[current_deq_idx] = current_vec_idx;
-
-    while (current_deq_idx > 0) {
-      current_vec_idx = m_block_pool[current_deq_idx][current_vec_idx].prev_vec_idx;
-      current_deq_idx--;
-
-      line[current_deq_idx] = current_vec_idx;
-    }
-
-    if (m_block_pool[current_deq_idx][current_vec_idx].prev_vec_idx != 0) {
-      logger::ERROR("This block is not linked!");
-      line.resize(1, -1);
-    }
-    return line;
-  }
-}
-
 bool UnresolvedBlockPool::resolveBlock(Block &block, UnresolvedBlock &resolved_result) {
   //  if (!lateStage(block)) {
   //    return false;
@@ -275,65 +224,171 @@ void UnresolvedBlockPool::updateTotalNumSSig() {
   }
 }
 
-// ------------------------------------------------------------------
-//
-// void KvController::testBackward() {
-//  cout << "--------------- test Backward called -----------------" << endl;
-//  Layer back_layer = popBackLayer();
-//
-//  for (auto data : back_layer.m_temporary_data) {
-//    Key key = data.first;
-//    Value value = data.second;
-//    uint32_t path;
-//    test_data rollback_data;
-//
-//    rollback_data.user_id = key.user_id;
-//    rollback_data.var_type = key.var_type;
-//    rollback_data.var_name = key.var_name;
-//
-//    cout << key << ", " << value << endl;
-//
-//    // 지워진 데이터라면 insertNode 를 호출하여 다시 트리에 삽입
-//    if (value.isDeleted) {
-//      rollback_data.var_value = value.var_value;
-//      path = value.path;
-//
-//      m_tree.insertNode(path, rollback_data);
-//    } else {
-//      // 지워진 데이터가 아니라면 남은 레이어와 DB 에서 찾아봄
-//      int depth = checkLayer(key);
-//      // 데이터가 존재한다면 modifyNode 호출하여 이전값으로 돌림
-//      if (depth != NO_DATA) {
-//        if (depth == DB_DATA) {
-//          cout << "data is in the DB" << endl;
-//          pair<int, vector<string>> db_data = m_server.selectAllUsingUserIdVarTypeVarName(key.user_id, key.var_type, key.var_name);
-//
-//          rollback_data.var_value = db_data.second[VAR_VALUE];
-//          path = (uint32_t)stoul(db_data.second[PATH]);
-//        } else {
-//          cout << "data is in the m_layer[" << depth << "]" << endl;
-//          map<Key, Value>::iterator it;
-//          it = m_layer[depth].m_temporary_data.find(key);
-//
-//          rollback_data.var_value = it->second.var_value;
-//          path = it->second.path;
-//        }
-//        m_tree.modifyNode(path, rollback_data);
-//      }
-//      // 데이터가 존재하지 않는다면 removeNode 호출하여 트리에서 제거
-//      else {
-//        cout << "can't find data" << endl;
-//
-//        path = value.path;
-//        m_tree.removeNode(path);
-//      }
-//    }
-//  }
-//}
+UnresolvedBlock UnresolvedBlockPool::findBlock(const base58_type &block_id, const block_height_type block_height) {
+  // TODO: Refactoring. height와 cur_vec_idx를 이용하면 순회 안 하고도 찾을 수 있음
+  for (auto &each_level : m_block_pool) {
+    for (auto &each_block : each_level) {
+      if ((each_block.block.getBlockId() == block_id) && (each_block.block.getHeight() == block_height))
+        return each_block;
+    }
+  }
+
+  logger::ERROR("Cannot found block in pool " + block_id + " " + to_string(block_height));
+  return UnresolvedBlock{};
+}
+
+UnresolvedBlock UnresolvedBlockPool::getBlock(int pool_deq_idx, int pool_vec_idx) {
+  return m_block_pool[pool_deq_idx][pool_vec_idx];
+}
+
+vector<int> UnresolvedBlockPool::getLine(const base58_type &block_id, const block_height_type block_height) {
+  vector<int> line;
+  if (!block_id.empty()) {
+    // latest_confirmed의 height가 10이었고, 현재 line을 구하려는 블록의 height가 12라면 vector size는 2이다
+    int vec_size = static_cast<int>(block_height - m_latest_confirmed_height);
+    line.resize(vec_size, -1);
+
+    int current_deq_idx = static_cast<int>(block_height - m_latest_confirmed_height) - 1;
+    int current_vec_idx = -1;
+
+    for (int i = 0; i < m_block_pool[current_deq_idx].size(); ++i) {
+      if (block_id == m_block_pool[current_deq_idx][i].block.getBlockId()) {
+        current_vec_idx = static_cast<int>(i);
+        break;
+      }
+    }
+
+    line[current_deq_idx] = current_vec_idx;
+
+    while (current_deq_idx > 0) {
+      current_vec_idx = m_block_pool[current_deq_idx][current_vec_idx].prev_vec_idx;
+      current_deq_idx--;
+
+      line[current_deq_idx] = current_vec_idx;
+    }
+
+    if (m_block_pool[current_deq_idx][current_vec_idx].prev_vec_idx != 0) {
+      logger::ERROR("This block is not linked!");
+      line.resize(1, -1);
+    }
+    return line;
+  }
+}
+
+string UnresolvedBlockPool::serializeUserLedgerList(const UnresolvedBlock &unresolved_block) {
+  nlohmann::json ledger_list_json = nlohmann::json::array();
+  string serialized_list;
+
+  for(auto &each_ledger : unresolved_block.user_ledger_list) {
+    nlohmann::json json;
+    json["var_name"] = each_ledger.second.var_name;
+    json["var_val"] = each_ledger.second.var_val;
+    json["var_type"] = to_string(each_ledger.second.var_type);
+    json["uid"] = each_ledger.second.uid;
+    json["up_time"] = to_string(each_ledger.second.up_time);
+    json["up_block"] = to_string(each_ledger.second.up_block);
+    json["tag"] = each_ledger.second.tag;
+    json["pid"] = each_ledger.second.pid;
+    json["query_type"] = each_ledger.second.query_type;
+    json["is_empty"] = each_ledger.second.is_empty;
+
+    ledger_list_json.push_back(json);
+  }
+
+  serialized_list = TypeConverter::bytesToString(nlohmann::json::to_cbor(ledger_list_json));
+  return serialized_list;
+}
+
+string UnresolvedBlockPool::serializeContractLedgerList(const UnresolvedBlock &unresolved_block) {
+  nlohmann::json ledger_list_json = nlohmann::json::array();
+  string serialized_list;
+
+  for(auto &each_ledger : unresolved_block.contract_ledger_list) {
+    nlohmann::json json;
+    json["var_name"] = each_ledger.second.var_name;
+    json["var_val"] = each_ledger.second.var_val;
+    json["var_type"] = to_string(each_ledger.second.var_type);
+    json["cid"] = each_ledger.second.cid;
+    json["up_time"] = to_string(each_ledger.second.up_time);
+    json["up_block"] = to_string(each_ledger.second.up_block);
+    json["var_info"] = each_ledger.second.var_info;
+    json["pid"] = each_ledger.second.pid;
+    json["query_type"] = each_ledger.second.query_type;
+    json["is_empty"] = each_ledger.second.is_empty;
+
+    ledger_list_json.push_back(json);
+  }
+
+  serialized_list = TypeConverter::bytesToString(nlohmann::json::to_cbor(ledger_list_json));
+  return serialized_list;
+}
+
+string UnresolvedBlockPool::serializeUserAttributeList(const UnresolvedBlock &unresolved_block) {
+  nlohmann::json ledger_list_json = nlohmann::json::array();
+  string serialized_list;
+
+  for(auto &each_user : unresolved_block.user_attribute_list) {
+    nlohmann::json json;
+    json["uid"] = each_user.second.uid;
+    json["register_day"] = to_string(each_user.second.register_day);
+    json["register_code"] = each_user.second.register_code;
+    json["gender"] = to_string(each_user.second.gender);
+    json["isc_type"] = each_user.second.isc_type;
+    json["isc_code"] = each_user.second.isc_code;
+    json["location"] = each_user.second.location;
+    json["age_limit"] = to_string(each_user.second.age_limit);
+    json["sigma"] = each_user.second.sigma;
+
+    ledger_list_json.push_back(json);
+  }
+
+  serialized_list = TypeConverter::bytesToString(nlohmann::json::to_cbor(ledger_list_json));
+  return serialized_list;
+}
+
+string UnresolvedBlockPool::serializeUserCertList(const UnresolvedBlock &unresolved_block) {
+  nlohmann::json ledger_list_json = nlohmann::json::array();
+  string serialized_list;
+
+  for(auto &each_cert : unresolved_block.user_cert_list) {
+    nlohmann::json json;
+    json["uid"] = each_cert.second.uid;
+    json["sn"] = each_cert.second.sn;
+    json["nvbefore"] = to_string(each_cert.second.nvbefore);
+    json["nvafter"] = to_string(each_cert.second.nvafter);
+    json["x509"] = each_cert.second.x509;
+
+    ledger_list_json.push_back(json);
+  }
+
+  serialized_list = TypeConverter::bytesToString(nlohmann::json::to_cbor(ledger_list_json));
+  return serialized_list;
+}
+
+string UnresolvedBlockPool::serializeContractList(const UnresolvedBlock &unresolved_block) {
+  nlohmann::json ledger_list_json = nlohmann::json::array();
+  string serialized_list;
+
+  for(auto &each_contract : unresolved_block.contract_list) {
+    nlohmann::json json;
+    json["cid"] = each_contract.second.cid;
+    json["after"] = to_string(each_contract.second.after);
+    json["before"] = to_string(each_contract.second.before);
+    json["author"] = each_contract.second.author;
+    json["friends"] = each_contract.second.friends;
+    json["contract"] = each_contract.second.contract;
+    json["desc"] = each_contract.second.desc;
+    json["sigma"] = each_contract.second.sigma;
+
+    ledger_list_json.push_back(json);
+  }
+
+  serialized_list = TypeConverter::bytesToString(nlohmann::json::to_cbor(ledger_list_json));
+  return serialized_list;
+}
+
 
 // 추후 구현
 void UnresolvedBlockPool::invalidateCaches() {}
-void UnresolvedBlockPool::backupPool() {}
-nlohmann::json UnresolvedBlockPool::readBackupIds() {}
 
 } // namespace tethys

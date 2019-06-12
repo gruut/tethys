@@ -87,7 +87,6 @@ bool KvController::saveWorld(world_type &world_info) {
   addBatch(DataType::WORLD, tmp_wid + "_tmp_jfee", tmp_jfee);
 
   commitBatchAll();
-
   return true;
 }
 
@@ -127,7 +126,6 @@ bool KvController::saveChain(local_chain_type &chain_info) {
   addBatch(DataType::CHAIN, tmp_chid + "_tk_addr", tk_addr_list);
 
   commitBatchAll();
-
   return true;
 }
 
@@ -137,7 +135,6 @@ bool KvController::saveSelfInfo(self_info_type &self_info) {
   addBatch(DataType::SELF_INFO, "self_id", self_info.id);
 
   commitBatchAll();
-
   return true;
 }
 
@@ -181,7 +178,41 @@ bool KvController::saveBackupBlock(const nlohmann::json &block_json) {
   addBatch(DataType::BACKUP_BLOCK, block_id, serialized_block);
 
   commitBatchAll();
+  return true;
+}
 
+bool KvController::saveBackupUserLedgers(const base58_type &block_id, const string &serialized_user_ledgers) {
+  addBatch(DataType::BACKUP_USER_LEDGER, block_id, serialized_user_ledgers);
+
+  commitBatchAll();
+  return true;
+}
+
+bool KvController::saveBackupContractLedgers(const base58_type &block_id, const string &serialized_contract_ledgers) {
+  addBatch(DataType::BACKUP_CONTRACT_LEDGER, block_id, serialized_contract_ledgers);
+
+  commitBatchAll();
+  return true;
+}
+
+bool KvController::saveBackupUserAttributes(const base58_type &block_id, const string &serialized_user_attributes) {
+  addBatch(DataType::BACKUP_USER_ATTRIBUTE, block_id, serialized_user_attributes);
+
+  commitBatchAll();
+  return true;
+}
+
+bool KvController::saveBackupUserCerts(const base58_type &block_id, const string &serialized_user_certs) {
+  addBatch(DataType::BACKUP_USER_CERT, block_id, serialized_user_certs);
+
+  commitBatchAll();
+  return true;
+}
+
+bool KvController::saveBackupContracts(const base58_type &block_id, const string &serialized_contracts) {
+  addBatch(DataType::BACKUP_CONTRACT, block_id, serialized_contracts);
+
+  commitBatchAll();
   return true;
 }
 
