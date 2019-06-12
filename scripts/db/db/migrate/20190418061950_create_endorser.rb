@@ -5,7 +5,6 @@ class CreateEndorser < ActiveRecord::Migration[5.2]
       t.integer :tsidx, index: true, null: false
       t.column :end_id, 'char(44)'
       t.text :end_pk
-      t.string :end_sig, limit: 100
     end
   end
 end

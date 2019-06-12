@@ -1,85 +1,126 @@
 #ifndef GRUUT_PUBLIC_MERGER_MEM_LEDGER_HPP
 #define GRUUT_PUBLIC_MERGER_MEM_LEDGER_HPP
 
-#include "../config/storage_type.hpp"
-#include "../../../../lib/tethys-utils/src/bytes_builder.hpp"
 #include "../../../../lib/log/include/log.hpp"
+#include "../../../../lib/tethys-utils/src/bytes_builder.hpp"
+#include "../../../../lib/tethys-utils/src/sha256.hpp"
+#include "../config/storage_type.hpp"
 
-#include <list>
+#include <iomanip>
+#include <iostream>
+#include <map>
 #include <memory>
 #include <mutex>
+#include <sstream>
+#include <stack>
+#include <stdlib.h>
 #include <string>
 #include <vector>
 
 namespace tethys {
 
-struct LedgerRecord {
-  bool which_scope; // user scope와 contract scope를 구분하기 위한 변수. LedgerType::
-  std::string var_name;
-  std::string var_val;
-  std::string var_type;
-  std::string var_owner; // user scope의 경우 uid, contract scope의 경우 cid
-  timestamp_t up_time;
-  block_height_type up_block; // user scope only
-  std::string tag;      // user scope only
-  std::string var_info;       // contract scope only
-  hash_t pid;
+// TODO: define 값 변경
+#define _TREE_DEPTH 16
+#define _SHA256_SPLIT 15
 
-  LedgerRecord(std::string var_name_, std::string var_val_, std::string var_type_, std::string var_owner_, timestamp_t up_time_,
-               block_height_type up_block_, std::string tag_)
-      : var_name(var_name_), var_val(var_val_), var_type(var_type_), var_owner(var_owner_), up_time(up_time_), up_block(up_block_),
-        tag(tag_) {
-    //    which_scope = LedgerType::USERSCOPE;
-    BytesBuilder bytes_builder;
-    bytes_builder.append(var_name);
-    bytes_builder.append(var_type);
-    bytes_builder.appendBase<58>(var_owner);
-    bytes_builder.append(tag);
-    pid = Sha256::hash(bytes_builder.getBytes());
-  }
+string toHex(int num);
+string valueToStr(vector<uint8_t> value);
+char *intToBin(uint32_t num);
 
-  LedgerRecord(std::string var_name_, std::string var_val_, std::string var_type_, std::string var_owner_, timestamp_t up_time_,
-               std::string var_info_)
-      : var_name(var_name_), var_val(var_val_), var_type(var_type_), var_owner(var_owner_), up_time(up_time_), var_info(var_info_) {
-    //    which_scope = LedgerType::CONTRACTSCOPE;
-    BytesBuilder bytes_builder;
-    bytes_builder.append(var_name);
-    bytes_builder.append(var_type);
-    bytes_builder.append(var_owner);
-    bytes_builder.append(var_info);
-    pid = Sha256::hash(bytes_builder.getBytes());
-  }
-};
+ostream &operator<<(ostream &os, vector<uint8_t> &value);
 
-class MemLedger {
+class StateNode {
 private:
-  std::list<LedgerRecord> m_ledger;
-//  std::mutex m_active_mutex;
+  // TODO: 메모리 절약을 위해 최대한 멤버 변수를 줄일 것
+  string m_pid;
+  shared_ptr<StateNode> m_left;
+  shared_ptr<StateNode> m_right;
+  vector<uint8_t> m_hash_value;
+  path_type m_suffix;
+  int m_suffix_len;
+  path_type m_bin_path;
+
+  shared_ptr<user_ledger_type> m_user_ledger;
+  shared_ptr<contract_ledger_type> m_contract_ledger;
+
+  void makeValue(const user_ledger_type &user_ledger);
+  void makeValue(const contract_ledger_type &contract_ledger);
+  void makeValue(string &key);
+//  uint32_t makePath(user_ledger_type &user_ledger);
+//  uint32_t makePath(contract_ledger_type &contract_ledger);
 
 public:
-  MemLedger() {
-    logger::INFO("New MemLedger Created");
-  }
+  StateNode() = default;
+  StateNode(const user_ledger_type &user_ledger);
+  StateNode(const contract_ledger_type &contract_ledger);
+  void reHash();
+  void reHash(string l_value, string r_value);
 
-  bool addUserScope(std::string var_name, std::string var_val, std::string var_type, std::string var_owner, timestamp_t up_time,
-                    block_height_type up_block, std::string tag) {
-//    std::lock_guard<std::mutex> lock(m_active_mutex);
+  void moveToParent();
+  bool isDummy();
+  path_type calPathFromPid(const string &pid);
 
-    // TODO: 현 위치에서 RDB까지 체크하면서 값의 갱신 결과 계산
+  void setLeft(shared_ptr<StateNode> node);
+  void setRight(shared_ptr<StateNode> node);
+  void setSuffix(const path_type &path, int pos);
+  void setBinPath(const string &pid);
+  void setNodeInfo(shared_ptr<StateNode> new_node);
+  void overwriteNode(shared_ptr<StateNode> node);
 
-    m_ledger.emplace_back(var_name, var_val, var_type, var_owner, up_time, up_block, tag);
+  string getPid();
+  shared_ptr<StateNode> getLeft();
+  shared_ptr<StateNode> getRight();
+  path_type getSuffix();
+  int getSuffixLen();
+  vector<uint8_t> getValue();
+  path_type getBinPath();
 
-    return true;
-  }
-
-  bool addContractScope(std::string var_name, std::string var_val, std::string var_type, std::string var_owner, timestamp_t up_time,
-                        std::string var_info) {
-//    std::lock_guard<std::mutex> lock(m_active_mutex);
-    m_ledger.emplace_back(var_name, var_val, var_type, var_owner, up_time, var_info);
-
-    return true;
-  }
+  const user_ledger_type &getUserLedger() const;
+  const contract_ledger_type &getContractLedger() const;
+  shared_ptr<user_ledger_type> getUserLedgerPtr() const;
+  shared_ptr<contract_ledger_type> getContractLedgerPtr() const;
 };
+
+class StateTree {
+private:
+  shared_ptr<StateNode> root;
+  uint64_t m_size;
+  stack<shared_ptr<StateNode>> stk; // leaf 에서 root 까지의 해쉬 재 계산을 위해 StateNode *를 기억해두는 변수
+
+  bool _debug_dir;
+  int _debug_depth;
+  string _debug_str_depth;
+  string _debug_str_dir;
+
+  bool getDirectionOf(const path_type &path, int pos); // false: left, true: right
+  void visit(shared_ptr<StateNode> node, bool isPrint);
+  void postOrder(shared_ptr<StateNode> node, bool isPrint = true);
+
+public:
+  StateTree() {
+    root = shared_ptr<StateNode>();
+    m_size = 0;
+  }
+
+  void updateUserState(const vector<user_ledger_type> &user_ledger_list);
+  void updateUserState(const map<string, user_ledger_type> &user_ledger_list);
+  void updateContractState(const vector<contract_ledger_type> &contract_ledger_list);
+  void updateContractState(const map<string, contract_ledger_type> &contract_ledger_list);
+  template <typename T>
+  void insertNode(const T &ledger);   // TODO: user_ledger_type과 contract_ledger_type 두 가지로 template를 제한
+  void modifyNode(shared_ptr<StateNode> old_node, shared_ptr<StateNode> new_node);
+  void removeNode(string &pid);
+  shared_ptr<StateNode> getMerkleNode(string &pid);
+  vector<vector<uint8_t>> getSiblings(string &pid);
+
+  void printTreePostOrder();
+
+  uint64_t getSize();
+  vector<uint8_t> getRootValue();
+  shared_ptr<StateNode> getRootPtr();
+  stack<shared_ptr<StateNode>> getStack();
+};
+
 } // namespace tethys
 
 #endif

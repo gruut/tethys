@@ -1,6 +1,10 @@
-#ifndef GRUUT_PUBLIC_MERGER_TYPES_HPP
-#define GRUUT_PUBLIC_MERGER_TYPES_HPP
+#ifndef TETHYS_PUBLIC_MERGER_TYPES_HPP
+#define TETHYS_PUBLIC_MERGER_TYPES_HPP
 
+#include "../../../../lib/tethys-utils/src/bytes_builder.hpp"
+#include "../../../../lib/tethys-utils/src/sha256.hpp"
+#include <bitset>
+#include <map>
 #include <string>
 #include <vector>
 #include "../../../contract/include/types.hpp"
@@ -9,7 +13,19 @@ using namespace std;
 
 namespace tethys {
 
-enum class LedgerType : bool { USERSCOPE = true, CONTRACTSCOPE = false };
+enum class QueryType : int { INSERT, UPDATE, DELETE };
+//enum class WhichType : int {
+//  USERLEDGER,
+//  CONTRACTLEDGER,
+//  USERATTRIBUTE,
+//  USERCERT,
+//  CONTRACT,
+//  USERLEDGER_LIST,
+//  CONTRACTLEDGER_LIST,
+//  USERATTRIBUTE_LIST,
+//  USERCERT_LIST,
+//  CONTRACT_LIST
+//};
 struct DataType {
   inline static const string WORLD = "world";
   inline static const string CHAIN = "chain";
@@ -28,7 +44,9 @@ constexpr auto ALPHANUMERIC_ID_TYPE_SIZE = 8;
 using alphanumeric_type = std::string;
 using base58_type = std::string;
 using base64_type = std::string;
+using contract_id_type = std::string; // 사용자 정의 식별자::사용자 아이디::로컬체인 이름::월드 이름
 using txagg_cbor_b64 = std::string;
+using path_type = std::bitset<256>;
 
 using local_chain_type = struct LocalChainState {
   // chain
@@ -105,12 +123,127 @@ using block_info_type = struct _block_info_type {
       : tx_agg_cbor(tx_agg_cbor_), block_id(block_id_), tx_pos(tx_pos_), tx_output(tx_output_) {}
 };
 
+using result_query_info_type = struct _result_query_info_type {
+  base58_type block_id;
+  block_height_type block_height;
+  base58_type tx_id;
+  bool status;
+  string info;
+  base58_type author;
+  base58_type user;
+  base58_type receiver;
+  contract_id_type self;
+  std::vector<contract_id_type> friends;
+  int fee_author;
+  int fee_user;
+
+  _result_query_info_type() = default;
+};
+
 using self_info_type = struct SelfInfo {
   string enc_sk;
   string cert;
   string id;
   // TODO : may need more info
 };
+
+using user_ledger_type = struct UserLedger {
+  string var_name;
+  string var_val;
+  int var_type;
+  base58_type uid;
+  timestamp_t up_time;
+  block_height_type up_block;
+  string tag;
+  string pid;
+  QueryType query_type;
+  bool is_empty{false};
+
+  UserLedger() = default;
+  UserLedger(string var_name_, int var_type_, string uid_, string tag_) : var_name(var_name_), var_type(var_type_), uid(uid_), tag(tag_) {
+    BytesBuilder bytes_builder;
+    bytes_builder.append(var_name);
+    bytes_builder.appendDec(var_type);
+    bytes_builder.appendBase<58>(uid);
+    bytes_builder.append(tag);
+    pid = TypeConverter::bytesToString(Sha256::hash(bytes_builder.getBytes()));
+  }
+};
+
+using contract_ledger_type = struct ContractLedger {
+  string var_name;
+  string var_val;
+  int var_type;
+  string cid;
+  timestamp_t up_time;
+  block_height_type up_block;
+  string var_info;
+  string pid;
+  QueryType query_type;
+  bool is_empty{false};
+
+  ContractLedger() = default;
+  ContractLedger(string var_name_, int var_type_, string cid_, string var_info_)
+      : var_name(var_name_), var_type(var_type_), cid(cid_), var_info(var_info_) {
+    BytesBuilder bytes_builder;
+    bytes_builder.append(var_name);
+    bytes_builder.appendDec(var_type);
+    bytes_builder.append(cid);
+    bytes_builder.append(var_info);
+    pid = TypeConverter::bytesToString(Sha256::hash(bytes_builder.getBytes()));
+  }
+};
+
+using search_result_type = struct LedgerSearchResult {
+  bool not_found{false};
+  user_ledger_type user_ledger;
+  contract_ledger_type contract_ledger;
+};
+
+using user_attribute_type = struct UserAttribute {
+  base58_type uid;
+  timestamp_t register_day;
+  string register_code;
+  int gender;
+  string isc_type;
+  string isc_code;
+  string location;
+  int age_limit;
+  string sigma;
+};
+
+using user_cert_type = struct UserCert {
+  base58_type uid;
+  string sn;
+  timestamp_t nvbefore;
+  timestamp_t nvafter;
+  string x509;
+};
+
+using contract_type = struct Contract {
+  contract_id_type cid;
+  timestamp_t after;
+  timestamp_t before;
+  base58_type author;
+  contract_id_type friends;
+  string contract;
+  string desc;
+  string sigma;
+};
+
+//using which_type = struct WhichData {
+//  user_ledger_type user_ledger;
+//  contract_ledger_type contract_ledger;
+//  user_attribute_type user_attribute;
+//  user_cert_type user_cert;
+//  contract_type contract;
+//
+//  map<string, user_ledger_type> user_ledger_list;
+//  map<string, contract_ledger_type> contract_ledger_list;
+//  WhichType which_type;
+//
+//  WhichData() = default;
+//};
 
 } // namespace tethys
 #endif

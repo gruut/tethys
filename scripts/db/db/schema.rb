@@ -12,7 +12,7 @@
 
 ActiveRecord::Schema.define(version: 2019_04_18_071722) do
 
-  create_table "blocks", primary_key: "bsidx", id: :integer, options: "ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci", force: :cascade do |t|
+  create_table "blocks", primary_key: "bsidx", id: :integer, options: "ENGINE=InnoDB DEFAULT CHARSET=utf8mb4", force: :cascade do |t|
     t.string "block_id", limit: 44
     t.integer "block_height"
     t.string "block_hash", limit: 44
@@ -31,7 +31,7 @@ ActiveRecord::Schema.define(version: 2019_04_18_071722) do
     t.index ["block_id"], name: "index_blocks_on_block_id", unique: true
   end
 
-  create_table "contract_scope", primary_key: "csidx", id: :integer, options: "ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci", force: :cascade do |t|
+  create_table "contract_scope", primary_key: "csidx", id: :integer, options: "ENGINE=InnoDB DEFAULT CHARSET=utf8mb4", force: :cascade do |t|
     t.string "contract_id"
     t.string "var_name"
     t.text "var_value"
@@ -41,11 +41,10 @@ ActiveRecord::Schema.define(version: 2019_04_18_071722) do
     t.integer "up_block"
     t.string "pid", limit: 44
     t.index ["contract_id", "var_name"], name: "index_contract_scope_on_contract_id_and_var_name", unique: true
-    t.index ["contract_id"], name: "index_contract_scope_on_contract_id", unique: true
     t.index ["pid"], name: "index_contract_scope_on_pid", unique: true
   end
 
-  create_table "contracts", primary_key: "cidx", id: :integer, options: "ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci", force: :cascade do |t|
+  create_table "contracts", primary_key: "cidx", id: :integer, options: "ENGINE=InnoDB DEFAULT CHARSET=utf8mb4", force: :cascade do |t|
     t.string "cid"
     t.bigint "after"
     t.bigint "before"
@@ -57,15 +56,14 @@ ActiveRecord::Schema.define(version: 2019_04_18_071722) do
     t.index ["cid"], name: "index_contracts_on_cid", unique: true
   end
 
-  create_table "endorsers", primary_key: "edidx", id: :integer, options: "ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci", force: :cascade do |t|
+  create_table "endorsers", primary_key: "edidx", id: :integer, options: "ENGINE=InnoDB DEFAULT CHARSET=utf8mb4", force: :cascade do |t|
     t.integer "tsidx", null: false
     t.string "end_id", limit: 44
     t.text "end_pk"
-    t.string "end_sig", limit: 100
     t.index ["tsidx"], name: "index_endorsers_on_tsidx"
   end
 
-  create_table "support_signatures", primary_key: "ssidx", id: :integer, options: "ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci", force: :cascade do |t|
+  create_table "support_signatures", primary_key: "ssidx", id: :integer, options: "ENGINE=InnoDB DEFAULT CHARSET=utf8mb4", force: :cascade do |t|
     t.integer "bsidx", null: false
     t.string "ss_id", limit: 44
     t.string "ss_sig", limit: 100
@@ -73,7 +71,7 @@ ActiveRecord::Schema.define(version: 2019_04_18_071722) do
     t.index ["bsidx"], name: "index_support_signatures_on_bsidx"
   end
 
-  create_table "transactions", primary_key: "tsidx", id: :integer, options: "ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci", force: :cascade do |t|
+  create_table "transactions", primary_key: "tsidx", id: :integer, options: "ENGINE=InnoDB DEFAULT CHARSET=utf8mb4", force: :cascade do |t|
     t.string "tx_id", limit: 44
     t.bigint "tx_time"
     t.string "tx_contract_id"
@@ -90,7 +88,7 @@ ActiveRecord::Schema.define(version: 2019_04_18_071722) do
     t.index ["tx_id"], name: "index_transactions_on_tx_id", unique: true
   end
 
-  create_table "user_attributes", primary_key: "uaidx", id: :integer, options: "ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci", force: :cascade do |t|
+  create_table "user_attributes", primary_key: "uaidx", id: :integer, options: "ENGINE=InnoDB DEFAULT CHARSET=utf8mb4", force: :cascade do |t|
     t.string "uid", limit: 44
     t.bigint "register_day"
     t.string "register_code", limit: 20
@@ -103,7 +101,7 @@ ActiveRecord::Schema.define(version: 2019_04_18_071722) do
     t.index ["uid"], name: "index_user_attributes_on_uid", unique: true
   end
 
-  create_table "user_certificates", primary_key: "ucidx", id: :integer, options: "ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci", force: :cascade do |t|
+  create_table "user_certificates", primary_key: "ucidx", id: :integer, options: "ENGINE=InnoDB DEFAULT CHARSET=utf8mb4", force: :cascade do |t|
     t.string "uid", limit: 44
     t.string "sn", limit: 40
     t.bigint "nvbefore"
@@ -112,7 +110,7 @@ ActiveRecord::Schema.define(version: 2019_04_18_071722) do
     t.index ["sn"], name: "index_user_certificates_on_sn", unique: true
   end
 
-  create_table "user_scope", primary_key: "usidx", id: :integer, options: "ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci", force: :cascade do |t|
+  create_table "user_scope", primary_key: "usidx", id: :integer, options: "ENGINE=InnoDB DEFAULT CHARSET=utf8mb4", force: :cascade do |t|
     t.string "var_name"
     t.text "var_value"
     t.integer "var_type", limit: 1

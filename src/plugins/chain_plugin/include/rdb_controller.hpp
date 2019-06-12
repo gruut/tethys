@@ -6,6 +6,7 @@
 #include "../config/storage_type.hpp"
 #include "../structure/block.hpp"
 #include "soci.h"
+#include "unresolved_block_pool.hpp"
 
 #include <vector>
 
@@ -26,13 +27,27 @@ private:
 public:
   RdbController(string_view dbms, string_view table_name, string_view db_user_id, string_view db_password);
   soci::connection_pool &pool();
-  bool insertBlockData(Block &block);
-  bool insertTransactionData(Block &block);
-  bool updateData(const string &userId, const string &varType, const string &varName, const string &varValue);
-  bool deleteData(const string &userId, const string &varType, const string &varName);
+  bool applyBlockToRDB(const Block &block);
+  bool applyTransactionToRDB(const Block &block);
+  bool applyUserLedgerToRDB(const map<string, user_ledger_type> &user_ledger_list);
+  bool applyContractLedgerToRDB(const map<string, contract_ledger_type> &contract_ledger_list);
+  bool applyUserAttributeToRDB(const map<base58_type, user_attribute_type> &user_attribute_list);
+  bool applyUserCertToRDB(const map<base58_type, user_cert_type> &user_cert_list);
+  bool applyContractToRDB(const map<base58_type, contract_type> &contract_list);
+
   vector<Block> getBlocks(const string &condition);
   Block getBlock(const string &condition);
   string getUserCert(const base58_type &user_id);
+
+//  bool queryRunQuery(std::vector<LedgerRecord> &mem_ledger, nlohmann::json &option, result_query_info_type &result_info);
+//  bool queryRunContract(std::vector<LedgerRecord> &mem_ledger, nlohmann::json &option, result_query_info_type &result_info);
+
+  bool checkUnique(const string &pid);
+  bool findUserFromRDB(string pid, user_ledger_type &user_ledger);
+  bool findContractFromRDB(string pid, contract_ledger_type &contract_ledger);
+  vector<user_ledger_type> getAllUserLedger();
+  vector<contract_ledger_type> getAllContractLedger();
+  int getVarType(string &key);
 };
 } // namespace tethys
 #endif

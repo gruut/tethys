@@ -130,7 +130,6 @@ class ChainPluginImpl {
 public:
   unique_ptr<Chain> chain;
   unique_ptr<TransactionPool> transaction_pool;
-  unique_ptr<UnresolvedBlockPool> unresolved_block_pool;
 
   string dbms;
   string table_name;
@@ -143,11 +142,11 @@ public:
 
   incoming::channels::transaction::channel_type::Handle incoming_transaction_subscription;
   incoming::channels::block::channel_type::Handle incoming_block_subscription;
+  incoming::channels::SCE_result::channel_type::Handle incoming_result_subscription;
 
   void initialize() {
     chain = make_unique<Chain>(dbms, table_name, db_user_id, db_password);
     transaction_pool = make_unique<TransactionPool>();
-    unresolved_block_pool = make_unique<UnresolvedBlockPool>();
 
     auto world_id = chain->getValueByKey(DataType::WORLD, "latest_world_id");
     if (!world_id.empty()) {
@@ -200,7 +199,7 @@ public:
       return;
     }
 
-    ubp_push_result_type push_result = unresolved_block_pool->push(input_block);
+    ubp_push_result_type push_result = chain->pushBlock(input_block);
     if (push_result.height == 0) {
       logger::ERROR("Block input fail: height 0");
       return;
@@ -211,13 +210,87 @@ public:
     }
 
     UnresolvedBlock resolved_block;
-    bool resolve_result = unresolved_block_pool->resolveBlock(input_block, resolved_block);
+    bool resolve_result = chain->resolveBlock(input_block, resolved_block);
     if (resolve_result) {
-      chain->insertBlockData(resolved_block.block);
-      chain->insertTransactionData(resolved_block.block);
+      chain->applyBlockToRDB(resolved_block.block);
+      chain->applyTransactionToRDB(resolved_block.block);
+      chain->applyUserLedgerToRDB(resolved_block.user_ledger_list);
+      chain->applyContractLedgerToRDB(resolved_block.contract_ledger_list);
+      chain->applyUserAttributeToRDB(resolved_block.user_attribute_list);
+      chain->applyUserCertToRDB(resolved_block.user_cert_list);
+      chain->applyContractToRDB(resolved_block.contract_list);
     }
 
     return;
+  }
+
+  void processTxResult(const nlohmann::json &result) {
+    // TODO: state tree lock 필요. head가 달라지면서 state tree가 반영되면 정확한 값이 아니게 될 수 있다
+    base58_type block_id = json::get<string>(result["block"], "id").value();
+    block_height_type block_height = static_cast<block_height_type>(stoi(json::get<string>(result["block"], "height").value()));
+    UnresolvedBlock updated_UR_block = chain->findBlock(block_id, block_height);
+
+    if (updated_UR_block.block.getBlockId() != chain->getCurrentHeadId()) {
+      chain->moveHead(updated_UR_block.block.getPrevBlockId(), updated_UR_block.block.getHeight() - 1);
+    }
+
+    nlohmann::json results_json = result["results"];
+    for (auto &each_result : results_json) {
+      result_query_info_type result_info;
+      result_info.block_id = block_id;
+      result_info.block_height = block_height;
+      result_info.tx_id = json::get<string>(each_result, "txid").value();
+      result_info.status = json::get<bool>(each_result, "status").value();
+      result_info.info = json::get<string>(each_result, "info").value();
+      result_info.author = json::get<string>(each_result["authority"], "author").value();
+      result_info.user = json::get<string>(each_result["authority"], "user").value();
+      result_info.receiver = json::get<string>(each_result["authority"], "receiver").value();
+      result_info.self = json::get<string>(each_result["authority"], "self").value();
+
+      nlohmann::json friends_json = each_result["friend"];
+      for (auto &each_friend : friends_json) {
+        result_info.friends.emplace_back(each_friend.get<string>());
+      }
+      result_info.fee_author = stoi(json::get<string>(each_result["fee"], "author").value());
+      result_info.fee_user = stoi(json::get<string>(each_result["fee"], "user").value());
+
+      nlohmann::json queries_json = each_result["queries"];
+      for (auto &each_query : queries_json) {
+        string type = json::get<string>(each_query, "type").value();
+        nlohmann::json option_json = each_query["option"];
+        if (type == "user.join") {
+          chain->queryUserJoin(updated_UR_block, option_json, result_info);
+        } else if (type == "user.cert") {
+          chain->queryUserCert(updated_UR_block, option_json, result_info);
+        } else if (type == "contract.new") {
+          chain->queryContractNew(updated_UR_block, option_json, result_info);
+        } else if (type == "contract.disable") {
+          chain->queryContractDisable(updated_UR_block, option_json, result_info);
+        } else if (type == "v.incinerate") {
+          chain->queryIncinerate(updated_UR_block, option_json, result_info);
+        } else if (type == "v.create") {
+          chain->queryCreate(updated_UR_block, option_json, result_info);
+        } else if (type == "v.transfer") {
+          chain->queryTransfer(updated_UR_block, option_json, result_info);
+        } else if (type == "scope.user") {
+          chain->queryUserScope(updated_UR_block, option_json, result_info);
+        } else if (type == "scope.contract") {
+          chain->queryContractScope(updated_UR_block, option_json, result_info);
+        } else if (type == "trade.item") {
+          chain->queryTradeItem(updated_UR_block, option_json, result_info);
+        } else if (type == "trade.v") {
+          chain->queryTradeVal(updated_UR_block, option_json, result_info);
+        } else if (type == "run.query") {
+          chain->queryRunQuery(updated_UR_block, option_json, result_info);
+        } else if (type == "run.contract") {
+          chain->queryRunContract(updated_UR_block, option_json, result_info);
+        } else {
+          logger::ERROR("URBP, Something error in query process");
+        }
+      }
+    }
+
+    chain->updateStateTree(updated_UR_block);
   }
 
   vector<Transaction> getTransactions() {
@@ -229,8 +302,9 @@ public:
 
     { // test code start
       // 테스트 시에는 임의로 block_input_test.json의 블록들을 저장하는것부터 시작.
-      unresolved_block_pool->setPool("11111111111111111111111111111111", 0, 0,
-                                     "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=", "11111111111111111111111111111111");
+      chain->setPool("11111111111111111111111111111111", 0, 0,
+                     "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=", "11111111111111111111111111111111");
+      chain->setupStateTree();
 
       nlohmann::json input_block_json;
 
@@ -249,7 +323,7 @@ public:
       for (int i = 0; i < input_block_num; ++i) {
         blocks[i].initialize(input_block_json[i]);
 
-        ubp_push_result_type push_result = unresolved_block_pool->push(blocks[i]);
+        ubp_push_result_type push_result = chain->pushBlock(blocks[i]);
         if (push_result.height == 0) {
           logger::ERROR("Block input fail: height 0");
           return;
@@ -260,21 +334,17 @@ public:
         }
 
         UnresolvedBlock resolved_block;
-        bool resolve_result = unresolved_block_pool->resolveBlock(blocks[i], resolved_block);
+        bool resolve_result = chain->resolveBlock(blocks[i], resolved_block);
         if (resolve_result) {
-          chain->insertBlockData(resolved_block.block);
-          chain->insertTransactionData(resolved_block.block);
+          chain->applyBlockToRDB(resolved_block.block);
+          chain->applyTransactionToRDB(resolved_block.block);
+          chain->applyUserLedgerToRDB(resolved_block.user_ledger_list);
+          chain->applyContractLedgerToRDB(resolved_block.contract_ledger_list);
+          chain->applyUserAttributeToRDB(resolved_block.user_attribute_list);
+          chain->applyUserCertToRDB(resolved_block.user_cert_list);
+          chain->applyContractToRDB(resolved_block.contract_list);
         }
       }
-    } // test code end
-
-    { // test code start
-      // 단순 입력 테스트. 실제로는 push해서 들어가야 한다.
-      //    chain->insertBlockData(blocks[0]);
-      //    logger::INFO("first block id: " + first_block.getBlockId());
-      //    logger::INFO("first block 0th cert content: " + first_block.getUserCerts()[0].cert_content);
-      //    logger::INFO("first block 0th txid: " + first_block.getTransactions()[0].getTxId());
-      //    logger::INFO("first block 0th cid: " + first_block.getTransactions()[0].getContractId());
     } // test code end
   }
 
@@ -283,8 +353,8 @@ public:
     if (!verifyBlock(block))
       return false;
 
-    vector<Transaction> &transactions = block.getTransactions();
-    for (auto &each_transaction : transactions) {
+    const vector<Transaction> &transactions = block.getTransactions();
+    for (auto each_transaction : transactions) {
       TransactionMessageVerifier tx_verifier;
       if (!tx_verifier(each_transaction, block.getWorldId(), block.getChainId()))
         return false;
@@ -401,9 +471,12 @@ public:
     return merkle_tree_vector;
   }
 
-  bool calcStateRoot() {
-    // user scope, contract scope의 root를 구할 때 쓰이는 동적 머클 트리
-    return true;
+  bytes getUserStateRoot() {
+    return chain->getUserStateRoot();
+  }
+
+  bytes getContractStateRoot() {
+    return chain->getContractStateRoot();
   }
 
   bool verifySSigs(const Block &block) const {
@@ -470,6 +543,10 @@ void ChainPlugin::pluginInitialize(const boost::program_options::variables_map &
 
   auto &block_channel = app().getChannel<incoming::channels::block>();
   impl->incoming_block_subscription = block_channel.subscribe([this](const nlohmann::json &block) { impl->pushBlock(block); });
+
+  auto &SCE_result_channel = app().getChannel<incoming::channels::SCE_result>();
+  impl->incoming_result_subscription =
+      SCE_result_channel.subscribe([this](const nlohmann::json &result) { impl->processTxResult(result); });
 
   impl->initialize();
 }

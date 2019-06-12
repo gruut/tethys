@@ -23,9 +23,11 @@ private:
   alphanumeric_type m_chain;
   timestamp_t m_tx_time;
 
-  string m_contract_id;
+  contract_id_type m_contract_id;
   base58_type m_receiver_id;
-  int m_fee;             // TODO: 처리 절차에 따라 author과 user로 나눠야 할 수 있음
+  int m_fee;             // msg_tx에서 받은, result 전의 값
+  int m_fee_author;      // result 결과 처리 후
+  int m_fee_user;        // result 결과 처리 후
   bytes m_tx_input_cbor; // to_cbor 된 상태
 
   base58_type m_tx_user_id;
@@ -173,6 +175,14 @@ public:
 
   int getFee() const {
     return m_fee;
+  }
+
+  int getFeeAuthor() const {
+    int m_fee_author;
+  }
+
+  int getFeeUser() const {
+    int m_fee_user;
   }
 
   bytes getTxInputCbor() const {

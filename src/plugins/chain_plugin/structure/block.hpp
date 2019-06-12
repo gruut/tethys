@@ -188,7 +188,7 @@ public:
       Certificate tmp;
 
       auto id = json::get<string>(each_cert, "id");
-      if(!id.has_value()) {
+      if (!id.has_value()) {
         continue;
       }
 
@@ -251,7 +251,7 @@ public:
     return ret_txaggs;
   }
 
-  std::vector<Transaction> &getTransactions() {
+  const std::vector<Transaction> &getTransactions() const {
     return m_transactions;
   }
 
