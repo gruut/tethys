@@ -43,7 +43,7 @@ namespace tethys::tsce {
     return m_element_parser.setContract(xml_doc);
   }
 
-  bool ContractRunner::setTransaction(Transaction &proc_tx, std::string &error) {
+  bool ContractRunner::setTransaction(const Transaction &proc_tx, std::string &error) {
 
     m_proc_tx = proc_tx;
 
