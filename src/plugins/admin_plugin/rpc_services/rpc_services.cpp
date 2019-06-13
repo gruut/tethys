@@ -97,7 +97,6 @@ optional<string> SetupKeyService::getIdFromCert(const string &cert_pem) {
     auto common_name = cert.subject_info("X520.CommonName");
     return common_name[0];
   } catch (Botan::Exception &exception) {
-    logger::ERROR("[SETUP KEY] Wrong Certificate {}", exception.what());
     return {};
   }
 }
@@ -138,21 +137,19 @@ void SetupKeyService::proceed() {
         return;
       }
 
-      SelfInfo self_info;
-      self_info.enc_sk = enc_sk_pem;
-      self_info.cert = cert;
-      chain.saveSelfInfo(self_info);
+      if (saveSelfInfo(chain, enc_sk_pem, cert)) {
+        app().completeUserSetup();
+        res.set_success(true);
 
-      auto my_id_b58 = getIdFromCert(cert);
-      auto my_id = TypeConverter::decodeBase<58>(my_id_b58.value());
-      self_info.id = my_id;
-      app().setId(my_id);
+        logger::INFO("[SETUP KEY] Success");
 
-      app().completeUserSetup();
+      } else {
+        string info = "Wrong Certificate";
+        logger::ERROR("[SETUP KEY] {}", info);
 
-      res.set_success(true);
-
-      logger::INFO("[SETUP KEY] Success");
+        res.set_info(info);
+        res.set_success(false);
+      }
     } else {
       string info = "Could not receive any info from user. please `SETUP KEY` again";
       logger::ERROR("[SETUP KEY] {}", info);
@@ -163,7 +160,27 @@ void SetupKeyService::proceed() {
 
     sendFinishedMsg(res);
   }).detach();
-} // namespace admin_plugin
+}
+
+bool SetupKeyService::saveSelfInfo(Chain &chain, const string &enc_sk, const string &cert) {
+  SelfInfo self_info;
+  self_info.enc_sk = enc_sk;
+  self_info.cert = cert;
+
+  auto my_id_b58 = getIdFromCert(cert);
+
+  if (!my_id_b58.has_value())
+    return false;
+
+  auto my_id = TypeConverter::decodeBase<58>(my_id_b58.value());
+  self_info.id = my_id;
+
+  chain.saveSelfInfo(self_info);
+
+  app().setId(my_id);
+
+  return true;
+}
 
 bool SetupKeyService::isAlreadySetup(Chain &chain) {
   auto self_sk = chain.getValueByKey(DataType::SELF_INFO, "self_enc_sk");

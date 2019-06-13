@@ -86,6 +86,8 @@ private:
   bool isAlreadySetup(Chain &chain);
   optional<nlohmann::json> waitForUserKeyInfo();
 
+  bool saveSelfInfo(Chain &chain, const string &enc_sk, const string &cert);
+
   string default_setup_port;
 };
 
