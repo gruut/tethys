@@ -320,7 +320,7 @@ vector<Block> RdbController::getBlocks(const string &condition) {
   }
 }
 
-Block RdbController::getBlock(const string &condition) {
+optional<Block> RdbController::getBlock(const string &condition) {
   try {
     soci::session db_session(RdbController::pool());
     soci::row r;
@@ -332,7 +332,7 @@ Block RdbController::getBlock(const string &condition) {
   } catch (const std::exception &e) {
     logger::ERROR("Failed to get blocks: {}", e.what());
 
-    throw e;
+    return {};
   }
 }
 
