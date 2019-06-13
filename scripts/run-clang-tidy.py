@@ -257,6 +257,10 @@ def main():
                 not ("tethys/include" in file_name)
                 and not ("grpc.pb.cc" in file_name)
                 and not ("grpc.pb.h" in file_name)
+                and not ("admin_service.pb.cc" in file_name)
+                and not ("kademlia_service.pb.cc" in file_name)
+                and not ("tethys/lib/tinyxml/tinyxml2.cpp" in file_name)
+                and not ("tethys/lib/tinyxml/include/tinyxml2.h" in file_name)
                 and not (".proto" in file_name)):
             new_files.append(file_name)
     files = new_files

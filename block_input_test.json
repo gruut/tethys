@@ -4,7 +4,7 @@
     "block": {
       "id": "11111111111111111111111111111111",
       "time": "1556504111",
-      "world": "GRUUTNET",
+      "world": "TETHYSNT",
       "chain": "TSTCHAIN",
       "height": "1",
       "previd": "11111111111111111111111111111111",
@@ -49,7 +49,7 @@
     "block": {
       "id": "22222222222222222222222222222222",
       "time": "1556504222",
-      "world": "GRUUTNET",
+      "world": "TETHYSNT",
       "chain": "TSTCHAIN",
       "height": "2",
       "previd": "11111111111111111111111111111111",
@@ -94,7 +94,7 @@
     "block": {
       "id": "33333333333333333333333333333333",
       "time": "1556504333",
-      "world": "GRUUTNET",
+      "world": "TETHYSNT",
       "chain": "TSTCHAIN",
       "height": "2",
       "previd": "11111111111111111111111111111111",
@@ -139,7 +139,7 @@
     "block": {
       "id": "44444444444444444444444444444444",
       "time": "1556504444",
-      "world": "GRUUTNET",
+      "world": "TETHYSNT",
       "chain": "TSTCHAIN",
       "height": "3",
       "previd": "33333333333333333333333333333333",
@@ -184,7 +184,7 @@
     "block": {
       "id": "55555555555555555555555555555555",
       "time": "1556504555",
-      "world": "GRUUTNET",
+      "world": "TETHYSNT",
       "chain": "TSTCHAIN",
       "height": "3",
       "previd": "33333333333333333333333333333333",
@@ -229,7 +229,7 @@
     "block": {
       "id": "66666666666666666666666666666666",
       "time": "1556504666",
-      "world": "GRUUTNET",
+      "world": "TETHYSNT",
       "chain": "TSTCHAIN",
       "height": "3",
       "previd": "33333333333333333333333333333333",
@@ -274,7 +274,7 @@
     "block": {
       "id": "77777777777777777777777777777777",
       "time": "1556504777",
-      "world": "GRUUTNET",
+      "world": "TETHYSNT",
       "chain": "TSTCHAIN",
       "height": "3",
       "previd": "22222222222222222222222222222222",
@@ -319,7 +319,7 @@
     "block": {
       "id": "88888888888888888888888888888888",
       "time": "1556504888",
-      "world": "GRUUTNET",
+      "world": "TETHYSNT",
       "chain": "TSTCHAIN",
       "height": "4",
       "previd": "77777777777777777777777777777777",

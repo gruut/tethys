@@ -1,18 +1,12 @@
-#ifndef TETHYS_SCE_GET_HANDLER_HPP
-#define TETHYS_SCE_GET_HANDLER_HPP
-
-#include "config.hpp"
-#include "datamap.hpp"
-#include "data_manager.hpp"
-#include "condition_manager.hpp"
+#include "include/config.hpp"
+#include "include/datamap.hpp"
+#include "include/handler/get_handler.hpp"
+#include "include/xml_tool.hpp"
 
 namespace tethys::tsce {
 
-class GetHandler {
-public:
-  GetHandler() = default;
-
-  void parseGet(std::vector<std::pair<tinyxml2::XMLElement*,std::string>> &get_nodes, ConditionManager &condition_manager, DataManager &data_storage){
+  void tsce::GetHandler::parseGet(std::vector<std::pair<tinyxml2::XMLElement *, std::string>> &get_nodes,
+                                  ConditionManager &condition_manager, DataManager &data_storage) {
     if(get_nodes.empty())
       return;
 
@@ -91,9 +85,4 @@ public:
     }
 
   }
-
-};
-
 }
-
-#endif

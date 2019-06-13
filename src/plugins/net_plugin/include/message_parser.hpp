@@ -1,7 +1,7 @@
 #pragma once
+#include "../../../../lib/json/include/json.hpp"
 #include "../../../../lib/tethys-utils/src/lz4_compressor.hpp"
 #include "../../../../lib/tethys-utils/src/type_converter.hpp"
-#include "../../../../lib/json/include/json.hpp"
 #include "../config/include/message.hpp"
 #include "msg_schema.hpp"
 
@@ -89,6 +89,9 @@ private:
       case SerializationAlgorithmType::NONE: {
         unpacked_body = json::parse(raw_body);
         break;
+      }
+      case SerializationAlgorithmType::CBOR: {
+        unpacked_body = nlohmann::json::from_cbor(raw_body, true, false);
       }
       default:
         break;

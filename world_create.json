@@ -1,10 +1,10 @@
 {
   "world": {
-    "id": "GRUUTNET",
+    "id": "TETHYSNT",
     "after": "1556504053"
   },
   "key_currency": {
-    "name": "GRU",
+    "name": "THY",
     "initial_amount": "200000000000"
   },
   "mining_policy": {
@@ -15,19 +15,7 @@
     "allow_anonymous_user": true,
     "join_fee": "0"
   },
-  "eden" : {
-    "chain": {
-      "id": "TSTCHAIN",
-      "world": "GRUUTNET",
-      "after": "1556504053"
-    },
-    "policy": {
-      "allow_custom_contract": false,
-      "allow_oracle": false,
-      "allow_tag": true,
-      "allow_heavy_contract": false
-    }
-  },
+  "eden_sig" : "AgEgowMCAQEwPTEVMBMGA1UEAxMMLy8vLy8vLy8vLzg9MQswCQYDVQQGEwJLUjEX...",
   "authority": {
     "id": "TethysAuthority",
     "cert": [

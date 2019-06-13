@@ -283,9 +283,9 @@ void StartService::proceed() {
   }
 
   if (!app().isWorldLoaded())
-    info = "World has not be loaded yet.";
+    info = "World has not been loaded yet.";
   else if (!app().isChainLoaded())
-    info = "Local chain has not be loaded yet.";
+    info = "Local chain has not been loaded yet.";
 
   if (!info.empty()) {
     logger::ERROR("[START] {}", info);
@@ -381,11 +381,17 @@ void LoadWorldService::proceed() {
   auto &chain = dynamic_cast<ChainPlugin *>(app().getPlugin("ChainPlugin"))->chain();
   try {
     chain.initWorld(world_state.value());
+
+    string info = "Success to load the world";
     res.set_success(true);
-    logger::INFO("[LOAD WORLD] Success to load world");
+    res.set_info(info);
+
+    app().resetLoadChainState();
     app().completeLoadWorld();
+
+    logger::INFO("[LOAD WORLD] " + info);
   } catch (...) {
-    string info = "Can not load world. please check world json file.";
+    string info = "Cannot load world. please check the world json file.";
     res.set_info(info);
     res.set_success(false);
 
@@ -403,7 +409,7 @@ void LoadChainService::proceed() {
 
   auto chain_state = loadJson(req.path(), res);
   if (!chain_state.has_value()) {
-    logger::ERROR("[LOAD CHAIN] Fail to load local chain");
+    logger::ERROR("[LOAD CHAIN] Failed to load the chain");
 
     sendFinishedMsg(res);
 
@@ -414,11 +420,11 @@ void LoadChainService::proceed() {
   try {
     auto chain_info = chain.initChain(chain_state.value());
     if (!chain_info.has_value()) {
-      string info = "This local chain is in another world. Please check World ID";
+      const string info = "This local chain is in another world. Please check World ID";
       res.set_info(info);
       res.set_success(false);
 
-      logger::ERROR("[LOAD CHAIN] Fail to load local chain");
+      logger::ERROR("[LOAD CHAIN] " + info);
 
     } else {
       auto tracker_addresses = chain_info.value();
@@ -430,11 +436,11 @@ void LoadChainService::proceed() {
       app().completeLoadChain();
     }
   } catch (...) {
-    string info = "Can not load local chain. please check local chain json file.";
+    const string info = "Cannot load the local chain.";
     res.set_info(info);
     res.set_success(false);
 
-    logger::ERROR("[LOAD CHAIN] Fail to load local chain");
+    logger::ERROR("[LOAD CHAIN] " + info);
   }
 
   sendFinishedMsg(res);
