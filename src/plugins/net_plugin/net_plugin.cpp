@@ -53,6 +53,7 @@ public:
   shared_ptr<IdMappingTable> id_mapping_table;
   shared_ptr<BroadcastMsgTable> broadcast_check_table;
 
+  unique_ptr<boost::asio::steady_timer> broadcast_table_check_timer;
   unique_ptr<boost::asio::steady_timer> connection_check_timer;
   unique_ptr<boost::asio::steady_timer> net_message_check_timer;
 
@@ -72,6 +73,7 @@ public:
     initializeRoutingTable();
     registerServices();
 
+    broadcast_table_check_timer = make_unique<boost::asio::steady_timer>(app().getIoContext());
     connection_check_timer = make_unique<boost::asio::steady_timer>(app().getIoContext());
     net_message_check_timer = make_unique<boost::asio::steady_timer>(app().getIoContext());
   }
@@ -212,8 +214,8 @@ public:
   }
 
   void monitorBroadcastMsgTable() {
-    connection_check_timer->expires_from_now(BROADCAST_MSG_CHECK_PERIOD);
-    connection_check_timer->async_wait([this](boost::system::error_code ec) {
+    broadcast_table_check_timer->expires_from_now(BROADCAST_MSG_CHECK_PERIOD);
+    broadcast_table_check_timer->async_wait([this](boost::system::error_code ec) {
       if (!ec) {
         refreshBroadcastCheckTable();
       } else {
