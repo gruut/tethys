@@ -42,17 +42,26 @@ public:
   bool saveSelfInfo(self_info_type &self_info);
 
   string getValueByKey(string what, const string &base_keys);
+  void destroyDB();
 
-  bool saveBlockIds(const nlohmann::json &serialized_block_ids);
+  // unresolved block pool backup / restore
+  bool saveBlockIds(const string &serialized_block_ids);
   bool saveBackupBlock(const nlohmann::json &block_json);
   bool saveBackupUserLedgers(const base58_type &block_id, const string &serialized_user_ledgers);
   bool saveBackupContractLedgers(const base58_type &block_id, const string &serialized_contract_ledgers);
   bool saveBackupUserAttributes(const base58_type &block_id, const string &serialized_user_attributes);
   bool saveBackupUserCerts(const base58_type &block_id, const string &serialized_user_certs);
   bool saveBackupContracts(const base58_type &block_id, const string &serialized_contracts);
-  std::string readBackupBlock(const std::string &key);
+
+  string loadBlockIds();
+  string loadBackupBlock(const std::string &key);
+  string loadBackupUserLedgers(const std::string &key);
+  string loadBackupContractLedgers(const std::string &key);
+  string loadBackupUserAttributes(const std::string &key);
+  string loadBackupUserCerts(const std::string &key);
+  string loadBackupContracts(const std::string &key);
+
   void delBackup(const base58_type &block_id);
-  void destroyDB();
 
 private:
   bool errorOnCritical(const leveldb::Status &status);

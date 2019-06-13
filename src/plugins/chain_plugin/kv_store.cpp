@@ -172,7 +172,13 @@ string KvController::getValueByKey(string what, const string &key) {
   return value;
 }
 
-bool KvController::saveBlockIds(const nlohmann::json &serialized_block_ids) {
+void KvController::destroyDB() {
+  for (auto &[db_name, _] : db_map) {
+    boost::filesystem::remove_all(m_db_path + "/" + db_name);
+  }
+}
+
+bool KvController::saveBlockIds(const string &serialized_block_ids) {
   addBatch(DataType::UNRESOLVED_BLOCK_IDS_KEY, DataType::UNRESOLVED_BLOCK_IDS_KEY, serialized_block_ids);
 
   commitBatchAll();
@@ -222,9 +228,32 @@ bool KvController::saveBackupContracts(const base58_type &block_id, const string
   return true;
 }
 
-std::string KvController::readBackupBlock(const std::string &key) {
-  // TODO: return type이 현재 cbor된 상태의 block_msg json인데, json 형태로 변환해서 return할지 등을 검토
+string KvController::loadBlockIds() {
+  return getValueByKey(DataType::UNRESOLVED_BLOCK_IDS_KEY, DataType::UNRESOLVED_BLOCK_IDS_KEY);
+}
+
+string KvController::loadBackupBlock(const std::string &key) {
   return getValueByKey(DataType::BACKUP_BLOCK, key);
+}
+
+string KvController::loadBackupUserLedgers(const std::string &key) {
+  return getValueByKey(DataType::BACKUP_USER_LEDGER, key);
+}
+
+string KvController::loadBackupContractLedgers(const std::string &key) {
+  return getValueByKey(DataType::BACKUP_CONTRACT_LEDGER, key);
+}
+
+string KvController::loadBackupUserAttributes(const std::string &key) {
+  return getValueByKey(DataType::BACKUP_USER_ATTRIBUTE, key);
+}
+
+string KvController::loadBackupUserCerts(const std::string &key) {
+  return getValueByKey(DataType::BACKUP_USER_CERT, key);
+}
+
+string KvController::loadBackupContracts(const std::string &key) {
+  return getValueByKey(DataType::BACKUP_CONTRACT, key);
 }
 
 void KvController::delBackup(const base58_type &block_id) {
@@ -237,12 +266,6 @@ void KvController::delBackup(const base58_type &block_id) {
     write_batch_map[DataType::BACKUP_CONTRACT].Delete(block_id);
 
     commitBatchAll();
-  }
-}
-
-void KvController::destroyDB() {
-  for (auto &[db_name, _] : db_map) {
-    boost::filesystem::remove_all(m_db_path + "/" + db_name);
   }
 }
 

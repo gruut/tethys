@@ -13,7 +13,7 @@ using namespace std;
 
 namespace tethys {
 
-enum class QueryType : int { INSERT, UPDATE, DELETE };
+enum class QueryType : int { INSERT = 0, UPDATE = 1, DELETE = 2 };
 // enum class WhichType : int {
 //  USERLEDGER,
 //  CONTRACTLEDGER,
@@ -36,8 +36,8 @@ struct DataType {
   inline static const string BACKUP_USER_ATTRIBUTE = "backup_user_attribute";
   inline static const string BACKUP_USER_CERT = "backup_user_cert";
   inline static const string BACKUP_CONTRACT = "backup_contract";
-  inline static const string SELF_INFO = "self_info";
   inline static const string UNRESOLVED_BLOCK_IDS_KEY = "UNRESOLVED_BLOCK_IDS_KEY";
+  inline static const string SELF_INFO = "self_info";
 };
 
 using string = std::string;
@@ -109,7 +109,7 @@ using proof_type = struct _proof_type {
   std::vector<std::pair<bool, std::string>> siblings;
 };
 
-using ubp_push_result_type = struct _ubp_push_result_type {
+using block_push_result_type = struct _block_push_result_type {
   bool linked;
   bool duplicated;
   block_height_type height;

@@ -60,7 +60,7 @@ public:
                const base64_type &prev_block_id);
 
   bool prepareDeque(block_height_type t_height);
-  ubp_push_result_type pushBlock(Block &block);
+  block_push_result_type pushBlock(Block &block);
   bool resolveBlock(Block &block, UnresolvedBlock &resolved_result, vector<base58_type> &dropped_block_id);
 
   UnresolvedBlock findBlock(const base58_type &block_id, const block_height_type block_height);
@@ -75,7 +75,6 @@ public:
   string serializeUserAttributeList(const UnresolvedBlock &unresolved_block);
   string serializeUserCertList(const UnresolvedBlock &unresolved_block);
   string serializeContractList(const UnresolvedBlock &unresolved_block);
-  void restorePool();
 
 private:
   void updateTotalNumSSig();

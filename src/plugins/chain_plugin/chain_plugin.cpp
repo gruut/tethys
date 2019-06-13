@@ -199,7 +199,7 @@ public:
       return;
     }
 
-    ubp_push_result_type push_result = chain->pushBlock(input_block);
+    block_push_result_type push_result = chain->pushBlock(input_block);
     if (push_result.height == 0) {
       logger::ERROR("Block input fail: height 0");
       return;
@@ -222,7 +222,7 @@ public:
       chain->applyUserCertToRDB(resolved_block.user_cert_list);
       chain->applyContractToRDB(resolved_block.contract_list);
 
-      chain->saveBlockIds();  // resolve로 인하여 pool에서 삭제된 블록을 백업 목록에서 제거
+      chain->saveBlockIds(); // resolve로 인하여 pool에서 삭제된 블록을 백업 목록에서 제거
     }
 
     return;
@@ -310,6 +310,7 @@ public:
       chain->setPool("11111111111111111111111111111111", 0, 0,
                      "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=", "11111111111111111111111111111111");
       chain->setupStateTree();
+      chain->restorePool();
 
       nlohmann::json input_block_json;
 
@@ -328,7 +329,7 @@ public:
       for (int i = 0; i < input_block_num; ++i) {
         blocks[i].initialize(input_block_json[i]);
 
-        ubp_push_result_type push_result = chain->pushBlock(blocks[i]);
+        block_push_result_type push_result = chain->pushBlock(blocks[i]);
         if (push_result.height == 0) {
           logger::ERROR("Block input fail: height 0");
           return;

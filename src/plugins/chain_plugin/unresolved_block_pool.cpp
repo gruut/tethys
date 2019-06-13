@@ -67,9 +67,9 @@ bool UnresolvedBlockPool::prepareDeque(block_height_type t_height) {
   return true;
 }
 
-ubp_push_result_type UnresolvedBlockPool::pushBlock(Block &block) {
+block_push_result_type UnresolvedBlockPool::pushBlock(Block &block) {
   logger::INFO("Unresolved block pool: pushBlock called");
-  ubp_push_result_type ret_val; // 해당 return 구조는 추후 변경 가능성 있음
+  block_push_result_type ret_val; // 해당 return 구조는 추후 변경 가능성 있음
   ret_val.height = 0;
   ret_val.linked = false;
   ret_val.duplicated = false;
