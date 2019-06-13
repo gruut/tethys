@@ -40,11 +40,17 @@ bool KvController::errorOnCritical(const leveldb::Status &status) {
 
 bool KvController::saveLatestWorldId(const alphanumeric_type &world_id) {
   addBatch(DataType::WORLD, "latest_world_id", world_id);
+
+  commitBatchAll();
+
   return true;
 }
 
 bool KvController::saveLatestChainId(const alphanumeric_type &chain_id) {
   addBatch(DataType::CHAIN, "latest_chain_id", chain_id);
+
+  commitBatchAll();
+
   return true;
 }
 
