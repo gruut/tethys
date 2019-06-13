@@ -55,6 +55,7 @@ public:
   void saveLatestChainId(const alphanumeric_type &chain_id);
   void saveWorld(world_type &world_info);
   void saveChain(local_chain_type &chain_info);
+  void saveBlockIds();
   void saveBackupBlock(const nlohmann::json &block_json);
   void saveBackupResult(const UnresolvedBlock &UR_block);
   void saveSelfInfo(self_info_type &self_info);

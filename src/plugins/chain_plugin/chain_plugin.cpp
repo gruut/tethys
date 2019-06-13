@@ -205,6 +205,7 @@ public:
       return;
     }
     chain->saveBackupBlock(block_json);
+    chain->saveBlockIds();
 
     UnresolvedBlock resolved_block;
     bool resolve_result = chain->resolveBlock(input_block, resolved_block);
@@ -216,6 +217,8 @@ public:
       chain->applyUserAttributeToRDB(resolved_block.user_attribute_list);
       chain->applyUserCertToRDB(resolved_block.user_cert_list);
       chain->applyContractToRDB(resolved_block.contract_list);
+
+      chain->saveBlockIds();  // resolve로 인하여 pool에서 삭제된 블록을 백업 목록에서 제거
     }
 
     return;

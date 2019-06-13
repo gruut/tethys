@@ -36,9 +36,8 @@ struct DataType {
   inline static const string BACKUP_USER_CERT = "backup_user_cert";
   inline static const string BACKUP_CONTRACT = "backup_contract";
   inline static const string SELF_INFO = "self_info";
+  inline static const string UNRESOLVED_BLOCK_IDS_KEY = "UNRESOLVED_BLOCK_IDS_KEY";
 };
-
-const std::string UNRESOLVED_BLOCK_IDS_KEY = "UNRESOLVED_BLOCK_IDS_KEY";
 
 using string = std::string;
 using bytes = std::vector<uint8_t>;

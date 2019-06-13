@@ -43,17 +43,15 @@ public:
 
   string getValueByKey(string what, const string &base_keys);
 
+  bool saveBlockIds(const nlohmann::json &serialized_block_ids);
   bool saveBackupBlock(const nlohmann::json &block_json);
   bool saveBackupUserLedgers(const base58_type &block_id, const string &serialized_user_ledgers);
   bool saveBackupContractLedgers(const base58_type &block_id, const string &serialized_contract_ledgers);
   bool saveBackupUserAttributes(const base58_type &block_id, const string &serialized_user_attributes);
   bool saveBackupUserCerts(const base58_type &block_id, const string &serialized_user_certs);
   bool saveBackupContracts(const base58_type &block_id, const string &serialized_contracts);
-  std::string readBackup(const std::string &key);
-  void flushBackup();
-  void clearBackup();
-  void delBackup(const std::string &block_id_b64);
-
+  std::string readBackupBlock(const std::string &key);
+  void delBackup(const base58_type &block_id);
   void destroyDB();
 
 private:

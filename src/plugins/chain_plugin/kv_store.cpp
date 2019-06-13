@@ -172,6 +172,12 @@ string KvController::getValueByKey(string what, const string &key) {
   return value;
 }
 
+bool KvController::saveBlockIds(const nlohmann::json &serialized_block_ids) {
+  addBatch(DataType::UNRESOLVED_BLOCK_IDS_KEY, DataType::UNRESOLVED_BLOCK_IDS_KEY, serialized_block_ids);
+
+  commitBatchAll();
+}
+
 bool KvController::saveBackupBlock(const nlohmann::json &block_json) {
   string serialized_block = TypeConverter::toString(nlohmann::json::to_cbor(block_json));
   base58_type block_id = json::get<string>(block_json["block"], "id").value();
@@ -214,6 +220,24 @@ bool KvController::saveBackupContracts(const base58_type &block_id, const string
 
   commitBatchAll();
   return true;
+}
+
+std::string KvController::readBackupBlock(const std::string &key) {
+  // TODO: return type이 현재 cbor된 상태의 block_msg json인데, json 형태로 변환해서 return할지 등을 검토
+  return getValueByKey(DataType::BACKUP_BLOCK, key);
+}
+
+void KvController::delBackup(const base58_type &block_id) {
+  if (!block_id.empty()) {
+    write_batch_map[DataType::BACKUP_BLOCK].Delete(block_id);
+    write_batch_map[DataType::BACKUP_USER_LEDGER].Delete(block_id);
+    write_batch_map[DataType::BACKUP_CONTRACT_LEDGER].Delete(block_id);
+    write_batch_map[DataType::BACKUP_USER_ATTRIBUTE].Delete(block_id);
+    write_batch_map[DataType::BACKUP_USER_CERT].Delete(block_id);
+    write_batch_map[DataType::BACKUP_CONTRACT].Delete(block_id);
+
+    commitBatchAll();
+  }
 }
 
 void KvController::destroyDB() {

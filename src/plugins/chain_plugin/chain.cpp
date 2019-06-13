@@ -194,6 +194,12 @@ void Chain::saveChain(local_chain_type &chain_info) {
   kv_controller->saveChain(chain_info);
 }
 
+void Chain::saveBlockIds() {
+  nlohmann::json id_array = unresolved_block_pool->getPoolBlockIds();
+
+  kv_controller->saveBlockIds(TypeConverter::bytesToString(nlohmann::json::to_cbor(id_array)));
+}
+
 void Chain::saveBackupBlock(const nlohmann::json &block_json) {
   kv_controller->saveBackupBlock(block_json);
 }
@@ -671,7 +677,7 @@ search_result_type Chain::findContractLedgerFromPoint(string key, block_height_t
 }
 
 ubp_push_result_type Chain::pushBlock(Block &block, bool is_restore) {
-  return unresolved_block_pool->pushBlock(block, is_restore);
+  return unresolved_block_pool->pushBlock(block);
 }
 
 UnresolvedBlock Chain::findBlock(const base58_type &block_id, const block_height_type block_height) {
@@ -679,7 +685,15 @@ UnresolvedBlock Chain::findBlock(const base58_type &block_id, const block_height
 }
 
 bool Chain::resolveBlock(Block &block, UnresolvedBlock &resolved_result) {
-  return unresolved_block_pool->resolveBlock(block, resolved_result);
+  vector<base58_type> dropped_block_ids;
+  if(!unresolved_block_pool->resolveBlock(block, resolved_result, dropped_block_ids))
+    return false;
+
+  for(auto &each_block_id : dropped_block_ids) {
+    kv_controller->delBackup(each_block_id);
+  }
+
+  return true;
 }
 
 void Chain::setPool(const base64_type &last_block_id, block_height_type last_height, timestamp_t last_time, const base64_type &last_hash,

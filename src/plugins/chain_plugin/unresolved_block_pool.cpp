@@ -67,7 +67,7 @@ bool UnresolvedBlockPool::prepareDeque(block_height_type t_height) {
   return true;
 }
 
-ubp_push_result_type UnresolvedBlockPool::pushBlock(Block &block, bool is_restore) {
+ubp_push_result_type UnresolvedBlockPool::pushBlock(Block &block) {
   logger::INFO("Unresolved block pool: pushBlock called");
   ubp_push_result_type ret_val; // 해당 return 구조는 추후 변경 가능성 있음
   ret_val.height = 0;
@@ -113,11 +113,7 @@ ubp_push_result_type UnresolvedBlockPool::pushBlock(Block &block, bool is_restor
   int vec_idx = m_block_pool[deq_idx].size();
 
   m_block_pool[deq_idx].emplace_back(block, vec_idx, prev_vec_idx); // pool에 블록 추가
-
   ret_val.height = block_height;
-
-  if (!is_restore)
-    backupPool();
 
   if (deq_idx + 1 < m_block_pool.size()) { // if there is next bin
     for (auto &each_block : m_block_pool[deq_idx + 1]) {
@@ -129,12 +125,14 @@ ubp_push_result_type UnresolvedBlockPool::pushBlock(Block &block, bool is_restor
     }
   }
 
-  invalidateCaches(); // 캐시 관련 함수. 추후 고려.
+  invalidateCaches(); // TODO: 캐시 관련 함수. 추후 고려.
 
   return ret_val;
 }
 
-bool UnresolvedBlockPool::resolveBlock(Block &block, UnresolvedBlock &resolved_result) {
+bool UnresolvedBlockPool::resolveBlock(Block &block, UnresolvedBlock &resolved_result, vector<base58_type> &dropped_block_id) {
+  dropped_block_id.clear();
+
   //  if (!lateStage(block)) {
   //    return false;
   //  }
@@ -179,9 +177,12 @@ bool UnresolvedBlockPool::resolveBlock(Block &block, UnresolvedBlock &resolved_r
     m_latest_confirmed_height = m_block_pool[0][resolved_block_idx].block.getHeight();
 
     UnresolvedBlock resolved_block = m_block_pool[0][resolved_block_idx];
+    for (auto &each_block : m_block_pool[0]) {
+      dropped_block_id.push_back(each_block.block.getBlockId());
+    }
 
-    // TODO: pop되기 전에 반복문을 사용하면 선택받지 못한 block branch를 전부 지울 수 있을 것.
-    //  그런데 그 후에 만약 해당 블록에 연결된 블록이 들어와서 지웠던 블록을 다시 요청하는 경우가 생길 수 있는것은 아닐지 고려.
+    // TODO: pop되기 전에 반복문을 사용하면 선택받지 못한 block branch를 전부 지울 수 있을 것이나,
+    //  그 후에 만약 해당 블록에 연결된 블록이 들어와서 지웠던 블록을 다시 요청하는 경우가 생길 수 있는것은 아닐지 고려.
 
     m_block_pool.pop_front();
 
@@ -275,11 +276,23 @@ vector<int> UnresolvedBlockPool::getLine(const base58_type &block_id, const bloc
   }
 }
 
+nlohmann::json UnresolvedBlockPool::getPoolBlockIds() {
+  nlohmann::json id_array = nlohmann::json::array();
+
+  for (auto &each_level : m_block_pool) {
+    for (auto &each_block : each_level) {
+      std::string block_id = each_block.block.getBlockId();
+      id_array.push_back(block_id);
+    }
+  }
+  return id_array;
+}
+
 string UnresolvedBlockPool::serializeUserLedgerList(const UnresolvedBlock &unresolved_block) {
   nlohmann::json ledger_list_json = nlohmann::json::array();
   string serialized_list;
 
-  for(auto &each_ledger : unresolved_block.user_ledger_list) {
+  for (auto &each_ledger : unresolved_block.user_ledger_list) {
     nlohmann::json json;
     json["var_name"] = each_ledger.second.var_name;
     json["var_val"] = each_ledger.second.var_val;
@@ -303,7 +316,7 @@ string UnresolvedBlockPool::serializeContractLedgerList(const UnresolvedBlock &u
   nlohmann::json ledger_list_json = nlohmann::json::array();
   string serialized_list;
 
-  for(auto &each_ledger : unresolved_block.contract_ledger_list) {
+  for (auto &each_ledger : unresolved_block.contract_ledger_list) {
     nlohmann::json json;
     json["var_name"] = each_ledger.second.var_name;
     json["var_val"] = each_ledger.second.var_val;
@@ -327,7 +340,7 @@ string UnresolvedBlockPool::serializeUserAttributeList(const UnresolvedBlock &un
   nlohmann::json ledger_list_json = nlohmann::json::array();
   string serialized_list;
 
-  for(auto &each_user : unresolved_block.user_attribute_list) {
+  for (auto &each_user : unresolved_block.user_attribute_list) {
     nlohmann::json json;
     json["uid"] = each_user.second.uid;
     json["register_day"] = to_string(each_user.second.register_day);
@@ -350,7 +363,7 @@ string UnresolvedBlockPool::serializeUserCertList(const UnresolvedBlock &unresol
   nlohmann::json ledger_list_json = nlohmann::json::array();
   string serialized_list;
 
-  for(auto &each_cert : unresolved_block.user_cert_list) {
+  for (auto &each_cert : unresolved_block.user_cert_list) {
     nlohmann::json json;
     json["uid"] = each_cert.second.uid;
     json["sn"] = each_cert.second.sn;
@@ -369,7 +382,7 @@ string UnresolvedBlockPool::serializeContractList(const UnresolvedBlock &unresol
   nlohmann::json ledger_list_json = nlohmann::json::array();
   string serialized_list;
 
-  for(auto &each_contract : unresolved_block.contract_list) {
+  for (auto &each_contract : unresolved_block.contract_list) {
     nlohmann::json json;
     json["cid"] = each_contract.second.cid;
     json["after"] = to_string(each_contract.second.after);
@@ -386,7 +399,6 @@ string UnresolvedBlockPool::serializeContractList(const UnresolvedBlock &unresol
   serialized_list = TypeConverter::bytesToString(nlohmann::json::to_cbor(ledger_list_json));
   return serialized_list;
 }
-
 
 // 추후 구현
 void UnresolvedBlockPool::invalidateCaches() {}

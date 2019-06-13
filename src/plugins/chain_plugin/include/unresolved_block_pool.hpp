@@ -60,8 +60,8 @@ public:
                const base64_type &prev_block_id);
 
   bool prepareDeque(block_height_type t_height);
-  ubp_push_result_type pushBlock(Block &block, bool is_restore = false);
-  bool resolveBlock(Block &block, UnresolvedBlock &resolved_result);
+  ubp_push_result_type pushBlock(Block &block);
+  bool resolveBlock(Block &block, UnresolvedBlock &resolved_result, vector<base58_type> &dropped_block_id);
 
   UnresolvedBlock findBlock(const base58_type &block_id, const block_height_type block_height);
   UnresolvedBlock getBlock(int pool_deq_idx, int pool_vec_idx);
@@ -69,6 +69,7 @@ public:
 
   void invalidateCaches();
 
+  nlohmann::json getPoolBlockIds();
   string serializeUserLedgerList(const UnresolvedBlock &unresolved_block);
   string serializeContractLedgerList(const UnresolvedBlock &unresolved_block);
   string serializeUserAttributeList(const UnresolvedBlock &unresolved_block);
