@@ -25,10 +25,11 @@ public:
 
 private:
   static string pack(OutNetMsg &out_msg) {
-    // TODO : serialized-body must be determined by serialization algo type
     string json_dump = out_msg.body.dump();
-    string serialized_body = LZ4Compressor::compressData(json_dump);
-    string header = makeHeader(serialized_body.size(), out_msg.type, SerializationAlgorithmType::LZ4);
+
+    auto vec_body = nlohmann::json::to_cbor(json_dump);
+    string serialized_body(vec_body.begin(), vec_body.end());
+    string header = makeHeader(serialized_body.size(), out_msg.type, SerializationAlgorithmType::CBOR);
 
     return (header + serialized_body);
   }
