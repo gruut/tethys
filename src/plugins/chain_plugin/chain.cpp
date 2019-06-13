@@ -169,10 +169,14 @@ vector<Block> Chain::getBlocksByHeight(int from, int to) {
 }
 
 block_height_type Chain::getLatestResolvedHeight() {
-  string condition = "ORDER BY block_height DESC LIMIT 1";
-  Block block = rdb_controller->getBlock(condition);
+  const string condition = "ORDER BY block_height DESC LIMIT 1";
+  auto block = rdb_controller->getBlock(condition);
 
-  return block.getHeight();
+  if(block.has_value()) {
+    return block.value().getHeight();
+  } else {
+    return 0;
+  }
 }
 
 bool Chain::findUserFromRDB(string key, user_ledger_type &user_ledger) {

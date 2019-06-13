@@ -61,6 +61,7 @@ private:
 
   vector<Block> getPreviousBlocks() {
     auto& chain = dynamic_cast<ChainPlugin*>(app().getPlugin("ChainPlugin"))->chain();
+
     auto latestHeight = chain.getLatestResolvedHeight();
     int from = latestHeight - PRODUCERS_COUNT + 1;
     if (from <= 0)
