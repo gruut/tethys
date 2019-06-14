@@ -182,11 +182,10 @@ bool KvController::saveBlockIds(const string &serialized_block_ids) {
   addBatch(DataType::UNRESOLVED_BLOCK_IDS_KEY, DataType::UNRESOLVED_BLOCK_IDS_KEY, serialized_block_ids);
 
   commitBatchAll();
+  return true;
 }
 
-bool KvController::saveBackupBlock(const nlohmann::json &block_json) {
-  string serialized_block = TypeConverter::toString(nlohmann::json::to_cbor(block_json));
-  base58_type block_id = json::get<string>(block_json["block"], "id").value();
+bool KvController::saveBackupBlock(const base58_type &block_id, const string &serialized_block) {
   addBatch(DataType::BACKUP_BLOCK, block_id, serialized_block);
 
   commitBatchAll();

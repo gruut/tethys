@@ -46,7 +46,7 @@ public:
 
   // unresolved block pool backup / restore
   bool saveBlockIds(const string &serialized_block_ids);
-  bool saveBackupBlock(const nlohmann::json &block_json);
+  bool saveBackupBlock(const base58_type &block_id, const string &serialized_block);
   bool saveBackupUserLedgers(const base58_type &block_id, const string &serialized_user_ledgers);
   bool saveBackupContractLedgers(const base58_type &block_id, const string &serialized_contract_ledgers);
   bool saveBackupUserAttributes(const base58_type &block_id, const string &serialized_user_attributes);

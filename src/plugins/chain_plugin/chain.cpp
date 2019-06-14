@@ -211,7 +211,10 @@ void Chain::saveBlockIds() {
 }
 
 void Chain::saveBackupBlock(const nlohmann::json &block_json) {
-  kv_controller->saveBackupBlock(block_json);
+  base58_type block_id = json::get<string>(block_json["block"], "id").value();
+  string serialized_block = TypeConverter::toString(nlohmann::json::to_cbor(block_json));
+
+  kv_controller->saveBackupBlock(block_id, serialized_block);
 }
 
 void Chain::saveBackupResult(const UnresolvedBlock &UR_block) {
@@ -238,6 +241,8 @@ void Chain::restorePool() {
   for (auto &each_block_id : id_array_json) {
     base58_type block_id = each_block_id;
 
+    // TODO: serialized_id_array가 empty string인 경우, from_cbor에서 exception 처리
+    // TODO: initialize 가 실패하는 case 처리
     nlohmann::json block_msg = nlohmann::json::from_cbor(kv_controller->loadBackupBlock(block_id));
     Block restored_block;
     restored_block.initialize(block_msg);
@@ -259,7 +264,7 @@ void Chain::restorePool() {
   }
 }
 
-void Chain::restoreUserLedgerList(UnresolvedBlock &restored_unresolved_block, const nlohmann::json user_ledger_list_json) {
+void Chain::restoreUserLedgerList(UnresolvedBlock &restored_unresolved_block, const nlohmann::json &user_ledger_list_json) {
   for (auto &each_user_ledger_json : user_ledger_list_json) {
     user_ledger_type each_user_ledger;
 
@@ -278,7 +283,7 @@ void Chain::restoreUserLedgerList(UnresolvedBlock &restored_unresolved_block, co
   }
 }
 
-void Chain::restoreContractLedgerList(UnresolvedBlock &restored_unresolved_block, const nlohmann::json contract_ledger_list_json) {
+void Chain::restoreContractLedgerList(UnresolvedBlock &restored_unresolved_block, const nlohmann::json &contract_ledger_list_json) {
   for (auto &each_contract_ledger_json : contract_ledger_list_json) {
     contract_ledger_type each_contract_ledger;
 
@@ -298,7 +303,7 @@ void Chain::restoreContractLedgerList(UnresolvedBlock &restored_unresolved_block
   }
 }
 
-void Chain::restoreUserAttributeList(UnresolvedBlock &restored_unresolved_block, const nlohmann::json user_attribute_list_json) {
+void Chain::restoreUserAttributeList(UnresolvedBlock &restored_unresolved_block, const nlohmann::json &user_attribute_list_json) {
   for (auto &each_user_attribute_json : user_attribute_list_json) {
     user_attribute_type each_user_attribute;
 
@@ -317,7 +322,7 @@ void Chain::restoreUserAttributeList(UnresolvedBlock &restored_unresolved_block,
   }
 }
 
-void Chain::restoreUserCertList(UnresolvedBlock &restored_unresolved_block, const nlohmann::json user_cert_list_json) {
+void Chain::restoreUserCertList(UnresolvedBlock &restored_unresolved_block, const nlohmann::json &user_cert_list_json) {
   for (auto &each_user_cert_json : user_cert_list_json) {
     user_cert_type each_user_cert;
 
@@ -331,7 +336,7 @@ void Chain::restoreUserCertList(UnresolvedBlock &restored_unresolved_block, cons
   }
 }
 
-void Chain::restoreContractList(UnresolvedBlock &restored_unresolved_block, const nlohmann::json contract_list_json) {
+void Chain::restoreContractList(UnresolvedBlock &restored_unresolved_block, const nlohmann::json &contract_list_json) {
   for (auto &each_contract_json : contract_list_json) {
     contract_type each_contract;
 

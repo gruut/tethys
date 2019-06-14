@@ -63,11 +63,11 @@ public:
   block_height_type getLatestResolvedHeight();
   string getValueByKey(string what, const string &base_keys);
   void restorePool();
-  void restoreUserLedgerList(UnresolvedBlock &restored_unresolved_block, const nlohmann::json user_ledger_list_json);
-  void restoreContractLedgerList(UnresolvedBlock &restored_unresolved_block, const nlohmann::json contract_ledger_list_json);
-  void restoreUserAttributeList(UnresolvedBlock &restored_unresolved_block, const nlohmann::json user_attribute_list_json);
-  void restoreUserCertList(UnresolvedBlock &restored_unresolved_block, const nlohmann::json user_cert_list_json);
-  void restoreContractList(UnresolvedBlock &restored_unresolved_block, const nlohmann::json contract_list_json);
+  void restoreUserLedgerList(UnresolvedBlock &restored_unresolved_block, const nlohmann::json &user_ledger_list_json);
+  void restoreContractLedgerList(UnresolvedBlock &restored_unresolved_block, const nlohmann::json &contract_ledger_list_json);
+  void restoreUserAttributeList(UnresolvedBlock &restored_unresolved_block, const nlohmann::json &user_attribute_list_json);
+  void restoreUserCertList(UnresolvedBlock &restored_unresolved_block, const nlohmann::json &user_cert_list_json);
+  void restoreContractList(UnresolvedBlock &restored_unresolved_block, const nlohmann::json &contract_list_json);
 
   // Unresolved block pool functions
   bool queryUserJoin(UnresolvedBlock &UR_block, nlohmann::json &option, result_query_info_type &result_info);
