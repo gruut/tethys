@@ -57,9 +57,9 @@ private:
   template <typename T>
   bool checkEntry(const string &key, T &val) {
     auto entry_type = getEntryType(key);
-    if (is_same<string, T>::value)
+    if (val.is_string())
       return validateEntry(entry_type, val);
-    else if (is_same<bool, T>::value)
+    else if (val.is_boolean())
       return true;
     return false;
   }
