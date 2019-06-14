@@ -208,8 +208,26 @@ void Chain::saveChain(local_chain_type &chain_info) {
   kv_controller->saveChain(chain_info);
 }
 
-void Chain::saveBackup(UnresolvedBlock &block_info) {
-  kv_controller->saveBackup(block_info);
+void Chain::saveBlockIds() {
+  nlohmann::json id_array = unresolved_block_pool->getPoolBlockIds();
+
+  kv_controller->saveBlockIds(TypeConverter::bytesToString(nlohmann::json::to_cbor(id_array)));
+}
+
+void Chain::saveBackupBlock(const nlohmann::json &block_json) {
+  base58_type block_id = json::get<string>(block_json["block"], "id").value();
+  string serialized_block = TypeConverter::toString(nlohmann::json::to_cbor(block_json));
+
+  kv_controller->saveBackupBlock(block_id, serialized_block);
+}
+
+void Chain::saveBackupResult(const UnresolvedBlock &UR_block) {
+  base58_type block_id = UR_block.block.getBlockId();
+  kv_controller->saveBackupUserLedgers(block_id, unresolved_block_pool->serializeUserLedgerList(UR_block));
+  kv_controller->saveBackupContractLedgers(block_id, unresolved_block_pool->serializeContractLedgerList(UR_block));
+  kv_controller->saveBackupUserAttributes(block_id, unresolved_block_pool->serializeUserAttributeList(UR_block));
+  kv_controller->saveBackupUserCerts(block_id, unresolved_block_pool->serializeUserCertList(UR_block));
+  kv_controller->saveBackupContracts(block_id, unresolved_block_pool->serializeContractList(UR_block));
 }
 
 void Chain::saveSelfInfo(self_info_type &self_info) {
@@ -218,6 +236,125 @@ void Chain::saveSelfInfo(self_info_type &self_info) {
 
 string Chain::getValueByKey(string what, const string &base_keys) {
   return kv_controller->getValueByKey(what, base_keys);
+}
+
+void Chain::restorePool() {
+  // TODO: 예외처리
+  string serialized_id_array = kv_controller->loadBlockIds();
+  nlohmann::json id_array_json = nlohmann::json::from_cbor(serialized_id_array);
+  for (auto &each_block_id : id_array_json) {
+    base58_type block_id = each_block_id;
+
+    // TODO: serialized_id_array가 empty string인 경우, from_cbor에서 exception 처리
+    // TODO: initialize 가 실패하는 case 처리
+    nlohmann::json block_msg = nlohmann::json::from_cbor(kv_controller->loadBackupBlock(block_id));
+    Block restored_block;
+    restored_block.initialize(block_msg);
+    block_push_result_type push_result = unresolved_block_pool->pushBlock(restored_block);
+
+    UnresolvedBlock restored_unresolved_block = unresolved_block_pool->findBlock(restored_block.getBlockId(), push_result.height);
+
+    nlohmann::json user_ledger_list_json = nlohmann::json::from_cbor(kv_controller->loadBackupUserLedgers(block_id));
+    nlohmann::json contract_ledger_list_json = nlohmann::json::from_cbor(kv_controller->loadBackupContractLedgers(block_id));
+    nlohmann::json user_attribute_list_json = nlohmann::json::from_cbor(kv_controller->loadBackupUserAttributes(block_id));
+    nlohmann::json user_cert_list_json = nlohmann::json::from_cbor(kv_controller->loadBackupUserCerts(block_id));
+    nlohmann::json contract_list_json = nlohmann::json::from_cbor(kv_controller->loadBackupContracts(block_id));
+
+    restoreUserLedgerList(restored_unresolved_block, user_ledger_list_json);
+    restoreContractLedgerList(restored_unresolved_block, contract_ledger_list_json);
+    restoreUserAttributeList(restored_unresolved_block, user_attribute_list_json);
+    restoreUserCertList(restored_unresolved_block, user_cert_list_json);
+    restoreContractList(restored_unresolved_block, contract_list_json);
+  }
+}
+
+void Chain::restoreUserLedgerList(UnresolvedBlock &restored_unresolved_block, const nlohmann::json &user_ledger_list_json) {
+  for (auto &each_user_ledger_json : user_ledger_list_json) {
+    user_ledger_type each_user_ledger;
+
+    each_user_ledger.var_name = json::get<string>(each_user_ledger_json, "var_name").value();
+    each_user_ledger.var_val = json::get<string>(each_user_ledger_json, "var_val").value();
+    each_user_ledger.var_type = stoi(json::get<string>(each_user_ledger_json, "var_type").value());
+    each_user_ledger.uid = json::get<string>(each_user_ledger_json, "uid").value();
+    each_user_ledger.up_time = static_cast<tethys::timestamp_t>(stoll(json::get<string>(each_user_ledger_json, "up_time").value()));
+    each_user_ledger.up_block = stoi(json::get<string>(each_user_ledger_json, "up_block").value());
+    each_user_ledger.tag = json::get<string>(each_user_ledger_json, "tag").value();
+    each_user_ledger.pid = json::get<string>(each_user_ledger_json, "pid").value();
+    each_user_ledger.query_type = static_cast<tethys::QueryType>(stoi(json::get<string>(each_user_ledger_json, "query_type").value()));
+    each_user_ledger.is_empty = json::get<bool>(each_user_ledger_json, "is_empty").value();
+
+    restored_unresolved_block.user_ledger_list[each_user_ledger.pid] = each_user_ledger;
+  }
+}
+
+void Chain::restoreContractLedgerList(UnresolvedBlock &restored_unresolved_block, const nlohmann::json &contract_ledger_list_json) {
+  for (auto &each_contract_ledger_json : contract_ledger_list_json) {
+    contract_ledger_type each_contract_ledger;
+
+    each_contract_ledger.var_name = json::get<string>(each_contract_ledger_json, "var_name").value();
+    each_contract_ledger.var_val = json::get<string>(each_contract_ledger_json, "var_val").value();
+    each_contract_ledger.var_type = stoi(json::get<string>(each_contract_ledger_json, "var_type").value());
+    each_contract_ledger.cid = json::get<string>(each_contract_ledger_json, "cid").value();
+    each_contract_ledger.up_time = static_cast<tethys::timestamp_t>(stoll(json::get<string>(each_contract_ledger_json, "up_time").value()));
+    each_contract_ledger.up_block = stoi(json::get<string>(each_contract_ledger_json, "up_block").value());
+    each_contract_ledger.var_info = json::get<string>(each_contract_ledger_json, "var_info").value();
+    each_contract_ledger.pid = json::get<string>(each_contract_ledger_json, "pid").value();
+    each_contract_ledger.query_type =
+        static_cast<tethys::QueryType>(stoi(json::get<string>(each_contract_ledger_json, "query_type").value()));
+    each_contract_ledger.is_empty = json::get<bool>(each_contract_ledger_json, "is_empty").value();
+
+    restored_unresolved_block.contract_ledger_list[each_contract_ledger.pid] = each_contract_ledger;
+  }
+}
+
+void Chain::restoreUserAttributeList(UnresolvedBlock &restored_unresolved_block, const nlohmann::json &user_attribute_list_json) {
+  for (auto &each_user_attribute_json : user_attribute_list_json) {
+    user_attribute_type each_user_attribute;
+
+    each_user_attribute.uid = json::get<string>(each_user_attribute_json, "uid").value();
+    each_user_attribute.register_day =
+        static_cast<tethys::timestamp_t>(stoll(json::get<string>(each_user_attribute_json, "register_day").value()));
+    each_user_attribute.register_code = json::get<string>(each_user_attribute_json, "register_code").value();
+    each_user_attribute.gender = stoi(json::get<string>(each_user_attribute_json, "gender").value());
+    each_user_attribute.isc_type = json::get<string>(each_user_attribute_json, "isc_type").value();
+    each_user_attribute.isc_code = json::get<string>(each_user_attribute_json, "isc_code").value();
+    each_user_attribute.location = json::get<string>(each_user_attribute_json, "location").value();
+    each_user_attribute.age_limit = stoi(json::get<string>(each_user_attribute_json, "age_limit").value());
+    each_user_attribute.sigma = json::get<string>(each_user_attribute_json, "sigma").value();
+
+    restored_unresolved_block.user_attribute_list[each_user_attribute.uid] = each_user_attribute;
+  }
+}
+
+void Chain::restoreUserCertList(UnresolvedBlock &restored_unresolved_block, const nlohmann::json &user_cert_list_json) {
+  for (auto &each_user_cert_json : user_cert_list_json) {
+    user_cert_type each_user_cert;
+
+    each_user_cert.uid = json::get<string>(each_user_cert_json, "uid").value();
+    each_user_cert.sn = json::get<string>(each_user_cert_json, "sn").value();
+    each_user_cert.nvbefore = static_cast<tethys::timestamp_t>(stoll(json::get<string>(each_user_cert_json, "nvbefore").value()));
+    each_user_cert.nvafter = static_cast<tethys::timestamp_t>(stoll(json::get<string>(each_user_cert_json, "nvafter").value()));
+    each_user_cert.x509 = json::get<string>(each_user_cert_json, "x509").value();
+
+    restored_unresolved_block.user_cert_list[each_user_cert.uid] = each_user_cert;
+  }
+}
+
+void Chain::restoreContractList(UnresolvedBlock &restored_unresolved_block, const nlohmann::json &contract_list_json) {
+  for (auto &each_contract_json : contract_list_json) {
+    contract_type each_contract;
+
+    each_contract.cid = json::get<string>(each_contract_json, "cid").value();
+    each_contract.after = static_cast<tethys::timestamp_t>(stoll(json::get<string>(each_contract_json, "after").value()));
+    each_contract.before = static_cast<tethys::timestamp_t>(stoll(json::get<string>(each_contract_json, "before").value()));
+    each_contract.author = json::get<string>(each_contract_json, "author").value();
+    each_contract.friends = json::get<string>(each_contract_json, "friends").value();
+    each_contract.contract = json::get<string>(each_contract_json, "contract").value();
+    each_contract.desc = json::get<string>(each_contract_json, "desc").value();
+    each_contract.sigma = json::get<string>(each_contract_json, "sigma").value();
+
+    restored_unresolved_block.contract_list[each_contract.cid] = each_contract;
+  }
 }
 
 // Unresolved block pool functions
@@ -675,8 +812,8 @@ search_result_type Chain::findContractLedgerFromPoint(string key, block_height_t
   }
 }
 
-ubp_push_result_type Chain::pushBlock(Block &block, bool is_restore) {
-  return unresolved_block_pool->pushBlock(block, is_restore);
+block_push_result_type Chain::pushBlock(Block &block) {
+  return unresolved_block_pool->pushBlock(block);
 }
 
 UnresolvedBlock Chain::findBlock(const base58_type &block_id, const block_height_type block_height) {
@@ -684,7 +821,15 @@ UnresolvedBlock Chain::findBlock(const base58_type &block_id, const block_height
 }
 
 bool Chain::resolveBlock(Block &block, UnresolvedBlock &resolved_result) {
-  return unresolved_block_pool->resolveBlock(block, resolved_result);
+  vector<base58_type> dropped_block_ids;
+  if (!unresolved_block_pool->resolveBlock(block, resolved_result, dropped_block_ids))
+    return false;
+
+  for (auto &each_block_id : dropped_block_ids) {
+    kv_controller->delBackup(each_block_id);
+  }
+
+  return true;
 }
 
 void Chain::setPool(const base64_type &last_block_id, block_height_type last_height, timestamp_t last_time, const base64_type &last_hash,

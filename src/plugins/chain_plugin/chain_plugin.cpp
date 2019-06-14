@@ -190,7 +190,7 @@ public:
     logger::INFO("chain_plugin - pushBlock() Called");
 
     // TODO: 입력되는 블록 관련 메세지가 BONE이나 PING일 경우의 처리 추가 필요
-    // TODO: block 구조체 형태로 입력되는게 맞을지 재고려
+    // TODO: block을 구조체 형태로 유지할지 재고려
 
     Block input_block;
     input_block.initialize(block_json);
@@ -199,7 +199,7 @@ public:
       return;
     }
 
-    ubp_push_result_type push_result = chain->pushBlock(input_block);
+    block_push_result_type push_result = chain->pushBlock(input_block);
     if (push_result.height == 0) {
       logger::ERROR("Block input fail: height 0");
       return;
@@ -208,6 +208,8 @@ public:
       logger::ERROR("Block input fail: duplicated");
       return;
     }
+    chain->saveBackupBlock(block_json);
+    chain->saveBlockIds();
 
     UnresolvedBlock resolved_block;
     bool resolve_result = chain->resolveBlock(input_block, resolved_block);
@@ -219,6 +221,8 @@ public:
       chain->applyUserAttributeToRDB(resolved_block.user_attribute_list);
       chain->applyUserCertToRDB(resolved_block.user_cert_list);
       chain->applyContractToRDB(resolved_block.contract_list);
+
+      chain->saveBlockIds(); // resolve로 인하여 pool에서 삭제된 블록을 백업 목록에서 제거
     }
 
     return;
@@ -291,6 +295,7 @@ public:
     }
 
     chain->updateStateTree(updated_UR_block);
+    chain->saveBackupResult(updated_UR_block);
   }
 
   vector<Transaction> getTransactions() {
@@ -305,6 +310,7 @@ public:
       chain->setPool("11111111111111111111111111111111", 0, 0,
                      "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=", "11111111111111111111111111111111");
       chain->setupStateTree();
+      chain->restorePool();
 
       nlohmann::json input_block_json;
 
@@ -323,7 +329,7 @@ public:
       for (int i = 0; i < input_block_num; ++i) {
         blocks[i].initialize(input_block_json[i]);
 
-        ubp_push_result_type push_result = chain->pushBlock(blocks[i]);
+        block_push_result_type push_result = chain->pushBlock(blocks[i]);
         if (push_result.height == 0) {
           logger::ERROR("Block input fail: height 0");
           return;

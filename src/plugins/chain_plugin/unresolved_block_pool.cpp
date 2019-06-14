@@ -67,9 +67,9 @@ bool UnresolvedBlockPool::prepareDeque(block_height_type t_height) {
   return true;
 }
 
-ubp_push_result_type UnresolvedBlockPool::pushBlock(Block &block, bool is_restore) {
+block_push_result_type UnresolvedBlockPool::pushBlock(Block &block) {
   logger::INFO("Unresolved block pool: pushBlock called");
-  ubp_push_result_type ret_val; // 해당 return 구조는 추후 변경 가능성 있음
+  block_push_result_type ret_val; // 해당 return 구조는 추후 변경 가능성 있음
   ret_val.height = 0;
   ret_val.linked = false;
   ret_val.duplicated = false;
@@ -113,11 +113,7 @@ ubp_push_result_type UnresolvedBlockPool::pushBlock(Block &block, bool is_restor
   int vec_idx = m_block_pool[deq_idx].size();
 
   m_block_pool[deq_idx].emplace_back(block, vec_idx, prev_vec_idx); // pool에 블록 추가
-
   ret_val.height = block_height;
-
-  if (!is_restore)
-    backupPool();
 
   if (deq_idx + 1 < m_block_pool.size()) { // if there is next bin
     for (auto &each_block : m_block_pool[deq_idx + 1]) {
@@ -129,9 +125,104 @@ ubp_push_result_type UnresolvedBlockPool::pushBlock(Block &block, bool is_restor
     }
   }
 
-  invalidateCaches(); // 캐시 관련 함수. 추후 고려.
+  invalidateCaches(); // TODO: 캐시 관련 함수. 추후 고려.
 
   return ret_val;
+}
+
+bool UnresolvedBlockPool::resolveBlock(Block &block, UnresolvedBlock &resolved_result, vector<base58_type> &dropped_block_id) {
+  dropped_block_id.clear();
+
+  //  if (!lateStage(block)) {
+  //    return false;
+  //  }
+
+  if (block.getHeight() - m_latest_confirmed_height > config::BLOCK_CONFIRM_LEVEL) {
+    updateTotalNumSSig();
+
+    if (m_block_pool.size() < 2 || m_block_pool[0].empty() || m_block_pool[1].empty()) {
+      return false;
+    }
+
+    int highest_total_ssig = 0;
+    int resolved_block_idx = -1;
+
+    for (int i = 0; i < m_block_pool[0].size(); ++i) {
+      if (m_block_pool[0][i].prev_vec_idx == 0 && m_block_pool[0][i].ssig_sum > highest_total_ssig) {
+        highest_total_ssig = m_block_pool[0][i].ssig_sum;
+        resolved_block_idx = i;
+      }
+    }
+
+    if (resolved_block_idx < 0 || highest_total_ssig < config::MIN_SIGNATURE_COLLECT_SIZE) {
+      return false;
+    }
+
+    bool is_after = false;
+    for (auto &each_block : m_block_pool[1]) {
+      if (each_block.prev_vec_idx == resolved_block_idx) { // some block links this block
+        is_after = true;
+        break;
+      }
+    }
+
+    if (!is_after) {
+      return false;
+    }
+
+    m_latest_confirmed_prev_id = m_latest_confirmed_id;
+
+    m_latest_confirmed_id = m_block_pool[0][resolved_block_idx].block.getBlockId();
+    m_latest_confirmed_hash = m_block_pool[0][resolved_block_idx].block.getBlockHash();
+    m_latest_confirmed_height = m_block_pool[0][resolved_block_idx].block.getHeight();
+
+    UnresolvedBlock resolved_block = m_block_pool[0][resolved_block_idx];
+    for (auto &each_block : m_block_pool[0]) {
+      dropped_block_id.push_back(each_block.block.getBlockId());
+    }
+
+    // TODO: pop되기 전에 반복문을 사용하면 선택받지 못한 block branch를 전부 지울 수 있을 것이나,
+    //  그 후에 만약 해당 블록에 연결된 블록이 들어와서 지웠던 블록을 다시 요청하는 경우가 생길 수 있는것은 아닐지 고려.
+
+    m_block_pool.pop_front();
+
+    if (m_block_pool.empty()) {
+      resolved_result = resolved_block;
+      return true;
+    }
+
+    for (auto &each_block : m_block_pool[0]) {
+      if (each_block.block.getPrevBlockId() == m_latest_confirmed_id) {
+        each_block.prev_vec_idx = 0;
+      } else {
+        // this block is unlinkable => to be deleted
+        each_block.prev_vec_idx = -1;
+      }
+    }
+    resolved_result = resolved_block;
+    return true;
+  } else {
+    return false;
+  }
+}
+
+void UnresolvedBlockPool::updateTotalNumSSig() {
+  if (m_block_pool.empty())
+    return;
+
+  for (auto &each_level : m_block_pool) {
+    for (auto &each_block : each_level) {
+      each_block.ssig_sum = each_block.block.getNumSigners();
+    }
+  }
+
+  for (int i = (int)m_block_pool.size() - 1; i > 0; --i) {
+    for (auto &each_block : m_block_pool[i]) { // for vector
+      if (each_block.prev_vec_idx >= 0 && m_block_pool[i - 1].size() > each_block.prev_vec_idx) {
+        m_block_pool[i - 1][each_block.prev_vec_idx].ssig_sum += each_block.ssig_sum;
+      }
+    }
+  }
 }
 
 UnresolvedBlock UnresolvedBlockPool::findBlock(const base58_type &block_id, const block_height_type block_height) {
@@ -185,155 +276,131 @@ vector<int> UnresolvedBlockPool::getLine(const base58_type &block_id, const bloc
   }
 }
 
-bool UnresolvedBlockPool::resolveBlock(Block &block, UnresolvedBlock &resolved_result) {
-  //  if (!lateStage(block)) {
-  //    return false;
-  //  }
-
-  if (block.getHeight() - m_latest_confirmed_height > config::BLOCK_CONFIRM_LEVEL) {
-    updateTotalNumSSig();
-
-    if (m_block_pool.size() < 2 || m_block_pool[0].empty() || m_block_pool[1].empty()) {
-      return false;
-    }
-
-    int highest_total_ssig = 0;
-    int resolved_block_idx = -1;
-
-    for (int i = 0; i < m_block_pool[0].size(); ++i) {
-      if (m_block_pool[0][i].prev_vec_idx == 0 && m_block_pool[0][i].ssig_sum > highest_total_ssig) {
-        highest_total_ssig = m_block_pool[0][i].ssig_sum;
-        resolved_block_idx = i;
-      }
-    }
-
-    if (resolved_block_idx < 0 || highest_total_ssig < config::MIN_SIGNATURE_COLLECT_SIZE) {
-      return false;
-    }
-
-    bool is_after = false;
-    for (auto &each_block : m_block_pool[1]) {
-      if (each_block.prev_vec_idx == resolved_block_idx) { // some block links this block
-        is_after = true;
-        break;
-      }
-    }
-
-    if (!is_after) {
-      return false;
-    }
-
-    m_latest_confirmed_prev_id = m_latest_confirmed_id;
-
-    m_latest_confirmed_id = m_block_pool[0][resolved_block_idx].block.getBlockId();
-    m_latest_confirmed_hash = m_block_pool[0][resolved_block_idx].block.getBlockHash();
-    m_latest_confirmed_height = m_block_pool[0][resolved_block_idx].block.getHeight();
-
-    UnresolvedBlock resolved_block = m_block_pool[0][resolved_block_idx];
-
-    // TODO: pop되기 전에 반복문을 사용하면 선택받지 못한 block branch를 전부 지울 수 있을 것.
-    //  그런데 그 후에 만약 해당 블록에 연결된 블록이 들어와서 지웠던 블록을 다시 요청하는 경우가 생길 수 있는것은 아닐지 고려.
-
-    m_block_pool.pop_front();
-
-    if (m_block_pool.empty()) {
-      resolved_result = resolved_block;
-      return true;
-    }
-
-    for (auto &each_block : m_block_pool[0]) {
-      if (each_block.block.getPrevBlockId() == m_latest_confirmed_id) {
-        each_block.prev_vec_idx = 0;
-      } else {
-        // this block is unlinkable => to be deleted
-        each_block.prev_vec_idx = -1;
-      }
-    }
-    resolved_result = resolved_block;
-    return true;
-  } else {
-    return false;
-  }
-}
-
-void UnresolvedBlockPool::updateTotalNumSSig() {
-  if (m_block_pool.empty())
-    return;
+nlohmann::json UnresolvedBlockPool::getPoolBlockIds() {
+  nlohmann::json id_array = nlohmann::json::array();
 
   for (auto &each_level : m_block_pool) {
     for (auto &each_block : each_level) {
-      each_block.ssig_sum = each_block.block.getNumSigners();
+      std::string block_id = each_block.block.getBlockId();
+      id_array.push_back(block_id);
     }
   }
-
-  for (int i = (int)m_block_pool.size() - 1; i > 0; --i) {
-    for (auto &each_block : m_block_pool[i]) { // for vector
-      if (each_block.prev_vec_idx >= 0 && m_block_pool[i - 1].size() > each_block.prev_vec_idx) {
-        m_block_pool[i - 1][each_block.prev_vec_idx].ssig_sum += each_block.ssig_sum;
-      }
-    }
-  }
+  return id_array;
 }
 
-// ------------------------------------------------------------------
-//
-// void KvController::testBackward() {
-//  cout << "--------------- test Backward called -----------------" << endl;
-//  Layer back_layer = popBackLayer();
-//
-//  for (auto data : back_layer.m_temporary_data) {
-//    Key key = data.first;
-//    Value value = data.second;
-//    uint32_t path;
-//    test_data rollback_data;
-//
-//    rollback_data.user_id = key.user_id;
-//    rollback_data.var_type = key.var_type;
-//    rollback_data.var_name = key.var_name;
-//
-//    cout << key << ", " << value << endl;
-//
-//    // 지워진 데이터라면 insertNode 를 호출하여 다시 트리에 삽입
-//    if (value.isDeleted) {
-//      rollback_data.var_value = value.var_value;
-//      path = value.path;
-//
-//      m_tree.insertNode(path, rollback_data);
-//    } else {
-//      // 지워진 데이터가 아니라면 남은 레이어와 DB 에서 찾아봄
-//      int depth = checkLayer(key);
-//      // 데이터가 존재한다면 modifyNode 호출하여 이전값으로 돌림
-//      if (depth != NO_DATA) {
-//        if (depth == DB_DATA) {
-//          cout << "data is in the DB" << endl;
-//          pair<int, vector<string>> db_data = m_server.selectAllUsingUserIdVarTypeVarName(key.user_id, key.var_type, key.var_name);
-//
-//          rollback_data.var_value = db_data.second[VAR_VALUE];
-//          path = (uint32_t)stoul(db_data.second[PATH]);
-//        } else {
-//          cout << "data is in the m_layer[" << depth << "]" << endl;
-//          map<Key, Value>::iterator it;
-//          it = m_layer[depth].m_temporary_data.find(key);
-//
-//          rollback_data.var_value = it->second.var_value;
-//          path = it->second.path;
-//        }
-//        m_tree.modifyNode(path, rollback_data);
-//      }
-//      // 데이터가 존재하지 않는다면 removeNode 호출하여 트리에서 제거
-//      else {
-//        cout << "can't find data" << endl;
-//
-//        path = value.path;
-//        m_tree.removeNode(path);
-//      }
-//    }
-//  }
-//}
+string UnresolvedBlockPool::serializeUserLedgerList(const UnresolvedBlock &unresolved_block) {
+  nlohmann::json ledger_list_json = nlohmann::json::array();
+  string serialized_list;
+
+  for (auto &each_ledger : unresolved_block.user_ledger_list) {
+    nlohmann::json json;
+    json["var_name"] = each_ledger.second.var_name;
+    json["var_val"] = each_ledger.second.var_val;
+    json["var_type"] = to_string(each_ledger.second.var_type);
+    json["uid"] = each_ledger.second.uid;
+    json["up_time"] = to_string(each_ledger.second.up_time);
+    json["up_block"] = to_string(each_ledger.second.up_block);
+    json["tag"] = each_ledger.second.tag;
+    json["pid"] = each_ledger.second.pid;
+    json["query_type"] = each_ledger.second.query_type;
+    json["is_empty"] = each_ledger.second.is_empty;
+
+    ledger_list_json.push_back(json);
+  }
+
+  serialized_list = TypeConverter::bytesToString(nlohmann::json::to_cbor(ledger_list_json));
+  return serialized_list;
+}
+
+string UnresolvedBlockPool::serializeContractLedgerList(const UnresolvedBlock &unresolved_block) {
+  nlohmann::json ledger_list_json = nlohmann::json::array();
+  string serialized_list;
+
+  for (auto &each_ledger : unresolved_block.contract_ledger_list) {
+    nlohmann::json json;
+    json["var_name"] = each_ledger.second.var_name;
+    json["var_val"] = each_ledger.second.var_val;
+    json["var_type"] = to_string(each_ledger.second.var_type);
+    json["cid"] = each_ledger.second.cid;
+    json["up_time"] = to_string(each_ledger.second.up_time);
+    json["up_block"] = to_string(each_ledger.second.up_block);
+    json["var_info"] = each_ledger.second.var_info;
+    json["pid"] = each_ledger.second.pid;
+    json["query_type"] = each_ledger.second.query_type;
+    json["is_empty"] = each_ledger.second.is_empty;
+
+    ledger_list_json.push_back(json);
+  }
+
+  serialized_list = TypeConverter::bytesToString(nlohmann::json::to_cbor(ledger_list_json));
+  return serialized_list;
+}
+
+string UnresolvedBlockPool::serializeUserAttributeList(const UnresolvedBlock &unresolved_block) {
+  nlohmann::json ledger_list_json = nlohmann::json::array();
+  string serialized_list;
+
+  for (auto &each_user : unresolved_block.user_attribute_list) {
+    nlohmann::json json;
+    json["uid"] = each_user.second.uid;
+    json["register_day"] = to_string(each_user.second.register_day);
+    json["register_code"] = each_user.second.register_code;
+    json["gender"] = to_string(each_user.second.gender);
+    json["isc_type"] = each_user.second.isc_type;
+    json["isc_code"] = each_user.second.isc_code;
+    json["location"] = each_user.second.location;
+    json["age_limit"] = to_string(each_user.second.age_limit);
+    json["sigma"] = each_user.second.sigma;
+
+    ledger_list_json.push_back(json);
+  }
+
+  serialized_list = TypeConverter::bytesToString(nlohmann::json::to_cbor(ledger_list_json));
+  return serialized_list;
+}
+
+string UnresolvedBlockPool::serializeUserCertList(const UnresolvedBlock &unresolved_block) {
+  nlohmann::json ledger_list_json = nlohmann::json::array();
+  string serialized_list;
+
+  for (auto &each_cert : unresolved_block.user_cert_list) {
+    nlohmann::json json;
+    json["uid"] = each_cert.second.uid;
+    json["sn"] = each_cert.second.sn;
+    json["nvbefore"] = to_string(each_cert.second.nvbefore);
+    json["nvafter"] = to_string(each_cert.second.nvafter);
+    json["x509"] = each_cert.second.x509;
+
+    ledger_list_json.push_back(json);
+  }
+
+  serialized_list = TypeConverter::bytesToString(nlohmann::json::to_cbor(ledger_list_json));
+  return serialized_list;
+}
+
+string UnresolvedBlockPool::serializeContractList(const UnresolvedBlock &unresolved_block) {
+  nlohmann::json ledger_list_json = nlohmann::json::array();
+  string serialized_list;
+
+  for (auto &each_contract : unresolved_block.contract_list) {
+    nlohmann::json json;
+    json["cid"] = each_contract.second.cid;
+    json["after"] = to_string(each_contract.second.after);
+    json["before"] = to_string(each_contract.second.before);
+    json["author"] = each_contract.second.author;
+    json["friends"] = each_contract.second.friends;
+    json["contract"] = each_contract.second.contract;
+    json["desc"] = each_contract.second.desc;
+    json["sigma"] = each_contract.second.sigma;
+
+    ledger_list_json.push_back(json);
+  }
+
+  serialized_list = TypeConverter::bytesToString(nlohmann::json::to_cbor(ledger_list_json));
+  return serialized_list;
+}
 
 // 추후 구현
 void UnresolvedBlockPool::invalidateCaches() {}
-void UnresolvedBlockPool::backupPool() {}
-nlohmann::json UnresolvedBlockPool::readBackupIds() {}
 
 } // namespace tethys

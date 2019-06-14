@@ -39,17 +39,29 @@ public:
   bool saveLatestChainId(const alphanumeric_type &chain_id);
   bool saveWorld(world_type &world_info);
   bool saveChain(local_chain_type &chain_info);
-  bool saveBackup(UnresolvedBlock &block_info);
   bool saveSelfInfo(self_info_type &self_info);
 
   string getValueByKey(string what, const string &base_keys);
-
-  std::string readBackup(const std::string &key);
-  void flushBackup();
-  void clearBackup();
-  void delBackup(const std::string &block_id_b64);
-
   void destroyDB();
+
+  // unresolved block pool backup / restore
+  bool saveBlockIds(const string &serialized_block_ids);
+  bool saveBackupBlock(const base58_type &block_id, const string &serialized_block);
+  bool saveBackupUserLedgers(const base58_type &block_id, const string &serialized_user_ledgers);
+  bool saveBackupContractLedgers(const base58_type &block_id, const string &serialized_contract_ledgers);
+  bool saveBackupUserAttributes(const base58_type &block_id, const string &serialized_user_attributes);
+  bool saveBackupUserCerts(const base58_type &block_id, const string &serialized_user_certs);
+  bool saveBackupContracts(const base58_type &block_id, const string &serialized_contracts);
+
+  string loadBlockIds();
+  string loadBackupBlock(const std::string &key);
+  string loadBackupUserLedgers(const std::string &key);
+  string loadBackupContractLedgers(const std::string &key);
+  string loadBackupUserAttributes(const std::string &key);
+  string loadBackupUserCerts(const std::string &key);
+  string loadBackupContracts(const std::string &key);
+
+  void delBackup(const base58_type &block_id);
 
 private:
   bool errorOnCritical(const leveldb::Status &status);

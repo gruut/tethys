@@ -43,7 +43,13 @@ namespace config {
 
           names.emplace_back(DataType::WORLD);
           names.emplace_back(DataType::CHAIN);
-          names.emplace_back(DataType::BACKUP);
+          names.emplace_back(DataType::BACKUP_BLOCK);
+          names.emplace_back(DataType::BACKUP_USER_LEDGER);
+          names.emplace_back(DataType::BACKUP_CONTRACT_LEDGER);
+          names.emplace_back(DataType::BACKUP_USER_ATTRIBUTE);
+          names.emplace_back(DataType::BACKUP_USER_CERT);
+          names.emplace_back(DataType::BACKUP_CONTRACT);
+          names.emplace_back(DataType::UNRESOLVED_BLOCK_IDS_KEY);
           names.emplace_back(DataType::SELF_INFO);
 
           return names;

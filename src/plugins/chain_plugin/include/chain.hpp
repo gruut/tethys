@@ -55,11 +55,19 @@ public:
   void saveLatestChainId(const alphanumeric_type &chain_id);
   void saveWorld(world_type &world_info);
   void saveChain(local_chain_type &chain_info);
-  void saveBackup(UnresolvedBlock &block_info);
+  void saveBlockIds();
+  void saveBackupBlock(const nlohmann::json &block_json);
+  void saveBackupResult(const UnresolvedBlock &UR_block);
   void saveSelfInfo(self_info_type &self_info);
   vector<Block> getBlocksByHeight(int from, int to);
   block_height_type getLatestResolvedHeight();
   string getValueByKey(string what, const string &base_keys);
+  void restorePool();
+  void restoreUserLedgerList(UnresolvedBlock &restored_unresolved_block, const nlohmann::json &user_ledger_list_json);
+  void restoreContractLedgerList(UnresolvedBlock &restored_unresolved_block, const nlohmann::json &contract_ledger_list_json);
+  void restoreUserAttributeList(UnresolvedBlock &restored_unresolved_block, const nlohmann::json &user_attribute_list_json);
+  void restoreUserCertList(UnresolvedBlock &restored_unresolved_block, const nlohmann::json &user_cert_list_json);
+  void restoreContractList(UnresolvedBlock &restored_unresolved_block, const nlohmann::json &contract_list_json);
 
   // Unresolved block pool functions
   bool queryUserJoin(UnresolvedBlock &UR_block, nlohmann::json &option, result_query_info_type &result_info);
@@ -79,7 +87,7 @@ public:
   search_result_type findUserLedgerFromPoint(string key, block_height_type height, int vec_idx);
   search_result_type findContractLedgerFromPoint(string key, block_height_type height, int vec_idx);
 
-  ubp_push_result_type pushBlock(Block &block, bool is_restore = false);
+  block_push_result_type pushBlock(Block &block);
   UnresolvedBlock findBlock(const base58_type &block_id, const block_height_type block_height);
   bool resolveBlock(Block &block, UnresolvedBlock &resolved_result);
   void setPool(const base64_type &last_block_id, block_height_type last_height, timestamp_t last_time, const base64_type &last_hash,

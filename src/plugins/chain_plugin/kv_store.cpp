@@ -93,7 +93,6 @@ bool KvController::saveWorld(world_type &world_info) {
   addBatch(DataType::WORLD, tmp_wid + "_tmp_jfee", tmp_jfee);
 
   commitBatchAll();
-
   return true;
 }
 
@@ -133,14 +132,6 @@ bool KvController::saveChain(local_chain_type &chain_info) {
   addBatch(DataType::CHAIN, tmp_chid + "_tk_addr", tk_addr_list);
 
   commitBatchAll();
-
-  return true;
-}
-
-bool KvController::saveBackup(UnresolvedBlock &block_info) {
-
-  commitBatchAll();
-
   return true;
 }
 
@@ -150,7 +141,6 @@ bool KvController::saveSelfInfo(self_info_type &self_info) {
   addBatch(DataType::SELF_INFO, "self_id", self_info.id);
 
   commitBatchAll();
-
   return true;
 }
 
@@ -191,6 +181,96 @@ string KvController::getValueByKey(string what, const string &key) {
 void KvController::destroyDB() {
   for (auto &[db_name, _] : db_map) {
     boost::filesystem::remove_all(m_db_path + "/" + db_name);
+  }
+}
+
+bool KvController::saveBlockIds(const string &serialized_block_ids) {
+  addBatch(DataType::UNRESOLVED_BLOCK_IDS_KEY, DataType::UNRESOLVED_BLOCK_IDS_KEY, serialized_block_ids);
+
+  commitBatchAll();
+  return true;
+}
+
+bool KvController::saveBackupBlock(const base58_type &block_id, const string &serialized_block) {
+  addBatch(DataType::BACKUP_BLOCK, block_id, serialized_block);
+
+  commitBatchAll();
+  return true;
+}
+
+bool KvController::saveBackupUserLedgers(const base58_type &block_id, const string &serialized_user_ledgers) {
+  addBatch(DataType::BACKUP_USER_LEDGER, block_id, serialized_user_ledgers);
+
+  commitBatchAll();
+  return true;
+}
+
+bool KvController::saveBackupContractLedgers(const base58_type &block_id, const string &serialized_contract_ledgers) {
+  addBatch(DataType::BACKUP_CONTRACT_LEDGER, block_id, serialized_contract_ledgers);
+
+  commitBatchAll();
+  return true;
+}
+
+bool KvController::saveBackupUserAttributes(const base58_type &block_id, const string &serialized_user_attributes) {
+  addBatch(DataType::BACKUP_USER_ATTRIBUTE, block_id, serialized_user_attributes);
+
+  commitBatchAll();
+  return true;
+}
+
+bool KvController::saveBackupUserCerts(const base58_type &block_id, const string &serialized_user_certs) {
+  addBatch(DataType::BACKUP_USER_CERT, block_id, serialized_user_certs);
+
+  commitBatchAll();
+  return true;
+}
+
+bool KvController::saveBackupContracts(const base58_type &block_id, const string &serialized_contracts) {
+  addBatch(DataType::BACKUP_CONTRACT, block_id, serialized_contracts);
+
+  commitBatchAll();
+  return true;
+}
+
+string KvController::loadBlockIds() {
+  return getValueByKey(DataType::UNRESOLVED_BLOCK_IDS_KEY, DataType::UNRESOLVED_BLOCK_IDS_KEY);
+}
+
+string KvController::loadBackupBlock(const std::string &key) {
+  return getValueByKey(DataType::BACKUP_BLOCK, key);
+}
+
+string KvController::loadBackupUserLedgers(const std::string &key) {
+  return getValueByKey(DataType::BACKUP_USER_LEDGER, key);
+}
+
+string KvController::loadBackupContractLedgers(const std::string &key) {
+  return getValueByKey(DataType::BACKUP_CONTRACT_LEDGER, key);
+}
+
+string KvController::loadBackupUserAttributes(const std::string &key) {
+  return getValueByKey(DataType::BACKUP_USER_ATTRIBUTE, key);
+}
+
+string KvController::loadBackupUserCerts(const std::string &key) {
+  return getValueByKey(DataType::BACKUP_USER_CERT, key);
+}
+
+string KvController::loadBackupContracts(const std::string &key) {
+  return getValueByKey(DataType::BACKUP_CONTRACT, key);
+}
+
+void KvController::delBackup(const base58_type &block_id) {
+  if (!block_id.empty()) {
+    write_batch_map[DataType::BACKUP_BLOCK].Delete(block_id);
+    write_batch_map[DataType::BACKUP_USER_LEDGER].Delete(block_id);
+    write_batch_map[DataType::BACKUP_CONTRACT_LEDGER].Delete(block_id);
+    write_batch_map[DataType::BACKUP_USER_ATTRIBUTE].Delete(block_id);
+    write_batch_map[DataType::BACKUP_USER_CERT].Delete(block_id);
+    write_batch_map[DataType::BACKUP_CONTRACT].Delete(block_id);
+
+    commitBatchAll();
   }
 }
 
