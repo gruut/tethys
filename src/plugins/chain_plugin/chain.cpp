@@ -332,7 +332,7 @@ void Chain::restoreUserCertList(UnresolvedBlock &restored_unresolved_block, cons
     each_user_cert.nvafter = static_cast<tethys::timestamp_t>(stoll(json::get<string>(each_user_cert_json, "nvafter").value()));
     each_user_cert.x509 = json::get<string>(each_user_cert_json, "x509").value();
 
-    restored_unresolved_block.user_cert_list[each_user_cert.uid] = each_user_cert;
+    restored_unresolved_block.user_cert_list[each_user_cert.sn] = each_user_cert;
   }
 }
 
@@ -380,6 +380,7 @@ bool Chain::queryUserJoin(UnresolvedBlock &UR_block, nlohmann::json &option, res
 }
 
 bool Chain::queryUserCert(UnresolvedBlock &UR_block, nlohmann::json &option, result_query_info_type &result_info) {
+  // TODO: user cert에는 한 사람이 유효기간이 서로 다른 인증서 여러 개가 저장될 수 있음
   user_cert_type user_cert;
 
   user_cert.uid = result_info.user;
@@ -388,7 +389,7 @@ bool Chain::queryUserCert(UnresolvedBlock &UR_block, nlohmann::json &option, res
   user_cert.nvafter = static_cast<uint64_t>(stoll(json::get<string>(option, "notafter").value()));
   user_cert.x509 = json::get<string>(option, "x509").value();
 
-  UR_block.user_cert_list[user_cert.uid] = user_cert;
+  UR_block.user_cert_list[user_cert.sn] = user_cert;
 
   return true;
 }
@@ -400,11 +401,13 @@ bool Chain::queryContractNew(UnresolvedBlock &UR_block, nlohmann::json &option, 
   contract_info.after = static_cast<uint64_t>(stoll(json::get<string>(option, "after").value()));
   contract_info.before = static_cast<uint64_t>(stoll(json::get<string>(option, "before").value()));
   contract_info.author = json::get<string>(option, "author").value();
+
   // TODO: friend 추가할 때 자신을 friend로 추가한 contract를 찾아서 추가해야 함
   contract_id_type friends = json::get<string>(option, "friend").value();
-  string contract = json::get<string>(option, "contract").value();
-  string desc = json::get<string>(option, "desc").value();
-  string sigma = json::get<string>(option, "sigma").value();
+
+  contract_info.contract = json::get<string>(option, "contract").value();
+  contract_info.desc = json::get<string>(option, "desc").value();
+  contract_info.sigma = json::get<string>(option, "sigma").value();
 
   UR_block.contract_list[contract_info.cid] = contract_info;
 
@@ -413,9 +416,12 @@ bool Chain::queryContractNew(UnresolvedBlock &UR_block, nlohmann::json &option, 
 
 bool Chain::queryContractDisable(UnresolvedBlock &UR_block, nlohmann::json &option, result_query_info_type &result_info) {
   // TODO: $user = cid.author인 경우에만 허용
-  contract_id_type cid = json::get<string>(option, "cid").value();
-  timestamp_t before = TimeUtil::nowBigInt();
+  contract_type contract_info;
 
+  contract_info.cid = json::get<string>(option, "cid").value();
+  contract_info.before = TimeUtil::nowBigInt();
+
+  // TODO: before 값을 갱신하는 코드
   return true;
 }
 
@@ -456,20 +462,16 @@ bool Chain::queryCreate(UnresolvedBlock &UR_block, nlohmann::json &option, resul
   block_height_type up_block = result_info.block_height;
 
   user_ledger_type user_ledger(var_name, var_type, uid, tag);
-  string pid = TypeConverter::bytesToString(user_ledger.pid);
+  string pid = user_ledger.pid;
 
   user_ledger_type found = findUserLedgerFromHead(pid);
 
-  if (found.is_empty) {
-    found.var_val = "";
-  } else {
-    if (found.uid != result_info.user)
+  if (!found.is_empty) {
+    logger::ERROR("Same pid state is exist. v.create must be new.");
       return false;
   }
 
-  int modified_value = stoi(found.var_val) + stoi(amount);
-  user_ledger.var_val = to_string(modified_value);
-
+  user_ledger.var_val = amount;
   user_ledger.up_time = up_time;
   user_ledger.up_block = up_block;
   user_ledger.query_type = QueryType::INSERT;
