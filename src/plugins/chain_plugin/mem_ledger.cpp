@@ -445,7 +445,7 @@ void StateTree::modifyNode(shared_ptr<StateNode> old_node, shared_ptr<StateNode>
   }
 }
 
-void StateTree::removeNode(string &pid) {
+void StateTree::removeNode(const string &pid) {
   shared_ptr<StateNode> node;
   shared_ptr<StateNode> parent, left, right;
 
@@ -502,7 +502,7 @@ void StateTree::removeNode(string &pid) {
   --m_size;
 }
 
-shared_ptr<StateNode> StateTree::getMerkleNode(string &pid) {
+shared_ptr<StateNode> StateTree::getMerkleNode(const string &pid) {
   shared_ptr<StateNode> ret = nullptr;
   path_type path = ret->calPathFromPid(pid);
 
@@ -533,7 +533,7 @@ shared_ptr<StateNode> StateTree::getMerkleNode(string &pid) {
   return ret;
 }
 
-vector<vector<uint8_t>> StateTree::getSiblings(string &pid) {
+vector<vector<uint8_t>> StateTree::getSiblings(const string &pid) {
   shared_ptr<StateNode> node = getMerkleNode(pid);
 
   vector<vector<uint8_t>> siblings;

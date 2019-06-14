@@ -109,9 +109,9 @@ public:
   template <typename T>
   void insertNode(const T &ledger);   // TODO: user_ledger_type과 contract_ledger_type 두 가지로 template를 제한
   void modifyNode(shared_ptr<StateNode> old_node, shared_ptr<StateNode> new_node);
-  void removeNode(string &pid);
-  shared_ptr<StateNode> getMerkleNode(string &pid);
-  vector<vector<uint8_t>> getSiblings(string &pid);
+  void removeNode(const string &pid);
+  shared_ptr<StateNode> getMerkleNode(const string &pid);
+  vector<vector<uint8_t>> getSiblings(const string &pid);
 
   void printTreePostOrder();
 
