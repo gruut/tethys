@@ -42,10 +42,10 @@ public:
   //  bool queryRunQuery(std::vector<LedgerRecord> &mem_ledger, nlohmann::json &option, result_query_info_type &result_info);
   //  bool queryRunContract(std::vector<LedgerRecord> &mem_ledger, nlohmann::json &option, result_query_info_type &result_info);
 
-  bool checkUniqueVarNameFromRDB(const string &var_owner, const string &var_name);
-  bool findUserFromRDB(const string &pid, user_ledger_type &user_ledger);
-  bool findContractFromRDB(const string &pid, contract_ledger_type &contract_ledger);
-  int getVarTypeFromRDB(const string &pid);
+  int getVarTypeFromRDB(const string &var_owner, const string &var_name);
+  int checkUniqueVarNameFromRDB(const string &var_owner, const string &var_name);
+  bool findUserScopeFromRDB(const string &pid, user_ledger_type &user_ledger);
+  bool findContractScopeFromRDB(const string &pid, contract_ledger_type &contract_ledger);
 
   vector<user_ledger_type> getAllUserLedger();
   vector<contract_ledger_type> getAllContractLedger();

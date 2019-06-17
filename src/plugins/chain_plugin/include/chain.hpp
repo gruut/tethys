@@ -45,8 +45,6 @@ public:
   bool applyUserAttributeToRDB(const map<base58_type, user_attribute_type> &user_attribute_list);
   bool applyUserCertToRDB(const map<base58_type, user_cert_type> &user_cert_list);
   bool applyContractToRDB(const map<base58_type, contract_type> &contract_list);
-  bool findUserFromRDB(const string &key, user_ledger_type &user_ledger);
-  bool findContractFromRDB(const string &key, contract_ledger_type &contract_ledger);
 
   // KV functions
   void saveLatestWorldId(const alphanumeric_type &world_id);
@@ -81,10 +79,9 @@ public:
   bool queryTradeVal(UnresolvedBlock &UR_block, nlohmann::json &option, result_query_info_type &result_info);
   bool queryRunQuery(UnresolvedBlock &UR_block, nlohmann::json &option, result_query_info_type &result_info);
   bool queryRunContract(UnresolvedBlock &UR_block, nlohmann::json &option, result_query_info_type &result_info);
-  base58_type setUserScopePid(optional<string> &pid, string &var_name, int var_type, string &var_owner);
-  contract_id_type setContractScopePid(optional<string> &pid, string &var_name, int var_type, string &var_owner);
-  int getVarType(const string &var_owner, const string &var_name);
-  bool checkUniqueVarName(const string &var_owner, const string &var_name);
+  string calculatePid(optional<string> &pid, string &var_name, int var_type, string &var_owner, const block_height_type height, const int vec_idx);
+  int getVarType(const string &var_owner, const string &var_name, const block_height_type height, const int vec_idx);
+  bool checkUniqueVarName(const string &var_owner, const string &var_name, const block_height_type height, const int vec_idx);
 
   block_push_result_type pushBlock(Block &block);
   UnresolvedBlock findBlock(const base58_type &block_id, const block_height_type block_height);

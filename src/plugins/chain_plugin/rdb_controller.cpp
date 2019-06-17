@@ -397,27 +397,46 @@ string RdbController::getUserCert(const base58_type &user_id) {
 //  return true;
 //}
 
-bool RdbController::checkUniqueVarNameFromRDB(const string &var_owner, const string &var_name) {
-  soci::row result;
-  soci::session db_session(RdbController::pool());
-  soci::statement st(db_session);
+int RdbController::getVarTypeFromRDB(const string &var_owner, const string &var_name) {
+  try {
+    short var_type = 0;
+    soci::row result;
+    soci::session db_session(RdbController::pool());
+    soci::statement st(db_session);
 
-  // clang-format off
-  if(var_owner.size() > 45)
-      st = (db_session.prepare << "SELECT * from user_scope WHERE var_owner = :var_owner AND var_name = :var_name", soci::use(var_owner, "var_owner"), soci::use(var_name, "var_name"), soci::into(result));
-  else
-      st = (db_session.prepare << "SELECT * from contract_scope WHERE contract_id = :contract_id AND var_name = :var_name", soci::use(var_owner, "contract_id"), soci::use(var_name, "var_name"), soci::into(result));
-  // clang-format on
-  st.execute(true);
+    // clang-format off
+    if(var_owner.size() > 45)
+      st = (db_session.prepare << "SELECT var_type from user_scope WHERE var_owner = :var_owner AND var_name = :var_name", soci::use(var_owner, "var_owner"), soci::use(var_name, "var_name"), soci::into(result));
+    else
+      st = (db_session.prepare << "SELECT var_type from contract_scope WHERE contract_id = :contract_id AND var_name = :var_name", soci::use(var_owner, "contract_id"), soci::use(var_name, "var_name"), soci::into(result));
+    // clang-format on
+    st.execute(true);
 
-  int num_rows = (int)st.get_affected_rows();
-  if (num_rows <= 1)
-    return true;
-  else
-    return false;
+    result >> var_type;
+
+    int num_rows = (int)st.get_affected_rows();
+    if (num_rows == 1)
+      return var_type;
+    else if (num_rows == 0)
+      return (int)UniqueCheck::NO_VALUE;
+    else
+      return (int)UniqueCheck::NOT_UNIQUE;
+
+  } catch (soci::mysql_soci_error const &e) {
+    logger::ERROR("MySQL error: {}", e.what());
+    return -3;
+  } catch (...) {
+    logger::ERROR("Unexpected error at `getVarTypeFromRDB`");
+    return -3;
+  }
 }
 
-bool RdbController::findUserFromRDB(const string &pid, user_ledger_type &user_ledger) {
+int RdbController::checkUniqueVarNameFromRDB(const string &var_owner, const string &var_name) {
+  // 위 함수와 같은 동작을 하는데, 함수 명에서 혼동이 있을 수 있을 것 같아서 별개로 선언
+  return getVarTypeFromRDB(var_owner, var_name);
+}
+
+bool RdbController::findUserScopeFromRDB(const string &pid, user_ledger_type &user_ledger) {
   try {
     string var_name, var_value, var_owner, tag, pid;
     short var_type;
@@ -445,13 +464,13 @@ bool RdbController::findUserFromRDB(const string &pid, user_ledger_type &user_le
     logger::ERROR("MySQL error: {}", e.what());
     return false;
   } catch (...) {
-    logger::ERROR("Unexpected error at `queryUserScope`");
+    logger::ERROR("Unexpected error at `findUserScopeFromRDB`");
     return false;
   }
   return true;
 }
 
-bool RdbController::findContractFromRDB(const string &pid, tethys::contract_ledger_type &contract_ledger) {
+bool RdbController::findContractScopeFromRDB(const string &pid, tethys::contract_ledger_type &contract_ledger) {
   try {
     string var_name, var_value, contract_id, var_info, pid;
     short var_type;
@@ -479,38 +498,10 @@ bool RdbController::findContractFromRDB(const string &pid, tethys::contract_ledg
     logger::ERROR("MySQL error: {}", e.what());
     return false;
   } catch (...) {
-    logger::ERROR("Unexpected error at `queryUserScope`");
+    logger::ERROR("Unexpected error at `findContractScopeFromRDB`");
     return false;
   }
   return true;
-}
-
-int RdbController::getVarTypeFromRDB(const string &pid) {
-  // TODO: checkUniqueVarNameFromRDB와 통합
-  try {
-    short var_type;
-
-    soci::row result;
-    soci::session db_session(RdbController::pool());
-    soci::statement st(db_session);
-
-    if (pid.size() > 45) {
-      st = (db_session.prepare << "SELECT var_type from contract_scope WHERE pid = :pid", soci::use(pid, "pid"), soci::into(result));
-    } else {
-      st = (db_session.prepare << "SELECT var_type from user_scope WHERE pid = :pid", soci::use(pid, "pid"), soci::into(result));
-    }
-    st.execute(true);
-
-    result >> var_type;
-
-    return var_type;
-  } catch (soci::mysql_soci_error const &e) {
-    logger::ERROR("MySQL error: {}", e.what());
-    return -1;
-  } catch (...) {
-    logger::ERROR("Unexpected error at `getVarTypeFromRDB`");
-    return -1;
-  }
 }
 
 vector<user_ledger_type> RdbController::getAllUserLedger() {
