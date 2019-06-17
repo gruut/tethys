@@ -171,13 +171,13 @@ private:
     string begin_str, end_str;
     switch (pem_type) {
     case MsgEntryType::PEM: {
-      begin_str = "-----BEGIN CERTIFICATE-----";
-      end_str = "-----END CERTIFICATE-----";
+      begin_str = "-----BEGIN CERTIFICATE-----\n";
+      end_str = "\n-----END CERTIFICATE-----";
       break;
     }
     case MsgEntryType::ENC_PRIVATE_PEM: {
-      begin_str = "-----BEGIN ENCRYPTED PRIVATE KEY-----";
-      end_str = "-----END ENCRYPTED PRIVATE KEY-----";
+      begin_str = "-----BEGIN ENCRYPTED PRIVATE KEY-----\n";
+      end_str = "\n-----END ENCRYPTED PRIVATE KEY-----";
       break;
     }
     default: {
@@ -190,9 +190,17 @@ private:
       logger::ERROR("[MVAL] Error on PEM");
       return false;
     }
-    auto content_len = pem.length() - begin_str.length() - end_str.length();
+    auto content_len = found2 - begin_str.length();
     auto content = pem.substr(begin_str.length(), content_len);
-    return validateEntry(MsgEntryType::BASE64, content);
+
+    string content_without_linebreak;
+
+    vector<string> lines;
+    boost::iter_split(lines, content, boost::algorithm::first_finder("\n"));
+    for (auto &line : lines)
+      content_without_linebreak += line;
+
+    return validateEntry(MsgEntryType::BASE64, content_without_linebreak);
   }
 };
 
