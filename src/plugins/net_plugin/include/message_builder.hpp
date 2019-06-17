@@ -1,9 +1,9 @@
 #pragma once
 
 #include "../../../../lib/appbase/include/application.hpp"
+#include "../../../../lib/json/include/json.hpp"
 #include "../../../../lib/tethys-utils/src/hmac_key_maker.hpp"
 #include "../../../../lib/tethys-utils/src/time_util.hpp"
-#include "../../../../lib/json/include/json.hpp"
 #include "../../channel_interface/include/channel_interface.hpp"
 #include "../config/include/network_config.hpp"
 #include "msg_schema.hpp"
@@ -64,7 +64,7 @@ public:
     nlohmann::json msg_body;
 
     msg_body["time"] = TimeUtil::now();
-    msg_body["user"] = b58_recv_id;
+    msg_body["merger"] = TypeConverter::encodeBase<58>(app().getId());
     msg_body["val"] = true;
 
     msg_accept.type = MessageType::MSG_ACCEPT;
