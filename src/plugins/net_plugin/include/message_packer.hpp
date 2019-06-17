@@ -25,9 +25,7 @@ public:
 
 private:
   static string pack(OutNetMsg &out_msg) {
-    string json_dump = out_msg.body.dump();
-
-    auto vec_body = nlohmann::json::to_cbor(json_dump);
+    auto vec_body = nlohmann::json::to_cbor(out_msg.body);
     string serialized_body(vec_body.begin(), vec_body.end());
     string header = makeHeader(serialized_body.size(), out_msg.type, SerializationAlgorithmType::CBOR);
 

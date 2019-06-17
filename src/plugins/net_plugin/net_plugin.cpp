@@ -380,10 +380,8 @@ public:
 
     switch (control_type) {
     case ControlType::LOGIN: {
-      if (!app().isUserSignedIn()) {
-        app().completeUserSignedIn();
-        user_pool_manager->setSelfKeyInfo(control_info);
-      }
+      user_pool_manager->setSelfKeyInfo(control_info);
+
       break;
     }
     case ControlType::LOAD_CHAIN: {
