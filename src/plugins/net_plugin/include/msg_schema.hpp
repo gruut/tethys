@@ -480,7 +480,7 @@ static SchemaMap schema_map = {{MessageType::MSG_PING,
     "time": {
       "type": "string"
     },
-     "sn": {
+     "un": {
       "type": "string"
     },
     "dh": {
@@ -520,7 +520,7 @@ static SchemaMap schema_map = {{MessageType::MSG_PING,
   },
   "required": [
     "time",
-    "sn",
+    "un",
     "dh",
     "user"
   ]
