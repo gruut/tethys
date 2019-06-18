@@ -407,9 +407,9 @@ int RdbController::getVarTypeFromRDB(const string &var_owner, const string &var_
 
     // clang-format off
     if(isUserId(var_owner))
-      st = (db_session.prepare << "SELECT var_type from user_scope WHERE var_owner = :var_owner AND var_name = :var_name", soci::use(var_owner, "var_owner"), soci::use(var_name, "var_name"), soci::into(result));
+      st = (db_session.prepare << "SELECT var_type from user_scope WHERE var_owner = :var_owner AND var_name = :var_name AND tag is NULL", soci::use(var_owner, "var_owner"), soci::use(var_name, "var_name"), soci::into(result));
     else if(isContractId(var_owner))
-      st = (db_session.prepare << "SELECT var_type from contract_scope WHERE contract_id = :contract_id AND var_name = :var_name", soci::use(var_owner, "contract_id"), soci::use(var_name, "var_name"), soci::into(result));
+      st = (db_session.prepare << "SELECT var_type from contract_scope WHERE contract_id = :contract_id AND var_name = :var_name AND var_info is NULL", soci::use(var_owner, "contract_id"), soci::use(var_name, "var_name"), soci::into(result));
     // clang-format on
     st.execute(true);
 

@@ -477,16 +477,15 @@ bool Chain::queryCreate(UnresolvedBlock &UR_block, nlohmann::json &option, resul
 }
 
 bool Chain::queryTransfer(UnresolvedBlock &UR_block, nlohmann::json &option, result_query_info_type &result_info) {
-  // TODO: 권한 체크 세부적으로 구현
+  // TODO: authority 검사
   string from = json::get<string>(option, "from").value();
   string to = json::get<string>(option, "to").value();
   string amount = json::get<string>(option, "amount").value();
-  string unit = json::get<string>(option, "unit").value();
-
-  auto pid = json::get<string>(option, "pid");
+  string var_name = json::get<string>(option, "unit").value();
+  auto pid_json = json::get<string>(option, "pid");
   string calculated_pid;
-
-  string tag = json::get<string>(option, "tag").value(); // TODO: var_info도 가능한 것 아닌가?
+  auto tag_json = json::get<string>(option, "tag");
+  string tag;
   int var_type;
 
   // Transfer : from
@@ -495,9 +494,9 @@ bool Chain::queryTransfer(UnresolvedBlock &UR_block, nlohmann::json &option, res
     string cid = result_info.self;
     contract_ledger_type contract_ledger;
 
-    var_type = getVarType(cid, unit, UR_block.block.getHeight(), UR_block.cur_vec_idx);
+    var_type = getVarType(cid, var_name, UR_block.block.getHeight(), UR_block.cur_vec_idx);
 
-    calculated_pid = calculatePid(pid, unit, var_type, from, UR_block.block.getHeight(), UR_block.cur_vec_idx);
+    calculated_pid = calculatePid(var_name, var_type, cid);
 
     contract_ledger_type found = findContractLedgerFromHead(calculated_pid);
 
@@ -527,11 +526,14 @@ bool Chain::queryTransfer(UnresolvedBlock &UR_block, nlohmann::json &option, res
     else if (from == "author")
       uid = result_info.author;
 
-    var_type = getVarType(uid, unit, UR_block.block.getHeight(), UR_block.cur_vec_idx);
+    // TODO: tag가 붙어있는 ledger의 type일 수도 있음. 검증 필요
+    var_type = getVarType(uid, var_name, UR_block.block.getHeight(), UR_block.cur_vec_idx);
 
-    user_ledger_type user_ledger(unit, var_type, uid, tag);
-
-    calculated_pid = calculatePid(pid, unit, var_type, uid, UR_block.block.getHeight(), UR_block.cur_vec_idx);
+    if (tag_json.has_value()) {
+      tag = tag_json.value();
+      calculated_pid = calculatePid(var_name, var_type, uid, tag);
+    } else
+      calculated_pid = calculatePid(var_name, var_type, uid);
 
     user_ledger_type found = findUserLedgerFromHead(calculated_pid);
 
@@ -587,7 +589,7 @@ bool Chain::queryTransfer(UnresolvedBlock &UR_block, nlohmann::json &option, res
 
     int modified_value = stoi(found_ledger.var_val) + stoi(amount);
     user_ledger.var_val = to_string(modified_value);
-    user_ledger.tag = tag;
+    user_ledger.tag = tag_json.value();
 
     UR_block.user_ledger_list[calculated_pid] = user_ledger;
   }
@@ -618,25 +620,45 @@ bool Chain::queryUserScope(UnresolvedBlock &UR_block, nlohmann::json &option, re
 
   var_val = json::get<string>(option, "value").value();
 
-  auto type_json = json::get<string>(option, "type");
-  if (type_json.has_value()) { // type 존재: 새 변수 생성
-    query_type = QueryType::INSERT;
-    var_type = stoi(type_json.value());
-  } else { // type 생략: 기존 변수 수정
-    query_type = QueryType::UPDATE;
-    var_type = getVarType(uid, var_name, UR_block.block.getHeight(), UR_block.cur_vec_idx);
-
-    if (var_type == (int)UniqueCheck::NOT_UNIQUE)
-      return false;
-  }
-
   auto pid_json = json::get<string>(option, "pid");
   auto tag_json = json::get<string>(option, "tag");
-  if (tag_json.has_value()) {
-    tag = tag_json.value();
-    calculated_pid = calculatePid(pid_json, var_name, var_type, uid, tag);
-  } else
-    calculated_pid = calculatePid(pid_json, var_name, var_type, uid, UR_block.block.getHeight(), UR_block.cur_vec_idx);
+  auto type_json = json::get<string>(option, "type");
+
+  if (pid_json.has_value()) {
+
+    if (tag_json.has_value()) {
+      tag = tag_json.value();
+    }
+
+    if (type_json.has_value()) {
+      query_type = QueryType::INSERT;
+      var_type = stoi(type_json.value());
+    } else {
+      query_type = QueryType::UPDATE;
+    }
+
+    calculated_pid = pid_json.value();
+
+  } else { // pid가 존재하지 않으므로, tag가 없는 항목에만 접근할 수 있다
+    if (tag_json.has_value()) {
+      logger::ERROR("To use the tag, the pid must be given.");
+    }
+
+    if (type_json.has_value()) {
+      query_type = QueryType::INSERT;
+      var_type = stoi(type_json.value());
+    } else {
+      query_type = QueryType::UPDATE;
+      var_type = getVarType(uid, var_name, UR_block.block.getHeight(), UR_block.cur_vec_idx);
+
+      if (var_type == (int)UniqueCheck::NOT_UNIQUE) {
+        logger::ERROR("Error in `queryUserScope`, there was several same (var owner, var name).");
+        return false;
+      }
+    }
+
+    calculated_pid = calculatePid(var_name, var_type, uid);
+  }
 
   // TODO: '통화'속성의 변수는 변경 불가능한 조건 검사 시행
 
@@ -671,22 +693,39 @@ bool Chain::queryContractScope(UnresolvedBlock &UR_block, nlohmann::json &option
   cid = json::get<string>(option, "cid").value();
   var_val = json::get<string>(option, "value").value();
 
+  auto pid_json = json::get<string>(option, "pid");
   auto type_json = json::get<string>(option, "type");
-  if (type_json.has_value()) { // type 존재: 새 변수 생성
-    query_type = QueryType::INSERT;
-    var_type = stoi(type_json.value());
-  } else { // type 생략: 기존 변수 수정
-    query_type = QueryType::UPDATE;
-    var_type = getVarType(cid, var_name, UR_block.block.getHeight(), UR_block.cur_vec_idx);
 
-    if (var_type == (int)UniqueCheck::NOT_UNIQUE)
-      return false;
+  if (pid_json.has_value()) {
+    if (type_json.has_value()) {
+      query_type = QueryType::INSERT;
+      var_type = stoi(type_json.value());
+    } else {
+      query_type = QueryType::UPDATE;
+    }
+
+    calculated_pid = pid_json.value();
+
+  } else {
+    if (type_json.has_value()) {
+      query_type = QueryType::INSERT;
+      var_type = stoi(type_json.value());
+    } else {
+      query_type = QueryType::UPDATE;
+      var_type = getVarType(cid, var_name, UR_block.block.getHeight(), UR_block.cur_vec_idx);
+
+      if (var_type == (int)UniqueCheck::NOT_UNIQUE) {
+        logger::ERROR("Error in `queryContractScope`, there was several same (var owner, var name).");
+        return false;
+      }
+    }
+
+    calculated_pid = calculatePid(var_name, var_type, cid);
   }
 
-  auto pid_json = json::get<string>(option, "pid");
-  calculated_pid = calculatePid(pid_json, var_name, var_type, cid, UR_block.block.getHeight(), UR_block.cur_vec_idx);
-
   // TODO: '통화'속성의 변수는 변경 불가능한 조건 검사 시행
+
+  contract_ledger_type contract_ledger;
 
   contract_ledger.var_name = var_name;
   contract_ledger.var_val = var_val;
@@ -697,7 +736,7 @@ bool Chain::queryContractScope(UnresolvedBlock &UR_block, nlohmann::json &option
   contract_ledger.pid = calculated_pid;
   contract_ledger.query_type = query_type;
 
-  UR_block.contract_ledger_list[pid] = contract_ledger;
+  UR_block.contract_ledger_list[calculated_pid] = contract_ledger;
 
   return true;
 }
@@ -740,50 +779,25 @@ bool Chain::queryRunContract(UnresolvedBlock &UR_block, nlohmann::json &option, 
   return true;
 }
 
-string Chain::calculatePid(optional<string> &pid, string &var_name, int var_type, string &var_owner, const block_height_type height,
-                           const int vec_idx) {
+string Chain::calculatePid(string &var_name, int var_type, string &var_owner) {
   string calculated_pid;
-  if (pid.has_value()) {
-    calculated_pid = pid.value();
-  } else {
-    BytesBuilder bytes_builder;
-    bytes_builder.append(var_name);
-    bytes_builder.appendDec(var_type);
-    if (isContractId(var_owner))
-      bytes_builder.append(var_owner);
-    else if (isUserId(var_owner))
-      bytes_builder.appendBase<58>(var_owner);
-    calculated_pid = TypeConverter::bytesToString(Sha256::hash(bytes_builder.getBytes()));
 
-    if (!checkUniqueVarName(var_owner, var_name, height, vec_idx)) {
-      logger::ERROR("Error in `calculatePid`, there was several same (var owner, var name).");
-      calculated_pid.clear();
-    }
-  }
-  return calculated_pid;
-}
+  BytesBuilder bytes_builder;
+  bytes_builder.append(var_name);
+  bytes_builder.appendDec(var_type);
+  if (isContractId(var_owner))
+    bytes_builder.append(var_owner);
+  else if (isUserId(var_owner))
+    bytes_builder.appendBase<58>(var_owner);
+  calculated_pid = TypeConverter::bytesToString(Sha256::hash(bytes_builder.getBytes()));
 
-string Chain::calculatePid(optional<string> &pid, string &var_name, int var_type, string &var_owner, string &tag_varInfo) {
-  string calculated_pid;
-  if (pid.has_value()) {
-    calculated_pid = pid.value();
-  } else {
-    BytesBuilder bytes_builder;
-    bytes_builder.append(var_name);
-    bytes_builder.appendDec(var_type);
-    if (isContractId(var_owner))
-      bytes_builder.append(var_owner);
-    else if (isUserId(var_owner))
-      bytes_builder.appendBase<58>(var_owner);
-    bytes_builder.append(tag_varInfo);
-    calculated_pid = TypeConverter::bytesToString(Sha256::hash(bytes_builder.getBytes()));
-  }
   return calculated_pid;
 }
 
 int Chain::getVarType(const string &var_owner, const string &var_name, const block_height_type height, const int vec_idx) {
-  int var_type = (int)UniqueCheck::NO_VALUE;
+  // TODO: user scope일 경우, 찾은 ledger에 tag가 붙어있으면 안 됨
 
+  int var_type = (int)UniqueCheck::NO_VALUE;
   int pool_deque_idx = height - unresolved_block_pool->getLatestConfirmedHeight() - 1;
   int pool_vec_idx = vec_idx;
 
@@ -794,7 +808,7 @@ int Chain::getVarType(const string &var_owner, const string &var_name, const blo
     while (pool_deque_idx >= 0) {
       current_user_ledgers = unresolved_block_pool->getBlock(pool_deque_idx, pool_vec_idx).user_ledger_list;
       for (auto &each_ledger : current_user_ledgers) {
-        if ((each_ledger.second.uid == var_owner) && (each_ledger.second.var_name == var_name)) {
+        if ((each_ledger.second.uid == var_owner) && (each_ledger.second.var_name == var_name) && (each_ledger.second.tag.empty())) {
           if ((var_type != (int)UniqueCheck::NO_VALUE) && (var_type != each_ledger.second.var_type)) {
             return (int)UniqueCheck::NOT_UNIQUE; // var_type가 초기값이 아닌데 새로운 값이 오면 unique하지 않다는 것
           }
@@ -810,8 +824,8 @@ int Chain::getVarType(const string &var_owner, const string &var_name, const blo
     // unresolved block pool의 연결된 앞 블록들에서 검색
     while (pool_deque_idx >= 0) {
       current_contract_ledgers = unresolved_block_pool->getBlock(pool_deque_idx, pool_vec_idx).contract_ledger_list;
-      for (auto &each_ledger : current_contract_ledgers) {
-        if ((each_ledger.second.cid == var_owner) && (each_ledger.second.var_name == var_name)) {
+      for (auto &each_ledger : current_contract_ledgers) {  // TODO: var_info가 empty인걸 찾는게 맞는지 확인
+        if ((each_ledger.second.cid == var_owner) && (each_ledger.second.var_name == var_name) && (each_ledger.second.var_info.empty())) {
           if ((var_type != (int)UniqueCheck::NO_VALUE) && (var_type != each_ledger.second.var_type)) {
             return (int)UniqueCheck::NOT_UNIQUE; // var_type가 초기값이 아닌데 새로운 값이 오면 unique하지 않다는 것
           }

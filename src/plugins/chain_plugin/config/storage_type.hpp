@@ -169,7 +169,7 @@ using user_ledger_type = struct UserLedger {
   bool is_empty{false};
 
   UserLedger() = default;
-  UserLedger(string var_name_, int var_type_, string uid_, string tag_) : var_name(var_name_), var_type(var_type_), uid(uid_), tag(tag_) {
+  UserLedger(string var_name_, int var_type_, base58_type uid_, string tag_) : var_name(var_name_), var_type(var_type_), uid(uid_), tag(tag_) {
     BytesBuilder bytes_builder;
     bytes_builder.append(var_name);
     bytes_builder.appendDec(var_type);
