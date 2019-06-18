@@ -260,20 +260,18 @@ private:
 void PushService::proceed() {
   switch (m_receive_status) {
   case RpcCallStatus::CREATE: {
-    m_receive_status = RpcCallStatus::READ;
+    m_receive_status = RpcCallStatus::PROCESS;
     m_context.AsyncNotifyWhenDone(this);
     m_service->RequestPushService(&m_context, &m_request, &m_stream, m_completion_queue, m_completion_queue, this);
   } break;
 
-  case RpcCallStatus::READ: {
-    new PushService(m_service, m_completion_queue, m_user_conn_table, m_user_pool_manager);
-    m_receive_status = RpcCallStatus::PROCESS;
-    m_user_id_b58 = m_request.sender();
-  } break;
-
   case RpcCallStatus::PROCESS: {
+    new PushService(m_service, m_completion_queue, m_user_conn_table, m_user_pool_manager);
     m_receive_status = RpcCallStatus::WAIT;
+    m_user_id_b58 = TypeConverter::encodeBase<58>(m_request.sender());
     m_user_conn_table->setRpcInfo(m_user_id_b58, &m_stream, this);
+
+    logger::INFO("User/Signer Join. ID : {}", m_user_id_b58);
 
   } break;
 
@@ -282,6 +280,8 @@ void PushService::proceed() {
       m_user_conn_table->eraseRpcInfo(m_user_id_b58);
       m_user_pool_manager->removeUser(m_user_id_b58);
       m_user_pool_manager->removeTempUser(m_user_id_b58);
+
+      logger::INFO("Disconnected with User/Signer ID: {}", m_user_id_b58);
 
       delete this;
     }
