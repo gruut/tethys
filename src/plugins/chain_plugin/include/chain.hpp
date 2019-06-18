@@ -94,6 +94,9 @@ public:
   search_result_type findUserLedgerFromPoint(const string &pid, block_height_type height, int vec_idx);
   search_result_type findContractLedgerFromPoint(const string &pid, block_height_type height, int vec_idx);
 
+  bool isUserId(const string &id);
+  bool isContractId(const string &id);
+
   // State tree
 private:
   StateTree m_us_tree; // user scope state tree

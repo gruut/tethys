@@ -1,6 +1,7 @@
 #include "include/chain.hpp"
 #include "../../../lib/appbase/include/application.hpp"
 #include "../../../lib/tethys-utils/src/ags.hpp"
+#include <regex>
 
 namespace tethys {
 
@@ -174,7 +175,7 @@ block_height_type Chain::getLatestResolvedHeight() {
   const string condition = "ORDER BY block_height DESC LIMIT 1";
   auto block = rdb_controller->getBlock(condition);
 
-  if(block.has_value()) {
+  if (block.has_value()) {
     return block.value().getHeight();
   } else {
     return 0;
@@ -555,7 +556,7 @@ bool Chain::queryTransfer(UnresolvedBlock &UR_block, nlohmann::json &option, res
   }
 
   // Transfer : to
-  if (to.size() > 45) {
+  if (isContractId(to)) {
     // to : contract
     contract_ledger_type contract_ledger;
     contract_ledger_type found_ledger = findContractLedgerFromHead(calculated_pid);
@@ -571,7 +572,7 @@ bool Chain::queryTransfer(UnresolvedBlock &UR_block, nlohmann::json &option, res
     contract_ledger.var_info = from;
 
     UR_block.contract_ledger_list[calculated_pid] = contract_ledger;
-  } else {
+  } else if (isUserId(to)) {
     // to : user
     user_ledger_type user_ledger;
     user_ledger_type found_ledger = findUserLedgerFromHead(calculated_pid);
@@ -738,9 +739,9 @@ string Chain::calculatePid(optional<string> &pid, string &var_name, int var_type
     BytesBuilder bytes_builder;
     bytes_builder.append(var_name);
     bytes_builder.appendDec(var_type);
-    if (var_owner.size() > 45)
+    if (isContractId(var_owner))
       bytes_builder.append(var_owner);
-    else
+    else if (isUserId(var_owner))
       bytes_builder.appendBase<58>(var_owner);
     calculated_pid = TypeConverter::bytesToString(Sha256::hash(bytes_builder.getBytes()));
 
@@ -760,9 +761,9 @@ string Chain::calculatePid(optional<string> &pid, string &var_name, int var_type
     BytesBuilder bytes_builder;
     bytes_builder.append(var_name);
     bytes_builder.appendDec(var_type);
-    if (var_owner.size() > 45)
+    if (isContractId(var_owner))
       bytes_builder.append(var_owner);
-    else
+    else if (isUserId(var_owner))
       bytes_builder.appendBase<58>(var_owner);
     bytes_builder.append(tag_varInfo);
     calculated_pid = TypeConverter::bytesToString(Sha256::hash(bytes_builder.getBytes()));
@@ -776,44 +777,7 @@ int Chain::getVarType(const string &var_owner, const string &var_name, const blo
   int pool_deque_idx = height - unresolved_block_pool->getLatestConfirmedHeight() - 1;
   int pool_vec_idx = vec_idx;
 
-  if (var_owner.size() > 45) {
-    map<string, contract_ledger_type> current_contract_ledgers;
-
-    // unresolved block pool의 연결된 앞 블록들에서 검색
-    while (pool_deque_idx >= 0) {
-      current_contract_ledgers = unresolved_block_pool->getBlock(pool_deque_idx, pool_vec_idx).contract_ledger_list;
-      for (auto &each_ledger : current_contract_ledgers) {
-        if ((each_ledger.second.cid == var_owner) && (each_ledger.second.var_name == var_name)) {
-          if ((var_type != (int)UniqueCheck::NO_VALUE) && (var_type != each_ledger.second.var_type)) {
-            return (int)UniqueCheck::NOT_UNIQUE; // var_type가 초기값이 아닌데 새로운 값이 오면 unique하지 않다는 것
-          }
-          var_type = each_ledger.second.var_type;
-        }
-      }
-      pool_vec_idx = unresolved_block_pool->getBlock(pool_deque_idx, pool_vec_idx).prev_vec_idx;
-      --pool_deque_idx;
-    }
-
-    // rdb에서 검색
-    int rdb_var_type = rdb_controller->getVarTypeFromRDB(var_owner, var_name);
-
-    if (rdb_var_type == (int)UniqueCheck::NOT_UNIQUE)
-      return (int)UniqueCheck::NOT_UNIQUE;
-
-    if ((var_type == (int)UniqueCheck::NO_VALUE) && (rdb_var_type == (int)UniqueCheck::NO_VALUE)) {
-      return (int)UniqueCheck::NO_VALUE;
-    } else if ((var_type >= 0) && (rdb_var_type >= 0)) { // pool에서도, rdb에서도 값이 하나씩 발견
-      if (var_type == rdb_var_type)
-        return var_type;
-      else
-        return (int)UniqueCheck::NOT_UNIQUE;
-    } else { // pool과 rdb에서 하나는 NO_VALUE, 하나는 하나의 값
-      if (var_type == (int)UniqueCheck::NO_VALUE)
-        return rdb_var_type;
-      else if (rdb_var_type == (int)UniqueCheck::NO_VALUE)
-        return var_type;
-    }
-  } else {
+  if (isUserId(var_owner)) {
     map<string, user_ledger_type> current_user_ledgers;
 
     // unresolved block pool의 연결된 앞 블록들에서 검색
@@ -830,27 +794,45 @@ int Chain::getVarType(const string &var_owner, const string &var_name, const blo
       pool_vec_idx = unresolved_block_pool->getBlock(pool_deque_idx, pool_vec_idx).prev_vec_idx;
       --pool_deque_idx;
     }
+  } else if (isContractId(var_owner)) {
+    map<string, contract_ledger_type> current_contract_ledgers;
 
-    // rdb에서 검색
-    int rdb_var_type = rdb_controller->getVarTypeFromRDB(var_owner, var_name);
-
-    if (rdb_var_type == (int)UniqueCheck::NOT_UNIQUE)
-      return (int)UniqueCheck::NOT_UNIQUE;
-
-    if ((var_type == (int)UniqueCheck::NO_VALUE) && (rdb_var_type == (int)UniqueCheck::NO_VALUE)) {
-      return (int)UniqueCheck::NO_VALUE;
-    } else if ((var_type >= 0) && (rdb_var_type >= 0)) { // pool에서도, rdb에서도 값이 하나씩 발견
-      if (var_type == rdb_var_type)
-        return var_type;
-      else
-        return (int)UniqueCheck::NOT_UNIQUE;
-    } else { // pool과 rdb에서 하나는 NO_VALUE, 하나는 하나의 값
-      if (var_type == (int)UniqueCheck::NO_VALUE)
-        return rdb_var_type;
-      else if (rdb_var_type == (int)UniqueCheck::NO_VALUE)
-        return var_type;
+    // unresolved block pool의 연결된 앞 블록들에서 검색
+    while (pool_deque_idx >= 0) {
+      current_contract_ledgers = unresolved_block_pool->getBlock(pool_deque_idx, pool_vec_idx).contract_ledger_list;
+      for (auto &each_ledger : current_contract_ledgers) {
+        if ((each_ledger.second.cid == var_owner) && (each_ledger.second.var_name == var_name)) {
+          if ((var_type != (int)UniqueCheck::NO_VALUE) && (var_type != each_ledger.second.var_type)) {
+            return (int)UniqueCheck::NOT_UNIQUE; // var_type가 초기값이 아닌데 새로운 값이 오면 unique하지 않다는 것
+          }
+          var_type = each_ledger.second.var_type;
+        }
+      }
+      pool_vec_idx = unresolved_block_pool->getBlock(pool_deque_idx, pool_vec_idx).prev_vec_idx;
+      --pool_deque_idx;
     }
   }
+
+  // rdb에서 검색
+  int rdb_var_type = rdb_controller->getVarTypeFromRDB(var_owner, var_name);
+
+  if (rdb_var_type == (int)UniqueCheck::NOT_UNIQUE)
+    return (int)UniqueCheck::NOT_UNIQUE;
+
+  if ((var_type == (int)UniqueCheck::NO_VALUE) && (rdb_var_type == (int)UniqueCheck::NO_VALUE)) {
+    return (int)UniqueCheck::NO_VALUE;
+  } else if ((var_type >= 0) && (rdb_var_type >= 0)) { // pool에서도, rdb에서도 값이 하나씩 발견
+    if (var_type == rdb_var_type)
+      return var_type;
+    else
+      return (int)UniqueCheck::NOT_UNIQUE;
+  } else { // pool과 rdb에서 하나는 NO_VALUE, 하나는 하나의 값
+    if (var_type == (int)UniqueCheck::NO_VALUE)
+      return rdb_var_type;
+    else if (rdb_var_type == (int)UniqueCheck::NO_VALUE)
+      return var_type;
+  }
+
   logger::ERROR("Something error in `getVarType`. Cannot reach here.");
 }
 
@@ -945,6 +927,24 @@ search_result_type Chain::findContractLedgerFromPoint(const string &pid, block_h
       return search_result;
     }
   }
+}
+
+bool Chain::isUserId(const string &id) {
+  const auto BASE58_REGEX = "^[A-HJ-NP-Za-km-z1-9]*$";
+  regex rgx(BASE58_REGEX);
+  if (id.size() != static_cast<int>(44) || !regex_match(id, rgx)) {
+    logger::ERROR("Invalid user ID.");
+    return false;
+  }
+  return true;
+}
+
+bool Chain::isContractId(const string &id) {
+  // TODO: 검증 추가
+  if (id.size() > 45)
+    return true;
+  else
+    return false;
 }
 
 // State Tree

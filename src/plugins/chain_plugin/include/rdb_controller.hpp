@@ -23,6 +23,8 @@ private:
   soci::connection_pool m_db_pool;
 
   Block rowToBlock(const soci::row &r);
+  bool isUserId(const string &id);
+  bool isContractId(const string &id);
 
 public:
   RdbController(string_view dbms, string_view table_name, string_view db_user_id, string_view db_password);
