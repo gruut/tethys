@@ -658,36 +658,46 @@ bool Chain::queryUserScope(UnresolvedBlock &UR_block, nlohmann::json &option, re
 }
 
 bool Chain::queryContractScope(UnresolvedBlock &UR_block, nlohmann::json &option, result_query_info_type &result_info) {
-  contract_ledger_type contract_ledger;
+  // TODO: friend나 self가 아니면 변수를 업데이트할 수 없음
+  string var_name;
+  string cid;
+  string var_val;
+  string calculated_pid;
+  string var_info;
+  int var_type;
+  QueryType query_type;
 
-  string var_name = json::get<string>(option, "name").value();
-  string var_value = json::get<string>(option, "value").value();
-  int var_type; // TODO: 세부적인 값 설정 필요
-  contract_id_type cid = json::get<string>(option, "cid").value();
-  string key;
-  auto pid = json::get<string>(option, "pid");
-  if (pid.has_value()) {
-    key = pid.value();
-  } else {
-    // TODO: var_name이 unique한지 검증하는 함수 추가
-    //  var_name이 없으면 insert, 1개면 update, 2개 이상이면 false
-    //  insert일 경우 var_type이 존재, 다른 경우 var_type가 생략
-    var_type = -1;
-  }
+  var_name = json::get<string>(option, "name").value();
+  cid = json::get<string>(option, "cid").value();
+  var_val = json::get<string>(option, "value").value();
+
   auto type_json = json::get<string>(option, "type");
-  if (type_json.has_value()) {
-    contract_ledger.query_type = QueryType::INSERT;
+  if (type_json.has_value()) { // type 존재: 새 변수 생성
+    query_type = QueryType::INSERT;
     var_type = stoi(type_json.value());
-  } else
-    contract_ledger.query_type = QueryType::UPDATE;
+  } else { // type 생략: 기존 변수 수정
+    query_type = QueryType::UPDATE;
+    var_type = getVarType(cid, var_name, UR_block.block.getHeight(), UR_block.cur_vec_idx);
 
-  calculatePid(pid, var_name, var_type, cid, UR_block.block.getHeight(), UR_block.cur_vec_idx);
+    if (var_type == (int)UniqueCheck::NOT_UNIQUE)
+      return false;
+  }
+
+  auto pid_json = json::get<string>(option, "pid");
+  calculated_pid = calculatePid(pid_json, var_name, var_type, cid, UR_block.block.getHeight(), UR_block.cur_vec_idx);
 
   // TODO: '통화'속성의 변수는 변경 불가능한 조건 검사 시행
 
-  contract_ledger.var_val = var_value;
+  contract_ledger.var_name = var_name;
+  contract_ledger.var_val = var_val;
+  contract_ledger.var_type = var_type;
+  contract_ledger.cid = cid;
+  contract_ledger.up_time = TimeUtil::nowBigInt(); // TODO: DB에 저장되는 시간인지, mem_ledger에 들어오는 시간인지
+  contract_ledger.up_block = UR_block.block.getHeight();
+  contract_ledger.pid = calculated_pid;
+  contract_ledger.query_type = query_type;
 
-  UR_block.contract_ledger_list[key] = contract_ledger;
+  UR_block.contract_ledger_list[pid] = contract_ledger;
 
   return true;
 }
