@@ -81,8 +81,7 @@ public:
   bool queryRunContract(UnresolvedBlock &UR_block, nlohmann::json &option, result_query_info_type &result_info);
   string calculatePid(optional<string> &pid, string &var_name, int var_type, string &var_owner, const block_height_type height,
                       const int vec_idx);
-  string calculatePid(optional<string> &pid, string &var_name, int var_type, string &var_owner, string &tag_varInfo,
-                      const block_height_type height, const int vec_idx);
+  string calculatePid(optional<string> &pid, string &var_name, int var_type, string &var_owner, string &tag_varInfo);
   int getVarType(const string &var_owner, const string &var_name, const block_height_type height, const int vec_idx);
   bool checkUniqueVarName(const string &var_owner, const string &var_name, const block_height_type height, const int vec_idx);
 

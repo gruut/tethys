@@ -629,7 +629,7 @@ bool Chain::queryUserScope(UnresolvedBlock &UR_block, nlohmann::json &option, re
   auto tag_json = json::get<string>(option, "tag");
   if (tag_json.has_value()) {
     tag = tag_json.value();
-    calculated_pid = calculatePid(pid_json, var_name, var_type, uid, tag, UR_block.block.getHeight(), UR_block.cur_vec_idx);
+    calculated_pid = calculatePid(pid_json, var_name, var_type, uid, tag);
   } else
     calculated_pid = calculatePid(pid_json, var_name, var_type, uid, UR_block.block.getHeight(), UR_block.cur_vec_idx);
 
@@ -742,13 +742,13 @@ string Chain::calculatePid(optional<string> &pid, string &var_name, int var_type
 
     if (!checkUniqueVarName(var_owner, var_name, height, vec_idx)) {
       logger::ERROR("Error in `calculatePid`, there was several same (var owner, var name).");
+      calculated_pid.clear();
     }
   }
   return calculated_pid;
 }
 
-string Chain::calculatePid(optional<string> &pid, string &var_name, int var_type, string &var_owner, string &tag_varInfo,
-                           const block_height_type height, const int vec_idx) {
+string Chain::calculatePid(optional<string> &pid, string &var_name, int var_type, string &var_owner, string &tag_varInfo) {
   string calculated_pid;
   if (pid.has_value()) {
     calculated_pid = pid.value();
@@ -762,10 +762,6 @@ string Chain::calculatePid(optional<string> &pid, string &var_name, int var_type
       bytes_builder.appendBase<58>(var_owner);
     bytes_builder.append(tag_varInfo);
     calculated_pid = TypeConverter::bytesToString(Sha256::hash(bytes_builder.getBytes()));
-
-    if (!checkUniqueVarName(var_owner, var_name, height, vec_idx)) {
-      logger::ERROR("Error in `calculatePid`, there was several same (var owner, var name).");
-    }
   }
   return calculated_pid;
 }
@@ -855,8 +851,11 @@ int Chain::getVarType(const string &var_owner, const string &var_name, const blo
 }
 
 bool Chain::checkUniqueVarName(const string &var_owner, const string &var_name, const block_height_type height, const int vec_idx) {
-  // 위 함수와 같은 동작을 하는데, 함수 명에서 혼동이 있을 수 있을 것 같아서 별개로 선언
-  return getVarType(var_owner, var_name, height, vec_idx);
+  int result = getVarType(var_owner, var_name, height, vec_idx);
+  if (result == (int)UniqueCheck::NOT_UNIQUE)
+    return false;
+  else
+    return true;
 }
 
 block_push_result_type Chain::pushBlock(Block &block) {

@@ -431,11 +431,6 @@ int RdbController::getVarTypeFromRDB(const string &var_owner, const string &var_
   }
 }
 
-int RdbController::checkUniqueVarNameFromRDB(const string &var_owner, const string &var_name) {
-  // 위 함수와 같은 동작을 하는데, 함수 명에서 혼동이 있을 수 있을 것 같아서 별개로 선언
-  return getVarTypeFromRDB(var_owner, var_name);
-}
-
 bool RdbController::findUserScopeFromRDB(const string &pid, user_ledger_type &user_ledger) {
   try {
     string var_name, var_value, var_owner, tag, pid;

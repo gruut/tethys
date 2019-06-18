@@ -43,7 +43,6 @@ public:
   //  bool queryRunContract(std::vector<LedgerRecord> &mem_ledger, nlohmann::json &option, result_query_info_type &result_info);
 
   int getVarTypeFromRDB(const string &var_owner, const string &var_name);
-  int checkUniqueVarNameFromRDB(const string &var_owner, const string &var_name);
   bool findUserScopeFromRDB(const string &pid, user_ledger_type &user_ledger);
   bool findContractScopeFromRDB(const string &pid, contract_ledger_type &contract_ledger);
 
