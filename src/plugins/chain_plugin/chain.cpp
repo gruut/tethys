@@ -231,6 +231,10 @@ string Chain::getValueByKey(string what, const string &base_keys) {
 void Chain::restorePool() {
   // TODO: 예외처리
   string serialized_id_array = kv_controller->loadBlockIds();
+  if (serialized_id_array.empty()) {
+    return;
+  }
+
   nlohmann::json id_array_json = nlohmann::json::from_cbor(serialized_id_array);
   for (auto &each_block_id : id_array_json) {
     base58_type block_id = each_block_id;
