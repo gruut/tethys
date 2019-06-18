@@ -40,6 +40,8 @@ struct DataType {
   inline static const string SELF_INFO = "self_info";
 };
 
+enum class UniqueCheck : int { NO_VALUE = -1, NOT_UNIQUE = -2 };
+
 using string = std::string;
 using bytes = std::vector<uint8_t>;
 using hash_t = std::vector<uint8_t>;

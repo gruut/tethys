@@ -397,20 +397,41 @@ string RdbController::getUserCert(const base58_type &user_id) {
 //  return true;
 //}
 
-bool RdbController::checkUnique(const string &pid) {
-  soci::row result;
-  soci::session db_session(RdbController::pool());
-  soci::statement st = (db_session.prepare << "SELECT * from user_scope WHERE pid = :pid", soci::use(pid, "pid"), soci::into(result));
-  st.execute(true);
+int RdbController::getVarTypeFromRDB(const string &var_owner, const string &var_name) {
+  try {
+    short var_type = 0;
+    soci::row result;
+    soci::session db_session(RdbController::pool());
+    soci::statement st(db_session);
 
-  int num_rows = (int)st.get_affected_rows();
-  if (num_rows == 1)
-    return true;
-  else
-    return false;
+    // clang-format off
+    if(var_owner.size() > 45)
+      st = (db_session.prepare << "SELECT var_type from user_scope WHERE var_owner = :var_owner AND var_name = :var_name", soci::use(var_owner, "var_owner"), soci::use(var_name, "var_name"), soci::into(result));
+    else
+      st = (db_session.prepare << "SELECT var_type from contract_scope WHERE contract_id = :contract_id AND var_name = :var_name", soci::use(var_owner, "contract_id"), soci::use(var_name, "var_name"), soci::into(result));
+    // clang-format on
+    st.execute(true);
+
+    result >> var_type;
+
+    int num_rows = (int)st.get_affected_rows();
+    if (num_rows == 1)
+      return var_type;
+    else if (num_rows == 0)
+      return (int)UniqueCheck::NO_VALUE;
+    else
+      return (int)UniqueCheck::NOT_UNIQUE;
+
+  } catch (soci::mysql_soci_error const &e) {
+    logger::ERROR("MySQL error: {}", e.what());
+    return -3;
+  } catch (...) {
+    logger::ERROR("Unexpected error at `getVarTypeFromRDB`");
+    return -3;
+  }
 }
 
-bool RdbController::findUserFromRDB(string pid, user_ledger_type &user_ledger) {
+bool RdbController::findUserScopeFromRDB(const string &pid, user_ledger_type &user_ledger) {
   try {
     string var_name, var_value, var_owner, tag, pid;
     short var_type;
@@ -438,13 +459,13 @@ bool RdbController::findUserFromRDB(string pid, user_ledger_type &user_ledger) {
     logger::ERROR("MySQL error: {}", e.what());
     return false;
   } catch (...) {
-    logger::ERROR("Unexpected error at `queryUserScope`");
+    logger::ERROR("Unexpected error at `findUserScopeFromRDB`");
     return false;
   }
   return true;
 }
 
-bool RdbController::findContractFromRDB(string pid, tethys::contract_ledger_type &contract_ledger) {
+bool RdbController::findContractScopeFromRDB(const string &pid, tethys::contract_ledger_type &contract_ledger) {
   try {
     string var_name, var_value, contract_id, var_info, pid;
     short var_type;
@@ -472,7 +493,7 @@ bool RdbController::findContractFromRDB(string pid, tethys::contract_ledger_type
     logger::ERROR("MySQL error: {}", e.what());
     return false;
   } catch (...) {
-    logger::ERROR("Unexpected error at `queryUserScope`");
+    logger::ERROR("Unexpected error at `findContractScopeFromRDB`");
     return false;
   }
   return true;
@@ -552,35 +573,6 @@ vector<contract_ledger_type> RdbController::getAllContractLedger() {
     return contract_ledger_list;
   }
   return contract_ledger_list;
-}
-
-int RdbController::getVarType(string &key) {
-  try {
-    // TODO: pid가 생략됐을 때의 검색도 구현해야 함
-    string pid = key;
-    short var_type;
-
-    soci::row result;
-    soci::session db_session(RdbController::pool());
-    soci::statement st(db_session);
-
-    if (key.size() > 45) {
-      st = (db_session.prepare << "SELECT var_type from contract_scope WHERE pid = :pid", soci::use(pid, "pid"), soci::into(result));
-    } else {
-      st = (db_session.prepare << "SELECT var_type from user_scope WHERE pid = :pid", soci::use(pid, "pid"), soci::into(result));
-    }
-    st.execute(true);
-
-    result >> var_type;
-
-    return var_type;
-  } catch (soci::mysql_soci_error const &e) {
-    logger::ERROR("MySQL error: {}", e.what());
-    return -1;
-  } catch (...) {
-    logger::ERROR("Unexpected error at `getVarType`");
-    return -1;
-  }
 }
 
 } // namespace tethys

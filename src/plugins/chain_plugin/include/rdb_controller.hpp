@@ -39,15 +39,15 @@ public:
   optional<Block> getBlock(const string &condition);
   string getUserCert(const base58_type &user_id);
 
-//  bool queryRunQuery(std::vector<LedgerRecord> &mem_ledger, nlohmann::json &option, result_query_info_type &result_info);
-//  bool queryRunContract(std::vector<LedgerRecord> &mem_ledger, nlohmann::json &option, result_query_info_type &result_info);
+  //  bool queryRunQuery(std::vector<LedgerRecord> &mem_ledger, nlohmann::json &option, result_query_info_type &result_info);
+  //  bool queryRunContract(std::vector<LedgerRecord> &mem_ledger, nlohmann::json &option, result_query_info_type &result_info);
 
-  bool checkUnique(const string &pid);
-  bool findUserFromRDB(string pid, user_ledger_type &user_ledger);
-  bool findContractFromRDB(string pid, contract_ledger_type &contract_ledger);
+  int getVarTypeFromRDB(const string &var_owner, const string &var_name);
+  bool findUserScopeFromRDB(const string &pid, user_ledger_type &user_ledger);
+  bool findContractScopeFromRDB(const string &pid, contract_ledger_type &contract_ledger);
+
   vector<user_ledger_type> getAllUserLedger();
   vector<contract_ledger_type> getAllContractLedger();
-  int getVarType(string &key);
 };
 } // namespace tethys
 #endif
