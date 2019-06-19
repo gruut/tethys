@@ -7,7 +7,6 @@
 #include <map>
 #include <string>
 #include <vector>
-#include "../../../contract/include/types.hpp"
 
 using namespace std;
 
@@ -46,6 +45,7 @@ using string = std::string;
 using bytes = std::vector<uint8_t>;
 using hash_t = std::vector<uint8_t>;
 using timestamp_t = uint64_t;
+using block_height_type = uint64_t;
 
 constexpr auto TRANSACTION_ID_TYPE_SIZE = 32;
 constexpr auto ALPHANUMERIC_ID_TYPE_SIZE = 8;
@@ -169,7 +169,8 @@ using user_ledger_type = struct UserLedger {
   bool is_empty{false};
 
   UserLedger() = default;
-  UserLedger(string var_name_, int var_type_, string uid_, string tag_) : var_name(var_name_), var_type(var_type_), uid(uid_), tag(tag_) {
+  UserLedger(string var_name_, int var_type_, base58_type uid_, string tag_)
+      : var_name(var_name_), var_type(var_type_), uid(uid_), tag(tag_) {
     BytesBuilder bytes_builder;
     bytes_builder.append(var_name);
     bytes_builder.appendDec(var_type);

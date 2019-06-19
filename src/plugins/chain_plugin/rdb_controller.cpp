@@ -1,6 +1,7 @@
 #include "include/rdb_controller.hpp"
 #include "../../../lib/tethys-utils/src/ags.hpp"
 #include "mysql/soci-mysql.h"
+#include <regex>
 
 using namespace std;
 
@@ -405,10 +406,10 @@ int RdbController::getVarTypeFromRDB(const string &var_owner, const string &var_
     soci::statement st(db_session);
 
     // clang-format off
-    if(var_owner.size() > 45)
-      st = (db_session.prepare << "SELECT var_type from user_scope WHERE var_owner = :var_owner AND var_name = :var_name", soci::use(var_owner, "var_owner"), soci::use(var_name, "var_name"), soci::into(result));
-    else
-      st = (db_session.prepare << "SELECT var_type from contract_scope WHERE contract_id = :contract_id AND var_name = :var_name", soci::use(var_owner, "contract_id"), soci::use(var_name, "var_name"), soci::into(result));
+    if(isUserId(var_owner))
+      st = (db_session.prepare << "SELECT var_type from user_scope WHERE var_owner = :var_owner AND var_name = :var_name AND tag is NULL", soci::use(var_owner, "var_owner"), soci::use(var_name, "var_name"), soci::into(result));
+    else if(isContractId(var_owner))
+      st = (db_session.prepare << "SELECT var_type from contract_scope WHERE contract_id = :contract_id AND var_name = :var_name AND var_info is NULL", soci::use(var_owner, "contract_id"), soci::use(var_name, "var_name"), soci::into(result));
     // clang-format on
     st.execute(true);
 
@@ -573,6 +574,24 @@ vector<contract_ledger_type> RdbController::getAllContractLedger() {
     return contract_ledger_list;
   }
   return contract_ledger_list;
+}
+
+bool RdbController::isUserId(const string &id) {
+  const auto BASE58_REGEX = "^[A-HJ-NP-Za-km-z1-9]*$";
+  regex rgx(BASE58_REGEX);
+  if (id.size() != static_cast<int>(44) || !regex_match(id, rgx)) {
+    logger::ERROR("Invalid user ID.");
+    return false;
+  }
+  return true;
+}
+
+bool RdbController::isContractId(const string &id) {
+  // TODO: 검증 추가
+  if (id.size() > 45)
+    return true;
+  else
+    return false;
 }
 
 } // namespace tethys
