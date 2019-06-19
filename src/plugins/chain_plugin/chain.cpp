@@ -424,25 +424,25 @@ bool Chain::queryIncinerate(UnresolvedBlock &UR_block, nlohmann::json &option, r
   string amount = json::get<string>(option, "amount").value();
   string pid = json::get<string>(option, "pid").value();
 
-  // TODO: pointer로 인한 복사/접근 체크 다시 할 것. 복사되어야 함.
-  user_ledger_type found = findUserLedgerFromHead(pid);
+  user_ledger_type found_ledger = findUserLedgerFromHead(pid);
 
-  if (found.is_empty)
+  if (found_ledger.is_empty)
     return false;
 
-  if (found.uid != result_info.user)
+  if (found_ledger.uid != result_info.user)
     return false;
-  int modified_value = stoi(found.var_val) - stoi(amount);
-  found.var_val = to_string(modified_value);
+
+  int modified_value = stoi(found_ledger.var_val) - stoi(amount);
+  found_ledger.var_val = to_string(modified_value);
 
   if (modified_value == 0)
-    found.query_type = QueryType::DELETE;
+    found_ledger.query_type = QueryType::DELETE;
   else if (modified_value > 0)
-    found.query_type = QueryType::UPDATE;
+    found_ledger.query_type = QueryType::UPDATE;
   else
     logger::ERROR("var_val is under 0 in queryIncinerate!");
 
-  UR_block.user_ledger_list[pid] = found;
+  UR_block.user_ledger_list[pid] = found_ledger;
 
   return true;
 }
@@ -478,12 +478,15 @@ bool Chain::queryCreate(UnresolvedBlock &UR_block, nlohmann::json &option, resul
 
 bool Chain::queryTransfer(UnresolvedBlock &UR_block, nlohmann::json &option, result_query_info_type &result_info) {
   // TODO: authority 검사
+  //  up_time, up_block 어떻게 설정할지 검토
   string from = json::get<string>(option, "from").value();
-  string to = json::get<string>(option, "to").value();
+  string from_id;
+  string to_id = json::get<string>(option, "to").value();
   string amount = json::get<string>(option, "amount").value();
   string var_name = json::get<string>(option, "unit").value();
-  auto pid_json = json::get<string>(option, "pid");
-  string calculated_pid;
+  auto from_pid_json = json::get<string>(option, "pid");
+  string from_pid;
+  string to_pid;
   auto tag_json = json::get<string>(option, "tag");
   string tag;
   int var_type;
@@ -491,20 +494,20 @@ bool Chain::queryTransfer(UnresolvedBlock &UR_block, nlohmann::json &option, res
   // Transfer : from
   if (from == "contract") {
     // from : contract
-    string cid = result_info.self;
+    from_id = result_info.self;
 
-    if (pid_json.has_value()) {
-      calculated_pid = pid_json.value();
+    if (from_pid_json.has_value()) {
+      from_pid = from_pid_json.value();
     } else {
-      var_type = getVarType(cid, var_name, UR_block.block.getHeight(), UR_block.cur_vec_idx);
+      var_type = getVarType(from_id, var_name, UR_block.block.getHeight(), UR_block.cur_vec_idx);
       if (var_type == (int)UniqueCheck::NOT_UNIQUE) {
         logger::ERROR("Error in `queryTransfer`, there was several same (var owner, var name).");
         return false;
       }
-      calculated_pid = calculatePid(var_name, var_type, cid);
+      from_pid = calculatePid(var_name, var_type, from_id);
     }
 
-    contract_ledger_type found_ledger = findContractLedgerFromHead(calculated_pid);
+    contract_ledger_type found_ledger = findContractLedgerFromHead(from_pid);
 
     if (found_ledger.is_empty) {
       logger::ERROR("Not exist from's ledger");
@@ -523,31 +526,28 @@ bool Chain::queryTransfer(UnresolvedBlock &UR_block, nlohmann::json &option, res
       return false;
     }
 
-    UR_block.contract_ledger_list[calculated_pid] = found_ledger;
+    UR_block.contract_ledger_list[from_pid] = found_ledger;
+    var_type = found_ledger.var_type;
   } else {
     // from : user
-    base58_type uid;
     if (from == "user")
-      uid = result_info.user;
+      from_id = result_info.user;
     else if (from == "author")
-      uid = result_info.author;
+      from_id = result_info.author;
 
-    if (pid_json.has_value()) {
-      if (tag_json.has_value()) {
-        tag = tag_json.value();
-      }
-      calculated_pid = pid_json.value();
+    if (from_pid_json.has_value()) {
+      from_pid = from_pid_json.value();
     } else {
-      var_type = getVarType(uid, var_name, UR_block.block.getHeight(), UR_block.cur_vec_idx);
+      var_type = getVarType(from_id, var_name, UR_block.block.getHeight(), UR_block.cur_vec_idx);
 
       if (var_type == (int)UniqueCheck::NOT_UNIQUE) {
         logger::ERROR("Error in `queryTransfer`, there was several same (var owner, var name).");
         return false;
       }
-      calculated_pid = calculatePid(var_name, var_type, uid);
+      from_pid = calculatePid(var_name, var_type, from_id);
     }
 
-    user_ledger_type found_ledger = findUserLedgerFromHead(calculated_pid);
+    user_ledger_type found_ledger = findUserLedgerFromHead(from_pid);
 
     if (found_ledger.is_empty) {
       logger::ERROR("Not exist from's ledger");
@@ -566,47 +566,48 @@ bool Chain::queryTransfer(UnresolvedBlock &UR_block, nlohmann::json &option, res
       return false;
     }
 
-    UR_block.user_ledger_list[calculated_pid] = found_ledger;
+    UR_block.user_ledger_list[from_pid] = found_ledger;
+    var_type = found_ledger.var_type;
   }
 
-  // TODO: from에서 쓰였던 pid가 to에서도 그대로 쓰이는가? tag 없었던 돈 -> tag 존재하는 돈 으로 될 수도 있는가? 확인 필요
-  //  마찬가지로 반대로, tag가 걸렸던 돈 -> tag를 풀기 도 가능한가? 가능해야한다고 보긴 하는데.
-
   // Transfer : to
-  if (isContractId(to)) {
+  if (isContractId(to_id)) {
     // to : contract
-    contract_ledger_type contract_ledger;
-    contract_ledger_type found_ledger = findContractLedgerFromHead(calculated_pid);
+    to_pid = calculatePid(var_name, var_type, to_id, from_id);
 
-    // TODO: 이 로직은 수정 필요.
+    contract_ledger_type found_ledger = findContractLedgerFromHead(to_pid);
+
+    // TODO: 이 로직은 수정 필요. 만약 같은 블록의 이전 결과가 insert였고, 이번에 다시 해당 ledger를 갱신한거라면 rdb에는 없지만 update가 됨
     if (found_ledger.var_val.empty())
-      contract_ledger.query_type = QueryType::INSERT;
+      found_ledger.query_type = QueryType::INSERT;
     else
-      contract_ledger.query_type = QueryType::UPDATE;
+      found_ledger.query_type = QueryType::UPDATE;
 
     int modified_value = stoi(found_ledger.var_val) + stoi(amount);
-    contract_ledger.var_val = to_string(modified_value);
-    contract_ledger.var_info = from;
+    found_ledger.var_val = to_string(modified_value);
 
-    UR_block.contract_ledger_list[calculated_pid] = contract_ledger;
-  } else if (isUserId(to)) {
+    UR_block.contract_ledger_list[to_pid] = found_ledger;
+  } else if (isUserId(to_id)) {
     // to : user
-    user_ledger_type user_ledger;
-    user_ledger_type found_ledger = findUserLedgerFromHead(calculated_pid);
-    if (found_ledger.uid != result_info.user)
-      return false;
+    if (tag_json.has_value()) {
+      tag = tag_json.value();
+      to_pid = calculatePid(var_name, var_type, to_id, tag);
+    } else {
+      to_pid = calculatePid(var_name, var_type, to_id);
+    }
 
-    // TODO: 이 로직은 수정 필요.
+    user_ledger_type found_ledger = findUserLedgerFromHead(to_pid);
+
+    // TODO: 이 로직 수정 필요.
     if (found_ledger.var_val.empty())
-      user_ledger.query_type = QueryType::INSERT;
+      found_ledger.query_type = QueryType::INSERT;
     else
-      user_ledger.query_type = QueryType::UPDATE;
+      found_ledger.query_type = QueryType::UPDATE;
 
     int modified_value = stoi(found_ledger.var_val) + stoi(amount);
-    user_ledger.var_val = to_string(modified_value);
-    user_ledger.tag = tag_json.value();
+    found_ledger.var_val = to_string(modified_value);
 
-    UR_block.user_ledger_list[calculated_pid] = user_ledger;
+    UR_block.user_ledger_list[to_pid] = found_ledger;
   }
 
   return true;
@@ -794,7 +795,7 @@ bool Chain::queryRunContract(UnresolvedBlock &UR_block, nlohmann::json &option, 
   return true;
 }
 
-string Chain::calculatePid(string &var_name, int var_type, string &var_owner) {
+string Chain::calculatePid(const string &var_name, int var_type, const string &var_owner) {
   string calculated_pid;
 
   BytesBuilder bytes_builder;
@@ -809,9 +810,23 @@ string Chain::calculatePid(string &var_name, int var_type, string &var_owner) {
   return calculated_pid;
 }
 
-int Chain::getVarType(const string &var_owner, const string &var_name, const block_height_type height, const int vec_idx) {
-  // TODO: user scope일 경우, 찾은 ledger에 tag가 붙어있으면 안 됨
+string Chain::calculatePid(const string &var_name, int var_type, const string &var_owner, const string &tag_varinfo) {
+  string calculated_pid;
 
+  BytesBuilder bytes_builder;
+  bytes_builder.append(var_name);
+  bytes_builder.appendDec(var_type);
+  if (isContractId(var_owner))
+    bytes_builder.append(var_owner);
+  else if (isUserId(var_owner))
+    bytes_builder.appendBase<58>(var_owner);
+  bytes_builder.append(tag_varinfo);
+  calculated_pid = TypeConverter::bytesToString(Sha256::hash(bytes_builder.getBytes()));
+
+  return calculated_pid;
+}
+
+int Chain::getVarType(const string &var_owner, const string &var_name, const block_height_type height, const int vec_idx) {
   int var_type = (int)UniqueCheck::NO_VALUE;
   int pool_deque_idx = height - unresolved_block_pool->getLatestConfirmedHeight() - 1;
   int pool_vec_idx = vec_idx;
