@@ -14,9 +14,9 @@ using tcp = boost::asio::ip::tcp;
 namespace http = boost::beast::http;
 
 namespace tethys {
-tethys::HttpClient::HttpClient(const string _host, const string _port) : host(_host), port(_port) {}
+tethys::HttpClient::HttpClient(const string &_host, const string &_port) : host(_host), port(_port) {}
 
-string HttpClient::get(const string target, const string query) {
+string HttpClient::get(const string &target, const string &query) {
   try {
     tcp::resolver resolver{ioc};
     tcp::socket socket{ioc};
@@ -27,7 +27,7 @@ string HttpClient::get(const string target, const string query) {
 
     http::request<http::string_body> req;
     req.method(http::verb::get);
-    req.target(target);
+    req.target(target + "?" + encodeQuery(query));
     req.set(http::field::host, host);
     req.set(http::field::content_type, "application/x-www-form-urlencoded");
 
@@ -51,4 +51,26 @@ string HttpClient::get(const string target, const string query) {
     return "";
   }
 }
+
+string HttpClient::encodeQuery(const string &value) {
+  ostringstream escaped;
+  escaped.fill('0');
+  escaped << hex;
+
+  for (auto character : value) {
+    string::value_type c = character;
+
+    // Keep alphanumeric and other accepted characters intact
+    if (isalnum(c) || c == '-' || c == '_' || c == '.' || c == '~') {
+      escaped << c;
+      continue;
+    }
+    // Any other characters are percent-encoded
+    escaped << uppercase;
+    escaped << '%' << setw(2) << int((unsigned char)c);
+    escaped << nouppercase;
+  }
+  return escaped.str();
+}
+
 } // namespace tethys

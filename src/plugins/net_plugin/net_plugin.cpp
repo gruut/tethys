@@ -155,13 +155,14 @@ public:
 
     logger::INFO("Start to get peers list from tracker");
     auto [my_host, my_port] = getHostAndPort(p2p_address);
+    auto my_b58_id = TypeConverter::encodeBase<58>(app().getId());
 
     for (auto &tracker_addr : tracker_addresses) {
       auto [addr, port] = getHostAndPort(tracker_addr);
 
       HttpClient http_client(addr, port);
 
-      auto res = http_client.get("/announce", "port=" + my_port);
+      auto res = http_client.get("/announce", "port=" + my_port + "&id=" + my_b58_id);
       if (res.empty())
         continue;
 
