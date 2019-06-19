@@ -492,32 +492,38 @@ bool Chain::queryTransfer(UnresolvedBlock &UR_block, nlohmann::json &option, res
   if (from == "contract") {
     // from : contract
     string cid = result_info.self;
-    contract_ledger_type contract_ledger;
 
-    var_type = getVarType(cid, var_name, UR_block.block.getHeight(), UR_block.cur_vec_idx);
+    if (pid_json.has_value()) {
+      calculated_pid = pid_json.value();
+    } else {
+      var_type = getVarType(cid, var_name, UR_block.block.getHeight(), UR_block.cur_vec_idx);
+      if (var_type == (int)UniqueCheck::NOT_UNIQUE) {
+        logger::ERROR("Error in `queryTransfer`, there was several same (var owner, var name).");
+        return false;
+      }
+      calculated_pid = calculatePid(var_name, var_type, cid);
+    }
 
-    calculated_pid = calculatePid(var_name, var_type, cid);
+    contract_ledger_type found_ledger = findContractLedgerFromHead(calculated_pid);
 
-    contract_ledger_type found = findContractLedgerFromHead(calculated_pid);
-
-    if (found.is_empty) {
+    if (found_ledger.is_empty) {
       logger::ERROR("Not exist from's ledger");
       return false;
     }
 
-    int modified_value = stoi(found.var_val) - stoi(amount);
-    contract_ledger.var_val = to_string(modified_value);
+    int modified_value = stoi(found_ledger.var_val) - stoi(amount);
+    found_ledger.var_val = to_string(modified_value);
 
     if (modified_value == 0)
-      contract_ledger.query_type = QueryType::DELETE;
+      found_ledger.query_type = QueryType::DELETE;
     else if (modified_value > 0)
-      contract_ledger.query_type = QueryType::UPDATE;
+      found_ledger.query_type = QueryType::UPDATE;
     else {
       logger::ERROR("var_val is under 0 in queryTransfer!");
       return false;
     }
 
-    UR_block.contract_ledger_list[calculated_pid] = contract_ledger;
+    UR_block.contract_ledger_list[calculated_pid] = found_ledger;
   } else {
     // from : user
     base58_type uid;
@@ -526,36 +532,45 @@ bool Chain::queryTransfer(UnresolvedBlock &UR_block, nlohmann::json &option, res
     else if (from == "author")
       uid = result_info.author;
 
-    // TODO: tag가 붙어있는 ledger의 type일 수도 있음. 검증 필요
-    var_type = getVarType(uid, var_name, UR_block.block.getHeight(), UR_block.cur_vec_idx);
+    if (pid_json.has_value()) {
+      if (tag_json.has_value()) {
+        tag = tag_json.value();
+      }
+      calculated_pid = pid_json.value();
+    } else {
+      var_type = getVarType(uid, var_name, UR_block.block.getHeight(), UR_block.cur_vec_idx);
 
-    if (tag_json.has_value()) {
-      tag = tag_json.value();
-      calculated_pid = calculatePid(var_name, var_type, uid, tag);
-    } else
+      if (var_type == (int)UniqueCheck::NOT_UNIQUE) {
+        logger::ERROR("Error in `queryTransfer`, there was several same (var owner, var name).");
+        return false;
+      }
       calculated_pid = calculatePid(var_name, var_type, uid);
+    }
 
-    user_ledger_type found = findUserLedgerFromHead(calculated_pid);
+    user_ledger_type found_ledger = findUserLedgerFromHead(calculated_pid);
 
-    if (found.is_empty) {
+    if (found_ledger.is_empty) {
       logger::ERROR("Not exist from's ledger");
       return false;
     }
 
-    int modified_value = stoi(found.var_val) - stoi(amount);
-    user_ledger.var_val = to_string(modified_value);
+    int modified_value = stoi(found_ledger.var_val) - stoi(amount);
+    found_ledger.var_val = to_string(modified_value);
 
     if (modified_value == 0)
-      user_ledger.query_type = QueryType::DELETE;
+      found_ledger.query_type = QueryType::DELETE;
     else if (modified_value > 0)
-      user_ledger.query_type = QueryType::UPDATE;
+      found_ledger.query_type = QueryType::UPDATE;
     else {
       logger::ERROR("var_val is under 0 in queryTransfer!");
       return false;
     }
 
-    UR_block.user_ledger_list[calculated_pid] = user_ledger;
+    UR_block.user_ledger_list[calculated_pid] = found_ledger;
   }
+
+  // TODO: from에서 쓰였던 pid가 to에서도 그대로 쓰이는가? tag 없었던 돈 -> tag 존재하는 돈 으로 될 수도 있는가? 확인 필요
+  //  마찬가지로 반대로, tag가 걸렸던 돈 -> tag를 풀기 도 가능한가? 가능해야한다고 보긴 하는데.
 
   // Transfer : to
   if (isContractId(to)) {
@@ -564,7 +579,7 @@ bool Chain::queryTransfer(UnresolvedBlock &UR_block, nlohmann::json &option, res
     contract_ledger_type found_ledger = findContractLedgerFromHead(calculated_pid);
 
     // TODO: 이 로직은 수정 필요.
-    if (found_ledger.var_val == "")
+    if (found_ledger.var_val.empty())
       contract_ledger.query_type = QueryType::INSERT;
     else
       contract_ledger.query_type = QueryType::UPDATE;
@@ -582,7 +597,7 @@ bool Chain::queryTransfer(UnresolvedBlock &UR_block, nlohmann::json &option, res
       return false;
 
     // TODO: 이 로직은 수정 필요.
-    if (found_ledger.var_val == "")
+    if (found_ledger.var_val.empty())
       user_ledger.query_type = QueryType::INSERT;
     else
       user_ledger.query_type = QueryType::UPDATE;
@@ -824,7 +839,7 @@ int Chain::getVarType(const string &var_owner, const string &var_name, const blo
     // unresolved block pool의 연결된 앞 블록들에서 검색
     while (pool_deque_idx >= 0) {
       current_contract_ledgers = unresolved_block_pool->getBlock(pool_deque_idx, pool_vec_idx).contract_ledger_list;
-      for (auto &each_ledger : current_contract_ledgers) {  // TODO: var_info가 empty인걸 찾는게 맞는지 확인
+      for (auto &each_ledger : current_contract_ledgers) { // TODO: var_info가 empty인걸 찾는게 맞는지 확인
         if ((each_ledger.second.cid == var_owner) && (each_ledger.second.var_name == var_name) && (each_ledger.second.var_info.empty())) {
           if ((var_type != (int)UniqueCheck::NO_VALUE) && (var_type != each_ledger.second.var_type)) {
             return (int)UniqueCheck::NOT_UNIQUE; // var_type가 초기값이 아닌데 새로운 값이 오면 unique하지 않다는 것
