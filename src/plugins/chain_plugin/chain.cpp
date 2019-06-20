@@ -1053,17 +1053,29 @@ void Chain::revertStateTree(const UnresolvedBlock &unresolved_block) {
 }
 
 user_ledger_type Chain::findUserLedgerFromHead(UnresolvedBlock &UR_block, const string &pid) {
-  if (m_us_tree.getMerkleNode(pid) == nullptr)
-    return UR_block.user_ledger_list[pid];
-  else
-    return m_us_tree.getMerkleNode(pid)->getUserLedger();
+  user_ledger_type return_ledger;
+  return_ledger = UR_block.user_ledger_list[pid];
+
+  if (return_ledger.is_empty) {
+    shared_ptr<StateNode> node = m_us_tree.getMerkleNode(pid);
+    if (node == nullptr)
+      return return_ledger;
+    else
+      return node->getUserLedger();
+  }
 }
 
 contract_ledger_type Chain::findContractLedgerFromHead(UnresolvedBlock &UR_block, const string &pid) {
-  if (m_cs_tree.getMerkleNode(pid) == nullptr)
-    return UR_block.contract_ledger_list[pid];
-  else
-    return m_cs_tree.getMerkleNode(pid)->getContractLedger();
+  contract_ledger_type return_ledger;
+  return_ledger = UR_block.contract_ledger_list[pid];
+
+  if (return_ledger.is_empty) {
+    shared_ptr<StateNode> node = m_cs_tree.getMerkleNode(pid);
+    if (node == nullptr)
+      return return_ledger;
+    else
+      return node->getContractLedger();
+  }
 }
 
 void Chain::moveHead(const base58_type &target_block_id, const block_height_type target_block_height) {
