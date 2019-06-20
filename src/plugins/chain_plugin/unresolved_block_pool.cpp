@@ -238,7 +238,7 @@ UnresolvedBlock UnresolvedBlockPool::findBlock(const base58_type &block_id, cons
   return UnresolvedBlock{};
 }
 
-UnresolvedBlock UnresolvedBlockPool::getBlock(int pool_deq_idx, int pool_vec_idx) {
+UnresolvedBlock UnresolvedBlockPool::getUnresolvedBlock(int pool_deq_idx, int pool_vec_idx) {
   return m_block_pool[pool_deq_idx][pool_vec_idx];
 }
 

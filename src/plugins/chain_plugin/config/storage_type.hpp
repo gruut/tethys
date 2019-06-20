@@ -166,7 +166,7 @@ using user_ledger_type = struct UserLedger {
   string tag;
   string pid;
   QueryType query_type;
-  bool is_empty{false};
+  bool is_empty{true};
 
   UserLedger() = default;
   UserLedger(string var_name_, int var_type_, base58_type uid_, string tag_)
@@ -184,13 +184,13 @@ using contract_ledger_type = struct ContractLedger {
   string var_name;
   string var_val;
   int var_type;
-  string cid;
+  contract_id_type cid;
   timestamp_t up_time;
   block_height_type up_block;
   string var_info;
   string pid;
   QueryType query_type;
-  bool is_empty{false};
+  bool is_empty{true};
 
   ContractLedger() = default;
   ContractLedger(string var_name_, int var_type_, string cid_, string var_info_)
@@ -239,6 +239,7 @@ using contract_type = struct Contract {
   string contract;
   string desc;
   string sigma;
+  QueryType query_type;
 };
 
 // using which_type = struct WhichData {

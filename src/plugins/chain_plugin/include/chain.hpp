@@ -110,8 +110,8 @@ public:
   void updateStateTree(const UnresolvedBlock &unresolved_block);
   void revertStateTree(const UnresolvedBlock &unresolved_block);
 
-  user_ledger_type findUserLedgerFromHead(const string &pid);
-  contract_ledger_type findContractLedgerFromHead(const string &pid);
+  user_ledger_type findUserLedgerFromHead(UnresolvedBlock &UR_block, const string &pid);
+  contract_ledger_type findContractLedgerFromHead(UnresolvedBlock &UR_block, const string &pid);
   void moveHead(const base58_type &target_block_id, const block_height_type target_block_height);
   base58_type getCurrentHeadId();
   block_height_type getCurrentHeadHeight();

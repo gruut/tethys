@@ -403,6 +403,7 @@ bool Chain::queryContractNew(UnresolvedBlock &UR_block, nlohmann::json &option, 
   contract_info.contract = json::get<string>(option, "contract").value();
   contract_info.desc = json::get<string>(option, "desc").value();
   contract_info.sigma = json::get<string>(option, "sigma").value();
+  contract_info.query_type = QueryType::INSERT;
 
   UR_block.contract_list[contract_info.cid] = contract_info;
 
@@ -415,8 +416,13 @@ bool Chain::queryContractDisable(UnresolvedBlock &UR_block, nlohmann::json &opti
 
   contract_info.cid = json::get<string>(option, "cid").value();
   contract_info.before = TimeUtil::nowBigInt();
+  contract_info.query_type = QueryType::UPDATE;
 
-  // TODO: before 값을 갱신하는 코드
+  // TODO: 수정 필요. 동일 블럭에 있던 contract일 경우 다른 정보가 증발하고 before만 현재시각으로 기록될 수 있음. UPDATE라 에러가 나거나.
+  //  무력화되는 contract이기 때문에 동작 자체에 문제를 일으키지는 않겠지만, 깔끔한 작동은 아님.
+
+  UR_block.contract_list[contract_info.cid] = contract_info;
+
   return true;
 }
 
@@ -424,7 +430,7 @@ bool Chain::queryIncinerate(UnresolvedBlock &UR_block, nlohmann::json &option, r
   string amount = json::get<string>(option, "amount").value();
   string pid = json::get<string>(option, "pid").value();
 
-  user_ledger_type found_ledger = findUserLedgerFromHead(pid);
+  user_ledger_type found_ledger = findUserLedgerFromHead(UR_block, pid);
 
   if (found_ledger.is_empty)
     return false;
@@ -459,7 +465,7 @@ bool Chain::queryCreate(UnresolvedBlock &UR_block, nlohmann::json &option, resul
   user_ledger_type user_ledger(var_name, var_type, uid, tag);
   string pid = user_ledger.pid;
 
-  user_ledger_type found = findUserLedgerFromHead(pid);
+  user_ledger_type found = findUserLedgerFromHead(UR_block, pid);
 
   if (!found.is_empty) {
     logger::ERROR("Same pid state is exist. v.create must be new.");
@@ -470,6 +476,7 @@ bool Chain::queryCreate(UnresolvedBlock &UR_block, nlohmann::json &option, resul
   user_ledger.up_time = up_time;
   user_ledger.up_block = up_block;
   user_ledger.query_type = QueryType::INSERT;
+  user_ledger.is_empty = false;
 
   UR_block.user_ledger_list[pid] = user_ledger;
 
@@ -484,6 +491,8 @@ bool Chain::queryTransfer(UnresolvedBlock &UR_block, nlohmann::json &option, res
   string to_id = json::get<string>(option, "to").value();
   string amount = json::get<string>(option, "amount").value();
   string var_name = json::get<string>(option, "unit").value();
+  timestamp_t up_time = TimeUtil::nowBigInt(); // TODO: DB에 저장되는 시간인지, mem_ledger에 들어오는 시간인지
+  block_height_type up_block = result_info.block_height;
   auto from_pid_json = json::get<string>(option, "pid");
   string from_pid;
   string to_pid;
@@ -507,7 +516,7 @@ bool Chain::queryTransfer(UnresolvedBlock &UR_block, nlohmann::json &option, res
       from_pid = calculatePid(var_name, var_type, from_id);
     }
 
-    contract_ledger_type found_ledger = findContractLedgerFromHead(from_pid);
+    contract_ledger_type found_ledger = findContractLedgerFromHead(UR_block, from_pid);
 
     if (found_ledger.is_empty) {
       logger::ERROR("Not exist from's ledger");
@@ -516,6 +525,8 @@ bool Chain::queryTransfer(UnresolvedBlock &UR_block, nlohmann::json &option, res
 
     int modified_value = stoi(found_ledger.var_val) - stoi(amount);
     found_ledger.var_val = to_string(modified_value);
+    found_ledger.up_time = up_time;
+    found_ledger.up_block = up_block;
 
     if (modified_value == 0)
       found_ledger.query_type = QueryType::DELETE;
@@ -547,7 +558,7 @@ bool Chain::queryTransfer(UnresolvedBlock &UR_block, nlohmann::json &option, res
       from_pid = calculatePid(var_name, var_type, from_id);
     }
 
-    user_ledger_type found_ledger = findUserLedgerFromHead(from_pid);
+    user_ledger_type found_ledger = findUserLedgerFromHead(UR_block, from_pid);
 
     if (found_ledger.is_empty) {
       logger::ERROR("Not exist from's ledger");
@@ -556,6 +567,8 @@ bool Chain::queryTransfer(UnresolvedBlock &UR_block, nlohmann::json &option, res
 
     int modified_value = stoi(found_ledger.var_val) - stoi(amount);
     found_ledger.var_val = to_string(modified_value);
+    found_ledger.up_time = up_time;
+    found_ledger.up_block = up_block;
 
     if (modified_value == 0)
       found_ledger.query_type = QueryType::DELETE;
@@ -575,16 +588,21 @@ bool Chain::queryTransfer(UnresolvedBlock &UR_block, nlohmann::json &option, res
     // to : contract
     to_pid = calculatePid(var_name, var_type, to_id, from_id);
 
-    contract_ledger_type found_ledger = findContractLedgerFromHead(to_pid);
+    contract_ledger_type found_ledger = findContractLedgerFromHead(UR_block, to_pid);
 
-    // TODO: 이 로직은 수정 필요. 만약 같은 블록의 이전 결과가 insert였고, 이번에 다시 해당 ledger를 갱신한거라면 rdb에는 없지만 update가 됨
-    if (found_ledger.var_val.empty())
+    if (found_ledger.var_val.empty() || found_ledger.is_empty)
       found_ledger.query_type = QueryType::INSERT;
-    else
+    else if ((found_ledger.up_block == up_block) && (found_ledger.query_type == QueryType::INSERT)) {
+      found_ledger.query_type = QueryType::INSERT;
+    } else {
       found_ledger.query_type = QueryType::UPDATE;
+    }
 
     int modified_value = stoi(found_ledger.var_val) + stoi(amount);
     found_ledger.var_val = to_string(modified_value);
+    found_ledger.up_time = up_time;
+    found_ledger.up_block = up_block;
+    found_ledger.is_empty = false;
 
     UR_block.contract_ledger_list[to_pid] = found_ledger;
   } else if (isUserId(to_id)) {
@@ -596,16 +614,21 @@ bool Chain::queryTransfer(UnresolvedBlock &UR_block, nlohmann::json &option, res
       to_pid = calculatePid(var_name, var_type, to_id);
     }
 
-    user_ledger_type found_ledger = findUserLedgerFromHead(to_pid);
+    user_ledger_type found_ledger = findUserLedgerFromHead(UR_block, to_pid);
 
-    // TODO: 이 로직 수정 필요.
-    if (found_ledger.var_val.empty())
+    if (found_ledger.var_val.empty() || found_ledger.is_empty)
       found_ledger.query_type = QueryType::INSERT;
-    else
+    else if ((found_ledger.up_block == up_block) && (found_ledger.query_type == QueryType::INSERT)) {
+      found_ledger.query_type = QueryType::INSERT;
+    } else {
       found_ledger.query_type = QueryType::UPDATE;
+    }
 
     int modified_value = stoi(found_ledger.var_val) + stoi(amount);
     found_ledger.var_val = to_string(modified_value);
+    found_ledger.up_time = up_time;
+    found_ledger.up_block = up_block;
+    found_ledger.is_empty = false;
 
     UR_block.user_ledger_list[to_pid] = found_ledger;
   }
@@ -641,7 +664,6 @@ bool Chain::queryUserScope(UnresolvedBlock &UR_block, nlohmann::json &option, re
   auto type_json = json::get<string>(option, "type");
 
   if (pid_json.has_value()) {
-
     if (tag_json.has_value()) {
       tag = tag_json.value();
     }
@@ -686,9 +708,10 @@ bool Chain::queryUserScope(UnresolvedBlock &UR_block, nlohmann::json &option, re
   user_ledger.uid = uid;
   user_ledger.up_time = TimeUtil::nowBigInt(); // TODO: DB에 저장되는 시간인지, mem_ledger에 들어오는 시간인지
   user_ledger.up_block = UR_block.block.getHeight();
-  user_ledger.tag = tag; // TODO: 변수가 존재하는 경우 무시
+  user_ledger.tag = tag;
   user_ledger.pid = calculated_pid;
   user_ledger.query_type = query_type;
+  user_ledger.is_empty = false;
 
   UR_block.user_ledger_list[calculated_pid] = user_ledger;
 
@@ -749,8 +772,10 @@ bool Chain::queryContractScope(UnresolvedBlock &UR_block, nlohmann::json &option
   contract_ledger.cid = cid;
   contract_ledger.up_time = TimeUtil::nowBigInt(); // TODO: DB에 저장되는 시간인지, mem_ledger에 들어오는 시간인지
   contract_ledger.up_block = UR_block.block.getHeight();
+  contract_ledger.var_info = var_info;
   contract_ledger.pid = calculated_pid;
   contract_ledger.query_type = query_type;
+  contract_ledger.is_empty = false;
 
   UR_block.contract_ledger_list[calculated_pid] = contract_ledger;
 
@@ -836,7 +861,7 @@ int Chain::getVarType(const string &var_owner, const string &var_name, const blo
 
     // unresolved block pool의 연결된 앞 블록들에서 검색
     while (pool_deque_idx >= 0) {
-      current_user_ledgers = unresolved_block_pool->getBlock(pool_deque_idx, pool_vec_idx).user_ledger_list;
+      current_user_ledgers = unresolved_block_pool->getUnresolvedBlock(pool_deque_idx, pool_vec_idx).user_ledger_list;
       for (auto &each_ledger : current_user_ledgers) {
         if ((each_ledger.second.uid == var_owner) && (each_ledger.second.var_name == var_name) && (each_ledger.second.tag.empty())) {
           if ((var_type != (int)UniqueCheck::NO_VALUE) && (var_type != each_ledger.second.var_type)) {
@@ -845,7 +870,7 @@ int Chain::getVarType(const string &var_owner, const string &var_name, const blo
           var_type = each_ledger.second.var_type;
         }
       }
-      pool_vec_idx = unresolved_block_pool->getBlock(pool_deque_idx, pool_vec_idx).prev_vec_idx;
+      pool_vec_idx = unresolved_block_pool->getUnresolvedBlock(pool_deque_idx, pool_vec_idx).prev_vec_idx;
       --pool_deque_idx;
     }
   } else if (isContractId(var_owner)) {
@@ -853,7 +878,7 @@ int Chain::getVarType(const string &var_owner, const string &var_name, const blo
 
     // unresolved block pool의 연결된 앞 블록들에서 검색
     while (pool_deque_idx >= 0) {
-      current_contract_ledgers = unresolved_block_pool->getBlock(pool_deque_idx, pool_vec_idx).contract_ledger_list;
+      current_contract_ledgers = unresolved_block_pool->getUnresolvedBlock(pool_deque_idx, pool_vec_idx).contract_ledger_list;
       for (auto &each_ledger : current_contract_ledgers) { // TODO: var_info가 empty인걸 찾는게 맞는지 확인
         if ((each_ledger.second.cid == var_owner) && (each_ledger.second.var_name == var_name) && (each_ledger.second.var_info.empty())) {
           if ((var_type != (int)UniqueCheck::NO_VALUE) && (var_type != each_ledger.second.var_type)) {
@@ -862,7 +887,7 @@ int Chain::getVarType(const string &var_owner, const string &var_name, const blo
           var_type = each_ledger.second.var_type;
         }
       }
-      pool_vec_idx = unresolved_block_pool->getBlock(pool_deque_idx, pool_vec_idx).prev_vec_idx;
+      pool_vec_idx = unresolved_block_pool->getUnresolvedBlock(pool_deque_idx, pool_vec_idx).prev_vec_idx;
       --pool_deque_idx;
     }
   }
@@ -932,14 +957,14 @@ search_result_type Chain::findUserLedgerFromPoint(const string &pid, block_heigh
   map<string, user_ledger_type>::iterator it;
 
   while (1) {
-    current_user_ledgers = unresolved_block_pool->getBlock(pool_deque_idx, pool_vec_idx).user_ledger_list;
+    current_user_ledgers = unresolved_block_pool->getUnresolvedBlock(pool_deque_idx, pool_vec_idx).user_ledger_list;
 
     it = current_user_ledgers.find(pid);
     if (it != current_user_ledgers.end()) {
       search_result.user_ledger = it->second;
       return search_result;
     }
-    pool_vec_idx = unresolved_block_pool->getBlock(pool_deque_idx, pool_vec_idx).prev_vec_idx;
+    pool_vec_idx = unresolved_block_pool->getUnresolvedBlock(pool_deque_idx, pool_vec_idx).prev_vec_idx;
     --pool_deque_idx;
 
     if (pool_deque_idx < 0) {
@@ -962,14 +987,14 @@ search_result_type Chain::findContractLedgerFromPoint(const string &pid, block_h
   map<string, contract_ledger_type>::iterator it;
 
   while (1) {
-    current_contract_ledgers = unresolved_block_pool->getBlock(pool_deque_idx, pool_vec_idx).contract_ledger_list;
+    current_contract_ledgers = unresolved_block_pool->getUnresolvedBlock(pool_deque_idx, pool_vec_idx).contract_ledger_list;
 
     it = current_contract_ledgers.find(pid);
     if (it != current_contract_ledgers.end()) {
       search_result.contract_ledger = it->second;
       return search_result;
     }
-    pool_vec_idx = unresolved_block_pool->getBlock(pool_deque_idx, pool_vec_idx).prev_vec_idx;
+    pool_vec_idx = unresolved_block_pool->getUnresolvedBlock(pool_deque_idx, pool_vec_idx).prev_vec_idx;
     --pool_deque_idx;
 
     if (pool_deque_idx < 0) {
@@ -1008,9 +1033,10 @@ void Chain::setupStateTree() {
 }
 
 void Chain::updateStateTree(const UnresolvedBlock &unresolved_block) {
+  // TODO: 현재의 state tree 관리 방식은 한 블록의 처리를 모두 끝낸 후 최종 결과를 한꺼번에 반영하는 방식.
+  //  쿼리 하나를 처리할때마다 state tree를 갱신하는 방식으로 할 수도 있음. 어느쪽이 더 적절한지 검토.
   m_us_tree.updateUserState(unresolved_block.user_ledger_list);
   m_cs_tree.updateContractState(unresolved_block.contract_ledger_list);
-  // TODO: user cert나 contract 등도 update해야 함
 }
 
 void Chain::revertStateTree(const UnresolvedBlock &unresolved_block) {
@@ -1024,24 +1050,19 @@ void Chain::revertStateTree(const UnresolvedBlock &unresolved_block) {
         findContractLedgerFromPoint(each_contract_ledger.first, unresolved_block.block.getHeight(), unresolved_block.cur_vec_idx)
             .contract_ledger);
   }
-  // TODO: user cert나 contract 등도 revert해야함
 }
 
-user_ledger_type Chain::findUserLedgerFromHead(const string &pid) {
-  if (m_us_tree.getMerkleNode(pid) == nullptr) {
-    user_ledger_type empty_ledger;
-    empty_ledger.is_empty = true;
-    return empty_ledger;
-  } else
+user_ledger_type Chain::findUserLedgerFromHead(UnresolvedBlock &UR_block, const string &pid) {
+  if (m_us_tree.getMerkleNode(pid) == nullptr)
+    return UR_block.user_ledger_list[pid];
+  else
     return m_us_tree.getMerkleNode(pid)->getUserLedger();
 }
 
-contract_ledger_type Chain::findContractLedgerFromHead(const string &pid) {
-  if (m_cs_tree.getMerkleNode(pid) == nullptr) {
-    contract_ledger_type empty_ledger;
-    empty_ledger.is_empty = true;
-    return empty_ledger;
-  } else
+contract_ledger_type Chain::findContractLedgerFromHead(UnresolvedBlock &UR_block, const string &pid) {
+  if (m_cs_tree.getMerkleNode(pid) == nullptr)
+    return UR_block.contract_ledger_list[pid];
+  else
     return m_cs_tree.getMerkleNode(pid)->getContractLedger();
 }
 
@@ -1053,7 +1074,7 @@ void Chain::moveHead(const base58_type &target_block_id, const block_height_type
     int current_height = static_cast<int>(m_head_height);
 
     while (current_height > target_block_height) {
-      current_vec_idx = unresolved_block_pool->getBlock(current_deq_idx, current_vec_idx).prev_vec_idx;
+      current_vec_idx = unresolved_block_pool->getUnresolvedBlock(current_deq_idx, current_vec_idx).prev_vec_idx;
       --current_deq_idx;
       --current_height;
     }
@@ -1061,7 +1082,7 @@ void Chain::moveHead(const base58_type &target_block_id, const block_height_type
     vector<int> line = unresolved_block_pool->getLine(target_block_id, target_block_height);
 
     while (current_vec_idx != line[current_deq_idx]) {
-      current_vec_idx = unresolved_block_pool->getBlock(current_deq_idx, current_vec_idx).prev_vec_idx;
+      current_vec_idx = unresolved_block_pool->getUnresolvedBlock(current_deq_idx, current_vec_idx).prev_vec_idx;
       --current_deq_idx;
       --current_height;
     }
@@ -1082,27 +1103,27 @@ void Chain::moveHead(const base58_type &target_block_id, const block_height_type
     current_vec_idx = m_head_vec_idx;
 
     for (int i = 0; i < back_count; i++) {
-      revertStateTree(unresolved_block_pool->getBlock(current_deq_idx, current_vec_idx));
+      revertStateTree(unresolved_block_pool->getUnresolvedBlock(current_deq_idx, current_vec_idx));
 
-      current_vec_idx = unresolved_block_pool->getBlock(current_deq_idx, current_vec_idx).prev_vec_idx;
+      current_vec_idx = unresolved_block_pool->getUnresolvedBlock(current_deq_idx, current_vec_idx).prev_vec_idx;
       current_deq_idx--;
       current_height--;
     }
 
     for (int i = 0; i < front_count; i++) {
-      updateStateTree(unresolved_block_pool->getBlock(current_deq_idx, current_vec_idx));
+      updateStateTree(unresolved_block_pool->getUnresolvedBlock(current_deq_idx, current_vec_idx));
 
       current_vec_idx = line[current_deq_idx];
       ++current_deq_idx;
       ++current_height;
     }
 
-    m_head_id = unresolved_block_pool->getBlock(m_head_deq_idx, m_head_vec_idx).block.getBlockId();
+    m_head_id = unresolved_block_pool->getUnresolvedBlock(m_head_deq_idx, m_head_vec_idx).block.getBlockId();
     m_head_height = current_height;
     m_head_deq_idx = current_deq_idx;
     m_head_vec_idx = current_vec_idx;
 
-    if (unresolved_block_pool->getBlock(m_head_deq_idx, m_head_vec_idx).block.getHeight() != m_head_height) {
+    if (unresolved_block_pool->getUnresolvedBlock(m_head_deq_idx, m_head_vec_idx).block.getHeight() != m_head_height) {
       logger::ERROR("URBP, Something error in move_head() - end part, check height");
       return;
     }
