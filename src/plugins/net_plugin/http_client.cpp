@@ -31,7 +31,6 @@ string HttpClient::get(const string &target, const string &query) {
     req.set(http::field::host, host);
     req.set(http::field::content_type, "application/x-www-form-urlencoded");
 
-    req.body() = query;
     req.prepare_payload();
 
     http::write(socket, req);
