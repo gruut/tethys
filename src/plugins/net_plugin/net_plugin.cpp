@@ -314,64 +314,80 @@ public:
 
       grpc_merger::RequestMsg request;
       request.set_message(packed_msg);
-      request.set_broadcast(is_broadcast);
 
       ClientContext context;
       std::chrono::time_point deadline = std::chrono::system_clock::now() + GENERAL_SERVICE_TIMEOUT;
       context.set_deadline(deadline);
       context.AddMetadata("net_id", getMyNetId());
 
-      grpc_merger::MsgStatus msg_status;
+      if (is_broadcast)
+        sendToMergerBroadcast(context, request, out_msg.type, packed_msg);
+      else
+        sendToMerger(context, request, out_msg.receivers);
 
-      if (is_broadcast) {
-        auto vec_msg_id = Sha256::hash(packed_msg);
-        string str_hash_msg_id(vec_msg_id.begin(), vec_msg_id.end());
+    } else if (checkUserMsgType(out_msg.type))
+      sendToUser(out_msg);
+  }
 
-        broadcast_check_table->insert({str_hash_msg_id, TimeUtil::nowBigInt()});
-        request.set_message_id(str_hash_msg_id);
+  void sendToMergerBroadcast(ClientContext &context, grpc_merger::RequestMsg &request, MessageType msg_type, const string &packed_msg) {
+    if (checkOneHopBroadcastMsgType(msg_type)) {
+      request.set_broadcast(false);
+    } else {
+      auto vec_msg_id = Sha256::hash(packed_msg);
+      string str_hash_msg_id(vec_msg_id.begin(), vec_msg_id.end());
+      broadcast_check_table->insert({str_hash_msg_id, TimeUtil::nowBigInt()});
+      request.set_message_id(str_hash_msg_id);
+      request.set_broadcast(true);
+    }
 
-        for (auto &bucket : *routing_table) {
-          if (!bucket.empty()) {
-            auto nodes = bucket.selectRandomAliveNodes(PARALLELISM_ALPHA);
-            for (auto &n : nodes) {
-              auto stub = genStub<TethysMergerService::Stub, TethysMergerService>(n.getChannelPtr());
-              auto status = stub->MergerService(&context, request, &msg_status);
-            }
-          }
-        }
-      } else {
-        for (auto &b58_receiver_id : out_msg.receivers) {
-          auto hashed_net_id = id_mapping_table->get(b58_receiver_id);
+    grpc_merger::MsgStatus msg_status;
 
-          if (hashed_net_id.has_value()) {
-            auto node = routing_table->findNode(hashed_net_id.value());
-
-            if (node.has_value()) {
-              auto stub = genStub<TethysMergerService::Stub, TethysMergerService>(node.value().getChannelPtr());
-              auto status = stub->MergerService(&context, request, &msg_status);
-            } else {
-              id_mapping_table->unmapId(b58_receiver_id);
-            }
-          }
+    for (auto &bucket : *routing_table) {
+      if (!bucket.empty()) {
+        auto nodes = bucket.selectRandomAliveNodes(PARALLELISM_ALPHA);
+        for (auto &n : nodes) {
+          auto stub = genStub<TethysMergerService::Stub, TethysMergerService>(n.getChannelPtr());
+          auto status = stub->MergerService(&context, request, &msg_status);
         }
       }
-    } else if (checkUserMsgType(out_msg.type)) {
-      for (auto &b58_receiver_id : out_msg.receivers) {
-        UserRpcInfo user_rpc_info = user_conn_table->getRpcInfo(b58_receiver_id);
-        if (user_rpc_info.sender == nullptr)
-          continue;
+    }
+  }
 
-        string packed_msg;
-        auto hmac_key = user_pool_manager->getHmacKey(b58_receiver_id);
-        if (!hmac_key.has_value())
-          continue;
-        packed_msg = MessagePacker::packMessage<MACAlgorithmType::HMAC>(out_msg, hmac_key.value());
+  void sendToMerger(ClientContext &context, grpc_merger::RequestMsg &request, vector<b58_user_id_type> &receivers) {
+    request.set_broadcast(false);
+    grpc_merger::MsgStatus msg_status;
+    for (auto &b58_receiver_id : receivers) {
+      auto hashed_net_id = id_mapping_table->get(b58_receiver_id);
 
-        auto tag = static_cast<Identity *>(user_rpc_info.tag_identity);
-        Message msg;
-        msg.set_message(packed_msg);
-        user_rpc_info.sender->Write(msg, tag);
+      if (hashed_net_id.has_value()) {
+        auto node = routing_table->findNode(hashed_net_id.value());
+
+        if (node.has_value()) {
+          auto stub = genStub<TethysMergerService::Stub, TethysMergerService>(node.value().getChannelPtr());
+          auto status = stub->MergerService(&context, request, &msg_status);
+        } else {
+          id_mapping_table->unmapId(b58_receiver_id);
+        }
       }
+    }
+  }
+
+  void sendToUser(OutNetMsg &out_msg) {
+    for (auto &b58_receiver_id : out_msg.receivers) {
+      UserRpcInfo user_rpc_info = user_conn_table->getRpcInfo(b58_receiver_id);
+      if (user_rpc_info.sender == nullptr)
+        continue;
+
+      string packed_msg;
+      auto hmac_key = user_pool_manager->getHmacKey(b58_receiver_id);
+      if (!hmac_key.has_value())
+        continue;
+      packed_msg = MessagePacker::packMessage<MACAlgorithmType::HMAC>(out_msg, hmac_key.value());
+
+      auto tag = static_cast<Identity *>(user_rpc_info.tag_identity);
+      Message msg;
+      msg.set_message(packed_msg);
+      user_rpc_info.sender->Write(msg, tag);
     }
   }
 
@@ -396,8 +412,13 @@ public:
     }
   }
 
+  bool checkOneHopBroadcastMsgType(MessageType msg_type) {
+    return (msg_type == MessageType::MSG_PING || msg_type == MessageType::MSG_REQ_BLOCK || msg_type == MessageType::MSG_REQ_BONE);
+  }
+
   bool checkMergerMsgType(MessageType msg_type) {
-    return (msg_type == MessageType::MSG_TX || msg_type == MessageType::MSG_BONE || msg_type == MessageType::MSG_BLOCK);
+    return (msg_type == MessageType::MSG_PING || msg_type == MessageType::MSG_BONE || msg_type == MessageType::MSG_BLOCK ||
+            msg_type == MessageType::MSG_REQ_BLOCK || msg_type == MessageType::MSG_REQ_BONE);
   }
 
   bool checkUserMsgType(MessageType msg_type) {
