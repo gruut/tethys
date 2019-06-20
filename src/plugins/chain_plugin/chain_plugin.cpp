@@ -233,7 +233,7 @@ public:
     base58_type block_id = json::get<string>(result["block"], "id").value();
     block_height_type block_height = static_cast<block_height_type>(stoi(json::get<string>(result["block"], "height").value()));
     // TODO: updated_UR_block로 갱신한 값이 unresolved block pool에 직접 반영되는 부분이 없음. 수정 필요
-    UnresolvedBlock updated_UR_block = chain->findBlock(block_id, block_height);
+    UnresolvedBlock updated_UR_block = chain->getUnresolvedBlock(block_id, block_height);
 
     if (updated_UR_block.block.getBlockId() != chain->getCurrentHeadId()) {
       chain->moveHead(updated_UR_block.block.getPrevBlockId(), updated_UR_block.block.getHeight() - 1);
@@ -294,7 +294,7 @@ public:
         }
       }
     }
-
+    chain->setUnresolvedBlock(updated_UR_block);
     chain->updateStateTree(updated_UR_block);
     chain->saveBackupResult(updated_UR_block);
   }

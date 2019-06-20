@@ -243,7 +243,7 @@ void Chain::restorePool() {
     restored_block.initialize(block_msg);
     block_push_result_type push_result = unresolved_block_pool->pushBlock(restored_block);
 
-    UnresolvedBlock restored_unresolved_block = unresolved_block_pool->findBlock(restored_block.getBlockId(), push_result.height);
+    UnresolvedBlock restored_unresolved_block = unresolved_block_pool->getUnresolvedBlock(restored_block.getBlockId(), push_result.height);
 
     nlohmann::json user_ledger_list_json = nlohmann::json::from_cbor(kv_controller->loadBackupUserLedgers(block_id));
     nlohmann::json contract_ledger_list_json = nlohmann::json::from_cbor(kv_controller->loadBackupContractLedgers(block_id));
@@ -927,8 +927,12 @@ block_push_result_type Chain::pushBlock(Block &block) {
   return unresolved_block_pool->pushBlock(block);
 }
 
-UnresolvedBlock Chain::findBlock(const base58_type &block_id, const block_height_type block_height) {
-  return unresolved_block_pool->findBlock(block_id, block_height);
+UnresolvedBlock Chain::getUnresolvedBlock(const base58_type &block_id, const block_height_type block_height) {
+  return unresolved_block_pool->getUnresolvedBlock(block_id, block_height);
+}
+
+void Chain::setUnresolvedBlock(const UnresolvedBlock &unresolved_block) {
+  unresolved_block_pool->setUnresolvedBlock(unresolved_block);
 }
 
 bool Chain::resolveBlock(Block &block, UnresolvedBlock &resolved_result) {
