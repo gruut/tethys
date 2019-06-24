@@ -36,6 +36,25 @@ public:
   void initWorld(nlohmann::json &world_state);
   optional<vector<string>> initChain(nlohmann::json &chain_state);
 
+  // KV functions
+  const nlohmann::json queryWorldGet();
+  const nlohmann::json queryChainGet();
+  void saveLatestWorldId(const alphanumeric_type &world_id);
+  void saveLatestChainId(const alphanumeric_type &chain_id);
+  void saveWorld(world_type &world_info);
+  void saveChain(local_chain_type &chain_info);
+  void saveBlockIds();
+  void saveBackupBlock(const nlohmann::json &block_json);
+  void saveBackupResult(const UnresolvedBlock &UR_block);
+  void saveSelfInfo(self_info_type &self_info);
+  string getValueByKey(string what, const string &base_keys);
+  void restorePool();
+  void restoreUserLedgerList(UnresolvedBlock &restored_unresolved_block, const nlohmann::json &user_ledger_list_json);
+  void restoreContractLedgerList(UnresolvedBlock &restored_unresolved_block, const nlohmann::json &contract_ledger_list_json);
+  void restoreUserAttributeList(UnresolvedBlock &restored_unresolved_block, const nlohmann::json &user_attribute_list_json);
+  void restoreUserCertList(UnresolvedBlock &restored_unresolved_block, const nlohmann::json &user_cert_list_json);
+  void restoreContractList(UnresolvedBlock &restored_unresolved_block, const nlohmann::json &contract_list_json);
+
   // RDB functions
   string getUserCert(const base58_type &user_id);
   bool applyBlockToRDB(const Block &block_info);
@@ -46,24 +65,8 @@ public:
   bool applyUserCertToRDB(const map<base58_type, user_cert_type> &user_cert_list);
   bool applyContractToRDB(const map<base58_type, contract_type> &contract_list);
 
-  // KV functions
-  void saveLatestWorldId(const alphanumeric_type &world_id);
-  void saveLatestChainId(const alphanumeric_type &chain_id);
-  void saveWorld(world_type &world_info);
-  void saveChain(local_chain_type &chain_info);
-  void saveBlockIds();
-  void saveBackupBlock(const nlohmann::json &block_json);
-  void saveBackupResult(const UnresolvedBlock &UR_block);
-  void saveSelfInfo(self_info_type &self_info);
   vector<Block> getBlocksByHeight(int from, int to);
   block_height_type getLatestResolvedHeight();
-  string getValueByKey(string what, const string &base_keys);
-  void restorePool();
-  void restoreUserLedgerList(UnresolvedBlock &restored_unresolved_block, const nlohmann::json &user_ledger_list_json);
-  void restoreContractLedgerList(UnresolvedBlock &restored_unresolved_block, const nlohmann::json &contract_ledger_list_json);
-  void restoreUserAttributeList(UnresolvedBlock &restored_unresolved_block, const nlohmann::json &user_attribute_list_json);
-  void restoreUserCertList(UnresolvedBlock &restored_unresolved_block, const nlohmann::json &user_cert_list_json);
-  void restoreContractList(UnresolvedBlock &restored_unresolved_block, const nlohmann::json &contract_list_json);
 
   // Unresolved block pool functions
   bool queryUserJoin(UnresolvedBlock &UR_block, nlohmann::json &option, result_query_info_type &result_info);
