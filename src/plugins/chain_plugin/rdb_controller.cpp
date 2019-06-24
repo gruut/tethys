@@ -107,29 +107,42 @@ bool RdbController::applyUserLedgerToRDB(const map<string, user_ledger_type> &us
     timestamp_t up_time;
     block_height_type up_block;
     string tag;
-    hash_t pid;
+    string pid;
+    QueryType query_type;
+
+    soci::row result;
+    soci::session db_session(RdbController::pool());
 
     // TODO: '통화'속성의 변수는 변경 불가능한 조건 검사 시행
-    // TODO: pid의 계산방법, 반영법, for의 정확한 활용 등을 적용
 
     for (auto &each_ledger : user_ledger_list) {
-      soci::row result;
-      soci::session db_session(RdbController::pool());
       soci::statement st(db_session);
 
+      var_name = each_ledger.second.var_name;
+      var_val = each_ledger.second.var_val;
+      var_type = each_ledger.second.var_type;
+      uid = each_ledger.second.uid;
+      up_time = each_ledger.second.up_time;
+      up_block = each_ledger.second.up_block;
+      tag = each_ledger.second.tag;
+      pid = each_ledger.second.pid;
+      query_type = each_ledger.second.query_type;
+
       // clang-format off
-      if (each_ledger.second.query_type == QueryType::INSERT) {
+      if (query_type == QueryType::INSERT) {
+        // TODO: 변경 가능한 column이 어떤 것이고, 제약을 어떻게 걸어야 하는지 검토하여 반영 필요
         st = (db_session.prepare << "INSERT INTO user_scope (var_name, var_value, var_type, var_owner, up_time, up_block, tag, pid) VALUES (:var_name, :var_value, :var_type, :var_owner, :up_time, :up_block, :tag, :pid)",
-                soci::use(var_name, "var_name"), soci::use(var_val, "var_value"), soci::use(tag, "tag"),
+                soci::use(var_name, "var_name"), soci::use(var_val, "var_value"), soci::use(var_type, "var_type"),
+                soci::use(uid, "var_owner"), soci::use(up_time, "up_time"), soci::use(up_block, "up_block"),
+                soci::use(tag, "tag"), soci::use(pid, "pid"),
                 soci::into(result));
-      } else if (each_ledger.second.query_type == QueryType::UPDATE) {
-        st = (db_session.prepare << "UPDATE user_scope SET var_name = :var_name, var_value = :var_value, tag = :tag, WHERE pid = :pid",
-                soci::use(var_name, "var_name"), soci::use(var_val, "var_value"), soci::use(tag, "tag"),
-                soci::into(result));
-      } else if ((each_ledger.second.query_type == QueryType::DELETE) && (each_ledger.second.var_val == "0")) {
-        st = (db_session.prepare << "DELETE FROM user_scope WHERE ",
-                soci::use(var_name, "var_name"), soci::use(var_val, "var_value"), soci::use(tag, "tag"),
-                soci::into(result));
+      } else if (query_type == QueryType::UPDATE) {
+        st = (db_session.prepare << "UPDATE user_scope SET var_value = :var_value, up_time = :up_time, up_block = :up_block WHERE pid = :pid",
+            soci::use(var_val, "var_value"), soci::use(up_time, "up_time"), soci::use(up_block, "up_block"), soci::use(pid, "pid"),
+            soci::into(result));
+      } else if ((query_type == QueryType::DELETE) && (var_val.empty())) {
+        st = (db_session.prepare << "DELETE FROM user_scope WHERE pid = :pid",
+                soci::use(pid, "pid"), soci::into(result));
       } else
         logger::ERROR("Error at applyUserLedgerToRDB");
       // clang-format on
@@ -151,33 +164,46 @@ bool RdbController::applyContractLedgerToRDB(const map<string, contract_ledger_t
     string var_name;
     string var_val;
     int var_type;
-    base58_type uid;
+    contract_id_type cid;
     timestamp_t up_time;
     block_height_type up_block;
     string var_info;
-    hash_t pid;
+    string pid;
+    QueryType query_type;
+
+    soci::row result;
+    soci::session db_session(RdbController::pool());
 
     // TODO: '통화'속성의 변수는 변경 불가능한 조건 검사 시행
-    // TODO: pid의 계산방법, 반영법, for의 정확한 활용 등을 적용
 
     for (auto &each_ledger : contract_ledger_list) {
-      soci::row result;
-      soci::session db_session(RdbController::pool());
       soci::statement st(db_session);
 
+      cid = each_ledger.second.cid;
+      var_name = each_ledger.second.var_name;
+      var_val = each_ledger.second.var_val;
+      var_type = each_ledger.second.var_type;
+      up_time = each_ledger.second.up_time;
+      up_block = each_ledger.second.up_block;
+      var_info = each_ledger.second.var_info;
+      pid = each_ledger.second.pid;
+      query_type = each_ledger.second.query_type;
+
       // clang-format off
-      if (each_ledger.second.query_type == QueryType::INSERT) {
-        st = (db_session.prepare << "INSERT INTO contract_scope (var_name, var_value, var_type, var_owner, up_time, up_block, var_info, pid) VALUES (:var_name, :var_value, :var_type, :var_owner, :up_time, :up_block, :var_info, :pid)",
-            soci::use(var_name, "var_name"), soci::use(var_val, "var_value"), soci::use(var_info, "var_info"),
+      if (query_type == QueryType::INSERT) {
+        st = (db_session.prepare << "INSERT INTO contract_scope (contract_id, var_name, var_value, var_type, var_info, up_time, up_block, pid) VALUES (:contract_id, :var_name, :var_value, :var_type, :var_info, :up_time, :up_block, :pid)",
+            soci::use(cid, "contract_id"), soci::use(var_name, "var_name"), soci::use(var_val, "var_value"),
+            soci::use(var_type, "var_type"), soci::use(var_info, "var_info"), soci::use(up_time, "up_time"),
+            soci::use(up_block, "up_block"), soci::use(pid, "pid"),
             soci::into(result));
-      } else if (each_ledger.second.query_type == QueryType::UPDATE) {
-        st = (db_session.prepare << "UPDATE contract_scope SET var_name = :var_name, var_value = :var_value, var_info = :var_info, WHERE pid = :pid",
-            soci::use(var_name, "var_name"), soci::use(var_val, "var_value"), soci::use(var_info, "var_info"),
+      } else if (query_type == QueryType::UPDATE) {
+        // TODO: 변경 가능한 column이 어떤 것이고, 제약을 어떻게 걸어야 하는지 검토하여 반영 필요
+        st = (db_session.prepare << "UPDATE contract_scope SET var_value = :var_value, up_time = :up_time, up_block = :up_block WHERE pid = :pid",
+            soci::use(var_val, "var_value"), soci::use(up_time, "up_time"), soci::use(up_block, "up_block"), soci::use(pid, "pid"),
             soci::into(result));
-      } else if ((each_ledger.second.query_type == QueryType::DELETE) && (each_ledger.second.var_val == "0")) {
-        st = (db_session.prepare << "DELETE FROM contract_scope WHERE ",
-            soci::use(var_name, "var_name"), soci::use(var_val, "var_value"), soci::use(var_info, "var_info"),
-            soci::into(result));
+      } else if ((query_type == QueryType::DELETE) && (var_val.empty())) {
+        st = (db_session.prepare << "DELETE FROM contract_scope WHERE pid = :pid",
+            soci::use(pid, "pid"), soci::into(result));
       } else
         logger::ERROR("Error at applyContractLedgerToRDB");
       // clang-format on
@@ -196,26 +222,39 @@ bool RdbController::applyContractLedgerToRDB(const map<string, contract_ledger_t
 
 bool RdbController::applyUserAttributeToRDB(const map<base58_type, user_attribute_type> &user_attribute_list) {
   try {
-    for (auto &each_attribute : user_attribute_list) {
-      base58_type uid = each_attribute.second.uid;
-      timestamp_t register_day = each_attribute.second.register_day;
-      string register_code = each_attribute.second.register_code;
-      int gender = each_attribute.second.gender;
-      string isc_type = each_attribute.second.isc_type;
-      string isc_code = each_attribute.second.isc_code;
-      string location = each_attribute.second.location;
-      int age_limit = each_attribute.second.age_limit;
+    base58_type uid;
+    timestamp_t register_day;
+    string register_code;
+    int gender;
+    string isc_type;
+    string isc_code;
+    string location;
+    int age_limit;
+    string sigma;
 
-      soci::row result;
-      soci::session db_session(RdbController::pool());
+    soci::row result;
+    soci::session db_session(RdbController::pool());
+
+    for (auto &each_attribute : user_attribute_list) {
       soci::statement st(db_session);
 
+      uid = each_attribute.second.uid;
+      register_day = each_attribute.second.register_day;
+      register_code = each_attribute.second.register_code;
+      gender = each_attribute.second.gender;
+      isc_type = each_attribute.second.isc_type;
+      isc_code = each_attribute.second.isc_code;
+      location = each_attribute.second.location;
+      age_limit = each_attribute.second.age_limit;
+      sigma = each_attribute.second.sigma;
+
       // clang-format off
-      // TODO: INSERT일수도, UPDATE일수도 있음. 구분해서 구현 필요.
-      st = (db_session.prepare << "INSERT INTO user_attributes (uid, register_day, register_code, gender, isc_type, isc_code, location, age_limit) VALUES (:uid, :register_day, :register_code, :gender, :isc_type, :isc_code, :location, :age_limit)",
+      // TODO: 변경 가능한 column이 어떤 것이고, 제약을 어떻게 걸어야 하는지 검토하여 반영 필요
+      //  QueryType를 적용시켜야 하는지 검토
+      st = (db_session.prepare << "INSERT INTO user_attributes (uid, register_day, register_code, gender, isc_type, isc_code, location, age_limit, sigma) VALUES (:uid, :register_day, :register_code, :gender, :isc_type, :isc_code, :location, :age_limit, :sigma) ON DUPLICATE KEY UPDATE register_day = :register_day, register_code = :register_code, gender = :gender, isc_type = :isc_type, isc_code = :isc_code, location = :location, age_limit = :age_limit, sigma = :sigma",
           soci::use(uid, "uid"), soci::use(register_day, "register_day"), soci::use(register_code, "register_code"),
           soci::use(gender, "gender"), soci::use(isc_type, "isc_type"), soci::use(isc_code, "isc_code"),
-          soci::use(location, "location"), soci::use(age_limit, "age_limit"),
+          soci::use(location, "location"), soci::use(age_limit, "age_limit"), soci::use(sigma, "sigma"),
           soci::into(result));
       // clang-format on
 
@@ -239,10 +278,17 @@ bool RdbController::applyUserCertToRDB(const map<base58_type, user_cert_type> &u
     timestamp_t nvafter;
     string x509;
 
+    soci::row result;
+    soci::session db_session(RdbController::pool());
+
     for (auto &each_cert : user_cert_list) {
-      soci::row result;
-      soci::session db_session(RdbController::pool());
       soci::statement st(db_session);
+
+      uid = each_cert.second.uid;
+      sn = each_cert.second.sn;
+      nvbefore = each_cert.second.nvbefore;
+      nvafter = each_cert.second.nvafter;
+      x509 = each_cert.second.x509;
 
       // clang-format off
       st = (db_session.prepare << "INSERT INTO user_certificates (uid, sn, nvbefore, nvafter, x509) VALUES (:uid, :sn, :nvbefore, :nvafter, :x509)",
@@ -269,23 +315,42 @@ bool RdbController::applyContractToRDB(const map<base58_type, contract_type> &co
     timestamp_t after;
     timestamp_t before;
     base58_type author;
-    // TODO: friend 추가할 때 자신을 friend로 추가한 contract를 찾아서 추가해야함을 주의
     contract_id_type friends;
     string contract;
     string desc;
     string sigma;
+    QueryType query_type;
+
+    soci::row result;
+    soci::session db_session(RdbController::pool());
 
     for (auto &each_contract : contract_list) {
-      soci::row result;
-      soci::session db_session(RdbController::pool());
       soci::statement st(db_session);
 
+      cid = each_contract.second.cid;
+      after = each_contract.second.after;
+      before = each_contract.second.before;
+      author = each_contract.second.author;
+      // TODO: friend 추가할 때 자신을 friend로 추가한 contract를 찾아서 추가해야함을 주의
+      friends = each_contract.second.friends;
+      contract = each_contract.second.contract;
+      desc = each_contract.second.desc;
+      sigma = each_contract.second.sigma;
+      query_type = each_contract.second.query_type;
+
       // clang-format off
-      st = (db_session.prepare << "INSERT INTO contracts (cid, after, before, author, friends, contract, desc, sigma) VALUES (:cid, :after, :before, :author, :friends, :contract, :desc, :sigma)",
-          soci::use(cid, "cid"), soci::use(after, "after"), soci::use(before, "before"),
-          soci::use(author, "author"), soci::use(friends, "friends"), soci::use(contract, "contract"),
-          soci::use(desc, "desc"), soci::use(sigma, "sigma"),
-          soci::into(result));
+      if (query_type == QueryType::INSERT) {
+        st = (db_session.prepare << "INSERT INTO contracts (cid, after, before, author, friends, contract, desc, sigma) VALUES (:cid, :after, :before, :author, :friends, :contract, :desc, :sigma)",
+            soci::use(cid, "cid"), soci::use(after, "after"), soci::use(before, "before"),
+            soci::use(author, "author"), soci::use(friends, "friends"), soci::use(contract, "contract"),
+            soci::use(desc, "desc"), soci::use(sigma, "sigma"),
+            soci::into(result));
+      } else if (query_type == QueryType::UPDATE) {
+        st = (db_session.prepare << "UPDATE contracts SET before = :before WHERE cid = :cid",
+            soci::use(before, "before"), soci::use(cid, "cid"),
+            soci::into(result));
+      } else
+        logger::ERROR("Error at applyContractToRDB");
       // clang-format on
 
       st.execute(true);

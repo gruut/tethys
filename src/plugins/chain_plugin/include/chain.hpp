@@ -85,7 +85,8 @@ public:
   bool checkUniqueVarName(const string &var_owner, const string &var_name, const block_height_type height, const int vec_idx);
 
   block_push_result_type pushBlock(Block &block);
-  UnresolvedBlock findBlock(const base58_type &block_id, const block_height_type block_height);
+  UnresolvedBlock getUnresolvedBlock(const base58_type &block_id, const block_height_type block_height);
+  void setUnresolvedBlock(const UnresolvedBlock &unresolved_block);
   bool resolveBlock(Block &block, UnresolvedBlock &resolved_result);
   void setPool(const base64_type &last_block_id, block_height_type last_height, timestamp_t last_time, const base64_type &last_hash,
                const base64_type &prev_block_id);
@@ -110,8 +111,8 @@ public:
   void updateStateTree(const UnresolvedBlock &unresolved_block);
   void revertStateTree(const UnresolvedBlock &unresolved_block);
 
-  user_ledger_type findUserLedgerFromHead(const string &pid);
-  contract_ledger_type findContractLedgerFromHead(const string &pid);
+  user_ledger_type findUserLedgerFromHead(UnresolvedBlock &UR_block, const string &pid);
+  contract_ledger_type findContractLedgerFromHead(UnresolvedBlock &UR_block, const string &pid);
   void moveHead(const base58_type &target_block_id, const block_height_type target_block_height);
   base58_type getCurrentHeadId();
   block_height_type getCurrentHeadHeight();

@@ -63,8 +63,9 @@ public:
   block_push_result_type pushBlock(Block &block);
   bool resolveBlock(Block &block, UnresolvedBlock &resolved_result, vector<base58_type> &dropped_block_id);
 
-  UnresolvedBlock findBlock(const base58_type &block_id, const block_height_type block_height);
-  UnresolvedBlock getBlock(int pool_deq_idx, int pool_vec_idx);
+  UnresolvedBlock getUnresolvedBlock(const base58_type &block_id, const block_height_type block_height);
+  UnresolvedBlock getUnresolvedBlock(int pool_deq_idx, int pool_vec_idx);
+  void setUnresolvedBlock(const UnresolvedBlock &unresolved_block);
   vector<int> getLine(const base58_type &block_id, const block_height_type block_height);
 
   void invalidateCaches();

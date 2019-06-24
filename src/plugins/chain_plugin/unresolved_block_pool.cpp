@@ -225,7 +225,7 @@ void UnresolvedBlockPool::updateTotalNumSSig() {
   }
 }
 
-UnresolvedBlock UnresolvedBlockPool::findBlock(const base58_type &block_id, const block_height_type block_height) {
+UnresolvedBlock UnresolvedBlockPool::getUnresolvedBlock(const base58_type &block_id, const block_height_type block_height) {
   // TODO: Refactoring. height와 cur_vec_idx를 이용하면 순회 안 하고도 찾을 수 있음
   for (auto &each_level : m_block_pool) {
     for (auto &each_block : each_level) {
@@ -238,8 +238,15 @@ UnresolvedBlock UnresolvedBlockPool::findBlock(const base58_type &block_id, cons
   return UnresolvedBlock{};
 }
 
-UnresolvedBlock UnresolvedBlockPool::getBlock(int pool_deq_idx, int pool_vec_idx) {
+UnresolvedBlock UnresolvedBlockPool::getUnresolvedBlock(int pool_deq_idx, int pool_vec_idx) {
   return m_block_pool[pool_deq_idx][pool_vec_idx];
+}
+
+void UnresolvedBlockPool::setUnresolvedBlock(const UnresolvedBlock &unresolved_block) {
+  int pool_deq_idx= static_cast<int>(unresolved_block.block.getHeight() - m_latest_confirmed_height) - 1;
+  int pool_vec_idx = unresolved_block.cur_vec_idx;
+
+  m_block_pool[pool_deq_idx][pool_vec_idx] = unresolved_block;
 }
 
 vector<int> UnresolvedBlockPool::getLine(const base58_type &block_id, const block_height_type block_height) {
