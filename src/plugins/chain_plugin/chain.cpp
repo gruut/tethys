@@ -1227,8 +1227,8 @@ search_result_type Chain::findUserLedgerFromPoint(const string &pid, block_heigh
 
     if (pool_deque_idx < 0) {
       // -1이 되면 rdb에서 찾을 차례. select문으로 조회하는데도 찾지 못한다면 존재하지 않는 데이터
-      bool result = rdb_controller->findUserScopeFromRDB(pid, search_result.user_ledger);
-      if (!result) {
+      search_result.user_ledger = rdb_controller->findUserScopeFromRDB(pid);
+      if (search_result.user_ledger.is_empty) {
         search_result.not_found = true;
       }
       return search_result;
@@ -1257,8 +1257,8 @@ search_result_type Chain::findContractLedgerFromPoint(const string &pid, block_h
 
     if (pool_deque_idx < 0) {
       // -1이 되면 rdb에서 찾을 차례. select문으로 조회하는데도 찾지 못한다면 존재하지 않는 데이터
-      bool result = rdb_controller->findContractScopeFromRDB(pid, search_result.contract_ledger);
-      if (!result) {
+      search_result.contract_ledger = rdb_controller->findContractScopeFromRDB(pid);
+      if (search_result.contract_ledger.is_empty) {
         search_result.not_found = true;
       }
       return search_result;

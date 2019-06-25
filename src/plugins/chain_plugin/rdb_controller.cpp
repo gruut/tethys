@@ -54,122 +54,121 @@ const vector<contract_id_type> RdbController::queryContractScan(const nlohmann::
 }
 
 const string RdbController::queryContractGet(const nlohmann::json &where_json) {
-
+  string contract;
   try {
 
   } catch (soci::mysql_soci_error const &e) {
     logger::ERROR("MySQL error: {}", e.what());
-    return ;
+    return;
   } catch (...) {
     logger::ERROR("Unexpected error at ``");
-    return ;
+    return;
   }
 }
 
 const vector<user_cert_type> RdbController::queryCertGet(const nlohmann::json &where_json) {
-
+  vector<user_cert_type> cert_list;
   try {
 
   } catch (soci::mysql_soci_error const &e) {
     logger::ERROR("MySQL error: {}", e.what());
-    return ;
+    return;
   } catch (...) {
     logger::ERROR("Unexpected error at ``");
-    return ;
+    return;
   }
 }
 
 const user_attribute_type RdbController::queryUserInfoGet(const nlohmann::json &where_json) {
-
+  user_attribute_type user_info;
   try {
 
   } catch (soci::mysql_soci_error const &e) {
     logger::ERROR("MySQL error: {}", e.what());
-    return ;
+    return;
   } catch (...) {
     logger::ERROR("Unexpected error at ``");
-    return ;
+    return;
   }
 }
 
 const vector<user_ledger_type> RdbController::queryUserScopeGet(const nlohmann::json &where_json) {
-
+  vector<user_ledger_type> user_ledger_list;
   try {
 
   } catch (soci::mysql_soci_error const &e) {
     logger::ERROR("MySQL error: {}", e.what());
-    return ;
+    return;
   } catch (...) {
     logger::ERROR("Unexpected error at ``");
-    return ;
+    return;
   }
 }
 
 const vector<contract_ledger_type> RdbController::queryContractScopeGet(const nlohmann::json &where_json) {
-
+  vector<contract_ledger_type> contract_ledger_list;
   try {
 
   } catch (soci::mysql_soci_error const &e) {
     logger::ERROR("MySQL error: {}", e.what());
-    return ;
+    return;
   } catch (...) {
     logger::ERROR("Unexpected error at ``");
-    return ;
+    return;
   }
 }
 
 const Block RdbController::queryBlockGet(const nlohmann::json &where_json) {
-
+  Block block;
   try {
 
   } catch (soci::mysql_soci_error const &e) {
     logger::ERROR("MySQL error: {}", e.what());
-    return ;
+    return;
   } catch (...) {
     logger::ERROR("Unexpected error at ``");
-    return ;
+    return;
   }
 }
 
 const Transaction RdbController::queryTxGet(const nlohmann::json &where_json) {
-
+  Transaction transaction;
   try {
 
   } catch (soci::mysql_soci_error const &e) {
     logger::ERROR("MySQL error: {}", e.what());
-    return ;
+    return;
   } catch (...) {
     logger::ERROR("Unexpected error at ``");
-    return ;
+    return;
   }
 }
 
 const vector<base58_type> RdbController::queryBlockScan(const nlohmann::json &where_json) {
-
+  vector<base58_type> block_id_list;
   try {
 
   } catch (soci::mysql_soci_error const &e) {
     logger::ERROR("MySQL error: {}", e.what());
-    return ;
+    return;
   } catch (...) {
     logger::ERROR("Unexpected error at ``");
-    return ;
+    return;
   }
 }
 
 const vector<base58_type> RdbController::queryTxScan(const nlohmann::json &where_json) {
-
+  vector<base58_type> tx_id_list;
   try {
 
   } catch (soci::mysql_soci_error const &e) {
     logger::ERROR("MySQL error: {}", e.what());
-    return ;
+    return;
   } catch (...) {
     logger::ERROR("Unexpected error at ``");
-    return ;
+    return;
   }
 }
-
 
 bool RdbController::applyBlockToRDB(const Block &block) {
   logger::INFO("insert Block Data");
@@ -459,7 +458,7 @@ bool RdbController::applyUserCertToRDB(const map<base58_type, user_cert_type> &u
   return true;
 }
 
-bool RdbController::applyContractToRDB(const map<base58_type, contract_type> &contract_list) {
+bool RdbController::applyContractToRDB(const map<contract_id_type, contract_type> &contract_list) {
   try {
     contract_id_type cid;
     timestamp_t after;
@@ -625,8 +624,8 @@ int RdbController::getVarTypeFromRDB(const string &var_owner, const string &var_
       st = (db_session.prepare << "SELECT var_type from user_scope WHERE var_owner = :var_owner AND var_name = :var_name AND tag is NULL", soci::use(var_owner, "var_owner"), soci::use(var_name, "var_name"), soci::into(result));
     else if(isContractId(var_owner))
       st = (db_session.prepare << "SELECT var_type from contract_scope WHERE contract_id = :contract_id AND var_name = :var_name AND var_info is NULL", soci::use(var_owner, "contract_id"), soci::use(var_name, "var_name"), soci::into(result));
-    // clang-format on
     st.execute(true);
+    // clang-format on
 
     result >> var_type;
 
@@ -647,7 +646,8 @@ int RdbController::getVarTypeFromRDB(const string &var_owner, const string &var_
   }
 }
 
-bool RdbController::findUserScopeFromRDB(const string &pid, user_ledger_type &user_ledger) {
+user_ledger_type RdbController::findUserScopeFromRDB(const string &pid) {
+  user_ledger_type user_ledger;
   try {
     string var_name, var_value, var_owner, tag, pid;
     short var_type;
@@ -659,29 +659,32 @@ bool RdbController::findUserScopeFromRDB(const string &pid, user_ledger_type &us
     soci::session db_session(RdbController::pool());
     soci::statement st = (db_session.prepare << "SELECT var_name, var_value, var_type, var_owner, up_time, up_block, tag, pid from user_scope WHERE pid = :pid", soci::use(pid, "pid"), soci::into(result));
     st.execute(true);
+    // clang-format on
 
     result >> var_name >> var_value >> var_type >> var_owner >> up_time >> up_block >> tag >> pid;
 
-    user_ledger.var_name = var_name;
-    user_ledger.var_val = var_value;
-    user_ledger.var_type = (int)var_type;
-    user_ledger.uid = var_owner;
-    user_ledger.up_time = (uint64_t)up_time;
-    user_ledger.up_block = (block_height_type)up_block;
-    user_ledger.tag = tag;
-    user_ledger.pid = pid;
-    // clang-format on
+    int num_rows = (int)st.get_affected_rows();
+    if (num_rows == 1) {
+      user_ledger.var_name = var_name;
+      user_ledger.var_val = var_value;
+      user_ledger.var_type = (int)var_type;
+      user_ledger.uid = var_owner;
+      user_ledger.up_time = (uint64_t)up_time;
+      user_ledger.up_block = (block_height_type)up_block;
+      user_ledger.tag = tag;
+      user_ledger.pid = pid;
+      user_ledger.is_empty = false;
+    }
   } catch (soci::mysql_soci_error const &e) {
     logger::ERROR("MySQL error: {}", e.what());
-    return false;
   } catch (...) {
     logger::ERROR("Unexpected error at `findUserScopeFromRDB`");
-    return false;
   }
-  return true;
+  return user_ledger;
 }
 
-bool RdbController::findContractScopeFromRDB(const string &pid, tethys::contract_ledger_type &contract_ledger) {
+contract_ledger_type RdbController::findContractScopeFromRDB(const string &pid) {
+  contract_ledger_type contract_ledger;
   try {
     string var_name, var_value, contract_id, var_info, pid;
     short var_type;
@@ -693,26 +696,28 @@ bool RdbController::findContractScopeFromRDB(const string &pid, tethys::contract
     soci::session db_session(RdbController::pool());
     soci::statement st = (db_session.prepare << "SELECT var_name, var_value, var_type, contract_id, up_time, up_block, var_info, pid from contract_scope WHERE pid = :pid", soci::use(pid, "pid"), soci::into(result));
     st.execute(true);
+    // clang-format on
 
     result >> var_name >> var_value >> var_type >> contract_id >> up_time >> up_block >> var_info >> pid;
 
-    contract_ledger.var_name = var_name;
-    contract_ledger.var_val = var_value;
-    contract_ledger.var_type = (int)var_type;
-    contract_ledger.cid = contract_id;
-    contract_ledger.up_time = (uint64_t)up_time;
-    contract_ledger.up_block = (block_height_type)up_block;
-    contract_ledger.var_info = var_info;
-    contract_ledger.pid = pid;
-    // clang-format on
+    int num_rows = (int)st.get_affected_rows();
+    if (num_rows == 1) {
+      contract_ledger.var_name = var_name;
+      contract_ledger.var_val = var_value;
+      contract_ledger.var_type = (int)var_type;
+      contract_ledger.cid = contract_id;
+      contract_ledger.up_time = (uint64_t)up_time;
+      contract_ledger.up_block = (block_height_type)up_block;
+      contract_ledger.var_info = var_info;
+      contract_ledger.pid = pid;
+      contract_ledger.is_empty = false;
+    }
   } catch (soci::mysql_soci_error const &e) {
     logger::ERROR("MySQL error: {}", e.what());
-    return false;
   } catch (...) {
     logger::ERROR("Unexpected error at `findContractScopeFromRDB`");
-    return false;
   }
-  return true;
+  return contract_ledger;
 }
 
 vector<user_ledger_type> RdbController::getAllUserLedger() {

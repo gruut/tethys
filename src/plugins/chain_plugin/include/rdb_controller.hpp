@@ -47,7 +47,7 @@ public:
   bool applyContractLedgerToRDB(const map<string, contract_ledger_type> &contract_ledger_list);
   bool applyUserAttributeToRDB(const map<base58_type, user_attribute_type> &user_attribute_list);
   bool applyUserCertToRDB(const map<base58_type, user_cert_type> &user_cert_list);
-  bool applyContractToRDB(const map<base58_type, contract_type> &contract_list);
+  bool applyContractToRDB(const map<contract_id_type, contract_type> &contract_list);
 
   vector<Block> getBlocks(const string &condition);
   optional<Block> getBlock(const string &condition);
@@ -57,8 +57,8 @@ public:
   //  bool queryRunContract(std::vector<LedgerRecord> &mem_ledger, nlohmann::json &option, result_query_info_type &result_info);
 
   int getVarTypeFromRDB(const string &var_owner, const string &var_name);
-  bool findUserScopeFromRDB(const string &pid, user_ledger_type &user_ledger);
-  bool findContractScopeFromRDB(const string &pid, contract_ledger_type &contract_ledger);
+  user_ledger_type findUserScopeFromRDB(const string &pid);
+  contract_ledger_type findContractScopeFromRDB(const string &pid);
 
   vector<user_ledger_type> getAllUserLedger();
   vector<contract_ledger_type> getAllContractLedger();
