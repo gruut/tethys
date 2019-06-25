@@ -21,6 +21,156 @@ soci::connection_pool &RdbController::pool() {
   return m_db_pool;
 }
 
+const vector<contract_id_type> RdbController::queryContractScan(const nlohmann::json &where_json) {
+  vector<contract_id_type> contract_id_list;
+  try {
+    // TODO: 네 가지 모두가 아닌 일부만 주어졌을 경우의 상황 처리 필요
+    string desc = json::get<string>(where_json, "desc").value();
+    base58_type author = json::get<string>(where_json, "author").value();
+    timestamp_t after = static_cast<tethys::timestamp_t>(stoll(json::get<string>(where_json, "after").value()));
+    timestamp_t before = static_cast<tethys::timestamp_t>(stoll(json::get<string>(where_json, "before").value()));
+
+    contract_id_type cid;
+
+    // clang-format off
+      soci::row result;
+      soci::session db_session(RdbController::pool());
+      soci::statement st = (db_session.prepare << "SELECT cid from contracts WHERE desc = :desc, author = :author, after = :after, before = :before", soci::use(desc, "desc"), soci::use(author, "author"),soci::use(after, "after"),soci::use(before, "before"), soci::into(result));
+      st.execute(true);
+    // clang-format on
+    do {
+      result >> cid;
+
+      contract_id_list.emplace_back(cid);
+    } while (st.fetch());
+
+  } catch (soci::mysql_soci_error const &e) {
+    logger::ERROR("MySQL error: {}", e.what());
+    return contract_id_list;
+  } catch (...) {
+    logger::ERROR("Unexpected error at `queryContractScan`");
+    return contract_id_list;
+  }
+}
+
+const string RdbController::queryContractGet(const nlohmann::json &where_json) {
+
+  try {
+
+  } catch (soci::mysql_soci_error const &e) {
+    logger::ERROR("MySQL error: {}", e.what());
+    return ;
+  } catch (...) {
+    logger::ERROR("Unexpected error at ``");
+    return ;
+  }
+}
+
+const vector<user_cert_type> RdbController::queryCertGet(const nlohmann::json &where_json) {
+
+  try {
+
+  } catch (soci::mysql_soci_error const &e) {
+    logger::ERROR("MySQL error: {}", e.what());
+    return ;
+  } catch (...) {
+    logger::ERROR("Unexpected error at ``");
+    return ;
+  }
+}
+
+const user_attribute_type RdbController::queryUserInfoGet(const nlohmann::json &where_json) {
+
+  try {
+
+  } catch (soci::mysql_soci_error const &e) {
+    logger::ERROR("MySQL error: {}", e.what());
+    return ;
+  } catch (...) {
+    logger::ERROR("Unexpected error at ``");
+    return ;
+  }
+}
+
+const vector<user_ledger_type> RdbController::queryUserScopeGet(const nlohmann::json &where_json) {
+
+  try {
+
+  } catch (soci::mysql_soci_error const &e) {
+    logger::ERROR("MySQL error: {}", e.what());
+    return ;
+  } catch (...) {
+    logger::ERROR("Unexpected error at ``");
+    return ;
+  }
+}
+
+const vector<contract_ledger_type> RdbController::queryContractScopeGet(const nlohmann::json &where_json) {
+
+  try {
+
+  } catch (soci::mysql_soci_error const &e) {
+    logger::ERROR("MySQL error: {}", e.what());
+    return ;
+  } catch (...) {
+    logger::ERROR("Unexpected error at ``");
+    return ;
+  }
+}
+
+const Block RdbController::queryBlockGet(const nlohmann::json &where_json) {
+
+  try {
+
+  } catch (soci::mysql_soci_error const &e) {
+    logger::ERROR("MySQL error: {}", e.what());
+    return ;
+  } catch (...) {
+    logger::ERROR("Unexpected error at ``");
+    return ;
+  }
+}
+
+const Transaction RdbController::queryTxGet(const nlohmann::json &where_json) {
+
+  try {
+
+  } catch (soci::mysql_soci_error const &e) {
+    logger::ERROR("MySQL error: {}", e.what());
+    return ;
+  } catch (...) {
+    logger::ERROR("Unexpected error at ``");
+    return ;
+  }
+}
+
+const vector<base58_type> RdbController::queryBlockScan(const nlohmann::json &where_json) {
+
+  try {
+
+  } catch (soci::mysql_soci_error const &e) {
+    logger::ERROR("MySQL error: {}", e.what());
+    return ;
+  } catch (...) {
+    logger::ERROR("Unexpected error at ``");
+    return ;
+  }
+}
+
+const vector<base58_type> RdbController::queryTxScan(const nlohmann::json &where_json) {
+
+  try {
+
+  } catch (soci::mysql_soci_error const &e) {
+    logger::ERROR("MySQL error: {}", e.what());
+    return ;
+  } catch (...) {
+    logger::ERROR("Unexpected error at ``");
+    return ;
+  }
+}
+
+
 bool RdbController::applyBlockToRDB(const Block &block) {
   logger::INFO("insert Block Data");
 

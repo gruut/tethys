@@ -305,26 +305,26 @@ public:
       return chain->queryWorldGet();
     } else if (type == "chain.get") {
       return chain->queryChainGet();
-//    } else if (type == "contract.scan") {
-//      return chain->queryContractScan(where_json);
-//    } else if (type == "contract.get") {
-//      return chain->queryContractGet(where_json);
-//    } else if (type == "user.cert.get") {
-//      return chain->queryCertGet(where_json);
-//    } else if (type == "user.info.get") {
-//      return chain->queryUserInfoGet(where_json);
-//    } else if (type == "user.scope.get") {
-//      return chain->queryUserScopeGet(where_json);
-//    } else if (type == "contract.scope.get") {
-//      return chain->queryContractScopeGet(where_json);
-//    } else if (type == "block.get") {
-//      return chain->queryBlockGet(where_json);
-//    } else if (type == "tx.get") {
-//      return chain->queryTxGet(where_json);
-//    } else if (type == "block.scan") {
-//      return chain->queryBlockScan(where_json);
-//    } else if (type == "tx.scan") {
-//      return chain->queryTxScan(where_json);
+    } else if (type == "contract.scan") {
+      return chain->queryContractScan(where_json);
+    } else if (type == "contract.get") {
+      return chain->queryContractGet(where_json);
+    } else if (type == "user.cert.get") {
+      return chain->queryCertGet(where_json);
+    } else if (type == "user.info.get") {
+      return chain->queryUserInfoGet(where_json);
+    } else if (type == "user.scope.get") {
+      return chain->queryUserScopeGet(where_json);
+    } else if (type == "contract.scope.get") {
+      return chain->queryContractScopeGet(where_json);
+    } else if (type == "block.get") {
+      return chain->queryBlockGet(where_json);
+    } else if (type == "tx.get") {
+      return chain->queryTxGet(where_json);
+    } else if (type == "block.scan") {
+      return chain->queryBlockScan(where_json);
+    } else if (type == "tx.scan") {
+      return chain->queryTxScan(where_json);
     } else {
       logger::ERROR("URBP, Something error in query process");
       return request;

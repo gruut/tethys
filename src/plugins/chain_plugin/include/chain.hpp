@@ -56,6 +56,16 @@ public:
   void restoreContractList(UnresolvedBlock &restored_unresolved_block, const nlohmann::json &contract_list_json);
 
   // RDB functions
+  const nlohmann::json queryContractScan(const nlohmann::json &where_json);
+  const nlohmann::json queryContractGet(const nlohmann::json &where_json);
+  const nlohmann::json queryCertGet(const nlohmann::json &where_json);
+  const nlohmann::json queryUserInfoGet(const nlohmann::json &where_json);
+  const nlohmann::json queryUserScopeGet(const nlohmann::json &where_json);
+  const nlohmann::json queryContractScopeGet(const nlohmann::json &where_json);
+  const nlohmann::json queryBlockGet(const nlohmann::json &where_json);
+  const nlohmann::json queryTxGet(const nlohmann::json &where_json);
+  const nlohmann::json queryBlockScan(const nlohmann::json &where_json);
+  const nlohmann::json queryTxScan(const nlohmann::json &where_json);
   string getUserCert(const base58_type &user_id);
   bool applyBlockToRDB(const Block &block_info);
   bool applyTransactionToRDB(const Block &block_info);

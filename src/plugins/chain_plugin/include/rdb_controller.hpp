@@ -29,6 +29,18 @@ private:
 public:
   RdbController(string_view dbms, string_view table_name, string_view db_user_id, string_view db_password);
   soci::connection_pool &pool();
+
+  const vector<contract_id_type> queryContractScan(const nlohmann::json &where_json);
+  const string queryContractGet(const nlohmann::json &where_json);
+  const vector<user_cert_type> queryCertGet(const nlohmann::json &where_json);
+  const user_attribute_type queryUserInfoGet(const nlohmann::json &where_json);
+  const vector<user_ledger_type> queryUserScopeGet(const nlohmann::json &where_json);
+  const vector<contract_ledger_type> queryContractScopeGet(const nlohmann::json &where_json);
+  const Block queryBlockGet(const nlohmann::json &where_json);
+  const Transaction queryTxGet(const nlohmann::json &where_json);
+  const vector<base58_type> queryBlockScan(const nlohmann::json &where_json);
+  const vector<base58_type> queryTxScan(const nlohmann::json &where_json);
+
   bool applyBlockToRDB(const Block &block);
   bool applyTransactionToRDB(const Block &block);
   bool applyUserLedgerToRDB(const map<string, user_ledger_type> &user_ledger_list);

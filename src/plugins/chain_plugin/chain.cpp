@@ -369,6 +369,87 @@ void Chain::restoreContractList(UnresolvedBlock &restored_unresolved_block, cons
 }
 
 // RDB functions
+const nlohmann::json Chain::queryContractScan(const nlohmann::json &where_json) {
+  vector<contract_id_type> found_contracts = rdb_controller->queryContractScan(where_json);
+
+  nlohmann::json result_json;
+  result_json["name"] = nlohmann::json::array();
+  result_json["name"].push_back("cid");
+
+  result_json["data"] = nlohmann::json::array();
+  for(int i = 0; i < found_contracts.size(); i++) {
+    result_json["data"][i].push_back(found_contracts[i]);
+  }
+
+  return result_json;
+}
+
+const nlohmann::json Chain::queryContractGet(const nlohmann::json &where_json) {
+  string contract = rdb_controller->queryContractGet(where_json);
+
+  nlohmann::json result_json;
+
+  return result_json;
+}
+
+const nlohmann::json Chain::queryCertGet(const nlohmann::json &where_json) {
+  vector<user_cert_type> found_certs = rdb_controller->queryCertGet(where_json);
+
+  nlohmann::json result_json;
+
+  return result_json;
+}
+
+const nlohmann::json Chain::queryUserInfoGet(const nlohmann::json &where_json) {
+  user_attribute_type found_user_info = rdb_controller->queryUserInfoGet(where_json);
+  nlohmann::json result_json;
+
+  return result_json;
+}
+
+const nlohmann::json Chain::queryUserScopeGet(const nlohmann::json &where_json) {
+  vector<user_ledger_type> found_user_ledgers = rdb_controller->queryUserScopeGet(where_json);
+  nlohmann::json result_json;
+
+  return result_json;
+}
+
+const nlohmann::json Chain::queryContractScopeGet(const nlohmann::json &where_json) {
+  vector<contract_ledger_type> found_contract_ledgers = rdb_controller->queryContractScopeGet(where_json);
+  nlohmann::json result_json;
+
+  return result_json;
+}
+
+const nlohmann::json Chain::queryBlockGet(const nlohmann::json &where_json) {
+  Block found_block = rdb_controller->queryBlockGet(where_json);
+  nlohmann::json result_json;
+
+  return result_json;
+}
+
+const nlohmann::json Chain::queryTxGet(const nlohmann::json &where_json) {
+  Transaction found_tx = rdb_controller->queryTxGet(where_json);
+  nlohmann::json result_json;
+
+  return result_json;
+}
+
+const nlohmann::json Chain::queryBlockScan(const nlohmann::json &where_json) {
+  vector<base58_type> found_blocks = rdb_controller->queryBlockScan(where_json);
+  nlohmann::json result_json;
+
+  return result_json;
+}
+
+const nlohmann::json Chain::queryTxScan(const nlohmann::json &where_json) {
+  vector<base58_type> found_txs = rdb_controller->queryTxScan(where_json);
+  nlohmann::json result_json;
+
+  return result_json;
+}
+
+
 string Chain::getUserCert(const base58_type &user_id) {
   return rdb_controller->getUserCert(user_id);
 }
