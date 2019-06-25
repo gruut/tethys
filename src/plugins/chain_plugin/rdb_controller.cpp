@@ -35,7 +35,7 @@ const vector<contract_id_type> RdbController::queryContractScan(const nlohmann::
     // clang-format off
       soci::row result;
       soci::session db_session(RdbController::pool());
-      soci::statement st = (db_session.prepare << "SELECT cid from contracts WHERE desc = :desc, author = :author, after = :after, before = :before", soci::use(desc, "desc"), soci::use(author, "author"),soci::use(after, "after"),soci::use(before, "before"), soci::into(result));
+      soci::statement st = (db_session.prepare << "SELECT cid FROM contracts WHERE desc = :desc, author = :author, after = :after, before = :before", soci::use(desc, "desc"), soci::use(author, "author"), soci::use(after, "after"), soci::use(before, "before"), soci::into(result));
       st.execute(true);
     // clang-format on
     do {
@@ -54,81 +54,203 @@ const vector<contract_id_type> RdbController::queryContractScan(const nlohmann::
 }
 
 const string RdbController::queryContractGet(const nlohmann::json &where_json) {
-  string contract;
+  string contract = "";
   try {
+    contract_id_type cid = json::get<string>(where_json, "cid").value();
+
+    // clang-format off
+    soci::row result;
+    soci::session db_session(RdbController::pool());
+    soci::statement st = (db_session.prepare << "SELECT contract FROM contracts WHERE cid = :cid", soci::use(cid, "cid"), soci::into(result));
+    st.execute(true);
+    // clang-format on
+
+    result >> contract;
 
   } catch (soci::mysql_soci_error const &e) {
     logger::ERROR("MySQL error: {}", e.what());
-    return;
   } catch (...) {
-    logger::ERROR("Unexpected error at ``");
-    return;
+    logger::ERROR("Unexpected error at `queryContractGet`");
   }
+  return contract;
 }
 
 const vector<user_cert_type> RdbController::queryCertGet(const nlohmann::json &where_json) {
   vector<user_cert_type> cert_list;
   try {
+    // TODO: uid뿐만 아닌 다른 것도 주어졌을 경우의 상황 처리 필요
+    base58_type uid = json::get<string>(where_json, "uid").value();
+    string sn = json::get<string>(where_json, "sn").value();
+    timestamp_t nvbefore = static_cast<tethys::timestamp_t>(stoll(json::get<string>(where_json, "nvbefore").value()));
+    timestamp_t nvafter = static_cast<tethys::timestamp_t>(stoll(json::get<string>(where_json, "nvafter").value()));
+
+    string x509;
+
+    // clang-format off
+    soci::row result;
+    soci::session db_session(RdbController::pool());
+    soci::statement st = (db_session.prepare << "SELECT sn, nvbefore, nvafter, x509 FROM user_certificates WHERE uid = :uid", soci::use(uid, "uid"), soci::into(result));
+    st.execute(true);
+    // clang-format on
+    do {
+      result >> sn >> nvbefore >> nvafter >> x509;
+
+      user_cert_type user_cert;
+      user_cert.uid = uid;
+      user_cert.sn = sn;
+      user_cert.nvbefore = nvbefore;
+      user_cert.nvafter = nvafter;
+      user_cert.x509 = x509;
+
+      cert_list.emplace_back(user_cert);
+
+    } while (st.fetch());
 
   } catch (soci::mysql_soci_error const &e) {
     logger::ERROR("MySQL error: {}", e.what());
-    return;
   } catch (...) {
-    logger::ERROR("Unexpected error at ``");
-    return;
+    logger::ERROR("Unexpected error at `queryCertGet`");
   }
+  return cert_list;
 }
 
 const user_attribute_type RdbController::queryUserInfoGet(const nlohmann::json &where_json) {
   user_attribute_type user_info;
   try {
+    base58_type uid = json::get<string>(where_json, "uid").value();
+
+    timestamp_t register_day;
+    string register_code;
+    int gender;
+    string isc_type;
+    string isc_code;
+    string location;
+    int age_limit;
+    string sigma;
+
+    // clang-format off
+    soci::row result;
+    soci::session db_session(RdbController::pool());
+    soci::statement st = (db_session.prepare << "SELECT register_day, register_code, gender, isc_type, isc_code, location, age_limit FROM user_attributes WHERE uid = :uid", soci::use(uid, "uid"), soci::into(result));
+    st.execute(true);
+    // clang-format on
+
+    result >> register_day >> register_code >> gender >> isc_type >> isc_code >> location >> age_limit;
+
+    user_info.uid = uid;
+    user_info.register_day = register_day;
+    user_info.register_code = register_code;
+    user_info.gender = gender;
+    user_info.isc_type = isc_type;
+    user_info.isc_code = isc_code;
+    user_info.location = location;
+    user_info.age_limit = age_limit;
 
   } catch (soci::mysql_soci_error const &e) {
     logger::ERROR("MySQL error: {}", e.what());
-    return;
   } catch (...) {
-    logger::ERROR("Unexpected error at ``");
-    return;
+    logger::ERROR("Unexpected error at `queryUserInfoGet`");
   }
+  return user_info;
 }
 
 const vector<user_ledger_type> RdbController::queryUserScopeGet(const nlohmann::json &where_json) {
   vector<user_ledger_type> user_ledger_list;
   try {
+    // TODO: uid뿐만 아닌 다른 것도 주어졌을 경우의 상황 처리 필요
+    base58_type uid = json::get<string>(where_json, "uid").value();
+    string pid = json::get<string>(where_json, "pid").value();
+    short var_type = static_cast<short>(stoi(json::get<string>(where_json, "type").value()));
+    string var_name = json::get<string>(where_json, "name").value();
+    bool notag = json::get<bool>(where_json, "notag").value();
+
+    string var_value, tag;
+    timestamp_t up_time;
+    block_height_type up_block;
+
+    // clang-format off
+    soci::row result;
+    soci::session db_session(RdbController::pool());
+    soci::statement st = (db_session.prepare << "SELECT var_name, var_value, var_type, up_time, up_block, tag, pid from user_scope WHERE uid = :uid", soci::use(uid, "uid"), soci::into(result));
+    st.execute(true);
+    // clang-format on
+    do {
+      result >> var_name >> var_value >> var_type >> up_time >> up_block >> tag >> pid;
+
+      user_ledger_type user_ledger;
+      user_ledger.var_name = var_name;
+      user_ledger.var_value = var_value;
+      user_ledger.var_type = var_type;
+      user_ledger.up_time = up_time;
+      user_ledger.up_block = up_block;
+      user_ledger.tag = tag;
+      user_ledger.pid = pid;
+
+      user_ledger_list.emplace_back(user_ledger);
+    } while (st.fetch());
 
   } catch (soci::mysql_soci_error const &e) {
     logger::ERROR("MySQL error: {}", e.what());
-    return;
   } catch (...) {
-    logger::ERROR("Unexpected error at ``");
-    return;
+    logger::ERROR("Unexpected error at `queryUserScopeGet`");
   }
+  return user_ledger_list;
 }
 
 const vector<contract_ledger_type> RdbController::queryContractScopeGet(const nlohmann::json &where_json) {
   vector<contract_ledger_type> contract_ledger_list;
   try {
+    // TODO: cid뿐만 아닌 다른 것도 주어졌을 경우의 상황 처리 필요
+    contract_id_type cid = json::get<string>(where_json, "cid").value();
+    string pid = json::get<string>(where_json, "pid").value();
+    short var_type = static_cast<short>(stoi(json::get<string>(where_json, "type").value()));
+    string var_name = json::get<string>(where_json, "name").value();
+    bool notag = json::get<bool>(where_json, "notag").value();
+
+    string var_value, var_info;
+    timestamp_t up_time;
+    block_height_type up_block;
+
+    // clang-format off
+    soci::row result;
+    soci::session db_session(RdbController::pool());
+    soci::statement st = (db_session.prepare << "SELECT var_name, var_value, var_type, var_info, up_time, up_block, pid from user_scope WHERE cid = :cid", soci::use(cid, "cid"), soci::into(result));
+    st.execute(true);
+    // clang-format on
+    do {
+      result >> var_name >> var_value >> var_type >> var_info >> up_time >> up_block >> pid;
+
+      contract_ledger_type contract_ledger;
+      contract_ledger.var_name = var_name;
+      contract_ledger.var_value = var_value;
+      contract_ledger.var_type = var_type;
+      contract_ledger.var_info = var_info;
+      contract_ledger.up_time = up_time;
+      contract_ledger.up_block = up_block;
+      contract_ledger.pid = pid;
+
+      contract_ledger_list.emplace_back(contract_ledger);
+    } while (st.fetch());
 
   } catch (soci::mysql_soci_error const &e) {
     logger::ERROR("MySQL error: {}", e.what());
-    return;
   } catch (...) {
-    logger::ERROR("Unexpected error at ``");
-    return;
+    logger::ERROR("Unexpected error at `queryContractScopeGet`");
   }
+  return contract_ledger_list;
 }
 
 const Block RdbController::queryBlockGet(const nlohmann::json &where_json) {
   Block block;
   try {
+    // TODO: block_id뿐만 아닌 다른 것도 주어졌을 경우의 상황 처리 필요
 
   } catch (soci::mysql_soci_error const &e) {
     logger::ERROR("MySQL error: {}", e.what());
-    return;
   } catch (...) {
-    logger::ERROR("Unexpected error at ``");
-    return;
+    logger::ERROR("Unexpected error at `queryBlockGet`");
   }
+  return block;
 }
 
 const Transaction RdbController::queryTxGet(const nlohmann::json &where_json) {
@@ -137,37 +259,70 @@ const Transaction RdbController::queryTxGet(const nlohmann::json &where_json) {
 
   } catch (soci::mysql_soci_error const &e) {
     logger::ERROR("MySQL error: {}", e.what());
-    return;
   } catch (...) {
-    logger::ERROR("Unexpected error at ``");
-    return;
+    logger::ERROR("Unexpected error at `queryTxGet`");
   }
+  return transaction;
 }
 
 const vector<base58_type> RdbController::queryBlockScan(const nlohmann::json &where_json) {
   vector<base58_type> block_id_list;
   try {
+    // TODO: producer 뿐만 아닌 다른 것도 주어졌을 경우의 상황 처리 필요
+    base58_type ss_id = json::get<string>(where_json, "ss_id").value();
+    base58_type producer_id = json::get<string>(where_json, "producer").value();
+    base58_type end_id = json::get<string>(where_json, "endorser").value();
+
+    base58_type block_id;
+
+    // clang-format off
+    soci::row result;
+    soci::session db_session(RdbController::pool());
+    soci::statement st = (db_session.prepare << "SELECT block_id FROM blocks WHERE producer_id = :producer_id", soci::use(producer_id, "producer_id"), soci::into(result));
+    st.execute(true);
+    // clang-format on
+    do {
+      result >> block_id;
+
+      block_id_list.emplace_back(block_id);
+    } while (st.fetch());
 
   } catch (soci::mysql_soci_error const &e) {
     logger::ERROR("MySQL error: {}", e.what());
-    return;
   } catch (...) {
-    logger::ERROR("Unexpected error at ``");
-    return;
+    logger::ERROR("Unexpected error at `queryBlockScan`");
   }
+  return block_id_list;
 }
 
 const vector<base58_type> RdbController::queryTxScan(const nlohmann::json &where_json) {
   vector<base58_type> tx_id_list;
   try {
+    // TODO: tx_user 뿐만 아닌 다른 것도 주어졌을 경우의 상황 처리 필요
+    base58_type tx_user = json::get<string>(where_json, "tx_user").value();
+    base58_type tx_receiver = json::get<string>(where_json, "tx_receiver").value();
+    contract_id_type tx_contract_id = json::get<string>(where_json, "cid").value();
+
+    base58_type tx_id;
+
+    // clang-format off
+    soci::row result;
+    soci::session db_session(RdbController::pool());
+    soci::statement st = (db_session.prepare << "SELECT tx_id FROM transactions WHERE tx_user = :tx_user", soci::use(tx_user, "tx_user"), soci::into(result));
+    st.execute(true);
+    // clang-format on
+    do {
+      result >> tx_id;
+
+      tx_id_list.emplace_back(tx_id);
+    } while (st.fetch());
 
   } catch (soci::mysql_soci_error const &e) {
     logger::ERROR("MySQL error: {}", e.what());
-    return;
   } catch (...) {
-    logger::ERROR("Unexpected error at ``");
-    return;
+    logger::ERROR("Unexpected error at `queryTxScan`");
   }
+  return tx_id_list;
 }
 
 bool RdbController::applyBlockToRDB(const Block &block) {
@@ -268,7 +423,7 @@ bool RdbController::applyUserLedgerToRDB(const map<string, user_ledger_type> &us
       soci::statement st(db_session);
 
       var_name = each_ledger.second.var_name;
-      var_val = each_ledger.second.var_val;
+      var_val = each_ledger.second.var_value;
       var_type = each_ledger.second.var_type;
       uid = each_ledger.second.uid;
       up_time = each_ledger.second.up_time;
@@ -330,7 +485,7 @@ bool RdbController::applyContractLedgerToRDB(const map<string, contract_ledger_t
 
       cid = each_ledger.second.cid;
       var_name = each_ledger.second.var_name;
-      var_val = each_ledger.second.var_val;
+      var_val = each_ledger.second.var_value;
       var_type = each_ledger.second.var_type;
       up_time = each_ledger.second.up_time;
       up_block = each_ledger.second.up_block;
@@ -576,6 +731,7 @@ Block RdbController::rowToBlock(const soci::row &r) {
 }
 
 string RdbController::getUserCert(const base58_type &user_id) {
+  // TODO: 위의 queryCertGet과 동일한 동작을 한다. 통합 검토.
   try {
     string user_cert = {};
     soci::session db_session(RdbController::pool());
@@ -649,7 +805,7 @@ int RdbController::getVarTypeFromRDB(const string &var_owner, const string &var_
 user_ledger_type RdbController::findUserScopeFromRDB(const string &pid) {
   user_ledger_type user_ledger;
   try {
-    string var_name, var_value, var_owner, tag, pid;
+    string var_name, var_value, var_owner, tag;
     short var_type;
     long long up_time;
     int up_block;
@@ -657,16 +813,16 @@ user_ledger_type RdbController::findUserScopeFromRDB(const string &pid) {
     // clang-format off
     soci::row result;
     soci::session db_session(RdbController::pool());
-    soci::statement st = (db_session.prepare << "SELECT var_name, var_value, var_type, var_owner, up_time, up_block, tag, pid from user_scope WHERE pid = :pid", soci::use(pid, "pid"), soci::into(result));
+    soci::statement st = (db_session.prepare << "SELECT var_name, var_value, var_type, var_owner, up_time, up_block, tag from user_scope WHERE pid = :pid", soci::use(pid, "pid"), soci::into(result));
     st.execute(true);
     // clang-format on
 
-    result >> var_name >> var_value >> var_type >> var_owner >> up_time >> up_block >> tag >> pid;
+    result >> var_name >> var_value >> var_type >> var_owner >> up_time >> up_block >> tag;
 
     int num_rows = (int)st.get_affected_rows();
     if (num_rows == 1) {
       user_ledger.var_name = var_name;
-      user_ledger.var_val = var_value;
+      user_ledger.var_value = var_value;
       user_ledger.var_type = (int)var_type;
       user_ledger.uid = var_owner;
       user_ledger.up_time = (uint64_t)up_time;
@@ -686,7 +842,7 @@ user_ledger_type RdbController::findUserScopeFromRDB(const string &pid) {
 contract_ledger_type RdbController::findContractScopeFromRDB(const string &pid) {
   contract_ledger_type contract_ledger;
   try {
-    string var_name, var_value, contract_id, var_info, pid;
+    string var_name, var_value, contract_id, var_info;
     short var_type;
     long long up_time;
     int up_block;
@@ -694,16 +850,16 @@ contract_ledger_type RdbController::findContractScopeFromRDB(const string &pid) 
     // clang-format off
     soci::row result;
     soci::session db_session(RdbController::pool());
-    soci::statement st = (db_session.prepare << "SELECT var_name, var_value, var_type, contract_id, up_time, up_block, var_info, pid from contract_scope WHERE pid = :pid", soci::use(pid, "pid"), soci::into(result));
+    soci::statement st = (db_session.prepare << "SELECT var_name, var_value, var_type, contract_id, up_time, up_block, var_info from contract_scope WHERE pid = :pid", soci::use(pid, "pid"), soci::into(result));
     st.execute(true);
     // clang-format on
 
-    result >> var_name >> var_value >> var_type >> contract_id >> up_time >> up_block >> var_info >> pid;
+    result >> var_name >> var_value >> var_type >> contract_id >> up_time >> up_block >> var_info;
 
     int num_rows = (int)st.get_affected_rows();
     if (num_rows == 1) {
       contract_ledger.var_name = var_name;
-      contract_ledger.var_val = var_value;
+      contract_ledger.var_value = var_value;
       contract_ledger.var_type = (int)var_type;
       contract_ledger.cid = contract_id;
       contract_ledger.up_time = (uint64_t)up_time;
@@ -739,7 +895,7 @@ vector<user_ledger_type> RdbController::getAllUserLedger() {
 
       user_ledger_type user_ledger;
       user_ledger.var_name = var_name;
-      user_ledger.var_val = var_value;
+      user_ledger.var_value = var_value;
       user_ledger.var_type = (int)var_type;
       user_ledger.uid = var_owner;
       user_ledger.up_time = (uint64_t)up_time;
@@ -777,7 +933,7 @@ vector<contract_ledger_type> RdbController::getAllContractLedger() {
 
       contract_ledger_type contract_ledger;
       contract_ledger.var_name = var_name;
-      contract_ledger.var_val = var_value;
+      contract_ledger.var_value = var_value;
       contract_ledger.var_type = (int)var_type;
       contract_ledger.cid = contract_id;
       contract_ledger.up_time = (uint64_t)up_time;

@@ -302,7 +302,7 @@ string UnresolvedBlockPool::serializeUserLedgerList(const UnresolvedBlock &unres
   for (auto &each_ledger : unresolved_block.user_ledger_list) {
     nlohmann::json json;
     json["var_name"] = each_ledger.second.var_name;
-    json["var_val"] = each_ledger.second.var_val;
+    json["var_value"] = each_ledger.second.var_value;
     json["var_type"] = to_string(each_ledger.second.var_type);
     json["uid"] = each_ledger.second.uid;
     json["up_time"] = to_string(each_ledger.second.up_time);
@@ -326,7 +326,7 @@ string UnresolvedBlockPool::serializeContractLedgerList(const UnresolvedBlock &u
   for (auto &each_ledger : unresolved_block.contract_ledger_list) {
     nlohmann::json json;
     json["var_name"] = each_ledger.second.var_name;
-    json["var_val"] = each_ledger.second.var_val;
+    json["var_value"] = each_ledger.second.var_value;
     json["var_type"] = to_string(each_ledger.second.var_type);
     json["cid"] = each_ledger.second.cid;
     json["up_time"] = to_string(each_ledger.second.up_time);

@@ -284,7 +284,7 @@ void Chain::restoreUserLedgerList(UnresolvedBlock &restored_unresolved_block, co
     user_ledger_type each_user_ledger;
 
     each_user_ledger.var_name = json::get<string>(each_user_ledger_json, "var_name").value();
-    each_user_ledger.var_val = json::get<string>(each_user_ledger_json, "var_val").value();
+    each_user_ledger.var_value = json::get<string>(each_user_ledger_json, "var_value").value();
     each_user_ledger.var_type = stoi(json::get<string>(each_user_ledger_json, "var_type").value());
     each_user_ledger.uid = json::get<string>(each_user_ledger_json, "uid").value();
     each_user_ledger.up_time = static_cast<tethys::timestamp_t>(stoll(json::get<string>(each_user_ledger_json, "up_time").value()));
@@ -303,7 +303,7 @@ void Chain::restoreContractLedgerList(UnresolvedBlock &restored_unresolved_block
     contract_ledger_type each_contract_ledger;
 
     each_contract_ledger.var_name = json::get<string>(each_contract_ledger_json, "var_name").value();
-    each_contract_ledger.var_val = json::get<string>(each_contract_ledger_json, "var_val").value();
+    each_contract_ledger.var_value = json::get<string>(each_contract_ledger_json, "var_value").value();
     each_contract_ledger.var_type = stoi(json::get<string>(each_contract_ledger_json, "var_type").value());
     each_contract_ledger.cid = json::get<string>(each_contract_ledger_json, "cid").value();
     each_contract_ledger.up_time = static_cast<tethys::timestamp_t>(stoll(json::get<string>(each_contract_ledger_json, "up_time").value()));
@@ -457,7 +457,7 @@ const nlohmann::json Chain::queryUserScopeGet(const nlohmann::json &where_json) 
   result_json["data"] = nlohmann::json::array();
   for(int i = 0; i < found_user_ledgers.size(); i++) {
     result_json["data"][i].push_back(found_user_ledgers[i].var_name);
-    result_json["data"][i].push_back(found_user_ledgers[i].var_val);
+    result_json["data"][i].push_back(found_user_ledgers[i].var_value);
     result_json["data"][i].push_back(found_user_ledgers[i].var_type);
     result_json["data"][i].push_back(found_user_ledgers[i].up_time);
     result_json["data"][i].push_back(found_user_ledgers[i].up_block);
@@ -483,7 +483,7 @@ const nlohmann::json Chain::queryContractScopeGet(const nlohmann::json &where_js
   result_json["data"] = nlohmann::json::array();
   for(int i = 0; i < found_contract_ledgers.size(); i++) {
     result_json["data"][i].push_back(found_contract_ledgers[i].var_name);
-    result_json["data"][i].push_back(found_contract_ledgers[i].var_val);
+    result_json["data"][i].push_back(found_contract_ledgers[i].var_value);
     result_json["data"][i].push_back(found_contract_ledgers[i].var_type);
     result_json["data"][i].push_back(found_contract_ledgers[i].var_info);
     result_json["data"][i].push_back(found_contract_ledgers[i].up_time);
@@ -536,7 +536,7 @@ const nlohmann::json Chain::queryTxScan(const nlohmann::json &where_json) {
   vector<base58_type> found_tx_ids = rdb_controller->queryTxScan(where_json);
   nlohmann::json result_json;
   result_json["name"] = nlohmann::json::array();
-  result_json["name"].push_back("txid");
+  result_json["name"].push_back("tx_id");
 
   result_json["data"] = nlohmann::json::array();
   for(int i = 0; i < found_tx_ids.size(); i++) {
@@ -692,15 +692,15 @@ bool Chain::queryIncinerate(UnresolvedBlock &UR_block, nlohmann::json &option, r
   if (found_ledger.uid != result_info.user)
     return false;
 
-  int modified_value = stoi(found_ledger.var_val) - stoi(amount);
-  found_ledger.var_val = to_string(modified_value);
+  int modified_value = stoi(found_ledger.var_value) - stoi(amount);
+  found_ledger.var_value = to_string(modified_value);
 
   if (modified_value == 0)
     found_ledger.query_type = QueryType::DELETE;
   else if (modified_value > 0)
     found_ledger.query_type = QueryType::UPDATE;
   else
-    logger::ERROR("var_val is under 0 in queryIncinerate!");
+    logger::ERROR("var_value is under 0 in queryIncinerate!");
 
   UR_block.user_ledger_list[pid] = found_ledger;
 
@@ -726,7 +726,7 @@ bool Chain::queryCreate(UnresolvedBlock &UR_block, nlohmann::json &option, resul
     return false;
   }
 
-  user_ledger.var_val = amount;
+  user_ledger.var_value = amount;
   user_ledger.up_time = up_time;
   user_ledger.up_block = up_block;
   user_ledger.query_type = QueryType::INSERT;
@@ -777,8 +777,8 @@ bool Chain::queryTransfer(UnresolvedBlock &UR_block, nlohmann::json &option, res
       return false;
     }
 
-    int modified_value = stoi(found_ledger.var_val) - stoi(amount);
-    found_ledger.var_val = to_string(modified_value);
+    int modified_value = stoi(found_ledger.var_value) - stoi(amount);
+    found_ledger.var_value = to_string(modified_value);
     found_ledger.up_time = up_time;
     found_ledger.up_block = up_block;
 
@@ -787,7 +787,7 @@ bool Chain::queryTransfer(UnresolvedBlock &UR_block, nlohmann::json &option, res
     else if (modified_value > 0)
       found_ledger.query_type = QueryType::UPDATE;
     else {
-      logger::ERROR("var_val is under 0 in queryTransfer!");
+      logger::ERROR("var_value is under 0 in queryTransfer!");
       return false;
     }
 
@@ -819,8 +819,8 @@ bool Chain::queryTransfer(UnresolvedBlock &UR_block, nlohmann::json &option, res
       return false;
     }
 
-    int modified_value = stoi(found_ledger.var_val) - stoi(amount);
-    found_ledger.var_val = to_string(modified_value);
+    int modified_value = stoi(found_ledger.var_value) - stoi(amount);
+    found_ledger.var_value = to_string(modified_value);
     found_ledger.up_time = up_time;
     found_ledger.up_block = up_block;
 
@@ -829,7 +829,7 @@ bool Chain::queryTransfer(UnresolvedBlock &UR_block, nlohmann::json &option, res
     else if (modified_value > 0)
       found_ledger.query_type = QueryType::UPDATE;
     else {
-      logger::ERROR("var_val is under 0 in queryTransfer!");
+      logger::ERROR("var_value is under 0 in queryTransfer!");
       return false;
     }
 
@@ -844,7 +844,7 @@ bool Chain::queryTransfer(UnresolvedBlock &UR_block, nlohmann::json &option, res
 
     contract_ledger_type found_ledger = findContractLedgerFromHead(UR_block, to_pid);
 
-    if (found_ledger.var_val.empty() || found_ledger.is_empty)
+    if (found_ledger.var_value.empty() || found_ledger.is_empty)
       found_ledger.query_type = QueryType::INSERT;
     else if ((found_ledger.up_block == up_block) && (found_ledger.query_type == QueryType::INSERT)) {
       found_ledger.query_type = QueryType::INSERT;
@@ -852,8 +852,8 @@ bool Chain::queryTransfer(UnresolvedBlock &UR_block, nlohmann::json &option, res
       found_ledger.query_type = QueryType::UPDATE;
     }
 
-    int modified_value = stoi(found_ledger.var_val) + stoi(amount);
-    found_ledger.var_val = to_string(modified_value);
+    int modified_value = stoi(found_ledger.var_value) + stoi(amount);
+    found_ledger.var_value = to_string(modified_value);
     found_ledger.up_time = up_time;
     found_ledger.up_block = up_block;
     found_ledger.is_empty = false;
@@ -870,7 +870,7 @@ bool Chain::queryTransfer(UnresolvedBlock &UR_block, nlohmann::json &option, res
 
     user_ledger_type found_ledger = findUserLedgerFromHead(UR_block, to_pid);
 
-    if (found_ledger.var_val.empty() || found_ledger.is_empty)
+    if (found_ledger.var_value.empty() || found_ledger.is_empty)
       found_ledger.query_type = QueryType::INSERT;
     else if ((found_ledger.up_block == up_block) && (found_ledger.query_type == QueryType::INSERT)) {
       found_ledger.query_type = QueryType::INSERT;
@@ -878,8 +878,8 @@ bool Chain::queryTransfer(UnresolvedBlock &UR_block, nlohmann::json &option, res
       found_ledger.query_type = QueryType::UPDATE;
     }
 
-    int modified_value = stoi(found_ledger.var_val) + stoi(amount);
-    found_ledger.var_val = to_string(modified_value);
+    int modified_value = stoi(found_ledger.var_value) + stoi(amount);
+    found_ledger.var_value = to_string(modified_value);
     found_ledger.up_time = up_time;
     found_ledger.up_block = up_block;
     found_ledger.is_empty = false;
@@ -957,7 +957,7 @@ bool Chain::queryUserScope(UnresolvedBlock &UR_block, nlohmann::json &option, re
   user_ledger_type user_ledger;
 
   user_ledger.var_name = var_name;
-  user_ledger.var_val = var_val;
+  user_ledger.var_value = var_val;
   user_ledger.var_type = var_type;
   user_ledger.uid = uid;
   user_ledger.up_time = TimeUtil::nowBigInt(); // TODO: DB에 저장되는 시간인지, mem_ledger에 들어오는 시간인지
@@ -1021,7 +1021,7 @@ bool Chain::queryContractScope(UnresolvedBlock &UR_block, nlohmann::json &option
   contract_ledger_type contract_ledger;
 
   contract_ledger.var_name = var_name;
-  contract_ledger.var_val = var_val;
+  contract_ledger.var_value = var_val;
   contract_ledger.var_type = var_type;
   contract_ledger.cid = cid;
   contract_ledger.up_time = TimeUtil::nowBigInt(); // TODO: DB에 저장되는 시간인지, mem_ledger에 들어오는 시간인지

@@ -158,7 +158,7 @@ using self_info_type = struct SelfInfo {
 
 using user_ledger_type = struct UserLedger {
   string var_name;
-  string var_val;
+  string var_value;
   int var_type;
   base58_type uid;
   timestamp_t up_time;
@@ -182,7 +182,7 @@ using user_ledger_type = struct UserLedger {
 
 using contract_ledger_type = struct ContractLedger {
   string var_name;
-  string var_val;
+  string var_value;
   int var_type;
   contract_id_type cid;
   timestamp_t up_time;
