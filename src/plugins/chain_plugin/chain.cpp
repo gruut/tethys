@@ -385,9 +385,14 @@ const nlohmann::json Chain::queryContractScan(const nlohmann::json &where_json) 
 }
 
 const nlohmann::json Chain::queryContractGet(const nlohmann::json &where_json) {
-  string contract = rdb_controller->queryContractGet(where_json);
+  string found_contract = rdb_controller->queryContractGet(where_json);
 
   nlohmann::json result_json;
+  result_json["name"] = nlohmann::json::array();
+  result_json["name"].push_back("contract");
+
+  result_json["data"] = nlohmann::json::array();
+  result_json["data"][0].push_back(found_contract);
 
   return result_json;
 }
@@ -396,6 +401,19 @@ const nlohmann::json Chain::queryCertGet(const nlohmann::json &where_json) {
   vector<user_cert_type> found_certs = rdb_controller->queryCertGet(where_json);
 
   nlohmann::json result_json;
+  result_json["name"] = nlohmann::json::array();
+  result_json["name"].push_back("sn");
+  result_json["name"].push_back("nvbefore");
+  result_json["name"].push_back("nvafter");
+  result_json["name"].push_back("x509");
+
+  result_json["data"] = nlohmann::json::array();
+  for(int i = 0; i < found_certs.size(); i++) {
+    result_json["data"][i].push_back(found_certs[i].sn);
+    result_json["data"][i].push_back(found_certs[i].nvbefore);
+    result_json["data"][i].push_back(found_certs[i].nvafter);
+    result_json["data"][i].push_back(found_certs[i].x509);
+  }
 
   return result_json;
 }
@@ -403,6 +421,23 @@ const nlohmann::json Chain::queryCertGet(const nlohmann::json &where_json) {
 const nlohmann::json Chain::queryUserInfoGet(const nlohmann::json &where_json) {
   user_attribute_type found_user_info = rdb_controller->queryUserInfoGet(where_json);
   nlohmann::json result_json;
+  result_json["name"] = nlohmann::json::array();
+  result_json["name"].push_back("register_day");
+  result_json["name"].push_back("register_code");
+  result_json["name"].push_back("gender");
+  result_json["name"].push_back("isc_type");
+  result_json["name"].push_back("isc_code");
+  result_json["name"].push_back("location");
+  result_json["name"].push_back("age_limit");
+
+  result_json["data"] = nlohmann::json::array();
+  result_json["data"][0].push_back(found_user_info.register_day);
+  result_json["data"][0].push_back(found_user_info.register_code);
+  result_json["data"][0].push_back(found_user_info.gender);
+  result_json["data"][0].push_back(found_user_info.isc_type);
+  result_json["data"][0].push_back(found_user_info.isc_code);
+  result_json["data"][0].push_back(found_user_info.location);
+  result_json["data"][0].push_back(found_user_info.age_limit);
 
   return result_json;
 }
@@ -410,6 +445,25 @@ const nlohmann::json Chain::queryUserInfoGet(const nlohmann::json &where_json) {
 const nlohmann::json Chain::queryUserScopeGet(const nlohmann::json &where_json) {
   vector<user_ledger_type> found_user_ledgers = rdb_controller->queryUserScopeGet(where_json);
   nlohmann::json result_json;
+  result_json["name"] = nlohmann::json::array();
+  result_json["name"].push_back("var_name");
+  result_json["name"].push_back("var_value");
+  result_json["name"].push_back("var_type");
+  result_json["name"].push_back("up_time");
+  result_json["name"].push_back("up_block");
+  result_json["name"].push_back("tag");
+  result_json["name"].push_back("pid");
+
+  result_json["data"] = nlohmann::json::array();
+  for(int i = 0; i < found_user_ledgers.size(); i++) {
+    result_json["data"][i].push_back(found_user_ledgers[i].var_name);
+    result_json["data"][i].push_back(found_user_ledgers[i].var_val);
+    result_json["data"][i].push_back(found_user_ledgers[i].var_type);
+    result_json["data"][i].push_back(found_user_ledgers[i].up_time);
+    result_json["data"][i].push_back(found_user_ledgers[i].up_block);
+    result_json["data"][i].push_back(found_user_ledgers[i].tag);
+    result_json["data"][i].push_back(found_user_ledgers[i].pid);
+  }
 
   return result_json;
 }
@@ -417,6 +471,25 @@ const nlohmann::json Chain::queryUserScopeGet(const nlohmann::json &where_json) 
 const nlohmann::json Chain::queryContractScopeGet(const nlohmann::json &where_json) {
   vector<contract_ledger_type> found_contract_ledgers = rdb_controller->queryContractScopeGet(where_json);
   nlohmann::json result_json;
+  result_json["name"] = nlohmann::json::array();
+  result_json["name"].push_back("var_name");
+  result_json["name"].push_back("var_value");
+  result_json["name"].push_back("var_type");
+  result_json["name"].push_back("var_info");
+  result_json["name"].push_back("up_time");
+  result_json["name"].push_back("up_block");
+  result_json["name"].push_back("pid");
+
+  result_json["data"] = nlohmann::json::array();
+  for(int i = 0; i < found_contract_ledgers.size(); i++) {
+    result_json["data"][i].push_back(found_contract_ledgers[i].var_name);
+    result_json["data"][i].push_back(found_contract_ledgers[i].var_val);
+    result_json["data"][i].push_back(found_contract_ledgers[i].var_type);
+    result_json["data"][i].push_back(found_contract_ledgers[i].var_info);
+    result_json["data"][i].push_back(found_contract_ledgers[i].up_time);
+    result_json["data"][i].push_back(found_contract_ledgers[i].up_block);
+    result_json["data"][i].push_back(found_contract_ledgers[i].pid);
+  }
 
   return result_json;
 }
@@ -424,6 +497,11 @@ const nlohmann::json Chain::queryContractScopeGet(const nlohmann::json &where_js
 const nlohmann::json Chain::queryBlockGet(const nlohmann::json &where_json) {
   Block found_block = rdb_controller->queryBlockGet(where_json);
   nlohmann::json result_json;
+  result_json["name"] = nlohmann::json::array();
+  result_json["name"].push_back("block");
+
+  // TODO: MSG_BLOCK 형태로 return해야 하는가?
+  result_json["data"] = nlohmann::json::array();
 
   return result_json;
 }
@@ -431,20 +509,39 @@ const nlohmann::json Chain::queryBlockGet(const nlohmann::json &where_json) {
 const nlohmann::json Chain::queryTxGet(const nlohmann::json &where_json) {
   Transaction found_tx = rdb_controller->queryTxGet(where_json);
   nlohmann::json result_json;
+  result_json["name"] = nlohmann::json::array();
+  result_json["name"].push_back("tx");
+
+  // TODO: MSG_TX 형태로 return해야 하는가?
+  result_json["data"] = nlohmann::json::array();
 
   return result_json;
 }
 
 const nlohmann::json Chain::queryBlockScan(const nlohmann::json &where_json) {
-  vector<base58_type> found_blocks = rdb_controller->queryBlockScan(where_json);
+  vector<base58_type> found_block_ids = rdb_controller->queryBlockScan(where_json);
   nlohmann::json result_json;
+  result_json["name"] = nlohmann::json::array();
+  result_json["name"].push_back("block_id");
+
+  result_json["data"] = nlohmann::json::array();
+  for(int i = 0; i < found_block_ids.size(); i++) {
+    result_json["data"][i].push_back(found_block_ids[i]);
+  }
 
   return result_json;
 }
 
 const nlohmann::json Chain::queryTxScan(const nlohmann::json &where_json) {
-  vector<base58_type> found_txs = rdb_controller->queryTxScan(where_json);
+  vector<base58_type> found_tx_ids = rdb_controller->queryTxScan(where_json);
   nlohmann::json result_json;
+  result_json["name"] = nlohmann::json::array();
+  result_json["name"].push_back("txid");
+
+  result_json["data"] = nlohmann::json::array();
+  for(int i = 0; i < found_tx_ids.size(); i++) {
+    result_json["data"][i].push_back(found_tx_ids[i]);
+  }
 
   return result_json;
 }

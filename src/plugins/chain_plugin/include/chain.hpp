@@ -66,6 +66,7 @@ public:
   const nlohmann::json queryTxGet(const nlohmann::json &where_json);
   const nlohmann::json queryBlockScan(const nlohmann::json &where_json);
   const nlohmann::json queryTxScan(const nlohmann::json &where_json);
+
   string getUserCert(const base58_type &user_id);
   bool applyBlockToRDB(const Block &block_info);
   bool applyTransactionToRDB(const Block &block_info);
