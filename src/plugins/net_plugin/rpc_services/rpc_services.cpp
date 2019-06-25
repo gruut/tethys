@@ -158,6 +158,10 @@ private:
       return MsgEntryType::ALPHA_64;
     else if (key == "pk")
       return MsgEntryType::PEM_PK;
+    else if (key == "enc_sk")
+      return MsgEntryType::ENC_PRIVATE_PEM;
+    else if (key == "cert")
+      return MsgEntryType::PEM;
     else if (key == "x" || key == "y")
       return MsgEntryType::HEX_256;
     else if (key == "val" || key == "confirm")
@@ -481,13 +485,14 @@ void SignerService::proceed() {
 
         if (err_info.empty()) {
           auto hmac_key = m_user_pool_manager->getHmacKey(user_id_b58).value_or(vector<uint8_t>());
-          if (verifyHMAC(packed_msg, hmac_key)) {
-            MessageHandler msg_handler;
-            msg_handler(input_data.value());
-            m_reply.set_status(Reply_Status_SUCCESS);
-          } else {
-            err_info = "Bad request (fail to verify hmac)";
-          }
+          // TODO: Signer쪽 HMAC 구현 후 주석 제거
+          //if (verifyHMAC(packed_msg, hmac_key)) {
+          MessageHandler msg_handler;
+          msg_handler(input_data.value());
+          m_reply.set_status(Reply_Status_SUCCESS);
+          //} else {
+          //  err_info = "Bad request (fail to verify hmac)";
+          //}
         }
       }
       if (!err_info.empty()) {
