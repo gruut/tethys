@@ -340,7 +340,7 @@ bool RdbController::applyContractToRDB(const map<base58_type, contract_type> &co
 
       // clang-format off
       if (query_type == QueryType::INSERT) {
-        st = (db_session.prepare << "INSERT INTO contracts (cid, after, before, author, friends, contract, desc, sigma) VALUES (:cid, :after, :before, :author, :friends, :contract, :desc, :sigma)",
+        st = (db_session.prepare << "INSERT INTO contracts (cid, after, `before`, author, friends, contract, `desc`, sigma) VALUES (:cid, :after, :before, :author, :friends, :contract, :desc, :sigma)",
             soci::use(cid, "cid"), soci::use(after, "after"), soci::use(before, "before"),
             soci::use(author, "author"), soci::use(friends, "friends"), soci::use(contract, "contract"),
             soci::use(desc, "desc"), soci::use(sigma, "sigma"),

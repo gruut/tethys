@@ -38,6 +38,16 @@ bool KvController::errorOnCritical(const leveldb::Status &status) {
   }
 }
 
+bool KvController::saveBuiltInContracts(map<string, string> &contracts) {
+  for (auto &contract : contracts) {
+    addBatch(DataType::BUILT_IN_CONTRACT, contract.first, contract.second);
+  }
+
+  commitBatchAll();
+
+  return true;
+}
+
 bool KvController::saveLatestWorldId(const alphanumeric_type &world_id) {
   addBatch(DataType::WORLD, "latest_world_id", world_id);
 

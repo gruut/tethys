@@ -26,7 +26,11 @@ enum class QueryType : int { INSERT = 0, UPDATE = 1, DELETE = 2 };
 //  CONTRACT_LIST
 //};
 
+const vector<string> BuiltInContractList{// TODO : add more types
+                                         "VALUE-TRANSFER"};
+
 struct DataType {
+  inline static const string BUILT_IN_CONTRACT = "built_in_contract";
   inline static const string WORLD = "world";
   inline static const string CHAIN = "chain";
   inline static const string BACKUP_BLOCK = "backup_block";

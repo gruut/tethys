@@ -9,6 +9,7 @@
 #include "unresolved_block_pool.hpp"
 
 #include <boost/program_options/variables_map.hpp>
+#include <map>
 #include <memory>
 #include <optional>
 #include <utility>
@@ -33,6 +34,8 @@ public:
   Chain(const Chain &&) = delete;
   Chain &operator=(const Chain &) = delete;
 
+  void loadBuiltInContracts(const string &contracts_dir_path);
+  void initBuiltInContracts();
   void initWorld(nlohmann::json &world_state);
   optional<vector<string>> initChain(nlohmann::json &chain_state);
 
@@ -47,6 +50,7 @@ public:
   bool applyContractToRDB(const map<base58_type, contract_type> &contract_list);
 
   // KV functions
+  void saveBuiltInContracts(map<string, string> &contracts);
   void saveLatestWorldId(const alphanumeric_type &world_id);
   void saveLatestChainId(const alphanumeric_type &chain_id);
   void saveWorld(world_type &world_info);

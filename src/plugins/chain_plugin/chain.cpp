@@ -1,9 +1,14 @@
 #include "include/chain.hpp"
 #include "../../../lib/appbase/include/application.hpp"
 #include "../../../lib/tethys-utils/src/ags.hpp"
+#include "../../../lib/tinyxml/include/tinyxml2.h"
+#include <boost/filesystem.hpp>
 #include <regex>
 
 namespace tethys {
+
+using namespace tinyxml2;
+namespace fs = boost::filesystem;
 
 class ChainImpl {
 public:
@@ -105,6 +110,79 @@ public:
   Chain &self;
 };
 
+void Chain::loadBuiltInContracts(const string &contracts_dir_path) {
+  fs::path dir_path(contracts_dir_path);
+  if (dir_path.is_relative())
+    dir_path = fs::current_path() / dir_path;
+
+  map<string, string> contracts;
+
+  for (auto i = fs::directory_iterator(dir_path); i != fs::directory_iterator(); i++) {
+    if (fs::is_directory(i->path()))
+      continue;
+
+    XMLDocument xml_doc;
+    xml_doc.LoadFile(i->path().string().data());
+
+    XMLNode *root = xml_doc.FirstChild();
+    XMLElement *head = root->FirstChildElement("head");
+
+    string cid = head->FirstChildElement("cid")->GetText();
+    string contract_type = cid.substr(0, cid.find("::"));
+
+    tinyxml2::XMLPrinter printer;
+    xml_doc.Accept(&printer);
+
+    string raw_xml = printer.CStr();
+    contracts[contract_type] = raw_xml;
+  }
+
+  saveBuiltInContracts(contracts);
+}
+
+void Chain::initBuiltInContracts() {
+  auto chain_id = appbase::app().getChainId();
+  auto chain_after = getValueByKey(DataType::CHAIN, chain_id + "_ctime");
+  auto chain_author = getValueByKey(DataType::CHAIN, chain_id + "_crid");
+
+  auto world_id = appbase::app().getWorldId();
+  auto world_creator = getValueByKey(DataType::WORLD, world_id + "_cid");
+
+  map<contract_id_type, contract_type> contract_list;
+  // TODO : must handle it differently depending on contract type
+  //       currently, only one being handled ( VALUE_TRANSFER )
+  for (auto &contract_name : BuiltInContractList) {
+    auto raw_xml = getValueByKey(DataType::BUILT_IN_CONTRACT, contract_name);
+
+    XMLDocument xml_doc;
+    xml_doc.Parse(raw_xml.data());
+
+    XMLNode *root = xml_doc.FirstChild();
+    XMLElement *head = root->FirstChildElement("head");
+
+    string cid = contract_name + "::" + world_creator + "::" + chain_id + "::" + world_id;
+    string desc = head->FirstChildElement("desc")->GetText();
+
+    head->FirstChildElement("cid")->SetText(cid.data());
+    head->FirstChildElement("after")->SetText(chain_after.data());
+
+    tinyxml2::XMLPrinter printer;
+    xml_doc.Accept(&printer);
+
+    contract_type contract;
+    contract.cid = cid;
+    contract.after = (uint64_t)stol(chain_after);
+    contract.desc = desc;
+    contract.author = chain_author;
+    contract.query_type = QueryType::INSERT;
+    contract.contract = printer.CStr();
+
+    contract_list[cid] = contract;
+  }
+
+  applyContractToRDB(contract_list);
+}
+
 void Chain::initWorld(nlohmann::json &world_state) {
   impl->initWorld(world_state);
 }
@@ -183,6 +261,10 @@ block_height_type Chain::getLatestResolvedHeight() {
 }
 
 // KV functions
+void Chain::saveBuiltInContracts(map<string, string> &contracts) {
+  kv_controller->saveBuiltInContracts(contracts);
+}
+
 void Chain::saveLatestWorldId(const alphanumeric_type &world_id) {
   kv_controller->saveLatestWorldId(world_id);
 }

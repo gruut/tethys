@@ -138,6 +138,8 @@ public:
 
   string block_input_path;
 
+  string builtin_contracts_path;
+
   nlohmann::json genesis_state;
 
   incoming::channels::transaction::channel_type::Handle incoming_transaction_subscription;
@@ -169,6 +171,8 @@ public:
       app().setId(self_id);
       app().completeUserSetup();
     }
+
+    chain->loadBuiltInContracts(builtin_contracts_path);
   }
 
   void pushTransaction(const nlohmann::json &transaction_json) {
@@ -544,6 +548,12 @@ void ChainPlugin::pluginInitialize(const boost::program_options::variables_map &
     throw std::invalid_argument("the input of block input path is empty"s);
   }
 
+  if (options.count("builtin-contracts-path")) {
+    impl->builtin_contracts_path = options.at("builtin-contracts-path").as<string>();
+  } else {
+    throw std::invalid_argument("the input of built-in contracts path is empty"s);
+  }
+
   auto &transaction_channel = app().getChannel<incoming::channels::transaction>();
   impl->incoming_transaction_subscription =
       transaction_channel.subscribe([this](const nlohmann::json &transaction) { impl->pushTransaction(transaction); });
@@ -563,7 +573,8 @@ void ChainPlugin::setProgramOptions(options_description &cfg) {
   cfg.add_options()("dbms", boost::program_options::value<string>()->composing(), "DBMS (MYSQL)")("table-name", boost::program_options::value<string>()->composing(), "table name")
   ("database-user", boost::program_options::value<string>()->composing(), "database user id")
   ("database-password", boost::program_options::value<string>()->composing(), "database password")
-  ("block-input-path", boost::program_options::value<string>()->composing(), "block input json path");
+  ("block-input-path", boost::program_options::value<string>()->composing(), "block input json path")
+  ("builtin-contracts-path", boost::program_options::value<string>()->composing(), "built-in standard contracts directory path");
 }
 // clang-format on
 

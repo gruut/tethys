@@ -43,7 +43,7 @@ endif (SOCI_FOUND)
 set(LIB_PREFIX "/usr/local/lib")
 set(BOTAN_LIB "${LIB_PREFIX}/libbotan-2.a")
 
-target_link_libraries(chain_plugin appbase log
+target_link_libraries(chain_plugin appbase log tinyxml
         ${Boost_LIBRARIES}
         ${BOTAN_LIB}
         )
@@ -57,4 +57,5 @@ target_include_directories(
         "${CMAKE_CURRENT_SOURCE_DIR}/../../../lib/appbase"
         "${CMAKE_CURRENT_SOURCE_DIR}/../../../lib/log"
         "${CMAKE_CURRENT_SOURCE_DIR}/../../../lib/tethys-utils/src"
+        "${CMAKE_CURRENT_SOURCE_DIR}/../../../lib/tinyxml"
         )
