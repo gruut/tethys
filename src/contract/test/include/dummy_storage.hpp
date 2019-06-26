@@ -1,5 +1,5 @@
-#ifndef TETHYSSCE_DUMMY_STORAGE_HPP
-#define TETHYSSCE_DUMMY_STORAGE_HPP
+#ifndef TETHYS_SCE_DUMMY_STORAGE_HPP
+#define TETHYS_SCE_DUMMY_STORAGE_HPP
 
 #include "../../../../lib/json/include/json.hpp"
 
@@ -106,4 +106,4 @@ std::function<nlohmann::json(nlohmann::json&)> read_storage_interface = [](nlohm
   return result;
 };
 
-#endif //TETHYSSCE_DUMMY_STORAGE_HPP
+#endif //TETHYS_SCE_DUMMY_STORAGE_HPP

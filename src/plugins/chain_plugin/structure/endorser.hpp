@@ -1,5 +1,5 @@
-#ifndef GRUUT_PUBLIC_MERGER_ENDORSER_HPP
-#define GRUUT_PUBLIC_MERGER_ENDORSER_HPP
+#ifndef TETHYS_PUBLIC_MERGER_ENDORSER_HPP
+#define TETHYS_PUBLIC_MERGER_ENDORSER_HPP
 
 #include "../config/storage_type.hpp"
 
@@ -25,4 +25,4 @@ public:
 };
 } // namespace tethys
 
-#endif // GRUUT_PUBLIC_MERGER_ENDORSER_HPP
+#endif // TETHYS_PUBLIC_MERGER_ENDORSER_HPP

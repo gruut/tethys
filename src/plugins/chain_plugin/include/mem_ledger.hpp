@@ -1,5 +1,5 @@
-#ifndef GRUUT_PUBLIC_MERGER_MEM_LEDGER_HPP
-#define GRUUT_PUBLIC_MERGER_MEM_LEDGER_HPP
+#ifndef TETHYS_PUBLIC_MERGER_MEM_LEDGER_HPP
+#define TETHYS_PUBLIC_MERGER_MEM_LEDGER_HPP
 
 #include "../../../../lib/log/include/log.hpp"
 #include "../../../../lib/tethys-utils/src/bytes_builder.hpp"

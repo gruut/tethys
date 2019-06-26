@@ -193,4 +193,4 @@ public:
 
 };
 
-#endif //GRUUTSCE_VS_TOOL_HPP
+#endif //TETHYS_SCE_VS_TOOL_HPP

@@ -27,4 +27,4 @@ namespace tethys::tsce {
 
 }
 
-#endif //GRUUTSCE_ENGINE_HPP
+#endif //TETHYS_SCE_ENGINE_HPP

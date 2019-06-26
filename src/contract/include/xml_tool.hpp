@@ -1,5 +1,5 @@
-#ifndef TETHYSSCE_XML_TOOL_HPP
-#define TETHYSSCE_XML_TOOL_HPP
+#ifndef TETHYS_SCE_XML_TOOL_HPP
+#define TETHYS_SCE_XML_TOOL_HPP
 
 #include <string>
 #include <optional>
@@ -119,4 +119,4 @@ public:
 #endif
 };
 
-#endif //TETHYSSCE_XML_TOOL_HPP
+#endif //TETHYS_SCE_XML_TOOL_HPP
