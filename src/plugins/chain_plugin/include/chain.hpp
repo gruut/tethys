@@ -39,6 +39,7 @@ public:
   // KV functions
   const nlohmann::json queryWorldGet();
   const nlohmann::json queryChainGet();
+  const nlohmann::json queryBlockGet(const nlohmann::json &where_json);
   void saveLatestWorldId(const alphanumeric_type &world_id);
   void saveLatestChainId(const alphanumeric_type &chain_id);
   void saveWorld(world_type &world_info);
@@ -62,7 +63,7 @@ public:
   const nlohmann::json queryUserInfoGet(const nlohmann::json &where_json);
   const nlohmann::json queryUserScopeGet(const nlohmann::json &where_json);
   const nlohmann::json queryContractScopeGet(const nlohmann::json &where_json);
-  const nlohmann::json queryBlockGet(const nlohmann::json &where_json);
+  //const nlohmann::json queryBlockGet(const nlohmann::json &where_json);
   const nlohmann::json queryTxGet(const nlohmann::json &where_json);
   const nlohmann::json queryBlockScan(const nlohmann::json &where_json);
   const nlohmann::json queryTxScan(const nlohmann::json &where_json);

@@ -42,6 +42,7 @@ public:
   bool saveSelfInfo(self_info_type &self_info);
   const world_type loadCurrentWorld();
   const local_chain_type loadCurrentChain();
+  const string queryBlockGet(const nlohmann::json &where_json);
 
   string getValueByKey(const string &what, const string &key);
   void destroyDB();

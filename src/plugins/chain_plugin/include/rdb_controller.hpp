@@ -37,7 +37,7 @@ public:
   const vector<user_ledger_type> queryUserScopeGet(const nlohmann::json &where_json);
   const vector<contract_ledger_type> queryContractScopeGet(const nlohmann::json &where_json);
   const Block queryBlockGet(const nlohmann::json &where_json);
-  const Transaction queryTxGet(const nlohmann::json &where_json);
+  const string queryTxGet(const nlohmann::json &where_json);
   const vector<base58_type> queryBlockScan(const nlohmann::json &where_json);
   const vector<base58_type> queryTxScan(const nlohmann::json &where_json);
 

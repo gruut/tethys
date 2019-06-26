@@ -243,8 +243,7 @@ const vector<contract_ledger_type> RdbController::queryContractScopeGet(const nl
 const Block RdbController::queryBlockGet(const nlohmann::json &where_json) {
   Block block;
   try {
-    // TODO: block_id뿐만 아닌 다른 것도 주어졌을 경우의 상황 처리 필요
-
+    // TODO: 현재 kv에서의 block backup시 저장되는 msg_block을 가지고 사용 중. 추후 rdb에서 구현
   } catch (soci::mysql_soci_error const &e) {
     logger::ERROR("MySQL error: {}", e.what());
   } catch (...) {
@@ -253,16 +252,26 @@ const Block RdbController::queryBlockGet(const nlohmann::json &where_json) {
   return block;
 }
 
-const Transaction RdbController::queryTxGet(const nlohmann::json &where_json) {
-  Transaction transaction;
+const string RdbController::queryTxGet(const nlohmann::json &where_json) {
+  string tx_agg_cbor;
   try {
+    base58_type tx_id = json::get<string>(where_json, "txid").value();
+
+    // clang-format off
+    soci::row result;
+    soci::session db_session(RdbController::pool());
+    soci::statement st = (db_session.prepare << "SELECT tx_agg_cbor FROM user_scope WHERE tx_id = :tx_id", soci::use(tx_id, "tx_id"), soci::into(result));
+    st.execute(true);
+    // clang-format on
+
+    result >> tx_agg_cbor;
 
   } catch (soci::mysql_soci_error const &e) {
     logger::ERROR("MySQL error: {}", e.what());
   } catch (...) {
     logger::ERROR("Unexpected error at `queryTxGet`");
   }
-  return transaction;
+  return tx_agg_cbor;
 }
 
 const vector<base58_type> RdbController::queryBlockScan(const nlohmann::json &where_json) {

@@ -203,6 +203,20 @@ const nlohmann::json Chain::queryChainGet() {
   return result_json;
 }
 
+const nlohmann::json Chain::queryBlockGet(const nlohmann::json &where_json) {
+  // TODO: 추후 RDB로 구현
+  nlohmann::json block_msg = nlohmann::json::from_cbor(kv_controller->queryBlockGet(where_json));
+  nlohmann::json result_json;
+  result_json["name"] = nlohmann::json::array();
+  result_json["name"].push_back("block");
+
+  result_json["data"] = nlohmann::json::array();
+  result_json["data"][0] = nlohmann::json::array();
+  result_json["data"][0].push_back(block_msg);
+
+  return result_json;
+}
+
 void Chain::saveLatestWorldId(const alphanumeric_type &world_id) {
   kv_controller->saveLatestWorldId(world_id);
 }
@@ -377,7 +391,7 @@ const nlohmann::json Chain::queryContractScan(const nlohmann::json &where_json) 
   result_json["name"].push_back("cid");
 
   result_json["data"] = nlohmann::json::array();
-  for(int i = 0; i < found_contracts.size(); i++) {
+  for (int i = 0; i < found_contracts.size(); i++) {
     result_json["data"][i].push_back(found_contracts[i]);
   }
 
@@ -408,7 +422,7 @@ const nlohmann::json Chain::queryCertGet(const nlohmann::json &where_json) {
   result_json["name"].push_back("x509");
 
   result_json["data"] = nlohmann::json::array();
-  for(int i = 0; i < found_certs.size(); i++) {
+  for (int i = 0; i < found_certs.size(); i++) {
     result_json["data"][i].push_back(found_certs[i].sn);
     result_json["data"][i].push_back(found_certs[i].nvbefore);
     result_json["data"][i].push_back(found_certs[i].nvafter);
@@ -455,7 +469,7 @@ const nlohmann::json Chain::queryUserScopeGet(const nlohmann::json &where_json) 
   result_json["name"].push_back("pid");
 
   result_json["data"] = nlohmann::json::array();
-  for(int i = 0; i < found_user_ledgers.size(); i++) {
+  for (int i = 0; i < found_user_ledgers.size(); i++) {
     result_json["data"][i].push_back(found_user_ledgers[i].var_name);
     result_json["data"][i].push_back(found_user_ledgers[i].var_value);
     result_json["data"][i].push_back(found_user_ledgers[i].var_type);
@@ -481,7 +495,7 @@ const nlohmann::json Chain::queryContractScopeGet(const nlohmann::json &where_js
   result_json["name"].push_back("pid");
 
   result_json["data"] = nlohmann::json::array();
-  for(int i = 0; i < found_contract_ledgers.size(); i++) {
+  for (int i = 0; i < found_contract_ledgers.size(); i++) {
     result_json["data"][i].push_back(found_contract_ledgers[i].var_name);
     result_json["data"][i].push_back(found_contract_ledgers[i].var_value);
     result_json["data"][i].push_back(found_contract_ledgers[i].var_type);
@@ -494,26 +508,28 @@ const nlohmann::json Chain::queryContractScopeGet(const nlohmann::json &where_js
   return result_json;
 }
 
-const nlohmann::json Chain::queryBlockGet(const nlohmann::json &where_json) {
-  Block found_block = rdb_controller->queryBlockGet(where_json);
-  nlohmann::json result_json;
-  result_json["name"] = nlohmann::json::array();
-  result_json["name"].push_back("block");
-
-  // TODO: MSG_BLOCK 형태로 return해야 하는가?
-  result_json["data"] = nlohmann::json::array();
-
-  return result_json;
-}
+// const nlohmann::json Chain::queryBlockGet(const nlohmann::json &where_json) {
+//  Block found_block = rdb_controller->queryBlockGet(where_json);
+//  nlohmann::json result_json;
+//  result_json["name"] = nlohmann::json::array();
+//  result_json["name"].push_back("block");
+//
+//  // TODO: 추후 RDB 구현
+//  // TODO: MSG_BLOCK 형태로 return
+//  result_json["data"] = nlohmann::json::array();
+//
+//  return result_json;
+//}
 
 const nlohmann::json Chain::queryTxGet(const nlohmann::json &where_json) {
-  Transaction found_tx = rdb_controller->queryTxGet(where_json);
+  nlohmann::json msg_tx_agg = nlohmann::json::from_cbor(rdb_controller->queryTxGet(where_json));
   nlohmann::json result_json;
   result_json["name"] = nlohmann::json::array();
   result_json["name"].push_back("tx");
 
-  // TODO: MSG_TX 형태로 return해야 하는가?
   result_json["data"] = nlohmann::json::array();
+  result_json["data"][0] = nlohmann::json::array();
+  result_json["data"][0].push_back(msg_tx_agg);
 
   return result_json;
 }
@@ -525,7 +541,7 @@ const nlohmann::json Chain::queryBlockScan(const nlohmann::json &where_json) {
   result_json["name"].push_back("block_id");
 
   result_json["data"] = nlohmann::json::array();
-  for(int i = 0; i < found_block_ids.size(); i++) {
+  for (int i = 0; i < found_block_ids.size(); i++) {
     result_json["data"][i].push_back(found_block_ids[i]);
   }
 
@@ -539,13 +555,12 @@ const nlohmann::json Chain::queryTxScan(const nlohmann::json &where_json) {
   result_json["name"].push_back("tx_id");
 
   result_json["data"] = nlohmann::json::array();
-  for(int i = 0; i < found_tx_ids.size(); i++) {
+  for (int i = 0; i < found_tx_ids.size(); i++) {
     result_json["data"][i].push_back(found_tx_ids[i]);
   }
 
   return result_json;
 }
-
 
 string Chain::getUserCert(const base58_type &user_id) {
   return rdb_controller->getUserCert(user_id);

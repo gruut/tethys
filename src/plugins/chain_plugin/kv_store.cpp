@@ -169,6 +169,15 @@ const local_chain_type KvController::loadCurrentChain() {
   return return_chain;
 }
 
+const string KvController::queryBlockGet(const nlohmann::json &where_json) {
+  // TODO: 추후 RDB로 구현
+  base58_type block_id = json::get<string>(where_json, "block_id").value();
+  block_height_type block_height = static_cast<short>(stoi(json::get<string>(where_json, "block_height").value()));
+  base58_type txid = json::get<string>(where_json, "txid").value();
+
+  return getValueByKey(DataType::BACKUP_BLOCK, block_id);
+}
+
 string KvController::getValueByKey(const string &what, const string &key) {
   string value;
   leveldb::Status status;
@@ -265,7 +274,7 @@ string KvController::loadBackupContracts(const std::string &key) {
 
 void KvController::delBackup(const base58_type &block_id) {
   if (!block_id.empty()) {
-    write_batch_map[DataType::BACKUP_BLOCK].Delete(block_id);
+    // write_batch_map[DataType::BACKUP_BLOCK].Delete(block_id);   // request query의 block.get에서 msg_block을 불러올 때 임시로 사용
     write_batch_map[DataType::BACKUP_USER_LEDGER].Delete(block_id);
     write_batch_map[DataType::BACKUP_CONTRACT_LEDGER].Delete(block_id);
     write_batch_map[DataType::BACKUP_USER_ATTRIBUTE].Delete(block_id);
