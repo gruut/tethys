@@ -35,7 +35,7 @@ const vector<contract_id_type> RdbController::queryContractScan(const nlohmann::
     // clang-format off
       soci::row result;
       soci::session db_session(RdbController::pool());
-      soci::statement st = (db_session.prepare << "SELECT cid FROM contracts WHERE desc = :desc, author = :author, after = :after, before = :before", soci::use(desc, "desc"), soci::use(author, "author"), soci::use(after, "after"), soci::use(before, "before"), soci::into(result));
+      soci::statement st = (db_session.prepare << "SELECT cid FROM contracts WHERE `desc` = :desc, author = :author, `after` = :after, `before` = :before", soci::use(desc, "desc"), soci::use(author, "author"), soci::use(after, "after"), soci::use(before, "before"), soci::into(result));
       st.execute(true);
     // clang-format on
     do {
@@ -171,7 +171,7 @@ const vector<user_ledger_type> RdbController::queryUserScopeGet(const nlohmann::
     // clang-format off
     soci::row result;
     soci::session db_session(RdbController::pool());
-    soci::statement st = (db_session.prepare << "SELECT var_name, var_value, var_type, up_time, up_block, tag, pid from user_scope WHERE uid = :uid", soci::use(uid, "uid"), soci::into(result));
+    soci::statement st = (db_session.prepare << "SELECT var_name, var_value, var_type, up_time, up_block, tag, pid FROM user_scope WHERE uid = :uid", soci::use(uid, "uid"), soci::into(result));
     st.execute(true);
     // clang-format on
     do {
@@ -214,7 +214,7 @@ const vector<contract_ledger_type> RdbController::queryContractScopeGet(const nl
     // clang-format off
     soci::row result;
     soci::session db_session(RdbController::pool());
-    soci::statement st = (db_session.prepare << "SELECT var_name, var_value, var_type, var_info, up_time, up_block, pid from user_scope WHERE cid = :cid", soci::use(cid, "cid"), soci::into(result));
+    soci::statement st = (db_session.prepare << "SELECT var_name, var_value, var_type, var_info, up_time, up_block, pid FROM user_scope WHERE cid = :cid", soci::use(cid, "cid"), soci::into(result));
     st.execute(true);
     // clang-format on
     do {
@@ -653,13 +653,13 @@ bool RdbController::applyContractToRDB(const map<contract_id_type, contract_type
 
       // clang-format off
       if (query_type == QueryType::INSERT) {
-        st = (db_session.prepare << "INSERT INTO contracts (cid, after, `before`, author, friends, contract, `desc`, sigma) VALUES (:cid, :after, :before, :author, :friends, :contract, :desc, :sigma)",
+        st = (db_session.prepare << "INSERT INTO contracts (cid, `after`, `before`, author, friends, contract, `desc`, sigma) VALUES (:cid, :after, :before, :author, :friends, :contract, :desc, :sigma)",
             soci::use(cid, "cid"), soci::use(after, "after"), soci::use(before, "before"),
             soci::use(author, "author"), soci::use(friends, "friends"), soci::use(contract, "contract"),
             soci::use(desc, "desc"), soci::use(sigma, "sigma"),
             soci::into(result));
       } else if (query_type == QueryType::UPDATE) {
-        st = (db_session.prepare << "UPDATE contracts SET before = :before WHERE cid = :cid",
+        st = (db_session.prepare << "UPDATE contracts SET `before` = :before WHERE cid = :cid",
             soci::use(before, "before"), soci::use(cid, "cid"),
             soci::into(result));
       } else
@@ -678,11 +678,13 @@ bool RdbController::applyContractToRDB(const map<contract_id_type, contract_type
   return true;
 }
 
-vector<Block> RdbController::getBlocks(const string &condition) {
+vector<Block> RdbController::getBlocks(const int from, const int to) {
   try {
-    soci::session db_session(RdbController::pool());
+    stringstream condition;
+    condition << "block_height BETWEEN " << from << " AND " << to;
 
-    soci::rowset<> rs(db_session.prepare << "select * from blocks where " + condition);
+    soci::session db_session(RdbController::pool());
+    soci::rowset<> rs(db_session.prepare << "SELECT * FROM blocks WHERE " + condition.str());
     vector<Block> blocks;
 
     for (auto it = rs.begin(); it != rs.end(); ++it) {
@@ -699,12 +701,14 @@ vector<Block> RdbController::getBlocks(const string &condition) {
   }
 }
 
-optional<Block> RdbController::getBlock(const string &condition) {
+optional<Block> RdbController::getLatestResolvedBlock() {
   try {
+    const string condition = "ORDER BY block_height DESC LIMIT 1";
+
     soci::session db_session(RdbController::pool());
     soci::row r;
 
-    db_session << "select * from blocks " + condition, into(r);
+    db_session << "SELECT * FROM blocks " + condition, into(r);
     auto block = rowToBlock(r);
 
     return block;
@@ -744,7 +748,7 @@ string RdbController::getUserCert(const base58_type &user_id) {
   try {
     string user_cert = {};
     soci::session db_session(RdbController::pool());
-    soci::statement st = (db_session.prepare << "select x509 from user_certificates where uid = " + user_id, soci::into(user_cert));
+    soci::statement st = (db_session.prepare << "SELECT x509 FROM user_certificates WHERE uid = " + user_id, soci::into(user_cert));
     st.execute(true);
 
     return user_cert;
@@ -786,9 +790,9 @@ int RdbController::getVarTypeFromRDB(const string &var_owner, const string &var_
 
     // clang-format off
     if(isUserId(var_owner))
-      st = (db_session.prepare << "SELECT var_type from user_scope WHERE var_owner = :var_owner AND var_name = :var_name AND tag is NULL", soci::use(var_owner, "var_owner"), soci::use(var_name, "var_name"), soci::into(result));
+      st = (db_session.prepare << "SELECT var_type FROM user_scope WHERE var_owner = :var_owner AND var_name = :var_name AND tag is NULL", soci::use(var_owner, "var_owner"), soci::use(var_name, "var_name"), soci::into(result));
     else if(isContractId(var_owner))
-      st = (db_session.prepare << "SELECT var_type from contract_scope WHERE contract_id = :contract_id AND var_name = :var_name AND var_info is NULL", soci::use(var_owner, "contract_id"), soci::use(var_name, "var_name"), soci::into(result));
+      st = (db_session.prepare << "SELECT var_type FROM contract_scope WHERE contract_id = :contract_id AND var_name = :var_name AND var_info is NULL", soci::use(var_owner, "contract_id"), soci::use(var_name, "var_name"), soci::into(result));
     st.execute(true);
     // clang-format on
 
@@ -822,7 +826,7 @@ user_ledger_type RdbController::findUserScopeFromRDB(const string &pid) {
     // clang-format off
     soci::row result;
     soci::session db_session(RdbController::pool());
-    soci::statement st = (db_session.prepare << "SELECT var_name, var_value, var_type, var_owner, up_time, up_block, tag from user_scope WHERE pid = :pid", soci::use(pid, "pid"), soci::into(result));
+    soci::statement st = (db_session.prepare << "SELECT var_name, var_value, var_type, var_owner, up_time, up_block, tag FROM user_scope WHERE pid = :pid", soci::use(pid, "pid"), soci::into(result));
     st.execute(true);
     // clang-format on
 
@@ -859,7 +863,7 @@ contract_ledger_type RdbController::findContractScopeFromRDB(const string &pid) 
     // clang-format off
     soci::row result;
     soci::session db_session(RdbController::pool());
-    soci::statement st = (db_session.prepare << "SELECT var_name, var_value, var_type, contract_id, up_time, up_block, var_info from contract_scope WHERE pid = :pid", soci::use(pid, "pid"), soci::into(result));
+    soci::statement st = (db_session.prepare << "SELECT var_name, var_value, var_type, contract_id, up_time, up_block, var_info FROM contract_scope WHERE pid = :pid", soci::use(pid, "pid"), soci::into(result));
     st.execute(true);
     // clang-format on
 
@@ -896,7 +900,7 @@ vector<user_ledger_type> RdbController::getAllUserLedger() {
     // clang-format off
     soci::row result;
     soci::session db_session(RdbController::pool());
-    soci::statement st = (db_session.prepare << "SELECT var_name, var_value, var_type, var_owner, up_time, up_block, tag, pid from user_scope", soci::into(result));
+    soci::statement st = (db_session.prepare << "SELECT var_name, var_value, var_type, var_owner, up_time, up_block, tag, pid FROM user_scope", soci::into(result));
     st.execute(true);
     // clang-format on
     do {
@@ -934,7 +938,7 @@ vector<contract_ledger_type> RdbController::getAllContractLedger() {
     // clang-format off
     soci::row result;
     soci::session db_session(RdbController::pool());
-    soci::statement st = (db_session.prepare << "SELECT var_name, var_value, var_type, contract_id, up_time, up_block, var_info, pid from contract_scope", soci::into(result));
+    soci::statement st = (db_session.prepare << "SELECT var_name, var_value, var_type, contract_id, up_time, up_block, var_info, pid FROM contract_scope", soci::into(result));
     st.execute(true);
     // clang-format on
     do {

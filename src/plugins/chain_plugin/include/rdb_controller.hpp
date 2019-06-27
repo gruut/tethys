@@ -49,8 +49,8 @@ public:
   bool applyUserCertToRDB(const map<base58_type, user_cert_type> &user_cert_list);
   bool applyContractToRDB(const map<contract_id_type, contract_type> &contract_list);
 
-  vector<Block> getBlocks(const string &condition);
-  optional<Block> getBlock(const string &condition);
+  vector<Block> getBlocks(const int from, const int to);
+  optional<Block> getLatestResolvedBlock();
   string getUserCert(const base58_type &user_id);
 
   //  bool queryRunQuery(std::vector<LedgerRecord> &mem_ledger, nlohmann::json &option, result_query_info_type &result_info);

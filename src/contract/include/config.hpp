@@ -9,4 +9,4 @@ constexpr int MIN_USER_FEE = 10;
 
 }
 
-#endif //GRUUTSCE_CONFIG_HPP
+#endif //TETHYS_SCE_CONFIG_HPP

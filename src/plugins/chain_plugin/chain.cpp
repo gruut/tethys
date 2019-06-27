@@ -685,17 +685,12 @@ vector<Block> Chain::getBlocksByHeight(int from, int to) {
   if (from > to) {
     return vector<Block>();
   }
-
-  stringstream ss;
-  ss << "block_height BETWEEN " << from << " AND " << to;
-
-  vector<Block> blocks = rdb_controller->getBlocks(ss.str());
+  vector<Block> blocks = rdb_controller->getBlocks(from, to);
   return blocks;
 }
 
 block_height_type Chain::getLatestResolvedHeight() {
-  const string condition = "ORDER BY block_height DESC LIMIT 1";
-  auto block = rdb_controller->getBlock(condition);
+  auto block = rdb_controller->getLatestResolvedBlock();
 
   if (block.has_value()) {
     return block.value().getHeight();

@@ -1,5 +1,5 @@
-#ifndef GRUUT_PUBLIC_MERGER_TRANSACTION_HPP
-#define GRUUT_PUBLIC_MERGER_TRANSACTION_HPP
+#ifndef TETHYS_PUBLIC_MERGER_TRANSACTION_HPP
+#define TETHYS_PUBLIC_MERGER_TRANSACTION_HPP
 
 #include "../../../../lib/json/include/json.hpp"
 #include "../../../../lib/log/include/log.hpp"
