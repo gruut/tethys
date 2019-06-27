@@ -15,9 +15,9 @@ public:
     appbase::app().setWorldId(world.world_id);
 
     string auth_cert;
-    int multiline_size = world.authority_cert.size() - 1;
+    int multiline_size = world.authority_pk.size() - 1;
     for (int i = 0; i <= multiline_size; ++i) {
-      auth_cert += world.authority_cert[i];
+      auth_cert += world.authority_pk[i];
       if (i != multiline_size)
         auth_cert += "\n";
     }
@@ -47,10 +47,10 @@ public:
       world_type world_state;
 
       world_state.world_id = state["/world/id"_json_pointer];
-      world_state.world_created_time = state["/world/after"_json_pointer];
+      world_state.created_time = state["/world/after"_json_pointer];
 
       world_state.keyc_name = state["/key_currency/name"_json_pointer];
-      world_state.initial_amount = state["/key_currency/initial_amount"_json_pointer];
+      world_state.keyc_initial_amount = state["/key_currency/initial_amount"_json_pointer];
 
       world_state.allow_mining = state["/mining_policy/allow_mining"_json_pointer];
 
@@ -60,10 +60,12 @@ public:
       world_state.eden_sig = state["eden_sig"].get<string>();
 
       world_state.authority_id = state["/authority/id"_json_pointer];
-      world_state.authority_cert = state["authority"]["cert"].get<vector<string>>();
+      vector<string> tmp_authority_cert = state["authority"]["cert"].get<vector<string>>();
+      world_state.authority_pk = parseCertContent(tmp_authority_cert);
 
       world_state.creator_id = state["/creator/id"_json_pointer];
-      world_state.creator_cert = state["creator"]["cert"].get<vector<string>>();
+      vector<string> tmp_creator_cert = state["creator"]["cert"].get<vector<string>>();
+      world_state.creator_pk = parseCertContent(tmp_creator_cert);
       world_state.creator_sig = state["/creator/sig"_json_pointer];
 
       return world_state;
@@ -79,7 +81,7 @@ public:
 
       chain_state.chain_id = state["/chain/id"_json_pointer];
       chain_state.world_id = state["/chain/world"_json_pointer];
-      chain_state.chain_created_time = state["/chain/after"_json_pointer];
+      chain_state.created_time = state["/chain/after"_json_pointer];
 
       chain_state.allow_custom_contract = state["/policy/allow_custom_contract"_json_pointer];
       chain_state.allow_oracle = state["/policy/allow_oracle"_json_pointer];
@@ -87,7 +89,8 @@ public:
       chain_state.allow_heavy_contract = state["/policy/allow_heavy_contract"_json_pointer];
 
       chain_state.creator_id = state["/creator/id"_json_pointer];
-      chain_state.creator_cert = state["creator"]["cert"].get<vector<string>>();
+      vector<string> tmp_creator_cert = state["creator"]["cert"].get<vector<string>>();
+      chain_state.creator_pk = parseCertContent(tmp_creator_cert);
       chain_state.creator_sig = state["/creator/sig"_json_pointer];
 
       for (auto &tracker_info : state["tracker"]) {
@@ -100,6 +103,15 @@ public:
       logger::ERROR("Failed to parse local chain json: {}", e.what());
       throw e;
     }
+  }
+
+  string parseCertContent(std::vector<string> &cert) {
+    string cert_content = "";
+    for (int i = 0; i < cert.size(); ++i) {
+      cert_content += cert[i];
+      cert_content += "\n";
+    }
+    return cert_content;
   }
 
   Chain &self;
@@ -126,63 +138,85 @@ Chain::~Chain() {
   impl.reset();
 }
 
-// RDB functions
-string Chain::getUserCert(const base58_type &user_id) {
-  return rdb_controller->getUserCert(user_id);
-}
-
-bool Chain::applyBlockToRDB(const tethys::Block &block_info) {
-  return rdb_controller->applyBlockToRDB(block_info);
-}
-
-bool Chain::applyTransactionToRDB(const tethys::Block &block_info) {
-  return rdb_controller->applyTransactionToRDB(block_info);
-}
-
-bool Chain::applyUserLedgerToRDB(const std::map<string, user_ledger_type> &user_ledger_list) {
-  return rdb_controller->applyUserLedgerToRDB(user_ledger_list);
-}
-
-bool Chain::applyContractLedgerToRDB(const std::map<string, contract_ledger_type> &contract_ledger_list) {
-  return rdb_controller->applyContractLedgerToRDB(contract_ledger_list);
-}
-
-bool Chain::applyUserAttributeToRDB(const std::map<base58_type, user_attribute_type> &user_attribute_list) {
-  return rdb_controller->applyUserAttributeToRDB(user_attribute_list);
-}
-
-bool Chain::applyUserCertToRDB(const std::map<base58_type, user_cert_type> &user_cert_list) {
-  return rdb_controller->applyUserCertToRDB(user_cert_list);
-}
-
-bool Chain::applyContractToRDB(const std::map<base58_type, contract_type> &contract_list) {
-  return rdb_controller->applyContractToRDB(contract_list);
-}
-
-vector<Block> Chain::getBlocksByHeight(int from, int to) {
-  if (from > to) {
-    return vector<Block>();
-  }
-
-  stringstream ss;
-  ss << "block_height BETWEEN " << from << " AND " << to;
-
-  vector<Block> blocks = rdb_controller->getBlocks(ss.str());
-  return blocks;
-}
-
-block_height_type Chain::getLatestResolvedHeight() {
-  const string condition = "ORDER BY block_height DESC LIMIT 1";
-  auto block = rdb_controller->getBlock(condition);
-
-  if (block.has_value()) {
-    return block.value().getHeight();
-  } else {
-    return 0;
-  }
-}
-
 // KV functions
+const nlohmann::json Chain::queryWorldGet() {
+  world_type current_world = kv_controller->loadCurrentWorld();
+
+  nlohmann::json result_json;
+  result_json["name"] = nlohmann::json::array();
+  result_json["name"].push_back("world_id");
+  result_json["name"].push_back("created_time");
+  result_json["name"].push_back("creator_id");
+  result_json["name"].push_back("creator_pk");
+  result_json["name"].push_back("authority_id");
+  result_json["name"].push_back("authority_pk");
+  result_json["name"].push_back("keyc_name");
+  result_json["name"].push_back("keyc_initial_amount");
+  result_json["name"].push_back("allow_mining");
+  result_json["name"].push_back("mining_rule");
+  result_json["name"].push_back("allow_anonymous_user");
+  result_json["name"].push_back("join_fee");
+
+  result_json["data"] = nlohmann::json::array();
+  result_json["data"][0] = nlohmann::json::array();
+  result_json["data"][0].push_back(current_world.world_id);
+  result_json["data"][0].push_back(current_world.created_time);
+  result_json["data"][0].push_back(current_world.creator_id);
+  result_json["data"][0].push_back(current_world.creator_pk);
+  result_json["data"][0].push_back(current_world.authority_id);
+  result_json["data"][0].push_back(current_world.authority_pk);
+  result_json["data"][0].push_back(current_world.keyc_name);
+  result_json["data"][0].push_back(current_world.keyc_initial_amount);
+  result_json["data"][0].push_back(current_world.allow_mining);
+  result_json["data"][0].push_back(current_world.mining_rule);
+  result_json["data"][0].push_back(current_world.allow_anonymous_user);
+  result_json["data"][0].push_back(current_world.join_fee);
+
+  return result_json;
+}
+
+const nlohmann::json Chain::queryChainGet() {
+  local_chain_type current_chain = kv_controller->loadCurrentChain();
+
+  nlohmann::json result_json;
+  result_json["name"] = nlohmann::json::array();
+  result_json["name"].push_back("chain_id");
+  result_json["name"].push_back("created_time");
+  result_json["name"].push_back("creator_id");
+  result_json["name"].push_back("creator_pk");
+  result_json["name"].push_back("allow_custom_contract");
+  result_json["name"].push_back("allow_oracle");
+  result_json["name"].push_back("allow_tag");
+  result_json["name"].push_back("allow_heavy_contract");
+
+  result_json["data"] = nlohmann::json::array();
+  result_json["data"][0] = nlohmann::json::array();
+  result_json["data"][0].push_back(current_chain.chain_id);
+  result_json["data"][0].push_back(current_chain.created_time);
+  result_json["data"][0].push_back(current_chain.creator_id);
+  result_json["data"][0].push_back(current_chain.creator_pk);
+  result_json["data"][0].push_back(current_chain.allow_custom_contract);
+  result_json["data"][0].push_back(current_chain.allow_oracle);
+  result_json["data"][0].push_back(current_chain.allow_tag);
+  result_json["data"][0].push_back(current_chain.allow_heavy_contract);
+
+  return result_json;
+}
+
+const nlohmann::json Chain::queryBlockGet(const nlohmann::json &where_json) {
+  // TODO: 추후 RDB로 구현
+  nlohmann::json block_msg = nlohmann::json::from_cbor(kv_controller->queryBlockGet(where_json));
+  nlohmann::json result_json;
+  result_json["name"] = nlohmann::json::array();
+  result_json["name"].push_back("block");
+
+  result_json["data"] = nlohmann::json::array();
+  result_json["data"][0] = nlohmann::json::array();
+  result_json["data"][0].push_back(block_msg);
+
+  return result_json;
+}
+
 void Chain::saveLatestWorldId(const alphanumeric_type &world_id) {
   kv_controller->saveLatestWorldId(world_id);
 }
@@ -268,7 +302,7 @@ void Chain::restoreUserLedgerList(UnresolvedBlock &restored_unresolved_block, co
     user_ledger_type each_user_ledger;
 
     each_user_ledger.var_name = json::get<string>(each_user_ledger_json, "var_name").value();
-    each_user_ledger.var_val = json::get<string>(each_user_ledger_json, "var_val").value();
+    each_user_ledger.var_value = json::get<string>(each_user_ledger_json, "var_value").value();
     each_user_ledger.var_type = stoi(json::get<string>(each_user_ledger_json, "var_type").value());
     each_user_ledger.uid = json::get<string>(each_user_ledger_json, "uid").value();
     each_user_ledger.up_time = static_cast<tethys::timestamp_t>(stoll(json::get<string>(each_user_ledger_json, "up_time").value()));
@@ -287,7 +321,7 @@ void Chain::restoreContractLedgerList(UnresolvedBlock &restored_unresolved_block
     contract_ledger_type each_contract_ledger;
 
     each_contract_ledger.var_name = json::get<string>(each_contract_ledger_json, "var_name").value();
-    each_contract_ledger.var_val = json::get<string>(each_contract_ledger_json, "var_val").value();
+    each_contract_ledger.var_value = json::get<string>(each_contract_ledger_json, "var_value").value();
     each_contract_ledger.var_type = stoi(json::get<string>(each_contract_ledger_json, "var_type").value());
     each_contract_ledger.cid = json::get<string>(each_contract_ledger_json, "cid").value();
     each_contract_ledger.up_time = static_cast<tethys::timestamp_t>(stoll(json::get<string>(each_contract_ledger_json, "up_time").value()));
@@ -349,6 +383,241 @@ void Chain::restoreContractList(UnresolvedBlock &restored_unresolved_block, cons
     each_contract.sigma = json::get<string>(each_contract_json, "sigma").value();
 
     restored_unresolved_block.contract_list[each_contract.cid] = each_contract;
+  }
+}
+
+// RDB functions
+const nlohmann::json Chain::queryContractScan(const nlohmann::json &where_json) {
+  vector<contract_id_type> found_contracts = rdb_controller->queryContractScan(where_json);
+
+  nlohmann::json result_json;
+  result_json["name"] = nlohmann::json::array();
+  result_json["name"].push_back("cid");
+
+  result_json["data"] = nlohmann::json::array();
+  for (int i = 0; i < found_contracts.size(); i++) {
+    result_json["data"][i].push_back(found_contracts[i]);
+  }
+
+  return result_json;
+}
+
+const nlohmann::json Chain::queryContractGet(const nlohmann::json &where_json) {
+  string found_contract = rdb_controller->queryContractGet(where_json);
+
+  nlohmann::json result_json;
+  result_json["name"] = nlohmann::json::array();
+  result_json["name"].push_back("contract");
+
+  result_json["data"] = nlohmann::json::array();
+  result_json["data"][0].push_back(found_contract);
+
+  return result_json;
+}
+
+const nlohmann::json Chain::queryCertGet(const nlohmann::json &where_json) {
+  vector<user_cert_type> found_certs = rdb_controller->queryCertGet(where_json);
+
+  nlohmann::json result_json;
+  result_json["name"] = nlohmann::json::array();
+  result_json["name"].push_back("sn");
+  result_json["name"].push_back("nvbefore");
+  result_json["name"].push_back("nvafter");
+  result_json["name"].push_back("x509");
+
+  result_json["data"] = nlohmann::json::array();
+  for (int i = 0; i < found_certs.size(); i++) {
+    result_json["data"][i].push_back(found_certs[i].sn);
+    result_json["data"][i].push_back(found_certs[i].nvbefore);
+    result_json["data"][i].push_back(found_certs[i].nvafter);
+    result_json["data"][i].push_back(found_certs[i].x509);
+  }
+
+  return result_json;
+}
+
+const nlohmann::json Chain::queryUserInfoGet(const nlohmann::json &where_json) {
+  user_attribute_type found_user_info = rdb_controller->queryUserInfoGet(where_json);
+  nlohmann::json result_json;
+  result_json["name"] = nlohmann::json::array();
+  result_json["name"].push_back("register_day");
+  result_json["name"].push_back("register_code");
+  result_json["name"].push_back("gender");
+  result_json["name"].push_back("isc_type");
+  result_json["name"].push_back("isc_code");
+  result_json["name"].push_back("location");
+  result_json["name"].push_back("age_limit");
+
+  result_json["data"] = nlohmann::json::array();
+  result_json["data"][0].push_back(found_user_info.register_day);
+  result_json["data"][0].push_back(found_user_info.register_code);
+  result_json["data"][0].push_back(found_user_info.gender);
+  result_json["data"][0].push_back(found_user_info.isc_type);
+  result_json["data"][0].push_back(found_user_info.isc_code);
+  result_json["data"][0].push_back(found_user_info.location);
+  result_json["data"][0].push_back(found_user_info.age_limit);
+
+  return result_json;
+}
+
+const nlohmann::json Chain::queryUserScopeGet(const nlohmann::json &where_json) {
+  vector<user_ledger_type> found_user_ledgers = rdb_controller->queryUserScopeGet(where_json);
+  nlohmann::json result_json;
+  result_json["name"] = nlohmann::json::array();
+  result_json["name"].push_back("var_name");
+  result_json["name"].push_back("var_value");
+  result_json["name"].push_back("var_type");
+  result_json["name"].push_back("up_time");
+  result_json["name"].push_back("up_block");
+  result_json["name"].push_back("tag");
+  result_json["name"].push_back("pid");
+
+  result_json["data"] = nlohmann::json::array();
+  for (int i = 0; i < found_user_ledgers.size(); i++) {
+    result_json["data"][i].push_back(found_user_ledgers[i].var_name);
+    result_json["data"][i].push_back(found_user_ledgers[i].var_value);
+    result_json["data"][i].push_back(found_user_ledgers[i].var_type);
+    result_json["data"][i].push_back(found_user_ledgers[i].up_time);
+    result_json["data"][i].push_back(found_user_ledgers[i].up_block);
+    result_json["data"][i].push_back(found_user_ledgers[i].tag);
+    result_json["data"][i].push_back(found_user_ledgers[i].pid);
+  }
+
+  return result_json;
+}
+
+const nlohmann::json Chain::queryContractScopeGet(const nlohmann::json &where_json) {
+  vector<contract_ledger_type> found_contract_ledgers = rdb_controller->queryContractScopeGet(where_json);
+  nlohmann::json result_json;
+  result_json["name"] = nlohmann::json::array();
+  result_json["name"].push_back("var_name");
+  result_json["name"].push_back("var_value");
+  result_json["name"].push_back("var_type");
+  result_json["name"].push_back("var_info");
+  result_json["name"].push_back("up_time");
+  result_json["name"].push_back("up_block");
+  result_json["name"].push_back("pid");
+
+  result_json["data"] = nlohmann::json::array();
+  for (int i = 0; i < found_contract_ledgers.size(); i++) {
+    result_json["data"][i].push_back(found_contract_ledgers[i].var_name);
+    result_json["data"][i].push_back(found_contract_ledgers[i].var_value);
+    result_json["data"][i].push_back(found_contract_ledgers[i].var_type);
+    result_json["data"][i].push_back(found_contract_ledgers[i].var_info);
+    result_json["data"][i].push_back(found_contract_ledgers[i].up_time);
+    result_json["data"][i].push_back(found_contract_ledgers[i].up_block);
+    result_json["data"][i].push_back(found_contract_ledgers[i].pid);
+  }
+
+  return result_json;
+}
+
+// const nlohmann::json Chain::queryBlockGet(const nlohmann::json &where_json) {
+//  Block found_block = rdb_controller->queryBlockGet(where_json);
+//  nlohmann::json result_json;
+//  result_json["name"] = nlohmann::json::array();
+//  result_json["name"].push_back("block");
+//
+//  // TODO: 추후 RDB 구현
+//  // TODO: MSG_BLOCK 형태로 return
+//  result_json["data"] = nlohmann::json::array();
+//
+//  return result_json;
+//}
+
+const nlohmann::json Chain::queryTxGet(const nlohmann::json &where_json) {
+  nlohmann::json msg_tx_agg = nlohmann::json::from_cbor(rdb_controller->queryTxGet(where_json));
+  nlohmann::json result_json;
+  result_json["name"] = nlohmann::json::array();
+  result_json["name"].push_back("tx");
+
+  result_json["data"] = nlohmann::json::array();
+  result_json["data"][0] = nlohmann::json::array();
+  result_json["data"][0].push_back(msg_tx_agg);
+
+  return result_json;
+}
+
+const nlohmann::json Chain::queryBlockScan(const nlohmann::json &where_json) {
+  vector<base58_type> found_block_ids = rdb_controller->queryBlockScan(where_json);
+  nlohmann::json result_json;
+  result_json["name"] = nlohmann::json::array();
+  result_json["name"].push_back("block_id");
+
+  result_json["data"] = nlohmann::json::array();
+  for (int i = 0; i < found_block_ids.size(); i++) {
+    result_json["data"][i].push_back(found_block_ids[i]);
+  }
+
+  return result_json;
+}
+
+const nlohmann::json Chain::queryTxScan(const nlohmann::json &where_json) {
+  vector<base58_type> found_tx_ids = rdb_controller->queryTxScan(where_json);
+  nlohmann::json result_json;
+  result_json["name"] = nlohmann::json::array();
+  result_json["name"].push_back("tx_id");
+
+  result_json["data"] = nlohmann::json::array();
+  for (int i = 0; i < found_tx_ids.size(); i++) {
+    result_json["data"][i].push_back(found_tx_ids[i]);
+  }
+
+  return result_json;
+}
+
+string Chain::getUserCert(const base58_type &user_id) {
+  return rdb_controller->getUserCert(user_id);
+}
+
+bool Chain::applyBlockToRDB(const tethys::Block &block_info) {
+  return rdb_controller->applyBlockToRDB(block_info);
+}
+
+bool Chain::applyTransactionToRDB(const tethys::Block &block_info) {
+  return rdb_controller->applyTransactionToRDB(block_info);
+}
+
+bool Chain::applyUserLedgerToRDB(const std::map<string, user_ledger_type> &user_ledger_list) {
+  return rdb_controller->applyUserLedgerToRDB(user_ledger_list);
+}
+
+bool Chain::applyContractLedgerToRDB(const std::map<string, contract_ledger_type> &contract_ledger_list) {
+  return rdb_controller->applyContractLedgerToRDB(contract_ledger_list);
+}
+
+bool Chain::applyUserAttributeToRDB(const std::map<base58_type, user_attribute_type> &user_attribute_list) {
+  return rdb_controller->applyUserAttributeToRDB(user_attribute_list);
+}
+
+bool Chain::applyUserCertToRDB(const std::map<base58_type, user_cert_type> &user_cert_list) {
+  return rdb_controller->applyUserCertToRDB(user_cert_list);
+}
+
+bool Chain::applyContractToRDB(const std::map<base58_type, contract_type> &contract_list) {
+  return rdb_controller->applyContractToRDB(contract_list);
+}
+
+vector<Block> Chain::getBlocksByHeight(int from, int to) {
+  if (from > to) {
+    return vector<Block>();
+  }
+
+  stringstream ss;
+  ss << "block_height BETWEEN " << from << " AND " << to;
+
+  vector<Block> blocks = rdb_controller->getBlocks(ss.str());
+  return blocks;
+}
+
+block_height_type Chain::getLatestResolvedHeight() {
+  const string condition = "ORDER BY block_height DESC LIMIT 1";
+  auto block = rdb_controller->getBlock(condition);
+
+  if (block.has_value()) {
+    return block.value().getHeight();
+  } else {
+    return 0;
   }
 }
 
@@ -442,15 +711,15 @@ bool Chain::queryIncinerate(UnresolvedBlock &UR_block, nlohmann::json &option, r
   if (found_ledger.uid != result_info.user)
     return false;
 
-  int modified_value = stoi(found_ledger.var_val) - stoi(amount);
-  found_ledger.var_val = to_string(modified_value);
+  int modified_value = stoi(found_ledger.var_value) - stoi(amount);
+  found_ledger.var_value = to_string(modified_value);
 
   if (modified_value == 0)
     found_ledger.query_type = QueryType::DELETE;
   else if (modified_value > 0)
     found_ledger.query_type = QueryType::UPDATE;
   else
-    logger::ERROR("var_val is under 0 in queryIncinerate!");
+    logger::ERROR("var_value is under 0 in queryIncinerate!");
 
   UR_block.user_ledger_list[pid] = found_ledger;
 
@@ -476,7 +745,7 @@ bool Chain::queryCreate(UnresolvedBlock &UR_block, nlohmann::json &option, resul
     return false;
   }
 
-  user_ledger.var_val = amount;
+  user_ledger.var_value = amount;
   user_ledger.up_time = up_time;
   user_ledger.up_block = up_block;
   user_ledger.query_type = QueryType::INSERT;
@@ -527,8 +796,8 @@ bool Chain::queryTransfer(UnresolvedBlock &UR_block, nlohmann::json &option, res
       return false;
     }
 
-    int modified_value = stoi(found_ledger.var_val) - stoi(amount);
-    found_ledger.var_val = to_string(modified_value);
+    int modified_value = stoi(found_ledger.var_value) - stoi(amount);
+    found_ledger.var_value = to_string(modified_value);
     found_ledger.up_time = up_time;
     found_ledger.up_block = up_block;
 
@@ -537,7 +806,7 @@ bool Chain::queryTransfer(UnresolvedBlock &UR_block, nlohmann::json &option, res
     else if (modified_value > 0)
       found_ledger.query_type = QueryType::UPDATE;
     else {
-      logger::ERROR("var_val is under 0 in queryTransfer!");
+      logger::ERROR("var_value is under 0 in queryTransfer!");
       return false;
     }
 
@@ -569,8 +838,8 @@ bool Chain::queryTransfer(UnresolvedBlock &UR_block, nlohmann::json &option, res
       return false;
     }
 
-    int modified_value = stoi(found_ledger.var_val) - stoi(amount);
-    found_ledger.var_val = to_string(modified_value);
+    int modified_value = stoi(found_ledger.var_value) - stoi(amount);
+    found_ledger.var_value = to_string(modified_value);
     found_ledger.up_time = up_time;
     found_ledger.up_block = up_block;
 
@@ -579,7 +848,7 @@ bool Chain::queryTransfer(UnresolvedBlock &UR_block, nlohmann::json &option, res
     else if (modified_value > 0)
       found_ledger.query_type = QueryType::UPDATE;
     else {
-      logger::ERROR("var_val is under 0 in queryTransfer!");
+      logger::ERROR("var_value is under 0 in queryTransfer!");
       return false;
     }
 
@@ -594,7 +863,7 @@ bool Chain::queryTransfer(UnresolvedBlock &UR_block, nlohmann::json &option, res
 
     contract_ledger_type found_ledger = findContractLedgerFromHead(UR_block, to_pid);
 
-    if (found_ledger.var_val.empty() || found_ledger.is_empty)
+    if (found_ledger.var_value.empty() || found_ledger.is_empty)
       found_ledger.query_type = QueryType::INSERT;
     else if ((found_ledger.up_block == up_block) && (found_ledger.query_type == QueryType::INSERT)) {
       found_ledger.query_type = QueryType::INSERT;
@@ -602,8 +871,8 @@ bool Chain::queryTransfer(UnresolvedBlock &UR_block, nlohmann::json &option, res
       found_ledger.query_type = QueryType::UPDATE;
     }
 
-    int modified_value = stoi(found_ledger.var_val) + stoi(amount);
-    found_ledger.var_val = to_string(modified_value);
+    int modified_value = stoi(found_ledger.var_value) + stoi(amount);
+    found_ledger.var_value = to_string(modified_value);
     found_ledger.up_time = up_time;
     found_ledger.up_block = up_block;
     found_ledger.is_empty = false;
@@ -620,7 +889,7 @@ bool Chain::queryTransfer(UnresolvedBlock &UR_block, nlohmann::json &option, res
 
     user_ledger_type found_ledger = findUserLedgerFromHead(UR_block, to_pid);
 
-    if (found_ledger.var_val.empty() || found_ledger.is_empty)
+    if (found_ledger.var_value.empty() || found_ledger.is_empty)
       found_ledger.query_type = QueryType::INSERT;
     else if ((found_ledger.up_block == up_block) && (found_ledger.query_type == QueryType::INSERT)) {
       found_ledger.query_type = QueryType::INSERT;
@@ -628,8 +897,8 @@ bool Chain::queryTransfer(UnresolvedBlock &UR_block, nlohmann::json &option, res
       found_ledger.query_type = QueryType::UPDATE;
     }
 
-    int modified_value = stoi(found_ledger.var_val) + stoi(amount);
-    found_ledger.var_val = to_string(modified_value);
+    int modified_value = stoi(found_ledger.var_value) + stoi(amount);
+    found_ledger.var_value = to_string(modified_value);
     found_ledger.up_time = up_time;
     found_ledger.up_block = up_block;
     found_ledger.is_empty = false;
@@ -707,7 +976,7 @@ bool Chain::queryUserScope(UnresolvedBlock &UR_block, nlohmann::json &option, re
   user_ledger_type user_ledger;
 
   user_ledger.var_name = var_name;
-  user_ledger.var_val = var_val;
+  user_ledger.var_value = var_val;
   user_ledger.var_type = var_type;
   user_ledger.uid = uid;
   user_ledger.up_time = TimeUtil::nowBigInt(); // TODO: DB에 저장되는 시간인지, mem_ledger에 들어오는 시간인지
@@ -771,7 +1040,7 @@ bool Chain::queryContractScope(UnresolvedBlock &UR_block, nlohmann::json &option
   contract_ledger_type contract_ledger;
 
   contract_ledger.var_name = var_name;
-  contract_ledger.var_val = var_val;
+  contract_ledger.var_value = var_val;
   contract_ledger.var_type = var_type;
   contract_ledger.cid = cid;
   contract_ledger.up_time = TimeUtil::nowBigInt(); // TODO: DB에 저장되는 시간인지, mem_ledger에 들어오는 시간인지
@@ -977,8 +1246,8 @@ search_result_type Chain::findUserLedgerFromPoint(const string &pid, block_heigh
 
     if (pool_deque_idx < 0) {
       // -1이 되면 rdb에서 찾을 차례. select문으로 조회하는데도 찾지 못한다면 존재하지 않는 데이터
-      bool result = rdb_controller->findUserScopeFromRDB(pid, search_result.user_ledger);
-      if (!result) {
+      search_result.user_ledger = rdb_controller->findUserScopeFromRDB(pid);
+      if (search_result.user_ledger.is_empty) {
         search_result.not_found = true;
       }
       return search_result;
@@ -1007,8 +1276,8 @@ search_result_type Chain::findContractLedgerFromPoint(const string &pid, block_h
 
     if (pool_deque_idx < 0) {
       // -1이 되면 rdb에서 찾을 차례. select문으로 조회하는데도 찾지 못한다면 존재하지 않는 데이터
-      bool result = rdb_controller->findContractScopeFromRDB(pid, search_result.contract_ledger);
-      if (!result) {
+      search_result.contract_ledger = rdb_controller->findContractScopeFromRDB(pid);
+      if (search_result.contract_ledger.is_empty) {
         search_result.not_found = true;
       }
       return search_result;

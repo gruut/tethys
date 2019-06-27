@@ -69,7 +69,7 @@ bool UnresolvedBlockPool::prepareDeque(block_height_type t_height) {
 
 block_push_result_type UnresolvedBlockPool::pushBlock(Block &block) {
   logger::INFO("Unresolved block pool: pushBlock called");
-  block_push_result_type ret_val; // 해당 return 구조는 추후 변경 가능성 있음
+  block_push_result_type ret_val;
   ret_val.height = 0;
   ret_val.linked = false;
   ret_val.duplicated = false;
@@ -302,7 +302,7 @@ string UnresolvedBlockPool::serializeUserLedgerList(const UnresolvedBlock &unres
   for (auto &each_ledger : unresolved_block.user_ledger_list) {
     nlohmann::json json;
     json["var_name"] = each_ledger.second.var_name;
-    json["var_val"] = each_ledger.second.var_val;
+    json["var_value"] = each_ledger.second.var_value;
     json["var_type"] = to_string(each_ledger.second.var_type);
     json["uid"] = each_ledger.second.uid;
     json["up_time"] = to_string(each_ledger.second.up_time);
@@ -326,7 +326,7 @@ string UnresolvedBlockPool::serializeContractLedgerList(const UnresolvedBlock &u
   for (auto &each_ledger : unresolved_block.contract_ledger_list) {
     nlohmann::json json;
     json["var_name"] = each_ledger.second.var_name;
-    json["var_val"] = each_ledger.second.var_val;
+    json["var_value"] = each_ledger.second.var_value;
     json["var_type"] = to_string(each_ledger.second.var_type);
     json["cid"] = each_ledger.second.cid;
     json["up_time"] = to_string(each_ledger.second.up_time);

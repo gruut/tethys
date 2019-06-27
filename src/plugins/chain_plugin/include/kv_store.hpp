@@ -40,8 +40,11 @@ public:
   bool saveWorld(world_type &world_info);
   bool saveChain(local_chain_type &chain_info);
   bool saveSelfInfo(self_info_type &self_info);
+  const world_type loadCurrentWorld();
+  const local_chain_type loadCurrentChain();
+  const string queryBlockGet(const nlohmann::json &where_json);
 
-  string getValueByKey(string what, const string &base_keys);
+  string getValueByKey(const string &what, const string &key);
   void destroyDB();
 
   // unresolved block pool backup / restore
@@ -69,8 +72,7 @@ private:
   void commitBatchAll();
   void rollbackBatchAll();
   void clearBatchAll();
-
-  string parseCertContent(std::vector<string> &cert);
+  bool to_bool(const string &string_bool);
 };
 } // namespace tethys
 #endif
