@@ -3862,7 +3862,7 @@ public:
   CONSTCD11 bool in_conventional_range() const NOEXCEPT
   {
     using namespace std;
-    return !neg_ && h_ < days{1} && m_ < chrono::hours{1} &&
+    return !neg_ && h_ < days{1} && m_ < std::chrono::hours{1} &&
         s_.in_conventional_range();
   }
 
@@ -3877,10 +3877,10 @@ private:
     using namespace std;
     if (tod.is_negative())
       os << '-';
-    if (tod.h_ < chrono::hours{10})
+    if (tod.h_ < std::chrono::hours{10})
       os << '0';
     os << tod.h_.count() << ':';
-    if (tod.m_ < chrono::minutes{10})
+    if (tod.m_ < std::chrono::minutes{10})
       os << '0';
     os << tod.m_.count() << ':' << tod.s_;
     return os;

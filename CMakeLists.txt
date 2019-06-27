@@ -31,6 +31,7 @@ target_link_libraries(tethys
         net_plugin
         block_producer_plugin
         chain_plugin
+        contract
         )
 
 target_include_directories(tethys
