@@ -1,4 +1,5 @@
 #include "include/chain_plugin.hpp"
+#include "../../contract/include/engine.hpp"
 
 namespace tethys {
 
@@ -130,6 +131,7 @@ class ChainPluginImpl {
 public:
   unique_ptr<Chain> chain;
   unique_ptr<TransactionPool> transaction_pool;
+  unique_ptr<tsce::ContractEngine> contract_engine;
 
   string dbms;
   string table_name;
@@ -149,6 +151,9 @@ public:
   void initialize() {
     chain = make_unique<Chain>(dbms, table_name, db_user_id, db_password);
     transaction_pool = make_unique<TransactionPool>();
+    contract_engine = make_unique<tsce::ContractEngine>();
+
+    contract_engine->attachReadInterface([this](const nlohmann::json &req_query) { return this->processRequestQuery(req_query); });
 
     auto world_id = chain->getValueByKey(DataType::WORLD, "latest_world_id");
     if (!world_id.empty()) {
