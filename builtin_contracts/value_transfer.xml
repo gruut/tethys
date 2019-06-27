@@ -1,0 +1,25 @@
+<contract>
+    <head>
+        <cid>VALUE-TRANSFER::{{WORLD.CREATOR}}::{{CHAIN.NAME}}::{{WORLD.NAME}}</cid>
+        <after>{{CHAIN.AFTER}}</after>
+        <desc>Official standardcontract for transfering v-type variable</desc>
+    </head>
+    <body>
+        <input>
+            <option name="amount" type="PINT" desc="amount of v-type variable for transfer" />
+            <option name="unit" type="TINYTEXT" desc="unit type of v-type variable for transfer" />
+            <option name="pid" type="BASE64" desc="id of v-type variable for transfer" />
+            <option name="tag" type="XML" desc="condition for use of this v-type value" />
+        </input>
+        <set type="v.transfer" from="user">
+            <option name="to" value="$receiver" />
+            <option name="amount" value="$0.amount" />
+            <option name="unit" value="$0.unit" />
+            <option name="pid" value="$0.pid" />
+            <option name="tag" value="$0.condition" />
+        </set>
+    </body>
+    <fee>
+        <pay from="user" value="$fee" />
+    </fee>
+</contract>

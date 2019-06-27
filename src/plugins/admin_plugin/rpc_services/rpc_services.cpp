@@ -449,8 +449,11 @@ void LoadChainService::proceed() {
       delegator.delegate();
 
       res.set_success(true);
-      logger::INFO("[LOAD CHAIN] Success to load chain");
+
       app().completeLoadChain();
+      chain.initBuiltInContracts();
+
+      logger::INFO("[LOAD CHAIN] Success to load chain");
     }
   } catch (...) {
     const string info = "Cannot load the local chain.";
