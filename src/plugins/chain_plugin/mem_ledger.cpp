@@ -51,7 +51,7 @@ StateNode::StateNode(const contract_ledger_type &contract_ledger) {
 void StateNode::makeValue(const user_ledger_type &user_ledger) {
   BytesBuilder state_value_builder;
   state_value_builder.append(user_ledger.pid);
-  state_value_builder.append(user_ledger.var_val);
+  state_value_builder.append(user_ledger.var_value);
 
   string key = state_value_builder.getString();
   makeValue(key);
@@ -60,7 +60,7 @@ void StateNode::makeValue(const user_ledger_type &user_ledger) {
 void StateNode::makeValue(const contract_ledger_type &contract_ledger) {
   BytesBuilder state_value_builder;
   state_value_builder.append(contract_ledger.pid);
-  state_value_builder.append(contract_ledger.var_val);
+  state_value_builder.append(contract_ledger.var_value);
 
   string key = state_value_builder.getString();
   makeValue(key);

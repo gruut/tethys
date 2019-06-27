@@ -1,4 +1,5 @@
 #include "include/kv_store.hpp"
+#include <include/application.hpp>
 
 namespace tethys {
 
@@ -29,15 +30,6 @@ KvController::~KvController() {
   }
 }
 
-bool KvController::errorOnCritical(const leveldb::Status &status) {
-  if (status.ok())
-    return true;
-  else {
-    logger::ERROR("KV: FATAL ERROR on LevelDB {}", status.ToString());
-    return false;
-  }
-}
-
 bool KvController::saveBuiltInContracts(map<string, string> &contracts) {
   for (auto &contract : contracts) {
     addBatch(DataType::BUILT_IN_CONTRACT, contract.first, contract.second);
@@ -65,35 +57,34 @@ bool KvController::saveLatestChainId(const alphanumeric_type &chain_id) {
 }
 
 bool KvController::saveWorld(world_type &world_info) {
-  // TODO: 리팩토링 필요
   alphanumeric_type tmp_wid = world_info.world_id;
   addBatch(DataType::WORLD, tmp_wid + "_wId", tmp_wid);
 
-  string tmp_ctime = world_info.world_created_time;
+  string tmp_ctime = world_info.created_time;
   addBatch(DataType::WORLD, tmp_wid + "_ctime", tmp_ctime);
 
   base58_type tmp_cid = world_info.creator_id;
   addBatch(DataType::WORLD, tmp_wid + "_cid", tmp_cid);
 
-  string tmp_cpk = parseCertContent(world_info.creator_cert);
+  string tmp_cpk = world_info.creator_pk;
   addBatch(DataType::WORLD, tmp_wid + "_cpk", tmp_cpk);
 
   base58_type tmp_aid = world_info.authority_id;
   addBatch(DataType::WORLD, tmp_wid + "_aid", tmp_aid);
 
-  string tmp_apk = parseCertContent(world_info.authority_cert);
+  string tmp_apk = world_info.authority_pk;
   addBatch(DataType::WORLD, tmp_wid + "_apk", tmp_apk);
 
   string tmp_kcn = world_info.keyc_name;
   addBatch(DataType::WORLD, tmp_wid + "_kcn", tmp_kcn);
 
-  string tmp_kcia = world_info.initial_amount;
+  string tmp_kcia = world_info.keyc_initial_amount;
   addBatch(DataType::WORLD, tmp_wid + "_kcia", tmp_kcia);
 
   bool tmp_amine = world_info.allow_mining;
   addBatch(DataType::WORLD, tmp_wid + "_amine", to_string(tmp_amine));
 
-  string tmp_mrule = world_info.rule;
+  string tmp_mrule = world_info.mining_rule;
   addBatch(DataType::WORLD, tmp_wid + "_mrule", tmp_mrule);
 
   bool tmp_aauser = world_info.allow_anonymous_user;
@@ -108,18 +99,16 @@ bool KvController::saveWorld(world_type &world_info) {
 
 bool KvController::saveChain(local_chain_type &chain_info) {
   // TODO: World는 unmarshalGenesisState가 다 해주지만, chain은 추가로 더 선언될 수 있으므로 파싱 추가구현 필요.
-  // TODO: 리팩토링 필요
-
   alphanumeric_type tmp_chid = chain_info.chain_id;
   addBatch(DataType::CHAIN, tmp_chid + "_chid", tmp_chid);
 
-  string tmp_ctime = chain_info.chain_created_time;
+  string tmp_ctime = chain_info.created_time;
   addBatch(DataType::CHAIN, tmp_chid + "_ctime", tmp_ctime);
 
   base58_type tmp_crid = chain_info.creator_id;
   addBatch(DataType::CHAIN, tmp_chid + "_crid", tmp_crid);
 
-  string tmp_cpk = parseCertContent(chain_info.creator_cert);
+  string tmp_cpk = chain_info.creator_pk;
   addBatch(DataType::CHAIN, tmp_chid + "_cpk", tmp_cpk);
 
   bool tmp_acc = chain_info.allow_custom_contract;
@@ -154,30 +143,52 @@ bool KvController::saveSelfInfo(self_info_type &self_info) {
   return true;
 }
 
-bool KvController::addBatch(string what, const string &key, const string &value) {
-  write_batch_map[what].Put(key, value);
-  return true;
+const world_type KvController::loadCurrentWorld() {
+  world_type return_world;
+  alphanumeric_type current_world_id = appbase::app().getWorldId();
+
+  return_world.world_id = getValueByKey(DataType::WORLD, current_world_id + "_wId");
+  return_world.created_time = getValueByKey(DataType::WORLD, current_world_id + "_ctime");
+  return_world.keyc_name = getValueByKey(DataType::WORLD, current_world_id + "_kcn");
+  return_world.keyc_initial_amount = getValueByKey(DataType::WORLD, current_world_id + "_kcia");
+  return_world.allow_mining = to_bool(getValueByKey(DataType::WORLD, current_world_id + "_amine"));
+  return_world.mining_rule = getValueByKey(DataType::WORLD, current_world_id + "_mrule");
+  return_world.allow_anonymous_user = to_bool(getValueByKey(DataType::WORLD, current_world_id + "_tmp_aauser"));
+  return_world.join_fee = getValueByKey(DataType::WORLD, current_world_id + "_tmp_jfee");
+  return_world.authority_id = getValueByKey(DataType::WORLD, current_world_id + "_aid");
+  return_world.authority_pk = getValueByKey(DataType::WORLD, current_world_id + "_apk");
+  return_world.creator_id = getValueByKey(DataType::WORLD, current_world_id + "_cid");
+  return_world.creator_pk = getValueByKey(DataType::WORLD, current_world_id + "_cpk");
+
+  return return_world;
 }
 
-void KvController::commitBatchAll() {
-  for (auto &[name, db_ptr] : db_map) {
-    db_ptr->Write(m_write_options, &write_batch_map[name]);
-  }
+const local_chain_type KvController::loadCurrentChain() {
+  local_chain_type return_chain;
+  alphanumeric_type current_chain_id = appbase::app().getChainId();
 
-  clearBatchAll();
+  return_chain.chain_id = getValueByKey(DataType::CHAIN, current_chain_id + "_chid");
+  return_chain.created_time = getValueByKey(DataType::CHAIN, current_chain_id + "_ctime");
+  return_chain.creator_id = getValueByKey(DataType::CHAIN, current_chain_id + "_crid");
+  return_chain.creator_pk = getValueByKey(DataType::CHAIN, current_chain_id + "_cpk");
+  return_chain.allow_custom_contract = to_bool(getValueByKey(DataType::CHAIN, current_chain_id + "_acc"));
+  return_chain.allow_oracle = to_bool(getValueByKey(DataType::CHAIN, current_chain_id + "_ao"));
+  return_chain.allow_tag = to_bool(getValueByKey(DataType::CHAIN, current_chain_id + "_atag"));
+  return_chain.allow_heavy_contract = to_bool(getValueByKey(DataType::CHAIN, current_chain_id + "_ahc"));
+
+  return return_chain;
 }
 
-void KvController::rollbackBatchAll() {
-  clearBatchAll();
+const string KvController::queryBlockGet(const nlohmann::json &where_json) {
+  // TODO: 추후 RDB로 구현
+  base58_type block_id = json::get<string>(where_json, "block_id").value();
+  block_height_type block_height = static_cast<short>(stoi(json::get<string>(where_json, "block_height").value()));
+  base58_type txid = json::get<string>(where_json, "txid").value();
+
+  return getValueByKey(DataType::BACKUP_BLOCK, block_id);
 }
 
-void KvController::clearBatchAll() {
-  for (auto &[_, write_batch] : write_batch_map) {
-    write_batch.Clear();
-  }
-}
-
-string KvController::getValueByKey(string what, const string &key) {
+string KvController::getValueByKey(const string &what, const string &key) {
   string value;
   leveldb::Status status;
 
@@ -273,7 +284,7 @@ string KvController::loadBackupContracts(const std::string &key) {
 
 void KvController::delBackup(const base58_type &block_id) {
   if (!block_id.empty()) {
-    write_batch_map[DataType::BACKUP_BLOCK].Delete(block_id);
+    // write_batch_map[DataType::BACKUP_BLOCK].Delete(block_id);   // request query의 block.get에서 msg_block을 불러올 때 임시로 사용
     write_batch_map[DataType::BACKUP_USER_LEDGER].Delete(block_id);
     write_batch_map[DataType::BACKUP_CONTRACT_LEDGER].Delete(block_id);
     write_batch_map[DataType::BACKUP_USER_ATTRIBUTE].Delete(block_id);
@@ -284,13 +295,40 @@ void KvController::delBackup(const base58_type &block_id) {
   }
 }
 
-string KvController::parseCertContent(std::vector<string> &cert) {
-  string cert_content = "";
-  for (int i = 0; i < cert.size(); ++i) {
-    cert_content += cert[i];
-    cert_content += "\n";
+bool KvController::errorOnCritical(const leveldb::Status &status) {
+  if (status.ok())
+    return true;
+  else {
+    logger::ERROR("KV: FATAL ERROR on LevelDB {}", status.ToString());
+    return false;
   }
-  return cert_content;
+}
+
+bool KvController::addBatch(string what, const string &key, const string &value) {
+  write_batch_map[what].Put(key, value);
+  return true;
+}
+
+void KvController::commitBatchAll() {
+  for (auto &[name, db_ptr] : db_map) {
+    db_ptr->Write(m_write_options, &write_batch_map[name]);
+  }
+
+  clearBatchAll();
+}
+
+void KvController::rollbackBatchAll() {
+  clearBatchAll();
+}
+
+void KvController::clearBatchAll() {
+  for (auto &[_, write_batch] : write_batch_map) {
+    write_batch.Clear();
+  }
+}
+
+bool KvController::to_bool(const string &string_bool) {
+  return ((string_bool != "0") && (string_bool != "false"));
 }
 
 }

@@ -65,7 +65,7 @@ using local_chain_type = struct LocalChainState {
   // chain
   alphanumeric_type chain_id;
   alphanumeric_type world_id;
-  string chain_created_time;
+  string created_time;
 
   // policy
   bool allow_custom_contract;
@@ -75,7 +75,7 @@ using local_chain_type = struct LocalChainState {
 
   // creator
   base58_type creator_id;
-  vector<string> creator_cert;
+  string creator_pk;
   string creator_sig;
 
   vector<string> tracker_addresses;
@@ -84,15 +84,15 @@ using local_chain_type = struct LocalChainState {
 using world_type = struct WorldState {
   // world
   alphanumeric_type world_id;
-  string world_created_time;
+  string created_time;
 
   // key_currency
   string keyc_name;
-  string initial_amount;
+  string keyc_initial_amount;
 
   // mining_policy
   bool allow_mining;
-  string rule;
+  string mining_rule;
 
   // user_policy
   bool allow_anonymous_user;
@@ -100,11 +100,11 @@ using world_type = struct WorldState {
 
   // authority
   string authority_id;
-  std::vector<string> authority_cert;
+  string authority_pk;
 
   // creator
   base58_type creator_id;
-  std::vector<string> creator_cert;
+  string creator_pk;
   string creator_sig;
 
   string eden_sig;
@@ -162,7 +162,7 @@ using self_info_type = struct SelfInfo {
 
 using user_ledger_type = struct UserLedger {
   string var_name;
-  string var_val;
+  string var_value;
   int var_type;
   base58_type uid;
   timestamp_t up_time;
@@ -186,7 +186,7 @@ using user_ledger_type = struct UserLedger {
 
 using contract_ledger_type = struct ContractLedger {
   string var_name;
-  string var_val;
+  string var_value;
   int var_type;
   contract_id_type cid;
   timestamp_t up_time;

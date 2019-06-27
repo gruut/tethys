@@ -236,7 +236,6 @@ public:
     // TODO: state tree lock 필요. head가 달라지면서 state tree가 반영되면 정확한 값이 아니게 될 수 있다
     base58_type block_id = json::get<string>(result["block"], "id").value();
     block_height_type block_height = static_cast<block_height_type>(stoi(json::get<string>(result["block"], "height").value()));
-    // TODO: updated_UR_block로 갱신한 값이 unresolved block pool에 직접 반영되는 부분이 없음. 수정 필요
     UnresolvedBlock updated_UR_block = chain->getUnresolvedBlock(block_id, block_height);
 
     if (updated_UR_block.block.getBlockId() != chain->getCurrentHeadId()) {
@@ -301,6 +300,39 @@ public:
     chain->setUnresolvedBlock(updated_UR_block);
     chain->updateStateTree(updated_UR_block);
     chain->saveBackupResult(updated_UR_block);
+  }
+
+  nlohmann::json processRequestQuery(const nlohmann::json &request) {
+    string type = json::get<string>(request, "type").value();
+    nlohmann::json where_json = request["where"];
+    if (type == "world.get") {
+      return chain->queryWorldGet();
+    } else if (type == "chain.get") {
+      return chain->queryChainGet();
+    } else if (type == "contract.scan") {
+      return chain->queryContractScan(where_json);
+    } else if (type == "contract.get") {
+      return chain->queryContractGet(where_json);
+    } else if (type == "user.cert.get") {
+      return chain->queryCertGet(where_json);
+    } else if (type == "user.info.get") {
+      return chain->queryUserInfoGet(where_json);
+    } else if (type == "user.scope.get") {
+      return chain->queryUserScopeGet(where_json);
+    } else if (type == "contract.scope.get") {
+      return chain->queryContractScopeGet(where_json);
+    } else if (type == "block.get") {
+      return chain->queryBlockGet(where_json);
+    } else if (type == "tx.get") {
+      return chain->queryTxGet(where_json);
+    } else if (type == "block.scan") {
+      return chain->queryBlockScan(where_json);
+    } else if (type == "tx.scan") {
+      return chain->queryTxScan(where_json);
+    } else {
+      logger::ERROR("URBP, Something error in query process");
+      return request;
+    }
   }
 
   vector<Transaction> getTransactions() {
