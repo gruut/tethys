@@ -41,6 +41,7 @@ namespace config {
         static vector<string> keyValueDBNames() {
           vector<string> names;
 
+          names.emplace_back(DataType::BUILT_IN_CONTRACT);
           names.emplace_back(DataType::WORLD);
           names.emplace_back(DataType::CHAIN);
           names.emplace_back(DataType::BACKUP_BLOCK);
