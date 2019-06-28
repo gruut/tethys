@@ -116,9 +116,14 @@ using proof_type = struct ProofType {
 };
 
 using block_push_result_type = struct BlockPushResultType {
+  base58_type block_id;
+  block_height_type block_height;
+  int deq_idx;
+  int vec_idx;
   bool linked;
   bool duplicated;
-  block_height_type height;
+
+  BlockPushResultType() = default;
 };
 
 using block_info_type = struct BlockInfoType {

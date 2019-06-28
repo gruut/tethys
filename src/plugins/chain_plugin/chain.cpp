@@ -364,7 +364,8 @@ void Chain::restorePool() {
     restored_block.initialize(block_msg);
     block_push_result_type push_result = unresolved_block_pool->pushBlock(restored_block);
 
-    UnresolvedBlock restored_unresolved_block = unresolved_block_pool->getUnresolvedBlock(restored_block.getBlockId(), push_result.height);
+    UnresolvedBlock restored_unresolved_block =
+        unresolved_block_pool->getUnresolvedBlock(restored_block.getBlockId(), push_result.block_height);
 
     nlohmann::json user_ledger_list_json = nlohmann::json::from_cbor(kv_controller->loadBackupUserLedgers(block_id));
     nlohmann::json contract_ledger_list_json = nlohmann::json::from_cbor(kv_controller->loadBackupContractLedgers(block_id));
@@ -1267,24 +1268,18 @@ int Chain::getVarType(const string &var_owner, const string &var_name, const blo
 }
 
 bool Chain::checkUniqueVarName(const string &var_owner, const string &var_name, const block_height_type height, const int vec_idx) {
-  int result = getVarType(var_owner, var_name, height, vec_idx);
-  if (result == (int)UniqueCheck::NOT_UNIQUE)
-    return false;
-  else
-    return true;
+  return (getVarType(var_owner, var_name, height, vec_idx) != (int)UniqueCheck::NOT_UNIQUE);
 }
 
 block_push_result_type Chain::pushBlock(Block &new_block) {
   block_push_result_type ret_val = unresolved_block_pool->pushBlock(new_block);
 
-  // TODO: HEAD 설정에 대한 로직 추가 필요. HEAD는 최대한 유지.
-  //  새로 들어온 block이 현재 가장 긴 체인보다 더 긴 다른 fork라면 그쪽으로 HEAD를 옮긴다.
-
-  if (m_longest_chain_info.block_height < ret_val.height) {
-    // TODO: 어느 chain인지 판단하여 가장 긴 체인의 길이를 갱신하는 로직 추가
-    m_longest_chain_info.block_height = ret_val.height;
+  if (m_longest_chain_info.block_height < ret_val.block_height) {
+    m_longest_chain_info.block_id = ret_val.block_id;
+    m_longest_chain_info.block_height = ret_val.block_height;
+    m_longest_chain_info.deq_idx = ret_val.deq_idx;
+    m_longest_chain_info.vec_idx = ret_val.vec_idx;
   }
-
   return ret_val;
 }
 

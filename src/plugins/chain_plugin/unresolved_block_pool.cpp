@@ -70,7 +70,7 @@ bool UnresolvedBlockPool::prepareDeque(block_height_type t_height) {
 block_push_result_type UnresolvedBlockPool::pushBlock(Block &new_block) {
   logger::INFO("Unresolved block pool: pushBlock called");
   block_push_result_type ret_val;
-  ret_val.height = 0;
+  ret_val.block_height = 0;
   ret_val.linked = false;
   ret_val.duplicated = false;
 
@@ -84,7 +84,7 @@ block_push_result_type UnresolvedBlockPool::pushBlock(Block &new_block) {
 
   for (auto &each_block : m_block_pool[deq_idx]) {
     if (each_block.block == new_block) {
-      ret_val.height = block_height;
+      ret_val.block_height = block_height;
       ret_val.duplicated = true;
       return ret_val;
     }
@@ -113,7 +113,10 @@ block_push_result_type UnresolvedBlockPool::pushBlock(Block &new_block) {
   int vec_idx = m_block_pool[deq_idx].size();
 
   m_block_pool[deq_idx].emplace_back(new_block, vec_idx, prev_vec_idx); // pool에 블록 추가
-  ret_val.height = block_height;
+  ret_val.block_id = new_block.getBlockId();
+  ret_val.block_height = block_height;
+  ret_val.deq_idx = deq_idx;
+  ret_val.vec_idx = vec_idx;
 
   if (deq_idx + 1 < m_block_pool.size()) { // if there is next bin
     for (auto &each_block : m_block_pool[deq_idx + 1]) {
@@ -286,19 +289,25 @@ Block &UnresolvedBlockPool::getLowestUnprocessedBlock(const block_pool_info_type
   int current_deq_idx = longest_chain_info.deq_idx;
   int current_vec_idx = longest_chain_info.vec_idx;
 
-  while (current_deq_idx >= 0) {
+  while (current_deq_idx > 0) {
     int prev_vec_idx = m_block_pool[current_deq_idx][current_vec_idx].prev_vec_idx;
 
     bool current_processed = m_block_pool[current_deq_idx][current_vec_idx].is_processed;
     bool prev_processed = m_block_pool[current_deq_idx - 1][prev_vec_idx].is_processed;
 
-    if ((current_processed == false) && (prev_processed == true)) {
+    if (!current_processed && prev_processed) {
       return m_block_pool[current_deq_idx][current_vec_idx].block;
     }
 
     current_vec_idx = prev_vec_idx;
     --current_deq_idx;
   }
+
+  if (!m_block_pool[0][0].is_processed) {
+    logger::INFO("No one processed?");
+    return m_block_pool[0][0].block;
+  } else
+    logger::ERROR("Something error in `getLowestUnprocessedBlock`");
 }
 
 nlohmann::json UnresolvedBlockPool::getPoolBlockIds() {

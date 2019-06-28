@@ -213,7 +213,7 @@ public:
     }
 
     block_push_result_type push_result = chain->pushBlock(input_block);
-    if (push_result.height == 0) {
+    if (push_result.block_height == 0) {
       logger::ERROR("Block input fail: height 0");
       return;
     }
@@ -379,7 +379,7 @@ public:
         blocks[i].initialize(input_block_json[i]);
 
         block_push_result_type push_result = chain->pushBlock(blocks[i]);
-        if (push_result.height == 0) {
+        if (push_result.block_height == 0) {
           logger::ERROR("Block input fail: height 0");
           return;
         }
