@@ -129,7 +129,7 @@ void Chain::loadBuiltInContracts(const string &contracts_dir_path) {
 
   map<string, string> contracts;
 
-  for (auto i = fs::directory_iterator(dir_path); i != fs::directory_iterator(); i++) {
+  for (auto i = fs::directory_iterator(dir_path); i != fs::directory_iterator(); ++i) {
     if (fs::is_directory(i->path()))
       continue;
 
@@ -478,7 +478,7 @@ const nlohmann::json Chain::queryContractScan(const nlohmann::json &where_json) 
   result_json["name"].push_back("cid");
 
   result_json["data"] = nlohmann::json::array();
-  for (int i = 0; i < found_contracts.size(); i++) {
+  for (int i = 0; i < found_contracts.size(); ++i) {
     result_json["data"][i].push_back(found_contracts[i]);
   }
 
@@ -509,7 +509,7 @@ const nlohmann::json Chain::queryCertGet(const nlohmann::json &where_json) {
   result_json["name"].push_back("x509");
 
   result_json["data"] = nlohmann::json::array();
-  for (int i = 0; i < found_certs.size(); i++) {
+  for (int i = 0; i < found_certs.size(); ++i) {
     result_json["data"][i].push_back(found_certs[i].sn);
     result_json["data"][i].push_back(found_certs[i].nvbefore);
     result_json["data"][i].push_back(found_certs[i].nvafter);
@@ -556,7 +556,7 @@ const nlohmann::json Chain::queryUserScopeGet(const nlohmann::json &where_json) 
   result_json["name"].push_back("pid");
 
   result_json["data"] = nlohmann::json::array();
-  for (int i = 0; i < found_user_ledgers.size(); i++) {
+  for (int i = 0; i < found_user_ledgers.size(); ++i) {
     result_json["data"][i].push_back(found_user_ledgers[i].var_name);
     result_json["data"][i].push_back(found_user_ledgers[i].var_value);
     result_json["data"][i].push_back(found_user_ledgers[i].var_type);
@@ -582,7 +582,7 @@ const nlohmann::json Chain::queryContractScopeGet(const nlohmann::json &where_js
   result_json["name"].push_back("pid");
 
   result_json["data"] = nlohmann::json::array();
-  for (int i = 0; i < found_contract_ledgers.size(); i++) {
+  for (int i = 0; i < found_contract_ledgers.size(); ++i) {
     result_json["data"][i].push_back(found_contract_ledgers[i].var_name);
     result_json["data"][i].push_back(found_contract_ledgers[i].var_value);
     result_json["data"][i].push_back(found_contract_ledgers[i].var_type);
@@ -628,7 +628,7 @@ const nlohmann::json Chain::queryBlockScan(const nlohmann::json &where_json) {
   result_json["name"].push_back("block_id");
 
   result_json["data"] = nlohmann::json::array();
-  for (int i = 0; i < found_block_ids.size(); i++) {
+  for (int i = 0; i < found_block_ids.size(); ++i) {
     result_json["data"][i].push_back(found_block_ids[i]);
   }
 
@@ -642,7 +642,7 @@ const nlohmann::json Chain::queryTxScan(const nlohmann::json &where_json) {
   result_json["name"].push_back("tx_id");
 
   result_json["data"] = nlohmann::json::array();
-  for (int i = 0; i < found_tx_ids.size(); i++) {
+  for (int i = 0; i < found_tx_ids.size(); ++i) {
     result_json["data"][i].push_back(found_tx_ids[i]);
   }
 
@@ -1274,8 +1274,18 @@ bool Chain::checkUniqueVarName(const string &var_owner, const string &var_name, 
     return true;
 }
 
-block_push_result_type Chain::pushBlock(Block &block) {
-  return unresolved_block_pool->pushBlock(block);
+block_push_result_type Chain::pushBlock(Block &new_block) {
+  block_push_result_type ret_val = unresolved_block_pool->pushBlock(new_block);
+
+  // TODO: HEAD 설정에 대한 로직 추가 필요. HEAD는 최대한 유지.
+  //  새로 들어온 block이 현재 가장 긴 체인보다 더 긴 다른 fork라면 그쪽으로 HEAD를 옮긴다.
+
+  if (m_longest_chain_info.block_height < ret_val.height) {
+    // TODO: 어느 chain인지 판단하여 가장 긴 체인의 길이를 갱신하는 로직 추가
+    m_longest_chain_info.block_height = ret_val.height;
+  }
+
+  return ret_val;
 }
 
 UnresolvedBlock Chain::getUnresolvedBlock(const base58_type &block_id, const block_height_type block_height) {
@@ -1286,9 +1296,9 @@ void Chain::setUnresolvedBlock(const UnresolvedBlock &unresolved_block) {
   unresolved_block_pool->setUnresolvedBlock(unresolved_block);
 }
 
-bool Chain::resolveBlock(Block &block, UnresolvedBlock &resolved_result) {
+bool Chain::resolveBlock(Block &new_block, UnresolvedBlock &resolved_result) {
   vector<base58_type> dropped_block_ids;
-  if (!unresolved_block_pool->resolveBlock(block, resolved_result, dropped_block_ids))
+  if (!unresolved_block_pool->resolveBlock(new_block, resolved_result, dropped_block_ids))
     return false;
 
   for (auto &each_block_id : dropped_block_ids) {
@@ -1361,6 +1371,11 @@ search_result_type Chain::findContractLedgerFromPoint(const string &pid, block_h
       return search_result;
     }
   }
+}
+
+Block &Chain::getLowestUnprocessedBlock() {
+  // 가장 긴 chain에서의 처리되지 않은 블록 중 가장 낮은 height block을 return
+  return unresolved_block_pool->getLowestUnprocessedBlock(m_longest_chain_info);
 }
 
 bool Chain::isUserId(const string &id) {
@@ -1436,9 +1451,9 @@ contract_ledger_type Chain::findContractLedgerFromHead(UnresolvedBlock &UR_block
 void Chain::moveHead(const base58_type &target_block_id, const block_height_type target_block_height) {
   if (!target_block_id.empty()) {
     // latest_confirmed의 height가 10이었고, 현재 head의 height가 11이라면 m_block_pool[0]에 있어야 한다
-    int current_deq_idx = m_head_deq_idx;
-    int current_vec_idx = m_head_vec_idx;
-    int current_height = static_cast<int>(m_head_height);
+    int current_deq_idx = m_head_info.deq_idx;
+    int current_vec_idx = m_head_info.vec_idx;
+    int current_height = static_cast<int>(m_head_info.block_height);
 
     while (current_height > target_block_height) {
       current_vec_idx = unresolved_block_pool->getUnresolvedBlock(current_deq_idx, current_vec_idx).prev_vec_idx;
@@ -1446,9 +1461,9 @@ void Chain::moveHead(const base58_type &target_block_id, const block_height_type
       --current_height;
     }
 
-    vector<int> line = unresolved_block_pool->getLine(target_block_id, target_block_height);
+    vector<int> target_path = unresolved_block_pool->getPath(target_block_id, target_block_height);
 
-    while (current_vec_idx != line[current_deq_idx]) {
+    while (current_vec_idx != target_path[current_deq_idx]) {
       current_vec_idx = unresolved_block_pool->getUnresolvedBlock(current_deq_idx, current_vec_idx).prev_vec_idx;
       --current_deq_idx;
       --current_height;
@@ -1456,41 +1471,41 @@ void Chain::moveHead(const base58_type &target_block_id, const block_height_type
 
     int common_deq_idx = current_deq_idx;
     int common_vec_idx = current_vec_idx;
-    int common_height = static_cast<int>(current_height);
+    int common_height = current_height;
     int front_count = static_cast<int>(target_block_height) - common_height;
-    int back_count = static_cast<int>(m_head_height) - common_height;
+    int back_count = static_cast<int>(m_head_info.block_height) - common_height;
 
     if (common_deq_idx < 0) {
       logger::ERROR("URBP, Something error in move_head() - Cannot find pool element");
       return;
     }
 
-    current_height = static_cast<int>(m_head_height);
-    current_deq_idx = m_head_deq_idx;
-    current_vec_idx = m_head_vec_idx;
+    current_height = static_cast<int>(m_head_info.block_height);
+    current_deq_idx = m_head_info.deq_idx;
+    current_vec_idx = m_head_info.vec_idx;
 
-    for (int i = 0; i < back_count; i++) {
+    for (int i = 0; i < back_count; ++i) {
       revertStateTree(unresolved_block_pool->getUnresolvedBlock(current_deq_idx, current_vec_idx));
-
+      // TODO: ledger 이외의 것들도 revert
       current_vec_idx = unresolved_block_pool->getUnresolvedBlock(current_deq_idx, current_vec_idx).prev_vec_idx;
-      current_deq_idx--;
-      current_height--;
+      --current_deq_idx;
+      --current_height;
     }
 
-    for (int i = 0; i < front_count; i++) {
+    for (int i = 0; i < front_count; ++i) {
       updateStateTree(unresolved_block_pool->getUnresolvedBlock(current_deq_idx, current_vec_idx));
-
-      current_vec_idx = line[current_deq_idx];
+      // TODO: ledger 이외의 것들도 update
       ++current_deq_idx;
+      current_vec_idx = target_path[current_deq_idx];
       ++current_height;
     }
 
-    m_head_id = unresolved_block_pool->getUnresolvedBlock(m_head_deq_idx, m_head_vec_idx).block.getBlockId();
-    m_head_height = current_height;
-    m_head_deq_idx = current_deq_idx;
-    m_head_vec_idx = current_vec_idx;
+    m_head_info.deq_idx = current_deq_idx;
+    m_head_info.vec_idx = current_vec_idx;
+    m_head_info.block_height = current_height;
+    m_head_info.block_id = unresolved_block_pool->getUnresolvedBlock(m_head_info.deq_idx, m_head_info.vec_idx).block.getBlockId();
 
-    if (unresolved_block_pool->getUnresolvedBlock(m_head_deq_idx, m_head_vec_idx).block.getHeight() != m_head_height) {
+    if (unresolved_block_pool->getUnresolvedBlock(m_head_info.deq_idx, m_head_info.vec_idx).block.getHeight() != m_head_info.block_height) {
       logger::ERROR("URBP, Something error in move_head() - end part, check height");
       return;
     }
@@ -1499,12 +1514,12 @@ void Chain::moveHead(const base58_type &target_block_id, const block_height_type
   }
 }
 
-base58_type Chain::getCurrentHeadId() {
-  return m_head_id;
+block_pool_info_type Chain::getHeadInfo() {
+  return m_head_info;
 }
 
-block_height_type Chain::getCurrentHeadHeight() {
-  return m_head_height;
+block_pool_info_type Chain::getLongestChainInfo() {
+  return m_longest_chain_info;
 }
 
 bytes Chain::getUserStateRoot() {

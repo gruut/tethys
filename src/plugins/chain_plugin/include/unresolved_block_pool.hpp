@@ -27,6 +27,7 @@ struct UnresolvedBlock {
   std::map<base58_type, user_attribute_type> user_attribute_list;
   std::map<base58_type, user_cert_type> user_cert_list;
   std::map<contract_id_type, contract_type> contract_list;
+  bool is_processed{false};
 
   UnresolvedBlock() = default;
   UnresolvedBlock(Block &block_, int cur_vec_idx_, int prev_vec_idx_)
@@ -60,15 +61,14 @@ public:
                const base64_type &prev_block_id);
 
   bool prepareDeque(block_height_type t_height);
-  block_push_result_type pushBlock(Block &block);
-  bool resolveBlock(Block &block, UnresolvedBlock &resolved_result, vector<base58_type> &dropped_block_id);
+  block_push_result_type pushBlock(Block &new_block);
+  bool resolveBlock(Block &new_block, UnresolvedBlock &resolved_result, vector<base58_type> &dropped_block_id);
 
   UnresolvedBlock getUnresolvedBlock(const base58_type &block_id, const block_height_type block_height);
   UnresolvedBlock getUnresolvedBlock(int pool_deq_idx, int pool_vec_idx);
   void setUnresolvedBlock(const UnresolvedBlock &unresolved_block);
-  vector<int> getLine(const base58_type &block_id, const block_height_type block_height);
-
-  void invalidateCaches();
+  vector<int> getPath(const base58_type &block_id, const block_height_type block_height);
+  Block &getLowestUnprocessedBlock(const block_pool_info_type &longest_chain_info);
 
   nlohmann::json getPoolBlockIds();
   string serializeUserLedgerList(const UnresolvedBlock &unresolved_block);
@@ -83,4 +83,4 @@ private:
 
 } // namespace tethys
 
-#endif // WORKSPACE_UNRESOLVED_BLOCK_POOL_HPP
+#endif // TETHYS_PUBLIC_MERGER_UNRESOLVED_BLOCK_POOL_HPP

@@ -1,5 +1,6 @@
 #include "include/chain_plugin.hpp"
 #include "../../contract/include/engine.hpp"
+#include <boost/asio/steady_timer.hpp>
 
 namespace tethys {
 
@@ -133,6 +134,8 @@ public:
   unique_ptr<TransactionPool> transaction_pool;
   unique_ptr<tsce::ContractEngine> contract_engine;
 
+  unique_ptr<boost::asio::steady_timer> block_check_timer;
+
   string dbms;
   string table_name;
   string db_user_id;
@@ -154,6 +157,7 @@ public:
     contract_engine = make_unique<tsce::ContractEngine>();
 
     contract_engine->attachReadInterface([this](const nlohmann::json &req_query) { return processRequestQuery(req_query); });
+    block_check_timer = make_unique<boost::asio::steady_timer>(app().getIoContext());
 
     auto world_id = chain->getValueByKey(DataType::WORLD, "latest_world_id");
     if (!world_id.empty()) {
@@ -243,7 +247,7 @@ public:
     block_height_type block_height = static_cast<block_height_type>(stoi(json::get<string>(result["block"], "height").value()));
     UnresolvedBlock updated_UR_block = chain->getUnresolvedBlock(block_id, block_height);
 
-    if (updated_UR_block.block.getBlockId() != chain->getCurrentHeadId()) {
+    if (updated_UR_block.block.getBlockId() != chain->getHeadInfo().block_id) {
       chain->moveHead(updated_UR_block.block.getPrevBlockId(), updated_UR_block.block.getHeight() - 1);
     }
 
@@ -305,6 +309,8 @@ public:
     chain->setUnresolvedBlock(updated_UR_block);
     chain->updateStateTree(updated_UR_block);
     chain->saveBackupResult(updated_UR_block);
+
+    chain->moveHead(updated_UR_block.block.getBlockId(), updated_UR_block.block.getHeight());
   }
 
   nlohmann::json processRequestQuery(const nlohmann::json &request) {
@@ -346,6 +352,7 @@ public:
 
   void start() {
     // TODO: msg 관련 요청 감시 (block, ping, request, etc..)
+    monitorBlockStatus();
 
     { // test code start
       // 테스트 시에는 임의로 block_input_test.json의 블록들을 저장하는것부터 시작.
@@ -394,6 +401,30 @@ public:
         }
       }
     } // test code end
+  }
+
+  void monitorBlockStatus() {
+    block_check_timer->expires_from_now(BLOCK_POOL_CHECK_PERIOD);
+    block_check_timer->async_wait([this](boost::system::error_code ec) {
+      if (!ec) {
+        block_pool_info_type longest_chain_info = chain->getLongestChainInfo();
+        block_pool_info_type head_info = chain->getHeadInfo();
+
+        if (longest_chain_info.block_height > head_info.block_height) {
+          Block unprocessed_block = chain->getLowestUnprocessedBlock();
+          std::optional<nlohmann::json> result = contract_engine->procBlock(unprocessed_block);
+          // TODO: result query를 위해 procBlock을 수행하는 동안 block pool을 pending 시키거나 할 필요성 검토
+
+          if (result != std::nullopt) {
+            processTxResult(result.value());
+          }
+        }
+
+        monitorBlockStatus();
+      } else {
+        logger::ERROR("Error from block_check_timer: {}", ec.message());
+      }
+    });
   }
 
   // block verify 코드. chain의 접근권한이 필요함. 정리 필요.
