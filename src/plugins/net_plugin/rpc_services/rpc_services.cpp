@@ -38,6 +38,13 @@ public:
     for (auto &[key, val] : msg_body.items()) {
       if (val.is_array())
         continue;
+      else if (val.is_null()) {
+        if(isNullable(key)) {
+          return true;
+        } else {
+          return false;
+        }
+      }
       else if (val.is_object()) {
         if (key == "where")
           continue;
@@ -63,6 +70,15 @@ private:
       return true;
     return false;
   }
+
+  bool isNullable(const string &key) {
+    if (key == "pk") {
+      return true;
+    }
+
+    return false;
+  }
+
   bool validateEntry(MsgEntryType entry_type, const string &val) {
     switch (entry_type) {
     case MsgEntryType::USER_MODE: {
@@ -164,6 +180,8 @@ private:
       return MsgEntryType::BOOL;
     else if (key == "mode")
       return MsgEntryType::USER_MODE;
+    else if (key == "cid")
+      return MsgEntryType::CONTRACT_ID;
     else
       return MsgEntryType::NONE;
   }
