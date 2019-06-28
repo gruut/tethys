@@ -799,6 +799,7 @@ public:
       validator.validate(json_obj);
       return true;
     } catch (const std::exception &e) {
+      logger::ERROR("[Message Type: {}] message validation error: {}", (uint8_t)msg_type, e.what());
       return false;
     }
   }
