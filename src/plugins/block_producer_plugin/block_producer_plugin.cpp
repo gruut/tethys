@@ -2,6 +2,7 @@
 #include "../../../lib/appbase/include/application.hpp"
 #include "../chain_plugin/include/chain_plugin.hpp"
 #include "include/ssig_pool.hpp"
+#include <algorithm>
 #include <boost/asio/steady_timer.hpp>
 #include <chrono>
 
@@ -25,6 +26,30 @@ public:
 
   void start() {
     scheduleBlockProductionLoop();
+  }
+
+  void pushSupportSig(nlohmann::json &msg_ssig) {
+    auto info = msg_ssig["singer"];
+    auto signer_id = json::get<string>(info, "id").value();
+
+    auto found = find_if(selected_signers.begin(), selected_signers.end(),
+                         [&signer_id](auto &signer_info) { return signer_info.first.user_id == signer_id; });
+
+    if (found == selected_signers.end()) {
+      logger::ERROR("[BP] Unrequested supporter : {}", signer_id);
+      return;
+    }
+
+    auto ssig = json::get<string>(info, "sig").value();
+    auto signer_cert = found->first.pk;
+
+    // TODO : verify support sig using MSG_REQ_SSIG info & ssig
+
+    SupportSigInfo ssig_info;
+    ssig_info.supporter_id = signer_id;
+    ssig_info.sig = ssig;
+
+    ssig_pool->add(ssig_info);
   }
 
 private:
@@ -203,7 +228,7 @@ void BlockProducerPlugin::pluginInitialize(const boost::program_options::variabl
   logger::INFO("BlockProducerPlugin Initialize");
 
   auto &ssig_channel = app().getChannel<incoming::channels::ssig>();
-  impl->ssig_channel_subscription = ssig_channel.subscribe([this](auto data) { /*TODO: push ssig into ssig pool */ });
+  impl->ssig_channel_subscription = ssig_channel.subscribe([this](auto data) { impl->pushSupportSig(data); });
 
   impl->initialize();
 }
