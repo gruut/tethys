@@ -1,6 +1,7 @@
 #include "include/block_producer_plugin.hpp"
 #include "../../../lib/appbase/include/application.hpp"
 #include "../chain_plugin/include/chain_plugin.hpp"
+#include "include/ssig_pool.hpp"
 #include <boost/asio/steady_timer.hpp>
 #include <chrono>
 
@@ -15,8 +16,11 @@ constexpr int SIGNERS_SIZE = 100;
 
 class BlockProducerPluginImpl {
 public:
+  incoming::channels::ssig::channel_type::Handle ssig_channel_subscription;
+
   void initialize() {
     timer = make_unique<boost::asio::steady_timer>(app().getIoContext());
+    ssig_pool = make_unique<SupportSigPool>();
   }
 
   void start() {
@@ -60,7 +64,7 @@ private:
   }
 
   vector<Block> getPreviousBlocks() {
-    auto& chain = dynamic_cast<ChainPlugin*>(app().getPlugin("ChainPlugin"))->chain();
+    auto &chain = dynamic_cast<ChainPlugin *>(app().getPlugin("ChainPlugin"))->chain();
 
     auto latestHeight = chain.getLatestResolvedHeight();
     int from = latestHeight - PRODUCERS_COUNT + 1;
@@ -68,9 +72,7 @@ private:
       from = 1;
 
     vector<Block> blocks = chain.getBlocksByHeight(from, latestHeight);
-    sort(blocks.begin(), blocks.end(), [](auto &left, auto &right) {
-        return left.getHeight() > right.getHeight();
-    });
+    sort(blocks.begin(), blocks.end(), [](auto &left, auto &right) { return left.getHeight() > right.getHeight(); });
 
     return blocks;
   }
@@ -138,22 +140,18 @@ private:
 
     const int signers_size = SIGNERS_SIZE;
     auto user_pool_manager_ptr = dynamic_cast<NetPlugin *>(app().getPlugin("NetPlugin"))->getUserPoolManager();
-    vector<User> signers = user_pool_manager_ptr->getSigners(signers_size);
 
-    vector<bitset<256>> signer_ids_bits;
-    transform(signers.begin(), signers.end(), back_inserter(signer_ids_bits), [this](User &signer){
-      return idToBitSet(signer.user_id);
-    });
+    selected_signers = user_pool_manager_ptr->getCloseSigners(optimal_signer_id_bits, signers_size);
 
     float dist = 0;
-    for (auto &signer_id_bits : signer_ids_bits) {
+    for (auto &[_, signer_id_bits] : selected_signers) {
       for (auto i = 0; i < 4; ++i) {
         bitset<64> bits;
         bitset<64> partial_optimal_id_bits;
 
         for (auto j = 0; j < 64; ++j) {
           bits[j] = signer_id_bits[i * j];
-          partial_optimal_id_bits[j] =  optimal_signer_id_bits[i * j];
+          partial_optimal_id_bits[j] = optimal_signer_id_bits[i * j];
         }
 
         dist += exponentialDistance((getHammingDistance(bits, partial_optimal_id_bits) % 11));
@@ -189,18 +187,23 @@ private:
     return bitset<256>(bits_str);
   }
 
-  template<typename T>
+  template <typename T>
   int getHammingDistance(T &optimal_id, T &my_id) {
     auto result = optimal_id ^ my_id;
 
     return result.count();
   }
 
+  unique_ptr<SupportSigPool> ssig_pool;
   unique_ptr<boost::asio::steady_timer> timer;
+  vector<pair<User, bitset<256>>> selected_signers;
 };
 
 void BlockProducerPlugin::pluginInitialize(const boost::program_options::variables_map &options) {
   logger::INFO("BlockProducerPlugin Initialize");
+
+  auto &ssig_channel = app().getChannel<incoming::channels::ssig>();
+  impl->ssig_channel_subscription = ssig_channel.subscribe([this](auto data) { /*TODO: push ssig into ssig pool */ });
 
   impl->initialize();
 }

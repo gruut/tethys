@@ -94,23 +94,28 @@ public:
     }
   }
 
-  vector<User> getSigners(unsigned long size) {
+  vector<pair<User, bitset<256>>> getCloseSigners(bitset<256> &optimal_signer_id_bitset, int size) {
     {
       shared_lock<shared_mutex> guard(pool_mutex);
 
       int signers_count = std::min(size, num_of_signers);
 
-      vector<User> signers;
-      signers.reserve(signers_count);
+      vector<pair<User, bitset<256>>> signers;
+
       for (auto &[key, value] : user_pool) {
-        if (signers_count == 0) {
-          break;
-        }
         if (value.mode != UserMode::USER_ONLY) {
-          signers.push_back(value);
-          --signers_count;
+          auto id_bitset = idToBitSet(TypeConverter::decodeBase<58>(value.user_id));
+          signers.push_back(make_pair(value, id_bitset));
         }
       }
+      sort(signers.begin(), signers.end(), [this, &optimal_signer_id_bitset](auto &left, auto &right) -> bool {
+        auto left_dist = optimal_signer_id_bitset ^ left.second;
+        auto right_dist = optimal_signer_id_bitset ^ right.second;
+
+        return left_dist.count() < right_dist.count();
+      });
+
+      signers.resize(size);
 
       return signers;
     }
@@ -125,7 +130,17 @@ public:
   }
 
 private:
-  unsigned long num_of_signers{0};
+  bitset<256> idToBitSet(string_view id) {
+    string bits_str;
+
+    for (int i = 0; i < id.size(); ++i) {
+      bits_str += bitset<8>(id[i]).to_string();
+    }
+
+    return bitset<256>(bits_str);
+  }
+
+  int num_of_signers{0};
   unordered_map<string, User> user_pool;
   shared_mutex pool_mutex;
 };
@@ -231,8 +246,8 @@ public:
     }
   }
 
-  vector<User> getSigners(int size) {
-    return user_pool.getSigners(size);
+  vector<pair<User, bitset<256>>> getCloseSigners(bitset<256> &optimal_signer, int size) {
+    return user_pool.getCloseSigners(optimal_signer, size);
   }
 
   void removeUser(const string &b58_suser_id) {
