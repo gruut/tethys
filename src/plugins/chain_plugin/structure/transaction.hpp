@@ -57,7 +57,7 @@ public:
       setTxInputCbor(msg_tx_json["body"]["input"]);
 
       m_tx_user_id = msg_tx_json["/user/id"_json_pointer];
-      m_tx_user_pk = msg_tx_json["/user/pk"_json_pointer];
+      m_tx_user_pk = extractPubKeyIfUnauthorized(msg_tx_json);
       m_tx_user_sig = msg_tx_json["/user/sig"_json_pointer];
 
       if (!setEndorsers(msg_tx_json["endorser"])) {
@@ -68,8 +68,18 @@ public:
       logger::ERROR("Failed to parse transaction json: {}", e.what());
       return false;
     } catch (std::exception &e) {
-      logger::ERROR("Unexpected error {}", e.what());
+      logger::ERROR("Unexpected error at `Transaction#inputMsgTx`: {}", e.what());
       return false;
+    }
+  }
+
+  string extractPubKeyIfUnauthorized(const nlohmann::json &msg) {
+    auto pk = msg["user"]["pk"];
+
+    if (pk.is_null()) {
+      return "";
+    } else {
+      return pk;
     }
   }
 
