@@ -51,14 +51,14 @@ public:
       m_chain = msg_tx_json["/chain"_json_pointer];
       m_tx_time = static_cast<tethys::timestamp_t>(stoll(json::get<string>(msg_tx_json, "time").value()));
 
-      m_contract_id = msg_tx_json["body/cid"_json_pointer];
-      m_receiver_id = msg_tx_json["body/receiver"_json_pointer];
+      m_contract_id = msg_tx_json["/body/cid"_json_pointer];
+      m_receiver_id = msg_tx_json["/body/receiver"_json_pointer];
       m_fee = stoi(json::get<string>(msg_tx_json["body"], "fee").value());
       setTxInputCbor(msg_tx_json["body"]["input"]);
 
-      m_tx_user_id = msg_tx_json["user/id"_json_pointer];
-      m_tx_user_pk = msg_tx_json["user/pk"_json_pointer];
-      m_tx_user_sig = msg_tx_json["user/sig"_json_pointer];
+      m_tx_user_id = msg_tx_json["/user/id"_json_pointer];
+      m_tx_user_pk = msg_tx_json["/user/pk"_json_pointer];
+      m_tx_user_sig = msg_tx_json["/user/sig"_json_pointer];
 
       if (!setEndorsers(msg_tx_json["endorser"])) {
         return false;
@@ -67,8 +67,8 @@ public:
     } catch (nlohmann::json::parse_error &e) {
       logger::ERROR("Failed to parse transaction json: {}", e.what());
       return false;
-    } catch (...) {
-      logger::ERROR("Unexpected error at `Transaction#inputMsgTxAgg`");
+    } catch (std::exception &e) {
+      logger::ERROR("Unexpected error {}", e.what());
       return false;
     }
   }
