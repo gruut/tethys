@@ -252,7 +252,9 @@ private:
     case MessageType::MSG_SUCCESS:
       return user_pool_manager->handleMsg(msg);
     case MessageType::MSG_SSIG:
-      // TODO : ssig message must be sent to `block producer`
+      app().getChannel<incoming::channels::ssig>().publish(msg.body);
+      return {};
+
     case MessageType::MSG_REQ_TX_CHECK:
     case MessageType::MSG_QUERY:
     case MessageType::MSG_REQ_BONE:
