@@ -334,7 +334,7 @@ public:
 
   void start() {
     // TODO: msg 관련 요청 감시 (block, ping, request, etc..)
-    monitorBlockStatus();
+    monitorUnresolvedBlockProcess();
 
     { // test code start
       // 테스트 시에는 임의로 block_input_test.json의 블록들을 저장하는것부터 시작.
@@ -387,8 +387,8 @@ public:
     } // test code end
   }
 
-  void monitorBlockStatus() {
-    logger::INFO("monitorBlockStatus called");
+  void monitorUnresolvedBlockProcess() {
+    logger::INFO("monitorUnresolvedBlockProcess called");
     block_check_timer->expires_from_now(BLOCK_POOL_CHECK_PERIOD);
     block_check_timer->async_wait([this](boost::system::error_code ec) {
       if (!ec) {
@@ -405,7 +405,7 @@ public:
           }
         }
 
-        monitorBlockStatus();
+        monitorUnresolvedBlockProcess();
       } else {
         logger::ERROR("Error from block_check_timer: {}", ec.message());
       }
