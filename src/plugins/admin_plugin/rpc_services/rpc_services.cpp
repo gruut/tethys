@@ -254,6 +254,10 @@ void LoginService::proceed() {
         LoginCommandDelegator delegator(self_sk, self_cert, pass);
         delegator.delegate();
 
+        app().setPass(pass);
+        app().setSk(self_sk);
+        app().setMyCert(self_cert);
+
         app().completeUserSetup();
         app().completeUserSignedIn();
 
