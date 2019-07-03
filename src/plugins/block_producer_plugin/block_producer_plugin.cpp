@@ -15,6 +15,21 @@ constexpr int PRODUCERS_COUNT = 10;
 
 constexpr int SIGNERS_SIZE = 100;
 
+struct PartialBlock {
+  base58_type id;
+  timestamp_t time;
+  alphanumeric_type world_id;
+  alphanumeric_type chain_id;
+  block_height_type height;
+  base58_type prev_id;
+  base64_type txroot;
+  base64_type usroot;
+  base64_type csroot;
+  base64_type link;
+
+  vector<string> txagg_cbor_list;
+};
+
 class BlockProducerPluginImpl {
 public:
   incoming::channels::ssig::channel_type::Handle ssig_channel_subscription;
@@ -217,6 +232,115 @@ private:
     auto result = optimal_id ^ my_id;
 
     return result.count();
+  }
+
+  PartialBlock makePartialBlock() {
+    auto &chain = dynamic_cast<ChainPlugin *>(app().getPlugin("ChainPlugin"))->chain();
+
+    // TODO : get latest block info from unresolved long chain
+    UnresolvedBlock ur_latest_block;
+
+    // TODO : exception handling (if unresolved pool is empty )
+
+    auto block_time = TimeUtil::nowBigInt();
+    auto world_id = app().getWorldId();
+    auto chain_id = app().getChainId();
+    auto height = ur_latest_block.block.getHeight() + 1;
+    auto block_prev_id = ur_latest_block.block.getBlockId();
+
+    auto vec_link = Sha256::hash(ur_latest_block.block.getBlockProdSig());
+    auto link = TypeConverter::encodeBase<64>(vec_link);
+
+    int latest_resolved_block_height = chain.getLatestResolvedHeight();
+
+    auto r_latest_block = chain.getBlocksByHeight(latest_resolved_block_height, latest_resolved_block_height);
+    auto csroot = r_latest_block[0].getContractStateRoot();
+    auto usroot = r_latest_block[0].getUserStateRoot();
+
+    BytesBuilder builder;
+    builder.append(app().getId());
+    builder.appendDec(block_time);
+    builder.append(world_id);
+    builder.append(chain_id);
+    builder.appendDec(height);
+    builder.appendBase<58>(block_prev_id);
+    builder.appendBase<64>(link);
+
+    auto raw_block_id = builder.getBytes();
+    auto hashed_block_id = Sha256::hash(raw_block_id);
+    auto block_id = TypeConverter::encodeBase<58>(hashed_block_id);
+
+    PartialBlock partial_block;
+
+    partial_block.id = block_id;
+    partial_block.time = block_time;
+    partial_block.world_id = world_id;
+    partial_block.chain_id = chain_id;
+    partial_block.height = height;
+    partial_block.prev_id = block_prev_id;
+    partial_block.link = link;
+    partial_block.usroot = usroot;
+    partial_block.csroot = csroot;
+
+    auto &tx_pool = dynamic_cast<ChainPlugin *>(app().getPlugin("ChainPlugin"))->transactionPool();
+    auto transactions = tx_pool.fetchAll();
+
+    vector<hash_t> hashed_txagg_cbor_list;
+
+    for (auto &tx : transactions) {
+      auto txagg_cbor = tx.getTxAggCbor();
+      partial_block.txagg_cbor_list.push_back(txagg_cbor);
+      hashed_txagg_cbor_list.push_back(Sha256::hash(txagg_cbor));
+    }
+
+    StaticMerkleTree merkle_tree;
+    merkle_tree.generate(hashed_txagg_cbor_list);
+    partial_block.txroot = TypeConverter::encodeBase<64>(merkle_tree.getStaticMerkleTree().at(0));
+
+    return partial_block;
+  }
+
+  OutNetMsg makeMsgReqSsig(PartialBlock &partial_block) {
+    nlohmann::json block;
+    block["id"] = partial_block.id;
+    block["time"] = to_string(partial_block.time);
+    block["world"] = partial_block.world_id;
+    block["chain"] = partial_block.chain_id;
+    block["height"] = to_string(partial_block.height);
+    block["previd"] = partial_block.prev_id;
+    block["link"] = partial_block.link;
+    block["txroot"] = partial_block.txroot;
+    block["usroot"] = partial_block.usroot;
+    block["csroot"] = partial_block.csroot;
+
+    nlohmann::json producer;
+    producer["id"] = TypeConverter::encodeBase<58>(app().getId());
+    producer["sig"] = signMsgReqSsig(partial_block.id, partial_block.txroot, partial_block.usroot, partial_block.csroot);
+
+    nlohmann::json req_ssig_body;
+    req_ssig_body["block"] = block;
+    req_ssig_body["producer"] = producer;
+
+    OutNetMsg msg_req_ssig;
+    msg_req_ssig.type = MessageType::MSG_REQ_SSIG;
+    msg_req_ssig.body = req_ssig_body;
+
+    for (auto &[signer, _] : selected_signers)
+      msg_req_ssig.receivers.push_back(signer.user_id);
+
+    return msg_req_ssig;
+  }
+
+  string signMsgReqSsig(const string &block_id, const string &txroot, const string &usroot, const string &csroot) {
+    BytesBuilder builder;
+    builder.appendBase<58>(block_id);
+    builder.appendBase<64>(txroot);
+    builder.appendBase<64>(usroot);
+    builder.appendBase<64>(csroot);
+
+    auto sig = ECDSA::doSign(app().getSk(), builder.getBytes(), app().getPass());
+
+    return TypeConverter::encodeBase<64>(sig);
   }
 
   unique_ptr<SupportSigPool> ssig_pool;
