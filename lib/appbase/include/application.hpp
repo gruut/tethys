@@ -90,11 +90,17 @@ public:
     }
   }
 
+  void setPass(string_view _pass);
+  void setSk(string_view _sk);
+  void setMyCert(string_view _cert);
   void setAuthCert(string_view _auth_cert);
   void setWorldId(string_view _id);
   void setChainId(string_view _id);
   void setId(string_view _id);
 
+  const string &getPass() const;
+  const string &getSk() const;
+  const string &getMyCert() const;
   const string &getAuthCert() const;
   const string &getWorldId() const;
   const string &getChainId() const;
@@ -156,6 +162,9 @@ private:
 
   unique_ptr<ProgramOptions> program_options;
 
+  string pass;
+  string my_sk;
+  string my_cert;
   string auth_cert;
   string world_id;
   string chain_id;

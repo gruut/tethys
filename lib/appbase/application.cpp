@@ -166,6 +166,18 @@ AbstractPlugin *Application::getPlugin(const string &name) const {
   }
 }
 
+void Application::setSk(string_view _sk) {
+  my_sk = _sk;
+}
+
+void Application::setMyCert(string_view _cert) {
+  my_cert = _cert;
+}
+
+void Application::setPass(string_view _pass) {
+  pass = _pass;
+}
+
 void Application::setAuthCert(string_view _auth_cert) {
   auth_cert = _auth_cert;
 }
@@ -180,6 +192,18 @@ void Application::setChainId(string_view _id) {
 
 void Application::setId(string_view _id) {
   id = _id;
+}
+
+const string &Application::getPass() const {
+  return pass;
+}
+
+const string &Application::getSk() const {
+  return my_sk;
+}
+
+const string &Application::getMyCert() const {
+  return my_cert;
 }
 
 const string &Application::getAuthCert() const {
