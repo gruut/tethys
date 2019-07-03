@@ -95,6 +95,9 @@ public:
   void setChainId(string_view _id);
   void setId(string_view _id);
 
+  const string &getPass() const;
+  const string &getSk() const;
+  const string &getMyCert() const;
   const string &getAuthCert() const;
   const string &getWorldId() const;
   const string &getChainId() const;
@@ -112,7 +115,7 @@ public:
   void completeLoadWorld();
   void completeLoadChain();
   void completeUserSetup();
-  void completeUserSignedIn();
+  void completeUserSignedIn(string_view _sk, string_view _cert, string_view _pass);
 
   RunningMode &runningMode();
 
@@ -156,6 +159,9 @@ private:
 
   unique_ptr<ProgramOptions> program_options;
 
+  string pass;
+  string my_sk;
+  string my_cert;
   string auth_cert;
   string world_id;
   string chain_id;

@@ -182,6 +182,18 @@ void Application::setId(string_view _id) {
   id = _id;
 }
 
+const string &Application::getPass() const {
+  return pass;
+}
+
+const string &Application::getSk() const {
+  return my_sk;
+}
+
+const string &Application::getMyCert() const {
+  return my_cert;
+}
+
 const string &Application::getAuthCert() const {
   return auth_cert;
 }
@@ -234,8 +246,11 @@ void Application::completeUserSetup() {
   application_status.user_setup = true;
 }
 
-void Application::completeUserSignedIn() {
+void Application::completeUserSignedIn(string_view _sk, string_view _cert, string_view _pass){
   application_status.user_login = true;
+  my_sk = _sk;
+  my_cert = _cert;
+  pass = _pass;
 }
 
 RunningMode &Application::runningMode() {

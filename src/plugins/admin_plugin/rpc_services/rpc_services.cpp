@@ -255,7 +255,7 @@ void LoginService::proceed() {
         delegator.delegate();
 
         app().completeUserSetup();
-        app().completeUserSignedIn();
+        app().completeUserSignedIn(self_sk, self_cert, pass);
 
         res.set_success(true);
 

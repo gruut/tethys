@@ -17,6 +17,7 @@ using transaction = ChannelTypeTemplate<struct transaction_tag, nlohmann::json>;
 using block = ChannelTypeTemplate<struct block_tag, nlohmann::json>;
 using SCE_result = ChannelTypeTemplate<struct SCE_result_tag, nlohmann::json>;
 using transaction_pool = ChannelTypeTemplate<struct tx_pool_tag, vector<tethys::Transaction>>;
+using ssig = ChannelTypeTemplate<struct ssig_tag, nlohmann::json>;
 }; // namespace channels
 } // namespace appbase::incoming
 
