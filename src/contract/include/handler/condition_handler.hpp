@@ -5,15 +5,14 @@
 
 namespace tethys::tsce {
 
-  class ConditionHandler : BaseConditionHandler {
+class ConditionHandler : BaseConditionHandler {
 
-  public:
-    ConditionHandler() = default;
+public:
+  ConditionHandler() = default;
 
-    bool evalue(tinyxml2::XMLElement *doc_node, DataManager &data_manager) override;
+  bool evalue(tinyxml2::XMLElement *doc_node, DataManager &data_manager) override;
+};
 
-  };
-
-}
+} // namespace tethys::tsce
 
 #endif

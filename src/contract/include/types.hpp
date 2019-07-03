@@ -4,10 +4,10 @@
 // Please, do not include this file directly.
 // Instead, you can include this file by including config.hpp
 
+#include "../../../include/json.hpp"
 #include <string>
 #include <unordered_map>
-#include "../../../include/json.hpp"
-
+// clang-format off
 namespace tethys::tsce {
 
 enum class EnumAll : uint8_t {
@@ -61,17 +61,17 @@ enum class EnumGender : int {
 };
 
 const std::map<EnumAll, EnumV> ENUM_ALL_V_MAP = {
-    {EnumAll::KEYC,EnumV::KEYC},
-    {EnumAll::FIAT,EnumV::FIAT},
-    {EnumAll::COIN,EnumV::COIN},
-    {EnumAll::XCOIN,EnumV::XCOIN},
-    {EnumAll::MILE,EnumV::MILE}
+    {EnumAll::KEYC, EnumV::KEYC},
+    {EnumAll::FIAT, EnumV::FIAT},
+    {EnumAll::COIN, EnumV::COIN},
+    {EnumAll::XCOIN, EnumV::XCOIN},
+    {EnumAll::MILE, EnumV::MILE}
 };
 
 const std::map<EnumAll, EnumGender> ENUM_ALL_GENDER_MAP = {
-    {EnumAll::MALE,EnumGender::MALE},
-    {EnumAll::FEMALE,EnumGender::FEMALE},
-    {EnumAll::OTHER,EnumGender::OTHER}
+    {EnumAll::MALE, EnumGender::MALE},
+    {EnumAll::FEMALE, EnumGender::FEMALE},
+    {EnumAll::OTHER, EnumGender::OTHER}
 };
 
 const std::map<std::string, EnumAll> INPUT_OPTION_TYPE_MAP = {
@@ -158,8 +158,8 @@ const std::unordered_map<std::string, std::string> TSCE_ERROR_MSG = {
 
 using BlockJson = nlohmann::json;
 using TransactionJson = nlohmann::json;
-
-}
+// clang-format on
+} // namespace tethys::tsce
 
 namespace tethys {
 
@@ -174,6 +174,6 @@ using alphanumeric_type = std::string;
 using base58_type = std::string;
 using base64_type = std::string;
 
-}
+} // namespace tethys
 
 #endif

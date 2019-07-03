@@ -9,9 +9,9 @@ class TimeHandler : public BaseConditionHandler {
 public:
   TimeHandler() = default;
 
-  bool evalue(tinyxml2::XMLElement* doc_node, DataManager &data_manager) override;
+  bool evalue(tinyxml2::XMLElement *doc_node, DataManager &data_manager) override;
 };
 
-}
+} // namespace tethys::tsce
 
 #endif

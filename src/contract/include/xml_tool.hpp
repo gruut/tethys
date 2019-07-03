@@ -1,17 +1,16 @@
 #ifndef TETHYS_SCE_XML_TOOL_HPP
 #define TETHYS_SCE_XML_TOOL_HPP
 
-#include <string>
 #include <optional>
+#include <string>
 
-#include "misc_tool.hpp"
 #include "../../../lib/tinyxml/include/tinyxml2.h"
+#include "misc_tool.hpp"
 #include <vector>
 
 class XmlTool {
 public:
-
-  static std::optional<tinyxml2::XMLElement*> parseChildFrom(tinyxml2::XMLElement *from_node, std::string_view element_name) {
+  static std::optional<tinyxml2::XMLElement *> parseChildFrom(tinyxml2::XMLElement *from_node, std::string_view element_name) {
     if (from_node == nullptr) {
       return std::nullopt;
     } else {
@@ -20,18 +19,19 @@ public:
     }
   }
 
-  static std::vector<std::pair<tinyxml2::XMLElement*,std::string>> parseChildrenFrom(tinyxml2::XMLElement *from_node, std::string_view element_name) {
+  static std::vector<std::pair<tinyxml2::XMLElement *, std::string>> parseChildrenFrom(tinyxml2::XMLElement *from_node,
+                                                                                       std::string_view element_name) {
 
-    std::vector<std::pair<tinyxml2::XMLElement*,std::string>> parsed_children;
+    std::vector<std::pair<tinyxml2::XMLElement *, std::string>> parsed_children;
 
     std::string name(element_name);
 
     if (from_node != nullptr) {
       tinyxml2::XMLElement *element_ptr;
       element_ptr = from_node->FirstChildElement(name.c_str());
-      while(element_ptr) {
+      while (element_ptr) {
         std::string if_id = mt::c2s(element_ptr->Attribute("if"));
-        parsed_children.push_back({element_ptr,if_id});
+        parsed_children.push_back({element_ptr, if_id});
 
         element_ptr = element_ptr->NextSiblingElement(name.c_str());
       }
@@ -40,17 +40,16 @@ public:
     return parsed_children;
   }
 
-  static std::vector<tinyxml2::XMLElement*> parseChildrenFromNoIf(tinyxml2::XMLElement *from_node,
-                                                                  std::string_view element_name) {
+  static std::vector<tinyxml2::XMLElement *> parseChildrenFromNoIf(tinyxml2::XMLElement *from_node, std::string_view element_name) {
 
-    std::vector<tinyxml2::XMLElement*> parsed_children;
+    std::vector<tinyxml2::XMLElement *> parsed_children;
 
     std::string name(element_name);
 
     if (from_node != nullptr) {
       tinyxml2::XMLElement *element_ptr;
       element_ptr = from_node->FirstChildElement(name.c_str());
-      while(element_ptr) {
+      while (element_ptr) {
         parsed_children.push_back(element_ptr);
 
         element_ptr = element_ptr->NextSiblingElement(name.c_str());
@@ -59,10 +58,6 @@ public:
 
     return parsed_children;
   }
-
-
-
-
 
 #if 0
   static std::optional<pugi::xml_node> parseChildFrom(pugi::xml_node &from_node, std::string_view element_name) {
@@ -119,4 +114,4 @@ public:
 #endif
 };
 
-#endif //TETHYS_SCE_XML_TOOL_HPP
+#endif // TETHYS_SCE_XML_TOOL_HPP

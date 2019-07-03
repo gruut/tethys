@@ -3,19 +3,19 @@
 #include "include/datamap.hpp"
 
 namespace tethys::tsce {
-  optional<tethys::tsce::EvalRuleType> tethys::tsce::BaseConditionHandler::getEvalRule(std::string_view eval_str) {
-    if (eval_str.empty())
-      return std::nullopt;
+optional<tethys::tsce::EvalRuleType> tethys::tsce::BaseConditionHandler::getEvalRule(std::string_view eval_str) {
+  if (eval_str.empty())
+    return std::nullopt;
 
-    return (mt::toLower(eval_str) == "or") ? EvalRuleType::OR : EvalRuleType::AND;
-  }
+  return (mt::toLower(eval_str) == "or") ? EvalRuleType::OR : EvalRuleType::AND;
+}
 
-  PrimaryConditionType BaseConditionHandler::getPrimaryConditionType(std::string_view condition_tag) {
-    if (condition_tag.empty())
-      return PrimaryConditionType::UNKNOWN;
+PrimaryConditionType BaseConditionHandler::getPrimaryConditionType(std::string_view condition_tag) {
+  if (condition_tag.empty())
+    return PrimaryConditionType::UNKNOWN;
 
-    std::string cond_tag_lower = mt::toLower(condition_tag);
-
+  std::string cond_tag_lower = mt::toLower(condition_tag);
+  // clang-format off
     static std::map<std::string, PrimaryConditionType> tag_to_type_map = {
             {"condition",   PrimaryConditionType::ROOT},
             {"update",      PrimaryConditionType::ROOT},
@@ -30,21 +30,21 @@ namespace tethys::tsce {
             {"user",        PrimaryConditionType::USER},
             {"var",         PrimaryConditionType::VAR}
     };
-
-    auto it_map = tag_to_type_map.find(cond_tag_lower);
-    if (it_map == tag_to_type_map.end()) {
-      return PrimaryConditionType::UNKNOWN;
-    }
-
-    return it_map->second;
+  // clang-format on
+  auto it_map = tag_to_type_map.find(cond_tag_lower);
+  if (it_map == tag_to_type_map.end()) {
+    return PrimaryConditionType::UNKNOWN;
   }
 
-  SecondaryConditionType BaseConditionHandler::getSecondaryConditionType(std::string_view condition_tag) {
-    if (condition_tag.empty())
-      return SecondaryConditionType::UNKNOWN;
+  return it_map->second;
+}
 
-    std::string cond_tag_lower = mt::toLower(condition_tag);
+SecondaryConditionType BaseConditionHandler::getSecondaryConditionType(std::string_view condition_tag) {
+  if (condition_tag.empty())
+    return SecondaryConditionType::UNKNOWN;
 
+  std::string cond_tag_lower = mt::toLower(condition_tag);
+  // clang-format off
     static std::map<std::string, SecondaryConditionType> tag_to_type_map = {
             {"if",       SecondaryConditionType::IF},
             {"nif",      SecondaryConditionType::NIF},
@@ -57,12 +57,12 @@ namespace tethys::tsce {
             {"user",     SecondaryConditionType::USER},
             {"receiver", SecondaryConditionType::RECEIVER}
     };
-
-    auto it_map = tag_to_type_map.find(cond_tag_lower);
-    if (it_map == tag_to_type_map.end()) {
-      return SecondaryConditionType::UNKNOWN;
-    }
-
-    return it_map->second;
+  // clang-format on
+  auto it_map = tag_to_type_map.find(cond_tag_lower);
+  if (it_map == tag_to_type_map.end()) {
+    return SecondaryConditionType::UNKNOWN;
   }
+
+  return it_map->second;
 }
+} // namespace tethys::tsce
