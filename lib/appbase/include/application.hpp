@@ -90,9 +90,6 @@ public:
     }
   }
 
-  void setPass(string_view _pass);
-  void setSk(string_view _sk);
-  void setMyCert(string_view _cert);
   void setAuthCert(string_view _auth_cert);
   void setWorldId(string_view _id);
   void setChainId(string_view _id);
@@ -118,7 +115,7 @@ public:
   void completeLoadWorld();
   void completeLoadChain();
   void completeUserSetup();
-  void completeUserSignedIn();
+  void completeUserSignedIn(string_view _sk, string_view _cert, string_view _pass);
 
   RunningMode &runningMode();
 

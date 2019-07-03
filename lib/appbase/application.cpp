@@ -166,18 +166,6 @@ AbstractPlugin *Application::getPlugin(const string &name) const {
   }
 }
 
-void Application::setSk(string_view _sk) {
-  my_sk = _sk;
-}
-
-void Application::setMyCert(string_view _cert) {
-  my_cert = _cert;
-}
-
-void Application::setPass(string_view _pass) {
-  pass = _pass;
-}
-
 void Application::setAuthCert(string_view _auth_cert) {
   auth_cert = _auth_cert;
 }
@@ -258,8 +246,11 @@ void Application::completeUserSetup() {
   application_status.user_setup = true;
 }
 
-void Application::completeUserSignedIn() {
+void Application::completeUserSignedIn(string_view _sk, string_view _cert, string_view _pass){
   application_status.user_login = true;
+  my_sk = _sk;
+  my_cert = _cert;
+  pass = _pass;
 }
 
 RunningMode &Application::runningMode() {

@@ -3,6 +3,7 @@
 #include "../chain_plugin/include/chain_plugin.hpp"
 #include "include/ssig_pool.hpp"
 #include <algorithm>
+#include <array>
 #include <boost/asio/steady_timer.hpp>
 #include <chrono>
 
@@ -251,11 +252,18 @@ private:
     auto vec_link = Sha256::hash(ur_latest_block.block.getBlockProdSig());
     auto link = TypeConverter::encodeBase<64>(vec_link);
 
-    int latest_resolved_block_height = chain.getLatestResolvedHeight();
-
-    auto r_latest_block = chain.getBlocksByHeight(latest_resolved_block_height, latest_resolved_block_height);
-    auto csroot = r_latest_block[0].getContractStateRoot();
-    auto usroot = r_latest_block[0].getUserStateRoot();
+    int latest_resolved_block_height = height - BLOCK_CONFIRM_LEVEL;
+    base64_type csroot, usroot;
+    if (latest_resolved_block_height > 0) {
+      auto r_latest_block = chain.getBlocksByHeight(latest_resolved_block_height, latest_resolved_block_height);
+      csroot = r_latest_block[0].getContractStateRoot();
+      usroot = r_latest_block[0].getUserStateRoot();
+    } else {
+      array<uint8_t, 32> empty_bytes{0};
+      base64_type b64_empty_data = TypeConverter::encodeBase<64>(empty_bytes); //AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=
+      csroot = b64_empty_data;
+      usroot = b64_empty_data;
+    }
 
     BytesBuilder builder;
     builder.append(app().getId());
