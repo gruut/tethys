@@ -36,7 +36,7 @@ namespace tethys::tsce {
       if (return_val.empty())
         return false;
 
-      compare_node->SetAttribute("src", return_val[0].value.c_str());
+      compare_node->SetAttribute("src", return_val[0].string_value.c_str());
 
       return compare_handler.evalue(compare_node, data_manager);
 

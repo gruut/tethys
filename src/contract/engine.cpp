@@ -11,7 +11,7 @@ namespace tethys::tsce {
   }
 
   std::optional<nlohmann::json> ContractEngine::procBlock(Block &block) {
-
+logger::INFO("called procBlock");
     if (m_storage_interface == nullptr)
       return std::nullopt;
 
@@ -85,7 +85,7 @@ namespace tethys::tsce {
       result_queries.emplace_back(res_query);
 
     }
-
+    logger::INFO("return procBlock");
     return m_query_composer.compose(result_queries, block_id, block_hgt);
   }
 }

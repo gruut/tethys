@@ -261,6 +261,10 @@ vector<int> UnresolvedBlockPool::getPath(const base58_type &block_id, const bloc
     int current_deq_idx = static_cast<int>(block_height - m_latest_confirmed_height) - 1;
     int current_vec_idx = -1;
 
+    if(current_deq_idx < 0) {
+        return path;
+    }
+
     for (int i = 0; i < m_block_pool[current_deq_idx].size(); ++i) {
       if (block_id == m_block_pool[current_deq_idx][i].block.getBlockId()) {
         current_vec_idx = static_cast<int>(i);

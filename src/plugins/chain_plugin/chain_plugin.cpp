@@ -247,7 +247,9 @@ public:
     block_height_type block_height = static_cast<block_height_type>(stoi(json::get<string>(result["block"], "height").value()));
     UnresolvedBlock updated_UR_block = chain->getUnresolvedBlock(block_id, block_height);
 
-    if (updated_UR_block.block.getBlockId() != chain->getHeadInfo().block_id) {
+    cout<<"result json : "<<endl<<result.dump()<<endl;
+
+    if ((block_id != chain->getHeadInfo().block_id) && (!chain->getHeadInfo().block_id.empty())) {
       chain->moveHead(updated_UR_block.block.getPrevBlockId(), updated_UR_block.block.getHeight() - 1);
     }
 
@@ -314,35 +316,42 @@ public:
   }
 
   nlohmann::json processRequestQuery(const nlohmann::json &request) {
-    string type = json::get<string>(request, "type").value();
-    nlohmann::json where_json = request["where"];
-    if (type == "world.get") {
-      return chain->queryWorldGet();
-    } else if (type == "chain.get") {
-      return chain->queryChainGet();
-    } else if (type == "contract.scan") {
-      return chain->queryContractScan(where_json);
-    } else if (type == "contract.get") {
-      return chain->queryContractGet(where_json);
-    } else if (type == "user.cert.get") {
-      return chain->queryCertGet(where_json);
-    } else if (type == "user.info.get") {
-      return chain->queryUserInfoGet(where_json);
-    } else if (type == "user.scope.get") {
-      return chain->queryUserScopeGet(where_json);
-    } else if (type == "contract.scope.get") {
-      return chain->queryContractScopeGet(where_json);
-    } else if (type == "block.get") {
-      return chain->queryBlockGet(where_json);
-    } else if (type == "tx.get") {
-      return chain->queryTxGet(where_json);
-    } else if (type == "block.scan") {
-      return chain->queryBlockScan(where_json);
-    } else if (type == "tx.scan") {
-      return chain->queryTxScan(where_json);
-    } else {
-      logger::ERROR("URBP, Something error in query process");
-      return request;
+    try {
+      string type = json::get<string>(request, "type").value();
+      auto where_json = json::get<nlohmann::json>(request, "where");
+
+      if (type == "world.get") {
+        return chain->queryWorldGet();
+      } else if (type == "chain.get") {
+        return chain->queryChainGet();
+      } else if (type == "contract.scan") {
+        return chain->queryContractScan(where_json.value());
+      } else if (type == "contract.get") {
+        return chain->queryContractGet(where_json.value());
+      } else if (type == "user.cert.get") {
+        return chain->queryCertGet(where_json.value());
+      } else if (type == "user.info.get") {
+        return chain->queryUserInfoGet(where_json.value());
+      } else if (type == "user.scope.get") {
+        return chain->queryUserScopeGet(where_json.value());
+      } else if (type == "contract.scope.get") {
+        return chain->queryContractScopeGet(where_json.value());
+      } else if (type == "block.get") {
+        return chain->queryBlockGet(where_json.value());
+      } else if (type == "tx.get") {
+        return chain->queryTxGet(where_json.value());
+      } else if (type == "block.scan") {
+        return chain->queryBlockScan(where_json.value());
+      } else if (type == "tx.scan") {
+        return chain->queryTxScan(where_json.value());
+      } else {
+        logger::ERROR("URBP, Something error in query process");
+        return request;
+      }
+    } catch (nlohmann::json::parse_error &e) {
+      logger::ERROR("json error: {}", e.what());
+    } catch (...) {
+      logger::ERROR("Unexpected error at `processRequestQuery`");
     }
   }
 
@@ -399,11 +408,14 @@ public:
           chain->applyUserCertToRDB(resolved_block.user_cert_list);
           chain->applyContractToRDB(resolved_block.contract_list);
         }
+
+        sleep(1);
       }
     } // test code end
   }
 
   void monitorBlockStatus() {
+    logger::INFO("monitorBlockStatus called");
     block_check_timer->expires_from_now(BLOCK_POOL_CHECK_PERIOD);
     block_check_timer->async_wait([this](boost::system::error_code ec) {
       if (!ec) {

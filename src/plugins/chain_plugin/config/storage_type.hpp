@@ -45,14 +45,14 @@ struct DataType {
 
 enum class UniqueCheck : int { NO_VALUE = -1, NOT_UNIQUE = -2 };
 
+constexpr auto TRANSACTION_ID_TYPE_SIZE = 32;
+constexpr auto ALPHANUMERIC_ID_TYPE_SIZE = 8;
+
 using string = std::string;
 using bytes = std::vector<uint8_t>;
 using hash_t = std::vector<uint8_t>;
 using timestamp_t = uint64_t;
 using block_height_type = uint64_t;
-
-constexpr auto TRANSACTION_ID_TYPE_SIZE = 32;
-constexpr auto ALPHANUMERIC_ID_TYPE_SIZE = 8;
 
 using alphanumeric_type = std::string;
 using base58_type = std::string;
@@ -142,10 +142,10 @@ using block_info_type = struct BlockInfoType {
 };
 
 using block_pool_info_type = struct BlockPoolInfoType {
-  base58_type block_id;
-  block_height_type block_height;
-  int deq_idx;
-  int vec_idx;
+  base58_type block_id{};
+  block_height_type block_height{0};
+  int deq_idx{-1};
+  int vec_idx{-1};
 
   BlockPoolInfoType() = default;
 };

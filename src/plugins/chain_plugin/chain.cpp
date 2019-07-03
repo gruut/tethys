@@ -512,8 +512,8 @@ const nlohmann::json Chain::queryCertGet(const nlohmann::json &where_json) {
   result_json["data"] = nlohmann::json::array();
   for (int i = 0; i < found_certs.size(); ++i) {
     result_json["data"][i].push_back(found_certs[i].sn);
-    result_json["data"][i].push_back(found_certs[i].nvbefore);
-    result_json["data"][i].push_back(found_certs[i].nvafter);
+    result_json["data"][i].push_back(to_string(found_certs[i].nvbefore));
+    result_json["data"][i].push_back(to_string(found_certs[i].nvafter));
     result_json["data"][i].push_back(found_certs[i].x509);
   }
 
@@ -533,13 +533,13 @@ const nlohmann::json Chain::queryUserInfoGet(const nlohmann::json &where_json) {
   result_json["name"].push_back("age_limit");
 
   result_json["data"] = nlohmann::json::array();
-  result_json["data"][0].push_back(found_user_info.register_day);
+  result_json["data"][0].push_back(to_string(found_user_info.register_day));
   result_json["data"][0].push_back(found_user_info.register_code);
-  result_json["data"][0].push_back(found_user_info.gender);
+  result_json["data"][0].push_back(to_string(found_user_info.gender));
   result_json["data"][0].push_back(found_user_info.isc_type);
   result_json["data"][0].push_back(found_user_info.isc_code);
   result_json["data"][0].push_back(found_user_info.location);
-  result_json["data"][0].push_back(found_user_info.age_limit);
+  result_json["data"][0].push_back(to_string(found_user_info.age_limit));
 
   return result_json;
 }
@@ -560,9 +560,9 @@ const nlohmann::json Chain::queryUserScopeGet(const nlohmann::json &where_json) 
   for (int i = 0; i < found_user_ledgers.size(); ++i) {
     result_json["data"][i].push_back(found_user_ledgers[i].var_name);
     result_json["data"][i].push_back(found_user_ledgers[i].var_value);
-    result_json["data"][i].push_back(found_user_ledgers[i].var_type);
-    result_json["data"][i].push_back(found_user_ledgers[i].up_time);
-    result_json["data"][i].push_back(found_user_ledgers[i].up_block);
+    result_json["data"][i].push_back(to_string(found_user_ledgers[i].var_type));
+    result_json["data"][i].push_back(to_string(found_user_ledgers[i].up_time));
+    result_json["data"][i].push_back(to_string(found_user_ledgers[i].up_block));
     result_json["data"][i].push_back(found_user_ledgers[i].tag);
     result_json["data"][i].push_back(found_user_ledgers[i].pid);
   }
@@ -588,8 +588,8 @@ const nlohmann::json Chain::queryContractScopeGet(const nlohmann::json &where_js
     result_json["data"][i].push_back(found_contract_ledgers[i].var_value);
     result_json["data"][i].push_back(found_contract_ledgers[i].var_type);
     result_json["data"][i].push_back(found_contract_ledgers[i].var_info);
-    result_json["data"][i].push_back(found_contract_ledgers[i].up_time);
-    result_json["data"][i].push_back(found_contract_ledgers[i].up_block);
+    result_json["data"][i].push_back(to_string(found_contract_ledgers[i].up_time));
+    result_json["data"][i].push_back(to_string(found_contract_ledgers[i].up_block));
     result_json["data"][i].push_back(found_contract_ledgers[i].pid);
   }
 
@@ -1458,10 +1458,17 @@ void Chain::moveHead(const base58_type &target_block_id, const block_height_type
 
     vector<int> target_path = unresolved_block_pool->getPath(target_block_id, target_block_height);
 
-    while (current_vec_idx != target_path[current_deq_idx]) {
-      current_vec_idx = unresolved_block_pool->getUnresolvedBlock(current_deq_idx, current_vec_idx).prev_vec_idx;
-      --current_deq_idx;
-      --current_height;
+    if (!target_path.empty()) {
+      while (current_vec_idx != target_path[current_deq_idx]) {
+        current_vec_idx = unresolved_block_pool->getUnresolvedBlock(current_deq_idx, current_vec_idx).prev_vec_idx;
+        --current_deq_idx;
+        --current_height;
+
+        if (current_deq_idx < 0 && current_vec_idx < 0) {
+          logger::ERROR("Target block is not linked resolved block");
+          return;
+        }
+      }
     }
 
     int common_deq_idx = current_deq_idx;
@@ -1471,8 +1478,7 @@ void Chain::moveHead(const base58_type &target_block_id, const block_height_type
     int back_count = static_cast<int>(m_head_info.block_height) - common_height;
 
     if (common_deq_idx < 0) {
-      logger::ERROR("URBP, Something error in move_head() - Cannot find pool element");
-      return;
+      logger::INFO("URBP; Common block is resolved block");
     }
 
     current_height = static_cast<int>(m_head_info.block_height);
