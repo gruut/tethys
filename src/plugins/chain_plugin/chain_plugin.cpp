@@ -37,22 +37,6 @@ public:
     return true;
   }
 
-  bool operator()(Transaction &transaction, const string &world, const string &chain) {
-    transaction.setWorld(world);
-    transaction.setChain(chain);
-
-    if (!verifyID(transaction))
-      return false;
-
-    if (!verifyEndorserSig(transaction))
-      return false;
-
-    if (!verifyUserSig(transaction))
-      return false;
-
-    return true;
-  }
-
 private:
   bool verifyID(const Transaction &transaction) const {
     BytesBuilder tx_id_builder;
@@ -226,6 +210,7 @@ public:
       chain->moveHead(updated_UR_block.block.getPrevBlockId(), updated_UR_block.block.getHeight() - 1);
     }
 
+    uint64_t block_total_fee = 0;
     nlohmann::json results_json = result["results"];
     for (auto &each_result : results_json) {
       result_query_info_type result_info;
@@ -234,6 +219,8 @@ public:
       result_info.tx_id = json::get<string>(each_result, "txid").value();
       result_info.status = json::get<bool>(each_result, "status").value();
       result_info.info = json::get<string>(each_result, "info").value();
+
+      // TODO: 이 아래 정보들은 optional으로 처리해야함
       result_info.author = json::get<string>(each_result["authority"], "author").value();
       result_info.user = json::get<string>(each_result["authority"], "user").value();
       result_info.receiver = json::get<string>(each_result["authority"], "receiver").value();
@@ -277,10 +264,11 @@ public:
         } else if (type == "run.contract") {
           chain->queryRunContract(updated_UR_block, option_json, result_info);
         } else {
-          logger::ERROR("URBP, Something error in query process");
+          logger::ERROR("Something error in `processTxResult`");
         }
       }
     }
+    chain->applyFee();
     chain->setUnresolvedBlock(updated_UR_block);
     chain->updateStateTree(updated_UR_block);
     chain->saveBackupResult(updated_UR_block);
@@ -334,7 +322,7 @@ public:
 
   void start() {
     // TODO: msg 관련 요청 감시 (block, ping, request, etc..)
-    monitorBlockStatus();
+    monitorUnresolvedBlockProcess();
 
     { // test code start
       // 테스트 시에는 임의로 block_input_test.json의 블록들을 저장하는것부터 시작.
@@ -387,8 +375,8 @@ public:
     } // test code end
   }
 
-  void monitorBlockStatus() {
-    logger::INFO("monitorBlockStatus called");
+  void monitorUnresolvedBlockProcess() {
+    logger::INFO("monitorUnresolvedBlockProcess called");
     block_check_timer->expires_from_now(BLOCK_POOL_CHECK_PERIOD);
     block_check_timer->async_wait([this](boost::system::error_code ec) {
       if (!ec) {
@@ -405,7 +393,7 @@ public:
           }
         }
 
-        monitorBlockStatus();
+        monitorUnresolvedBlockProcess();
       } else {
         logger::ERROR("Error from block_check_timer: {}", ec.message());
       }
@@ -420,7 +408,7 @@ public:
     const vector<Transaction> &transactions = block.getTransactions();
     for (auto each_transaction : transactions) {
       TransactionMessageVerifier tx_verifier;
-      if (!tx_verifier(each_transaction, block.getWorldId(), block.getChainId()))
+      if (!tx_verifier(each_transaction))
         return false;
     }
 
@@ -483,11 +471,8 @@ public:
     block_id_builder.appendBase<58>(block.getPrevBlockId());
 
     hash_t block_id = Sha256::hash(block_id_builder.getBytes());
-    if (block.getBlockId() != TypeConverter::encodeBase<58>(block_id)) {
-      return false;
-    }
 
-    return true;
+    return (block.getBlockId() == TypeConverter::encodeBase<58>(block_id));
   }
 
   bool verifyBlockHash(const Block &block) const {
@@ -498,10 +483,8 @@ public:
     block_hash_builder.appendBase<64>(block.getContractStateRoot());
 
     hash_t block_hash = Sha256::hash(block_hash_builder.getBytes());
-    if (block.getBlockHash() != TypeConverter::encodeBase<64>(block_hash)) {
-      return false;
-    }
-    return true;
+
+    return (block.getBlockHash() == TypeConverter::encodeBase<64>(block_hash));
   }
 
   bool verifyProducerSig(const Block &block) const {

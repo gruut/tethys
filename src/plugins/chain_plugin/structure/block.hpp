@@ -7,6 +7,7 @@
 #include "signature.hpp"
 #include "transaction.hpp"
 
+#include "../../../../lib/appbase/include/application.hpp"
 #include "../../../../lib/json/include/json.hpp"
 
 using namespace std;
@@ -153,12 +154,14 @@ public:
   bool setTransaction(std::vector<txagg_cbor_b64> &txagg) {
     m_transactions.clear();
     for (auto &each_txagg : txagg) {
-      nlohmann::json each_txs_json;
-      each_txs_json = nlohmann::json::from_cbor(TypeConverter::decodeBase<64>(each_txagg));
+      nlohmann::json each_txaggs_json;
+      each_txaggs_json = nlohmann::json::from_cbor(TypeConverter::decodeBase<64>(each_txagg));
 
       Transaction each_tx;
+      each_tx.setWorld(appbase::app().getWorldId());
+      each_tx.setChain(appbase::app().getChainId());
       block_info_type block_info(each_txagg, getBlockId());
-      each_tx.inputMsgTxAgg(each_txs_json, block_info);
+      each_tx.inputMsgTxAgg(each_txaggs_json, block_info);
       m_transactions.emplace_back(each_tx);
     }
     return true;

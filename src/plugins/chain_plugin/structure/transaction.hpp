@@ -60,10 +60,8 @@ public:
       m_tx_user_pk = extractPubKeyIfUnauthorized(msg_tx_json);
       m_tx_user_sig = msg_tx_json["/user/sig"_json_pointer];
 
-      if (!setEndorsers(msg_tx_json["endorser"])) {
-        return false;
-      }
-      return true;
+      return setEndorsers(msg_tx_json["endorser"]);
+
     } catch (nlohmann::json::parse_error &e) {
       logger::ERROR("Failed to parse transaction json: {}", e.what());
       return false;
@@ -114,10 +112,8 @@ public:
       m_tx_user_agga = json::get<string>(tx_json["user"], "a").value();
       m_tx_user_aggz = json::get<string>(tx_json["user"], "z").value();
 
-      if (!setEndorsers(tx_json["endorser"])) {
-        return false;
-      }
-      return true;
+      return setEndorsers(tx_json["endorser"]);
+
     } catch (nlohmann::json::parse_error &e) {
       logger::ERROR("Failed to parse transaction json: {}", e.what());
       return false;
