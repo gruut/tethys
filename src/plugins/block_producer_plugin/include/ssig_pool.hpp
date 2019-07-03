@@ -1,11 +1,12 @@
 #pragma once
 #include <shared_mutex>
+#include <string>
 #include <unordered_map>
 #include <vector>
-#include <string>
+
+namespace tethys {
 
 using namespace std;
-
 using base58_id_type = string;
 using signature_type = string;
 
@@ -27,3 +28,4 @@ private:
   std::shared_mutex pool_mutex;
   unordered_map<base58_id_type, SupportSigInfo> ssig_pool;
 };
+}

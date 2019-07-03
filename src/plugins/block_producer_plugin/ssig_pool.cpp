@@ -1,6 +1,7 @@
 #include "include/ssig_pool.hpp"
 #include <algorithm>
 
+namespace tethys {
 void SupportSigPool::add(const SupportSigInfo &ssig_info) {
   unique_lock<shared_mutex> lock(pool_mutex);
   ssig_pool.emplace(ssig_info.supporter_id, ssig_info);
@@ -24,4 +25,5 @@ int SupportSigPool::size() {
 void SupportSigPool::clear() {
   unique_lock<shared_mutex> lock(pool_mutex);
   ssig_pool.clear();
+}
 }

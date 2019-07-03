@@ -1,5 +1,7 @@
 #include "include/chain_plugin.hpp"
 #include "../../contract/include/engine.hpp"
+#include "include/transacton_pool.hpp"
+#include <boost/asio/steady_timer.hpp>
 
 namespace tethys {
 
@@ -97,34 +99,6 @@ private:
 
     return ags.verify(transaction.getTxUserPk(), message, user_sig);
   }
-};
-
-class TransactionPool {
-public:
-  void add(const Transaction &tx) {
-    {
-      unique_lock<shared_mutex> writerLock(pool_mutex);
-
-      tx_pool.try_emplace(tx.getTxId(), tx);
-    }
-  }
-
-  vector<Transaction> fetchAll() {
-    {
-      shared_lock<shared_mutex> readerLock(pool_mutex);
-
-      vector<Transaction> v;
-      v.reserve(tx_pool.size());
-
-      std::transform(tx_pool.begin(), tx_pool.end(), std::back_inserter(v), [](auto &kv) { return kv.second; });
-
-      return v;
-    }
-  }
-
-private:
-  std::map<string, Transaction> tx_pool;
-  std::shared_mutex pool_mutex;
 };
 
 class ChainPluginImpl {
@@ -622,6 +596,10 @@ void ChainPlugin::asyncFetchTransactionsFromPool() {
 
 Chain &ChainPlugin::chain() {
   return *(impl->chain);
+}
+
+TransactionPool &ChainPlugin::transactionPool() {
+  return *(impl->transaction_pool);
 }
 
 void ChainPlugin::pluginStart() {
