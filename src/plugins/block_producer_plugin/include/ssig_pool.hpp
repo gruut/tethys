@@ -9,10 +9,12 @@ namespace tethys {
 using namespace std;
 using base58_id_type = string;
 using signature_type = string;
+using cert_type = string;
 
 struct SupportSigInfo {
-  base58_id_type supporter_id;
+  base58_id_type id;
   signature_type sig;
+  cert_type cert;
 };
 
 class SupportSigPool {

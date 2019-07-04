@@ -62,8 +62,9 @@ public:
     // TODO : verify support sig using MSG_REQ_SSIG info & ssig
 
     SupportSigInfo ssig_info;
-    ssig_info.supporter_id = signer_id;
+    ssig_info.id = signer_id;
     ssig_info.sig = ssig;
+    ssig_info.cert = signer_cert;
 
     ssig_pool->add(ssig_info);
   }
@@ -260,7 +261,7 @@ private:
       usroot = r_latest_block[0].getUserStateRoot();
     } else {
       array<uint8_t, 32> empty_bytes{0};
-      base64_type b64_empty_data = TypeConverter::encodeBase<64>(empty_bytes); //AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=
+      base64_type b64_empty_data = TypeConverter::encodeBase<64>(empty_bytes); // AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=
       csroot = b64_empty_data;
       usroot = b64_empty_data;
     }
@@ -308,7 +309,7 @@ private:
     return partial_block;
   }
 
-  OutNetMsg makeMsgReqSsig(PartialBlock &partial_block) {
+  nlohmann::json makeBaseMsgBlock(PartialBlock &partial_block) {
     nlohmann::json block;
     block["id"] = partial_block.id;
     block["time"] = to_string(partial_block.time);
@@ -317,6 +318,12 @@ private:
     block["height"] = to_string(partial_block.height);
     block["previd"] = partial_block.prev_id;
     block["link"] = partial_block.link;
+
+    return block;
+  }
+
+  OutNetMsg makeMsgReqSsig(PartialBlock &partial_block) {
+    nlohmann::json block = makeBaseMsgBlock(partial_block);
     block["txroot"] = partial_block.txroot;
     block["usroot"] = partial_block.usroot;
     block["csroot"] = partial_block.csroot;
@@ -345,6 +352,93 @@ private:
     builder.appendBase<64>(txroot);
     builder.appendBase<64>(usroot);
     builder.appendBase<64>(csroot);
+
+    auto sig = ECDSA::doSign(app().getSk(), builder.getBytes(), app().getPass());
+
+    return TypeConverter::encodeBase<64>(sig);
+  }
+
+  OutNetMsg makeMsgBlock(PartialBlock &partial_block) {
+    nlohmann::json block = makeBaseMsgBlock(partial_block);
+
+    BytesBuilder bytes_builder;
+    bytes_builder.appendBase<58>(partial_block.id);
+    bytes_builder.appendBase<64>(partial_block.txroot);
+    bytes_builder.appendBase<64>(partial_block.usroot);
+    bytes_builder.appendBase<64>(partial_block.csroot);
+    auto hash_data = Sha256::hash(bytes_builder.getBytes());
+    auto b64_hash = TypeConverter::encodeBase<64>(hash_data);
+    block["hash"] = b64_hash;
+
+    nlohmann::json state, signer, certificate;
+
+    nlohmann::json my_cert_info;
+    auto b58_my_id = TypeConverter::encodeBase<58>(app().getId());
+    my_cert_info["id"] = b58_my_id;
+    my_cert_info["cert"] = app().getMyCert();
+    certificate.push_back(my_cert_info);
+
+    auto ssig_list = ssig_pool->fetchAll();
+    vector<hash_t> hashed_ssig_list;
+
+    for (auto &ssig : ssig_list) {
+      nlohmann::json ssig_info;
+      ssig_info["id"] = ssig.id;
+      ssig_info["sig"] = ssig.sig;
+      signer.push_back(ssig_info);
+
+      nlohmann::json cert_info;
+      cert_info["id"] = ssig.id;
+      cert_info["cert"] = ssig.cert;
+      certificate.push_back(cert_info);
+
+      bytes_builder.clear();
+      bytes_builder.appendBase<58>(ssig.id);
+      bytes_builder.appendBase<64>(ssig.sig);
+      auto hashed_data = Sha256::hash(bytes_builder.getBytes());
+      hashed_ssig_list.push_back(hashed_data);
+    }
+
+    state["txroot"] = partial_block.txroot;
+    state["usroot"] = partial_block.usroot;
+    state["csroot"] = partial_block.csroot;
+    StaticMerkleTree merkle_tree;
+    merkle_tree.generate(hashed_ssig_list);
+    auto sgroot = TypeConverter::encodeBase<64>(merkle_tree.getStaticMerkleTree().at(0));
+    state["sgroot"] = sgroot;
+
+    nlohmann::json tx(partial_block.txagg_cbor_list);
+
+    nlohmann::json producer;
+    producer["id"] = b58_my_id;
+    auto tx_len = static_cast<int>(tx.size());
+    auto signer_len = static_cast<int>(signer.size());
+    auto cur_time = TimeUtil::nowBigInt();
+    producer["sig"] = signMsgBlock(cur_time, b64_hash, tx_len, signer_len, sgroot);
+
+    nlohmann::json msg_block_body;
+    msg_block_body["btime"] = to_string(cur_time);
+    msg_block_body["block"] = block;
+    msg_block_body["tx"] = tx;
+    msg_block_body["state"] = state;
+    msg_block_body["signer"] = signer;
+    msg_block_body["certificate"] = certificate;
+    msg_block_body["producer"] = producer;
+
+    OutNetMsg msg_block;
+    msg_block.type = MessageType::MSG_BLOCK;
+    msg_block.body = msg_block_body;
+
+    return msg_block;
+  }
+
+  string signMsgBlock(uint64_t btime, const string &hash, int tx_len, int signer_len, const string &sgroot) {
+    BytesBuilder builder;
+    builder.appendDec(btime);
+    builder.appendBase<64>(hash);
+    builder.appendDec(tx_len);
+    builder.appendDec(signer_len);
+    builder.appendBase<64>(sgroot);
 
     auto sig = ECDSA::doSign(app().getSk(), builder.getBytes(), app().getPass());
 
