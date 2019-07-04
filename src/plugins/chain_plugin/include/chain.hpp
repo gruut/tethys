@@ -82,6 +82,7 @@ public:
   bool applyUserCertToRDB(const map<base58_type, user_cert_type> &user_cert_list);
   bool applyContractToRDB(const map<base58_type, contract_type> &contract_list);
 
+  vector<Block> getBlocksFromUnresolvedLongestChain();
   vector<Block> getBlocksByHeight(int from, int to);
   block_height_type getLatestResolvedHeight();
 
