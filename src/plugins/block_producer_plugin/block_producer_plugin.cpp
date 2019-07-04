@@ -108,13 +108,22 @@ private:
   vector<Block> getPreviousBlocks() {
     auto &chain = dynamic_cast<ChainPlugin *>(app().getPlugin("ChainPlugin"))->chain();
 
-    auto latestHeight = chain.getLatestResolvedHeight();
-    int from = latestHeight - PRODUCERS_COUNT + 1;
-    if (from <= 0)
-      from = 1;
+    auto blocks = chain.getBlocksFromUnresolvedLongestChain(); // descending order
 
-    vector<Block> blocks = chain.getBlocksByHeight(from, latestHeight);
-    sort(blocks.begin(), blocks.end(), [](auto &left, auto &right) { return left.getHeight() > right.getHeight(); });
+    int unresolved_blocks_len = blocks.size();
+
+    auto latestResolvedBlockHeight = chain.getLatestResolvedHeight();
+
+    if (unresolved_blocks_len < PRODUCERS_COUNT) {
+      int from = latestResolvedBlockHeight - PRODUCERS_COUNT + unresolved_blocks_len + 1;
+      if (from <= 0)
+        from = 1;
+
+      vector<Block> resolved_blocks = chain.getBlocksByHeight(from, latestResolvedBlockHeight);
+      sort(resolved_blocks.begin(), resolved_blocks.end(), [](auto &left, auto &right) { return left.getHeight() > right.getHeight(); });
+
+      move(resolved_blocks.begin(), resolved_blocks.end(), back_inserter(blocks));
+    }
 
     return blocks;
   }
@@ -167,7 +176,7 @@ private:
             count_1 += pow(1.414, static_cast<double>(producers_count - bit_position));
           }
 
-          optimal_merger_id[bit_position] = count_0 > count_1 ? 1 : 0;
+          optimal_merger_id[(8 * byte_position) + bit_position] = count_0 > count_1 ? 1 : 0;
         }
       }
     }
