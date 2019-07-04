@@ -1368,6 +1368,24 @@ search_result_type Chain::findContractLedgerFromPoint(const string &pid, block_h
   }
 }
 
+vector<Block> Chain::getBlocksFromUnresolvedLongestChain() {
+  auto latest_height = m_longest_chain_info.block_height;
+  auto latest_block_id = m_longest_chain_info.block_id;
+
+  auto chain_path = unresolved_block_pool->getPath(latest_block_id, latest_height);
+
+  vector<Block> blocks;
+  for (int i = 0; i < chain_path.size(); i++) {
+    int deq_idx = i;
+    int vec_idx = chain_path[i];
+    auto unresolved_block = unresolved_block_pool->getUnresolvedBlock(deq_idx, vec_idx);
+
+    blocks.push_back(unresolved_block.block);
+  }
+
+  return blocks;
+}
+
 Block &Chain::getLowestUnprocessedBlock() {
   // 가장 긴 chain에서의 처리되지 않은 블록 중 가장 낮은 height block을 return
   return unresolved_block_pool->getLowestUnprocessedBlock(m_longest_chain_info);
