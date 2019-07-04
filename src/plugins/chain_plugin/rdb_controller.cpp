@@ -47,8 +47,8 @@ const vector<contract_id_type> RdbController::queryContractScan(const nlohmann::
   } catch (soci::mysql_soci_error const &e) {
     logger::ERROR("MySQL error: {}", e.what());
     return contract_id_list;
-  } catch (...) {
-    logger::ERROR("Unexpected error at `queryContractScan`");
+  } catch (exception & e) {
+    logger::ERROR("Unexpected error at `queryContractScan` {}", e.what());
     return contract_id_list;
   }
 }
@@ -69,8 +69,8 @@ const string RdbController::queryContractGet(const nlohmann::json &where_json) {
 
   } catch (soci::mysql_soci_error const &e) {
     logger::ERROR("MySQL error: {}", e.what());
-  } catch (...) {
-    logger::ERROR("Unexpected error at `queryContractGet`");
+  } catch (exception & e) {
+    logger::ERROR("Unexpected error at `queryContractGet` {}", e.what());
   }
   return contract;
 }
@@ -108,14 +108,14 @@ const vector<user_cert_type> RdbController::queryCertGet(const nlohmann::json &w
 
   } catch (soci::mysql_soci_error const &e) {
     logger::ERROR("MySQL error: {}", e.what());
-  } catch (...) {
-    logger::ERROR("Unexpected error at `queryCertGet`");
+  } catch (exception & e) {
+    logger::ERROR("Unexpected error at `queryCertGet` {}", e.what());
   }
   return cert_list;
 }
 
 const user_attribute_type RdbController::queryUserInfoGet(const nlohmann::json &where_json) {
-  user_attribute_type user_info;
+  user_attribute_type user_info{};
   try {
     base58_type uid = json::get<string>(where_json, "uid").value();
 
@@ -126,7 +126,6 @@ const user_attribute_type RdbController::queryUserInfoGet(const nlohmann::json &
     string isc_code;
     string location;
     int age_limit;
-    string sigma;
 
     // clang-format off
     soci::row result;
@@ -135,7 +134,10 @@ const user_attribute_type RdbController::queryUserInfoGet(const nlohmann::json &
     st.execute(true);
     // clang-format on
 
-    result >> register_day >> register_code >> gender >> isc_type >> isc_code >> location >> age_limit;
+    long long register_day_ll;
+
+    result >> register_day_ll >> register_code >> gender >> isc_type >> isc_code >> location >> age_limit;
+    register_day = static_cast<timestamp_t>(register_day_ll);
 
     user_info.uid = uid;
     user_info.register_day = register_day;
@@ -148,8 +150,8 @@ const user_attribute_type RdbController::queryUserInfoGet(const nlohmann::json &
 
   } catch (soci::mysql_soci_error const &e) {
     logger::ERROR("MySQL error: {}", e.what());
-  } catch (...) {
-    logger::ERROR("Unexpected error at `queryUserInfoGet`");
+  } catch (exception & e) {
+    logger::ERROR("Unexpected error at `queryUserInfoGet` {}", e.what());
   }
   return user_info;
 }
@@ -158,24 +160,34 @@ const vector<user_ledger_type> RdbController::queryUserScopeGet(const nlohmann::
   vector<user_ledger_type> user_ledger_list;
   try {
     // TODO: uid뿐만 아닌 다른 것도 주어졌을 경우의 상황 처리 필요
-    base58_type uid = json::get<string>(where_json, "uid").value();
-    string pid = json::get<string>(where_json, "pid").value();
-    short var_type = static_cast<short>(stoi(json::get<string>(where_json, "type").value()));
-    string var_name = json::get<string>(where_json, "name").value();
-    bool notag = json::get<bool>(where_json, "notag").value();
+    auto uid_json = json::get<string>(where_json, "uid");
+    auto pid_json = json::get<string>(where_json, "pid");
+    auto var_type_json = json::get<string>(where_json, "type");  // int
+    auto var_name_json = json::get<string>(where_json, "name");
+    auto notag_json = json::get<bool>(where_json, "notag");
 
-    string var_value, tag;
+    base58_type uid;
+    string var_name, var_value, tag, pid;
     timestamp_t up_time;
     block_height_type up_block;
+    int var_type;
+    bool notag;
+
+    uid = uid_json.value();
 
     // clang-format off
     soci::row result;
     soci::session db_session(RdbController::pool());
-    soci::statement st = (db_session.prepare << "SELECT var_name, var_value, var_type, up_time, up_block, tag, pid FROM user_scope WHERE uid = :uid", soci::use(uid, "uid"), soci::into(result));
+    soci::statement st = (db_session.prepare << "SELECT var_name, var_value, var_type, up_time, up_block, tag, pid FROM user_scope WHERE var_owner = :var_owner", soci::use(uid, "var_owner"), soci::into(result));
     st.execute(true);
     // clang-format on
     do {
-      result >> var_name >> var_value >> var_type >> up_time >> up_block >> tag >> pid;
+      long long up_time_ll;
+      int up_block_int;
+
+      result >> var_name >> var_value >> var_type >> up_time_ll >> up_block_int >> tag >> pid;
+      up_time = static_cast<timestamp_t>(up_time_ll);
+      up_block = static_cast<block_height_type>(up_block_int);
 
       user_ledger_type user_ledger;
       user_ledger.var_name = var_name;
@@ -191,8 +203,8 @@ const vector<user_ledger_type> RdbController::queryUserScopeGet(const nlohmann::
 
   } catch (soci::mysql_soci_error const &e) {
     logger::ERROR("MySQL error: {}", e.what());
-  } catch (...) {
-    logger::ERROR("Unexpected error at `queryUserScopeGet`");
+  } catch (exception & e) {
+    logger::ERROR("Unexpected error at `queryUserScopeGet` {}", e.what());
   }
   return user_ledger_list;
 }
@@ -203,7 +215,7 @@ const vector<contract_ledger_type> RdbController::queryContractScopeGet(const nl
     // TODO: cid뿐만 아닌 다른 것도 주어졌을 경우의 상황 처리 필요
     contract_id_type cid = json::get<string>(where_json, "cid").value();
     string pid = json::get<string>(where_json, "pid").value();
-    short var_type = static_cast<short>(stoi(json::get<string>(where_json, "type").value()));
+    int var_type = stoi(json::get<string>(where_json, "type").value());
     string var_name = json::get<string>(where_json, "name").value();
     bool notag = json::get<bool>(where_json, "notag").value();
 
@@ -218,7 +230,10 @@ const vector<contract_ledger_type> RdbController::queryContractScopeGet(const nl
     st.execute(true);
     // clang-format on
     do {
+      long long up_time_ll;
+
       result >> var_name >> var_value >> var_type >> var_info >> up_time >> up_block >> pid;
+      up_time = static_cast<timestamp_t>(up_time_ll);
 
       contract_ledger_type contract_ledger;
       contract_ledger.var_name = var_name;
@@ -234,8 +249,8 @@ const vector<contract_ledger_type> RdbController::queryContractScopeGet(const nl
 
   } catch (soci::mysql_soci_error const &e) {
     logger::ERROR("MySQL error: {}", e.what());
-  } catch (...) {
-    logger::ERROR("Unexpected error at `queryContractScopeGet`");
+  } catch (exception & e) {
+    logger::ERROR("Unexpected error at `queryContractScopeGet` {}", e.what());
   }
   return contract_ledger_list;
 }
@@ -246,8 +261,8 @@ const Block RdbController::queryBlockGet(const nlohmann::json &where_json) {
     // TODO: 현재 kv에서의 block backup시 저장되는 msg_block을 가지고 사용 중. 추후 rdb에서 구현
   } catch (soci::mysql_soci_error const &e) {
     logger::ERROR("MySQL error: {}", e.what());
-  } catch (...) {
-    logger::ERROR("Unexpected error at `queryBlockGet`");
+  } catch (exception & e) {
+    logger::ERROR("Unexpected error at `queryBlockGet` {}", e.what());
   }
   return block;
 }
@@ -268,8 +283,8 @@ const string RdbController::queryTxGet(const nlohmann::json &where_json) {
 
   } catch (soci::mysql_soci_error const &e) {
     logger::ERROR("MySQL error: {}", e.what());
-  } catch (...) {
-    logger::ERROR("Unexpected error at `queryTxGet`");
+  } catch (exception & e) {
+    logger::ERROR("Unexpected error at `queryTxGet` {}", e.what());
   }
   return tx_agg_cbor;
 }
@@ -298,8 +313,8 @@ const vector<base58_type> RdbController::queryBlockScan(const nlohmann::json &wh
 
   } catch (soci::mysql_soci_error const &e) {
     logger::ERROR("MySQL error: {}", e.what());
-  } catch (...) {
-    logger::ERROR("Unexpected error at `queryBlockScan`");
+  } catch (exception & e) {
+    logger::ERROR("Unexpected error at `queryBlockScan` {}", e.what());
   }
   return block_id_list;
 }
@@ -328,8 +343,8 @@ const vector<base58_type> RdbController::queryTxScan(const nlohmann::json &where
 
   } catch (soci::mysql_soci_error const &e) {
     logger::ERROR("MySQL error: {}", e.what());
-  } catch (...) {
-    logger::ERROR("Unexpected error at `queryTxScan`");
+  } catch (exception & e) {
+    logger::ERROR("Unexpected error at `queryTxScan` {}", e.what());
   }
   return tx_id_list;
 }

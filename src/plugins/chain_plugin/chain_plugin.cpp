@@ -107,6 +107,8 @@ public:
   unique_ptr<TransactionPool> transaction_pool;
   unique_ptr<tsce::ContractEngine> contract_engine;
 
+  unique_ptr<boost::asio::steady_timer> block_check_timer;
+
   string dbms;
   string table_name;
   string db_user_id;
@@ -128,6 +130,7 @@ public:
     contract_engine = make_unique<tsce::ContractEngine>();
 
     contract_engine->attachReadInterface([this](const nlohmann::json &req_query) { return processRequestQuery(req_query); });
+    block_check_timer = make_unique<boost::asio::steady_timer>(app().getIoContext());
 
     auto world_id = chain->getValueByKey(DataType::WORLD, "latest_world_id");
     if (!world_id.empty()) {
@@ -183,7 +186,7 @@ public:
     }
 
     block_push_result_type push_result = chain->pushBlock(input_block);
-    if (push_result.height == 0) {
+    if (push_result.block_height == 0) {
       logger::ERROR("Block input fail: height 0");
       return;
     }
@@ -217,7 +220,9 @@ public:
     block_height_type block_height = static_cast<block_height_type>(stoi(json::get<string>(result["block"], "height").value()));
     UnresolvedBlock updated_UR_block = chain->getUnresolvedBlock(block_id, block_height);
 
-    if (updated_UR_block.block.getBlockId() != chain->getCurrentHeadId()) {
+    cout<<"result json : "<<endl<<result.dump()<<endl;
+
+    if ((block_id != chain->getHeadInfo().block_id) && (!chain->getHeadInfo().block_id.empty())) {
       chain->moveHead(updated_UR_block.block.getPrevBlockId(), updated_UR_block.block.getHeight() - 1);
     }
 
@@ -279,38 +284,47 @@ public:
     chain->setUnresolvedBlock(updated_UR_block);
     chain->updateStateTree(updated_UR_block);
     chain->saveBackupResult(updated_UR_block);
+
+    chain->moveHead(updated_UR_block.block.getBlockId(), updated_UR_block.block.getHeight());
   }
 
   nlohmann::json processRequestQuery(const nlohmann::json &request) {
-    string type = json::get<string>(request, "type").value();
-    nlohmann::json where_json = request["where"];
-    if (type == "world.get") {
-      return chain->queryWorldGet();
-    } else if (type == "chain.get") {
-      return chain->queryChainGet();
-    } else if (type == "contract.scan") {
-      return chain->queryContractScan(where_json);
-    } else if (type == "contract.get") {
-      return chain->queryContractGet(where_json);
-    } else if (type == "user.cert.get") {
-      return chain->queryCertGet(where_json);
-    } else if (type == "user.info.get") {
-      return chain->queryUserInfoGet(where_json);
-    } else if (type == "user.scope.get") {
-      return chain->queryUserScopeGet(where_json);
-    } else if (type == "contract.scope.get") {
-      return chain->queryContractScopeGet(where_json);
-    } else if (type == "block.get") {
-      return chain->queryBlockGet(where_json);
-    } else if (type == "tx.get") {
-      return chain->queryTxGet(where_json);
-    } else if (type == "block.scan") {
-      return chain->queryBlockScan(where_json);
-    } else if (type == "tx.scan") {
-      return chain->queryTxScan(where_json);
-    } else {
-      logger::ERROR("URBP, Something error in query process");
-      return request;
+    try {
+      string type = json::get<string>(request, "type").value();
+      auto where_json = json::get<nlohmann::json>(request, "where");
+
+      if (type == "world.get") {
+        return chain->queryWorldGet();
+      } else if (type == "chain.get") {
+        return chain->queryChainGet();
+      } else if (type == "contract.scan") {
+        return chain->queryContractScan(where_json.value());
+      } else if (type == "contract.get") {
+        return chain->queryContractGet(where_json.value());
+      } else if (type == "user.cert.get") {
+        return chain->queryCertGet(where_json.value());
+      } else if (type == "user.info.get") {
+        return chain->queryUserInfoGet(where_json.value());
+      } else if (type == "user.scope.get") {
+        return chain->queryUserScopeGet(where_json.value());
+      } else if (type == "contract.scope.get") {
+        return chain->queryContractScopeGet(where_json.value());
+      } else if (type == "block.get") {
+        return chain->queryBlockGet(where_json.value());
+      } else if (type == "tx.get") {
+        return chain->queryTxGet(where_json.value());
+      } else if (type == "block.scan") {
+        return chain->queryBlockScan(where_json.value());
+      } else if (type == "tx.scan") {
+        return chain->queryTxScan(where_json.value());
+      } else {
+        logger::ERROR("URBP, Something error in query process");
+        return request;
+      }
+    } catch (nlohmann::json::parse_error &e) {
+      logger::ERROR("json error: {}", e.what());
+    } catch (...) {
+      logger::ERROR("Unexpected error at `processRequestQuery`");
     }
   }
 
@@ -320,6 +334,7 @@ public:
 
   void start() {
     // TODO: msg 관련 요청 감시 (block, ping, request, etc..)
+    monitorUnresolvedBlockProcess();
 
     { // test code start
       // 테스트 시에는 임의로 block_input_test.json의 블록들을 저장하는것부터 시작.
@@ -346,7 +361,7 @@ public:
         blocks[i].initialize(input_block_json[i]);
 
         block_push_result_type push_result = chain->pushBlock(blocks[i]);
-        if (push_result.height == 0) {
+        if (push_result.block_height == 0) {
           logger::ERROR("Block input fail: height 0");
           return;
         }
@@ -366,8 +381,35 @@ public:
           chain->applyUserCertToRDB(resolved_block.user_cert_list);
           chain->applyContractToRDB(resolved_block.contract_list);
         }
+
+        sleep(1);
       }
     } // test code end
+  }
+
+  void monitorUnresolvedBlockProcess() {
+    logger::INFO("monitorUnresolvedBlockProcess called");
+    block_check_timer->expires_from_now(BLOCK_POOL_CHECK_PERIOD);
+    block_check_timer->async_wait([this](boost::system::error_code ec) {
+      if (!ec) {
+        block_pool_info_type longest_chain_info = chain->getLongestChainInfo();
+        block_pool_info_type head_info = chain->getHeadInfo();
+
+        if (longest_chain_info.block_height > head_info.block_height) {
+          Block unprocessed_block = chain->getLowestUnprocessedBlock();
+          std::optional<nlohmann::json> result = contract_engine->procBlock(unprocessed_block);
+          // TODO: result query를 위해 procBlock을 수행하는 동안 block pool을 pending 시키거나 할 필요성 검토
+
+          if (result != std::nullopt) {
+            processTxResult(result.value());
+          }
+        }
+
+        monitorUnresolvedBlockProcess();
+      } else {
+        logger::ERROR("Error from block_check_timer: {}", ec.message());
+      }
+    });
   }
 
   // block verify 코드. chain의 접근권한이 필요함. 정리 필요.

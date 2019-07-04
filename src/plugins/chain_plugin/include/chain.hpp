@@ -104,27 +104,26 @@ public:
   int getVarType(const string &var_owner, const string &var_name, const block_height_type height, const int vec_idx);
   bool checkUniqueVarName(const string &var_owner, const string &var_name, const block_height_type height, const int vec_idx);
 
-  block_push_result_type pushBlock(Block &block);
+  block_push_result_type pushBlock(Block &new_block);
   UnresolvedBlock getUnresolvedBlock(const base58_type &block_id, const block_height_type block_height);
   void setUnresolvedBlock(const UnresolvedBlock &unresolved_block);
-  bool resolveBlock(Block &block, UnresolvedBlock &resolved_result);
+  bool resolveBlock(Block &new_block, UnresolvedBlock &resolved_result);
   void setPool(const base64_type &last_block_id, block_height_type last_height, timestamp_t last_time, const base64_type &last_hash,
                const base64_type &prev_block_id);
 
   search_result_type findUserLedgerFromPoint(const string &pid, block_height_type height, int vec_idx);
   search_result_type findContractLedgerFromPoint(const string &pid, block_height_type height, int vec_idx);
+  Block &getLowestUnprocessedBlock();
 
   bool isUserId(const string &id);
   bool isContractId(const string &id);
 
-  // State tree
+  // State tree, Head
 private:
   StateTree m_us_tree; // user scope state tree
   StateTree m_cs_tree; // contract scope state tree
-  base64_type m_head_id;
-  block_height_type m_head_height;
-  int m_head_deq_idx;
-  int m_head_vec_idx;
+  block_pool_info_type m_head_info;
+  block_pool_info_type m_longest_chain_info;
 
 public:
   void setupStateTree();
@@ -134,8 +133,8 @@ public:
   user_ledger_type findUserLedgerFromHead(UnresolvedBlock &UR_block, const string &pid);
   contract_ledger_type findContractLedgerFromHead(UnresolvedBlock &UR_block, const string &pid);
   void moveHead(const base58_type &target_block_id, const block_height_type target_block_height);
-  base58_type getCurrentHeadId();
-  block_height_type getCurrentHeadHeight();
+  block_pool_info_type getHeadInfo();
+  block_pool_info_type getLongestChainInfo();
   bytes getUserStateRoot();
   bytes getContractStateRoot();
 };

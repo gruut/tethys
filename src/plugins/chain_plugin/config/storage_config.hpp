@@ -29,6 +29,7 @@ namespace config {
         constexpr uint32_t MAX_UNICAST_MISSING_BLOCK = 4;
         constexpr uint32_t DB_SESSION_POOL_SIZE = 10;
         constexpr uint32_t BP_INTERVAL = 10;
+        constexpr auto BLOCK_POOL_CHECK_PERIOD = std::chrono::milliseconds(500);
 
 // KNOWLEDGE
 

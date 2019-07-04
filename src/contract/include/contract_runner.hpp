@@ -44,7 +44,7 @@ namespace tethys::tsce {
       for (auto &each_attr : attr_list) {
         std::string key = prefix;
         key.append(".").append(each_attr.name);
-        m_data_manager.updateValue(key, each_attr.value);
+        m_data_manager.updateValue(key, each_attr.string_value);
       }
 
     }

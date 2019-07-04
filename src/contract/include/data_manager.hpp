@@ -16,11 +16,13 @@ namespace tethys::tsce {
 
   struct DataAttribute {
     std::string name;
-    std::string value;
+    std::string string_value;
+    bool bool_value;
 
     DataAttribute() = default;
 
-    DataAttribute(const std::string &name_, const std::string &value_) : name(name_), value(value_) {}
+    DataAttribute(const std::string &name_, const std::string &value_) : name(name_), string_value(value_) {}
+    DataAttribute(const std::string &name_, const bool &value_) : name(name_), bool_value(value_) {}
   };
 
   struct UserScopeRecord {

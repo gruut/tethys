@@ -56,7 +56,7 @@ namespace tethys::tsce {
           for (auto &each_attr : scope_values) {
             std::string key = "$";
             key.append(scope).append(".").append(each_attr.name);
-            data_storage.updateValue(key, each_attr.value);
+            data_storage.updateValue(key, each_attr.string_value);
           }
         }
 
@@ -64,19 +64,19 @@ namespace tethys::tsce {
           for (auto &each_attr : scope_values) {
             std::string key = "$.";
             key.append(id_as).append(".").append(each_attr.name);
-            data_storage.updateValue(key, each_attr.value);
+            data_storage.updateValue(key, each_attr.string_value);
           }
         }
 
         if(!name_as.empty()) {
 
           if(scope_values.size() == 1) {
-            data_storage.updateValue("$." + name_as, scope_values[0].value);
+            data_storage.updateValue("$." + name_as, scope_values[0].string_value);
           } else {
             for (auto &each_attr : scope_values) {
               std::string key = "$.";
               key.append(name_as).append(".").append(each_attr.name);
-              data_storage.updateValue(key, each_attr.value);
+              data_storage.updateValue(key, each_attr.string_value);
             }
           }
         }

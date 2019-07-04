@@ -45,14 +45,14 @@ struct DataType {
 
 enum class UniqueCheck : int { NO_VALUE = -1, NOT_UNIQUE = -2 };
 
+constexpr auto TRANSACTION_ID_TYPE_SIZE = 32;
+constexpr auto ALPHANUMERIC_ID_TYPE_SIZE = 8;
+
 using string = std::string;
 using bytes = std::vector<uint8_t>;
 using hash_t = std::vector<uint8_t>;
 using timestamp_t = uint64_t;
 using block_height_type = uint64_t;
-
-constexpr auto TRANSACTION_ID_TYPE_SIZE = 32;
-constexpr auto ALPHANUMERIC_ID_TYPE_SIZE = 8;
 
 using alphanumeric_type = std::string;
 using base58_type = std::string;
@@ -110,33 +110,47 @@ using world_type = struct WorldState {
   string eden_sig;
 };
 
-using proof_type = struct _proof_type {
+using proof_type = struct ProofType {
   base58_type block_id;
   std::vector<std::pair<bool, std::string>> siblings;
 };
 
-using block_push_result_type = struct _block_push_result_type {
+using block_push_result_type = struct BlockPushResultType {
+  base58_type block_id;
+  block_height_type block_height;
+  int deq_idx;
+  int vec_idx;
   bool linked;
   bool duplicated;
-  block_height_type height;
+
+  BlockPushResultType() = default;
 };
 
-using block_info_type = struct _block_info_type {
+using block_info_type = struct BlockInfoType {
   base64_type tx_agg_cbor;
   base58_type block_id;
   int tx_pos; // static_merkle_tree에서의 idx
   base64_type tx_output;
 
-  _block_info_type() = default;
-  _block_info_type(base64_type tx_agg_cbor_, base58_type block_id_) : tx_agg_cbor(tx_agg_cbor_), block_id(block_id_) {
+  BlockInfoType() = default;
+  BlockInfoType(base64_type tx_agg_cbor_, base58_type block_id_) : tx_agg_cbor(tx_agg_cbor_), block_id(block_id_) {
     tx_pos = -1;
     tx_output = "";
   }
-  _block_info_type(base64_type tx_agg_cbor_, base58_type block_id_, int tx_pos_, base64_type tx_output_)
+  BlockInfoType(base64_type tx_agg_cbor_, base58_type block_id_, int tx_pos_, base64_type tx_output_)
       : tx_agg_cbor(tx_agg_cbor_), block_id(block_id_), tx_pos(tx_pos_), tx_output(tx_output_) {}
 };
 
-using result_query_info_type = struct _result_query_info_type {
+using block_pool_info_type = struct BlockPoolInfoType {
+  base58_type block_id{};
+  block_height_type block_height{0};
+  int deq_idx{-1};
+  int vec_idx{-1};
+
+  BlockPoolInfoType() = default;
+};
+
+using result_query_info_type = struct ResultQueryInfoType {
   base58_type block_id;
   block_height_type block_height;
   base58_type tx_id;
@@ -150,7 +164,7 @@ using result_query_info_type = struct _result_query_info_type {
   int fee_author;
   int fee_user;
 
-  _result_query_info_type() = default;
+  ResultQueryInfoType() = default;
 };
 
 using self_info_type = struct SelfInfo {
