@@ -4,17 +4,17 @@
 
 namespace tethys::tsce {
 
-  void Datamap::set(const std::string &key, const std::string &vv) {
-    if (key.empty())
-      return;
+void Datamap::set(const std::string &key, const std::string &vv) {
+  if (key.empty())
+    return;
 
-    auto ret = m_storage.insert({key, vv}); // as new
-    if (!ret.second) { // as update
-      ret.first->second = vv;
-    }
+  auto ret = m_storage.insert({key, vv}); // as new
+  if (!ret.second) {                      // as update
+    ret.first->second = vv;
   }
+}
 
-  void Datamap::clear() {
-    m_storage.clear();
-  }
+void Datamap::clear() {
+  m_storage.clear();
+}
 }

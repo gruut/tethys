@@ -1,15 +1,15 @@
 #define BOOST_TEST_MODULE runner_test
 
-#include <iostream>
-#include <boost/test/included/unit_test.hpp>
+#include "../../../plugins/chain_plugin/structure/block.hpp"
 #include "../../include/engine.hpp"
 #include "../include/dummy_storage.hpp"
-#include "../../../plugins/chain_plugin/structure/block.hpp"
+#include <boost/test/included/unit_test.hpp>
+#include <iostream>
 
 BOOST_AUTO_TEST_SUITE(runner_test)
 
 BOOST_AUTO_TEST_CASE(simple_run) {
-
+  // clang-format off
   tethys::tsce::ContractEngine test_engine;
   test_engine.attachReadInterface(read_storage_interface);
 
@@ -127,5 +127,5 @@ BOOST_AUTO_TEST_CASE(simple_run) {
 
   BOOST_TEST(true);
 }
-
+// clang-format on
 BOOST_AUTO_TEST_SUITE_END()

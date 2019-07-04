@@ -1,7 +1,7 @@
 #define BOOST_TEST_MODULE component_test
 
-#include <iostream>
 #include <boost/test/included/unit_test.hpp>
+#include <iostream>
 
 #include "../../include/condition_manager.hpp"
 #include "../../include/data_manager.hpp"
@@ -21,21 +21,19 @@ BOOST_AUTO_TEST_CASE(simple_compare) {
 
   xml_doc.Parse(compare_condition.c_str());
 
-  if(xml_doc.Error()) {
+  if (xml_doc.Error()) {
     BOOST_TEST(false);
-  }
-  else {
+  } else {
 
-    tinyxml2::XMLElement* doc_node = xml_doc.RootElement();
+    tinyxml2::XMLElement *doc_node = xml_doc.RootElement();
 
     ConditionManager condition_manager;
     DataManager data_manager;
 
-    data_manager.updateValue("$tt","20");
-    data_manager.updateValue("$tt2","20");
+    data_manager.updateValue("$tt", "20");
+    data_manager.updateValue("$tt2", "20");
 
-    BOOST_TEST(condition_manager.evalue(doc_node,data_manager));
-
+    BOOST_TEST(condition_manager.evalue(doc_node, data_manager));
   }
 }
 
@@ -67,12 +65,12 @@ BOOST_AUTO_TEST_CASE(simple_endorser) {
   xml_doc_1.Parse(endorser_condition_1.c_str());
   xml_doc_2.Parse(endorser_condition_2.c_str());
 
-  if(xml_doc_1.Error() || xml_doc_2.Error()) {
+  if (xml_doc_1.Error() || xml_doc_2.Error()) {
     BOOST_TEST(false);
   } else {
 
-    tinyxml2::XMLElement* doc_node_1 = xml_doc_1.RootElement();
-    tinyxml2::XMLElement* doc_node_2 = xml_doc_2.RootElement();
+    tinyxml2::XMLElement *doc_node_1 = xml_doc_1.RootElement();
+    tinyxml2::XMLElement *doc_node_2 = xml_doc_2.RootElement();
 
     ConditionManager condition_manager_1;
     DataManager data_manager_1;
@@ -80,7 +78,7 @@ BOOST_AUTO_TEST_CASE(simple_endorser) {
     data_manager_1.updateValue("$tx.endorser.count", "1");
     data_manager_1.updateValue("$tx.endorser[0].id", "bt1fDSTLzc1AdSoxXTy6bfAG5NZFHJBThEHjjWYHN2H");
 
-    BOOST_TEST(condition_manager_1.evalue(doc_node_1,data_manager_1));
+    BOOST_TEST(condition_manager_1.evalue(doc_node_1, data_manager_1));
 
     ConditionManager condition_manager_2;
     DataManager data_manager_2;
@@ -88,10 +86,8 @@ BOOST_AUTO_TEST_CASE(simple_endorser) {
     data_manager_2.updateValue("$tx.endorser.count", "1");
     data_manager_2.updateValue("$tx.endorser[0].id", "bt1fDSTLzc1AdSoxXTy6bfAG5NZFHJBThEHjjWYHN2H");
 
-    BOOST_TEST(!condition_manager_2.evalue(doc_node_2,data_manager_2));
-
+    BOOST_TEST(!condition_manager_2.evalue(doc_node_2, data_manager_2));
   }
-
 }
 
 BOOST_AUTO_TEST_CASE(simple_user) {
@@ -109,12 +105,11 @@ BOOST_AUTO_TEST_CASE(simple_user) {
 
   xml_doc.Parse(user_condition.c_str());
 
-  if(xml_doc.Error()) {
+  if (xml_doc.Error()) {
     BOOST_TEST(false);
-  }
-  else {
+  } else {
 
-    tinyxml2::XMLElement* doc_node = xml_doc.RootElement();
+    tinyxml2::XMLElement *doc_node = xml_doc.RootElement();
 
     ConditionManager condition_manager;
     DataManager data_manager;
@@ -123,8 +118,7 @@ BOOST_AUTO_TEST_CASE(simple_user) {
     data_manager.updateValue("$user", "bt1fDSTLzc1AdSoxXTy6bfAG5NZFHJBThEHjjWYHN2H");
     data_manager.updateValue("$user.birthday", "1980-08-15");
 
-    BOOST_TEST(condition_manager.evalue(doc_node,data_manager));
-
+    BOOST_TEST(condition_manager.evalue(doc_node, data_manager));
   }
 }
 
@@ -143,21 +137,19 @@ BOOST_AUTO_TEST_CASE(simple_time) {
 
   xml_doc.Parse(time_condition.c_str());
 
-  if(xml_doc.Error()) {
+  if (xml_doc.Error()) {
     BOOST_TEST(false);
-  }
-  else {
+  } else {
 
-    tinyxml2::XMLElement* doc_node = xml_doc.RootElement();
+    tinyxml2::XMLElement *doc_node = xml_doc.RootElement();
 
     ConditionManager condition_manager;
     DataManager data_manager;
 
-    //data_manager.updateValue("$time", "2019-01-02 23:59:59");
+    // data_manager.updateValue("$time", "2019-01-02 23:59:59");
     data_manager.updateValue("$time", "1547542292"); // 2019-01-15 ~
 
-    BOOST_TEST(condition_manager.evalue(doc_node,data_manager));
-
+    BOOST_TEST(condition_manager.evalue(doc_node, data_manager));
   }
 }
 
@@ -203,17 +195,15 @@ BOOST_AUTO_TEST_CASE(simple_certificate) {
 </condition>
 )";
 
-
   tinyxml2::XMLDocument xml_doc;
 
   xml_doc.Parse(cert_certificate.c_str());
 
-  if(xml_doc.Error()) {
+  if (xml_doc.Error()) {
     BOOST_TEST(false);
-  }
-  else {
+  } else {
 
-    tinyxml2::XMLElement* doc_node = xml_doc.RootElement();
+    tinyxml2::XMLElement *doc_node = xml_doc.RootElement();
 
     ConditionManager condition_manager;
     DataManager data_manager;
@@ -243,11 +233,8 @@ wJqkw2WHOoNK3DJHznphy9LiuwmV9ZQY3Z2LO3wJcIS5YqYQrEczbzyGKS0F3hz7
 
     data_manager.updateValue("$.pk", certicate_str);
 
-    BOOST_TEST(condition_manager.evalue(doc_node,data_manager));
-
+    BOOST_TEST(condition_manager.evalue(doc_node, data_manager));
   }
 }
-
-
 
 BOOST_AUTO_TEST_SUITE_END()

@@ -5,14 +5,13 @@
 
 namespace tethys::tsce {
 
-  class EndorserHandler : public BaseConditionHandler {
-  public:
-    EndorserHandler() = default;
+class EndorserHandler : public BaseConditionHandler {
+public:
+  EndorserHandler() = default;
 
-    bool evalue(tinyxml2::XMLElement *doc_node, DataManager &data_manager) override;
+  bool evalue(tinyxml2::XMLElement *doc_node, DataManager &data_manager) override;
+};
 
-  };
-
-}
+} // namespace tethys::tsce
 
 #endif

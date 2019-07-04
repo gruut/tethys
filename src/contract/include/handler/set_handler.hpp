@@ -1,27 +1,27 @@
 #ifndef TETHYS_SCE_SET_HANDLER_HPP
 #define TETHYS_SCE_SET_HANDLER_HPP
 
-#include "../data_manager.hpp"
 #include "../condition_manager.hpp"
+#include "../data_manager.hpp"
 
 namespace tethys::tsce {
 
-  enum class SetType : int {
-    USER_JOIN,
-    USER_CERT,
-    V_CREATE,
-    V_INCINERATE,
-    V_TRANSFER,
-    SCOPE_USER,
-    SCOPE_CONTRACT,
-    CONTRACT_NEW,
-    CONTRACT_DISABLE,
-    TRADE_ITEM,
-    TRADE_V,
-    RUN_QUERY,
-    RUN_CONTRACT,
-    NONE
-  };
+enum class SetType : int {
+  USER_JOIN,
+  USER_CERT,
+  V_CREATE,
+  V_INCINERATE,
+  V_TRANSFER,
+  SCOPE_USER,
+  SCOPE_CONTRACT,
+  CONTRACT_NEW,
+  CONTRACT_DISABLE,
+  TRADE_ITEM,
+  TRADE_V,
+  RUN_QUERY,
+  RUN_CONTRACT,
+  NONE
+};
 
 // clang-format off
   const std::map<std::string, SetType> SET_TYPE_MAP{
@@ -41,20 +41,17 @@ namespace tethys::tsce {
   };
 // clang-format on
 
-  class SetHandler {
-  public:
-    SetHandler() = default;
+class SetHandler {
+public:
+  SetHandler() = default;
 
-    std::vector<nlohmann::json> parseSet(std::vector<std::pair<tinyxml2::XMLElement *, std::string>> &set_nodes,
-                                         ConditionManager &condition_manager, DataManager &data_manager);
+  std::vector<nlohmann::json> parseSet(std::vector<std::pair<tinyxml2::XMLElement *, std::string>> &set_nodes,
+                                       ConditionManager &condition_manager, DataManager &data_manager);
 
-  private:
+private:
+  std::optional<nlohmann::json> handle(SetType set_type, tinyxml2::XMLElement *set_node, DataManager &data_manager, std::string &error);
+};
 
-    std::optional<nlohmann::json>
-    handle(SetType set_type, tinyxml2::XMLElement *set_node, DataManager &data_manager, std::string &error);
-
-  };
-
-}
+} // namespace tethys::tsce
 
 #endif

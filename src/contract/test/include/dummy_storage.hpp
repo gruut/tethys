@@ -5,32 +5,45 @@
 
 using namespace tethys;
 
-std::function<nlohmann::json(nlohmann::json&)> read_storage_interface = [](nlohmann::json& query){
-
+std::function<nlohmann::json(nlohmann::json &)> read_storage_interface = [](nlohmann::json &query) {
+  // clang-format off on
   nlohmann::json result = R"({
         "name": [],
         "data": []
     })"_json;
 
-  std::string query_type = json::get<std::string>(query,"type").value_or("");
+  std::string query_type = json::get<std::string>(query, "type").value_or("");
 
-  if(query_type == "world.get") {
+  if (query_type == "world.get") {
 
-    result["name"] = {"world_id","created_time","creator_id","creator_pk","authority_id","authority_pk","keyc_name","keyc_initial_amount","allow_mining","mining_rule","allow_anonymous_user","join_fee"};
+    result["name"] = {"world_id",  "created_time",        "creator_id",   "creator_pk",  "authority_id",         "authority_pk",
+                      "keyc_name", "keyc_initial_amount", "allow_mining", "mining_rule", "allow_anonymous_user", "join_fee"};
 
-    nlohmann::json record = {"TETHYS19","0","5g9CMGLSXbNAKJMbWqBNp7rm78BJCMKhLzZVukBNGHSF","","5g9CMGLSXbNAKJMbWqBNp7rm78BJCMKhLzZVukBNGHSF","","THY","100000000000","false","","true","10"};
+    nlohmann::json record = {"TETHYS19",
+                             "0",
+                             "5g9CMGLSXbNAKJMbWqBNp7rm78BJCMKhLzZVukBNGHSF",
+                             "",
+                             "5g9CMGLSXbNAKJMbWqBNp7rm78BJCMKhLzZVukBNGHSF",
+                             "",
+                             "THY",
+                             "100000000000",
+                             "false",
+                             "",
+                             "true",
+                             "10"};
 
     result["data"].emplace_back(record);
 
-  } else if(query_type == "chain.get") {
+  } else if (query_type == "chain.get") {
 
-    result["name"] = {"chain_id", "created_time", "creator_id","creator_pk","allow_custom_contract","allow_oracle","allow_tag","allow_heavy_contract"};
+    result["name"] = {"chain_id",     "created_time", "creator_id",          "creator_pk", "allow_custom_contract",
+                      "allow_oracle", "allow_tag",    "allow_heavy_contract"};
 
     nlohmann::json record = {"SEOUL@KR", "1", "5g9CMGLSXbNAKJMbWqBNp7rm78BJCMKhLzZVukBNGHSF", "", "false", "false", "false", "false"};
 
     result["data"].emplace_back(record);
 
-  } else if(query_type == "contract.get") {
+  } else if (query_type == "contract.get") {
 
     std::string test_contract = R"(<contract>
   <head>
@@ -65,23 +78,24 @@ std::function<nlohmann::json(nlohmann::json&)> read_storage_interface = [](nlohm
 
     result["data"].emplace_back(record);
 
-  } else if(query_type == "user.info.get") {
+  } else if (query_type == "user.info.get") {
 
-    result["name"] = {"register_day", "register_code", "gender", "isc_type", "isc_code", "location","age_limit"};
+    result["name"] = {"register_day", "register_code", "gender", "isc_type", "isc_code", "location", "age_limit"};
 
     nlohmann::json record = {"1980-08-15", "", "MALE", "", "", "", ""};
 
     result["data"].emplace_back(record);
-  } else if(query_type == "user.scope.get") {
+  } else if (query_type == "user.scope.get") {
 
-    result["name"] = {"var_name","var_value","var_type","up_time","up_block","tag","pid"};
+    result["name"] = {"var_name", "var_value", "var_type", "up_time", "up_block", "tag", "pid"};
 
-    if(json::get<std::string>(query["where"],"name").value_or("") == "THY" && json::get<std::string>(query["where"],"type").value_or("") == "KEYC" && json::get<bool>(query["where"],"notag").value_or(false)) {
+    if (json::get<std::string>(query["where"], "name").value_or("") == "THY" &&
+        json::get<std::string>(query["where"], "type").value_or("") == "KEYC" && json::get<bool>(query["where"], "notag").value_or(false)) {
       nlohmann::json record = {"THY", "1000", "KEYC", "0", "0", "", "VGhlIHF1aWNrIGJyb3duIGZveCBqdW1wcyBvdmVyIDE="};
       result["data"].emplace_back(record);
     }
 
-    if(json::get<std::string>(query["where"],"pid").value_or("") == "8CJ8YhBwwgNGKAdzGl1qkKstJi+rUQ7ow8gMHIF3RHU=") {
+    if (json::get<std::string>(query["where"], "pid").value_or("") == "8CJ8YhBwwgNGKAdzGl1qkKstJi+rUQ7ow8gMHIF3RHU=") {
       std::string tag = R"(<tag>
   <info>
     <name>Fafa's Love</name>
@@ -98,12 +112,9 @@ std::function<nlohmann::json(nlohmann::json&)> read_storage_interface = [](nlohm
     }
 
   } else {
-
-
-
   }
-
+  // clang-format on
   return result;
 };
 
-#endif //TETHYS_SCE_DUMMY_STORAGE_HPP
+#endif // TETHYS_SCE_DUMMY_STORAGE_HPP
