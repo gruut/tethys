@@ -4,7 +4,7 @@
 namespace tethys {
 void SupportSigPool::add(const SupportSigInfo &ssig_info) {
   unique_lock<shared_mutex> lock(pool_mutex);
-  ssig_pool.emplace(ssig_info.supporter_id, ssig_info);
+  ssig_pool.emplace(ssig_info.id, ssig_info);
 }
 
 vector<SupportSigInfo> SupportSigPool::fetchAll() {
