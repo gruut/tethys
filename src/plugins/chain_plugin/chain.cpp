@@ -31,6 +31,7 @@ public:
 
     self.saveWorld(world);
     self.saveLatestWorldId(world.world_id);
+    self.setKeycName(world.keyc_name);
   }
 
   optional<vector<string>> initChain(nlohmann::json &chain_state) {
@@ -201,6 +202,10 @@ void Chain::initWorld(nlohmann::json &world_state) {
 
 optional<vector<string>> Chain::initChain(nlohmann::json &chain_state) {
   return impl->initChain(chain_state);
+}
+
+void Chain::setKeycName(const string &keyc_name) {
+  m_keyc_name = keyc_name;
 }
 
 Chain::Chain(string_view dbms, string_view table_name, string_view db_user_id, string_view db_password) {
@@ -704,7 +709,7 @@ block_height_type Chain::getLatestResolvedHeight() {
 bool Chain::queryUserJoin(UnresolvedBlock &UR_block, nlohmann::json &option, result_query_info_type &result_info) {
   user_attribute_type user_info;
 
-  user_info.uid = result_info.user;
+  user_info.uid = result_info.user.value();
   user_info.register_day = static_cast<tethys::timestamp_t>(stoll(json::get<string>(option, "register_day").value()));
   user_info.register_code = json::get<string>(option, "register_code").value();
   user_info.gender = stoi(json::get<string>(option, "gender").value());
@@ -730,7 +735,7 @@ bool Chain::queryUserCert(UnresolvedBlock &UR_block, nlohmann::json &option, res
   // TODO: user cert에는 한 사람이 유효기간이 서로 다른 인증서 여러 개가 저장될 수 있음
   user_cert_type user_cert;
 
-  user_cert.uid = result_info.user;
+  user_cert.uid = result_info.user.value();
   user_cert.sn = json::get<string>(option, "sn").value();
   user_cert.nvbefore = static_cast<uint64_t>(stoll(json::get<string>(option, "notbefore").value()));
   user_cert.nvafter = static_cast<uint64_t>(stoll(json::get<string>(option, "notafter").value()));
@@ -810,7 +815,7 @@ bool Chain::queryCreate(UnresolvedBlock &UR_block, nlohmann::json &option, resul
   string var_name = json::get<string>(option, "name").value();
   int var_type = stoi(json::get<string>(option, "type").value());
   string tag = json::get<string>(option, "tag").value();
-  base58_type uid = result_info.user;
+  base58_type uid = result_info.user.value();
   timestamp_t up_time = TimeUtil::nowBigInt(); // TODO: DB에 저장되는 시간인지, mem_ledger에 들어오는 시간인지
   block_height_type up_block = result_info.block_height;
 
@@ -855,7 +860,7 @@ bool Chain::queryTransfer(UnresolvedBlock &UR_block, nlohmann::json &option, res
   // Transfer : from
   if (from == "contract") {
     // from : contract
-    from_id = result_info.self;
+    from_id = result_info.self.value();
 
     if (from_pid_json.has_value()) {
       from_pid = from_pid_json.value();
@@ -894,9 +899,9 @@ bool Chain::queryTransfer(UnresolvedBlock &UR_block, nlohmann::json &option, res
   } else {
     // from : user
     if (from == "user")
-      from_id = result_info.user;
+      from_id = result_info.user.value();
     else if (from == "author")
-      from_id = result_info.author;
+      from_id = result_info.author.value();
 
     if (from_pid_json.has_value()) {
       from_pid = from_pid_json.value();
@@ -1002,9 +1007,9 @@ bool Chain::queryUserScope(UnresolvedBlock &UR_block, nlohmann::json &option, re
 
   string target = json::get<string>(option, "for").value(); // user or author
   if (target == "user") {
-    uid = result_info.user;
+    uid = result_info.user.value();
   } else if (target == "author") {
-    uid = result_info.author;
+    uid = result_info.author.value();
   } else {
     logger::ERROR("target is not 'user' or 'author' at `queryUserScope`");
   }
@@ -1271,6 +1276,95 @@ bool Chain::checkUniqueVarName(const string &var_owner, const string &var_name, 
   return (getVarType(var_owner, var_name, height, vec_idx) != (int)UniqueCheck::NOT_UNIQUE);
 }
 
+bool Chain::withdrawFee(UnresolvedBlock &UR_block, const base58_type &user_id, const int fee) {
+  timestamp_t up_time = TimeUtil::nowBigInt(); // TODO: DB에 저장되는 시간인지, mem_ledger에 들어오는 시간인지
+  block_height_type up_block = UR_block.block.getHeight();
+
+  string pid = calculatePid(m_keyc_name, 0, user_id); // fee는 KEYC로 지불. 0은 추후에 KEYC type로 바꿀것
+
+  user_ledger_type found_ledger = findUserLedgerFromHead(UR_block, pid);
+
+  if (found_ledger.is_empty) {
+    logger::ERROR("Payer's ledger does not exist. Can't pay fee.");
+    return false;
+  }
+
+  int modified_value = stoi(found_ledger.var_value) - fee;
+  found_ledger.var_value = to_string(modified_value);
+  found_ledger.up_time = up_time;
+  found_ledger.up_block = up_block;
+
+  if (modified_value == 0)
+    found_ledger.query_type = QueryType::DELETE;
+  else if (modified_value > 0)
+    found_ledger.query_type = QueryType::UPDATE;
+  else {
+    logger::ERROR("var_value is under 0 in withdrawFee!");
+    return false;
+  }
+
+  UR_block.user_ledger_list[pid] = found_ledger;
+  return true;
+}
+
+bool Chain::distributeFee(UnresolvedBlock &UR_block, const uint64_t block_total_fee) {
+  timestamp_t up_time = TimeUtil::nowBigInt(); // TODO: DB에 저장되는 시간인지, mem_ledger에 들어오는 시간인지
+  block_height_type up_block = UR_block.block.getHeight();
+  vector<Signature> signers = UR_block.block.getSigners();
+  int signer_num = UR_block.block.getNumSigners();
+
+  // TODO: 비율 조절
+  double merger_ratio = 0.5;
+  double signer_total_ratio = 1 - merger_ratio;
+
+  uint64_t fee_per_signer = (uint64_t)((double)block_total_fee * (double)(signer_total_ratio / (double)signer_num));
+  uint64_t fee_merger = block_total_fee - (fee_per_signer * signer_num);
+
+  for (auto &each_signer : signers) {
+    string signer_pid = calculatePid(m_keyc_name, 0, each_signer.signer_id); // fee는 KEYC로 지불. 0은 추후에 KEYC type로 바꿀것
+
+    user_ledger_type found_ledger = findUserLedgerFromHead(UR_block, signer_pid);
+
+    if (found_ledger.var_value.empty() || found_ledger.is_empty)
+      found_ledger.query_type = QueryType::INSERT;
+    else if ((found_ledger.up_block == up_block) && (found_ledger.query_type == QueryType::INSERT)) {
+      found_ledger.query_type = QueryType::INSERT;
+    } else {
+      found_ledger.query_type = QueryType::UPDATE;
+    }
+
+    int modified_value = stoi(found_ledger.var_value) + fee_per_signer;
+    found_ledger.var_value = to_string(modified_value);
+    found_ledger.up_time = up_time;
+    found_ledger.up_block = up_block;
+    found_ledger.is_empty = false;
+
+    UR_block.user_ledger_list[signer_pid] = found_ledger;
+  }
+
+  string merger_pid = calculatePid(m_keyc_name, 0, UR_block.block.getBlockProdId()); // fee는 KEYC로 지불
+
+  user_ledger_type found_ledger = findUserLedgerFromHead(UR_block, merger_pid);
+
+  if (found_ledger.var_value.empty() || found_ledger.is_empty)
+    found_ledger.query_type = QueryType::INSERT;
+  else if ((found_ledger.up_block == up_block) && (found_ledger.query_type == QueryType::INSERT)) {
+    found_ledger.query_type = QueryType::INSERT;
+  } else {
+    found_ledger.query_type = QueryType::UPDATE;
+  }
+
+  int modified_value = stoi(found_ledger.var_value) + fee_merger;
+  found_ledger.var_value = to_string(modified_value);
+  found_ledger.up_time = up_time;
+  found_ledger.up_block = up_block;
+  found_ledger.is_empty = false;
+
+  UR_block.user_ledger_list[merger_pid] = found_ledger;
+
+  return true;
+}
+
 block_push_result_type Chain::pushBlock(Block &new_block) {
   block_push_result_type ret_val = unresolved_block_pool->pushBlock(new_block);
 
@@ -1376,7 +1470,7 @@ Block &Chain::getLowestUnprocessedBlock() {
 bool Chain::isUserId(const string &id) {
   const auto BASE58_REGEX = "^[A-HJ-NP-Za-km-z1-9]*$";
   regex rgx(BASE58_REGEX);
-  if (id.size() != static_cast<int>(44) || !regex_match(id, rgx)) {
+  if (id.size() != !regex_match(id, rgx)) {
     logger::ERROR("Invalid user ID.");
     return false;
   }

@@ -156,11 +156,11 @@ using result_query_info_type = struct ResultQueryInfoType {
   base58_type tx_id;
   bool status;
   string info;
-  base58_type author;
-  base58_type user;
-  base58_type receiver;
-  contract_id_type self;
-  std::vector<contract_id_type> friends;
+  optional<base58_type> author;
+  optional<base58_type> user;
+  optional<base58_type> receiver;
+  optional<contract_id_type> self;
+  vector<contract_id_type> friends;
   int fee_author;
   int fee_user;
 

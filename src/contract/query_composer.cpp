@@ -21,8 +21,8 @@ namespace tethys::tsce {
         //res.erase("fee");
         res.erase("queries");
 
-        res["fee"]["author"] = 0;
-        res["fee"]["user"] = MIN_USER_FEE;
+        res["fee"]["author"] = to_string(0);
+        res["fee"]["user"] = to_string(MIN_USER_FEE);
       }
       result["results"].emplace_back(res);
     }

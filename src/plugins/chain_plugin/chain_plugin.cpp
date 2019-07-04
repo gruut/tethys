@@ -204,7 +204,7 @@ public:
     block_height_type block_height = static_cast<block_height_type>(stoi(json::get<string>(result["block"], "height").value()));
     UnresolvedBlock updated_UR_block = chain->getUnresolvedBlock(block_id, block_height);
 
-    cout<<"result json : "<<endl<<result.dump()<<endl;
+    cout << "result json : " << endl << result.dump() << endl;
 
     if ((block_id != chain->getHeadInfo().block_id) && (!chain->getHeadInfo().block_id.empty())) {
       chain->moveHead(updated_UR_block.block.getPrevBlockId(), updated_UR_block.block.getHeight() - 1);
@@ -220,21 +220,35 @@ public:
       result_info.status = json::get<bool>(each_result, "status").value();
       result_info.info = json::get<string>(each_result, "info").value();
 
-      // TODO: 이 아래 정보들은 optional으로 처리해야함
-      result_info.author = json::get<string>(each_result["authority"], "author").value();
-      result_info.user = json::get<string>(each_result["authority"], "user").value();
-      result_info.receiver = json::get<string>(each_result["authority"], "receiver").value();
-      result_info.self = json::get<string>(each_result["authority"], "self").value();
+      result_info.author = json::get<string>(each_result["authority"], "author").value_or("");
+      result_info.user = json::get<string>(each_result["authority"], "user").value_or("");
+      result_info.receiver = json::get<string>(each_result["authority"], "receiver").value_or("");
+      result_info.self = json::get<string>(each_result["authority"], "self").value_or("");
 
-      nlohmann::json friends_json = each_result["friend"];
-      for (auto &each_friend : friends_json) {
+      optional<nlohmann::json> friends_json = each_result["friend"];
+      for (auto &each_friend : friends_json.value_or("")) {
         result_info.friends.emplace_back(each_friend.get<string>());
       }
+
       result_info.fee_author = stoi(json::get<string>(each_result["fee"], "author").value());
       result_info.fee_user = stoi(json::get<string>(each_result["fee"], "user").value());
 
-      nlohmann::json queries_json = each_result["queries"];
-      for (auto &each_query : queries_json) {
+      // TODO: status가 false일때도 fee 차감?
+      // TODO: transaction 형태로 전체 실행 or 취소 형식으로
+      if (result_info.fee_author > 0) {
+        if(!chain->withdrawFee(updated_UR_block, result_info.author.value(), result_info.fee_author))
+          continue;
+        block_total_fee += result_info.fee_author;
+      }
+
+      if (result_info.fee_user > 0) {
+        if(!chain->withdrawFee(updated_UR_block, result_info.user.value(), result_info.fee_user))
+          continue;
+        block_total_fee += result_info.fee_user;
+      }
+
+      optional<nlohmann::json> queries_json = each_result["queries"];
+      for (auto &each_query : queries_json.value_or("")) {
         string type = json::get<string>(each_query, "type").value();
         nlohmann::json option_json = each_query["option"];
         if (type == "user.join") {
@@ -268,7 +282,7 @@ public:
         }
       }
     }
-    chain->applyFee();
+    chain->distributeFee(updated_UR_block, block_total_fee);
     chain->setUnresolvedBlock(updated_UR_block);
     chain->updateStateTree(updated_UR_block);
     chain->saveBackupResult(updated_UR_block);

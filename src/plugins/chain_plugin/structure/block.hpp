@@ -1,14 +1,14 @@
 #ifndef TETHYS_PUBLIC_MERGER_BLOCK_HPP
 #define TETHYS_PUBLIC_MERGER_BLOCK_HPP
 
+#include "../../../../lib/appbase/include/application.hpp"
+#include "../../../../lib/json/include/json.hpp"
+
 #include "../config/storage_type.hpp"
 #include "../include/static_merkle_tree.hpp"
 #include "certificate.hpp"
 #include "signature.hpp"
 #include "transaction.hpp"
-
-#include "../../../../lib/appbase/include/application.hpp"
-#include "../../../../lib/json/include/json.hpp"
 
 using namespace std;
 

@@ -26,6 +26,8 @@ private:
   unique_ptr<KvController> kv_controller;
   unique_ptr<UnresolvedBlockPool> unresolved_block_pool;
 
+  string m_keyc_name;
+
 public:
   Chain(string_view dbms, string_view table_name, string_view db_user_id, string_view db_password);
   ~Chain();
@@ -38,6 +40,7 @@ public:
   void initBuiltInContracts();
   void initWorld(nlohmann::json &world_state);
   optional<vector<string>> initChain(nlohmann::json &chain_state);
+  void setKeycName(const string &keyc_name);
 
   // KV functions
   const nlohmann::json queryWorldGet();
@@ -68,7 +71,7 @@ public:
   const nlohmann::json queryUserInfoGet(const nlohmann::json &where_json);
   const nlohmann::json queryUserScopeGet(const nlohmann::json &where_json);
   const nlohmann::json queryContractScopeGet(const nlohmann::json &where_json);
-  //const nlohmann::json queryBlockGet(const nlohmann::json &where_json);
+  // const nlohmann::json queryBlockGet(const nlohmann::json &where_json);
   const nlohmann::json queryTxGet(const nlohmann::json &where_json);
   const nlohmann::json queryBlockScan(const nlohmann::json &where_json);
   const nlohmann::json queryTxScan(const nlohmann::json &where_json);
@@ -103,6 +106,8 @@ public:
   string calculatePid(const string &var_name, int var_type, const string &var_owner, const string &tag_varinfo);
   int getVarType(const string &var_owner, const string &var_name, const block_height_type height, const int vec_idx);
   bool checkUniqueVarName(const string &var_owner, const string &var_name, const block_height_type height, const int vec_idx);
+  bool withdrawFee(UnresolvedBlock &UR_block, const base58_type &user_id, const int fee);
+  bool distributeFee(UnresolvedBlock &UR_block, const uint64_t block_total_fee);
 
   block_push_result_type pushBlock(Block &new_block);
   UnresolvedBlock getUnresolvedBlock(const base58_type &block_id, const block_height_type block_height);

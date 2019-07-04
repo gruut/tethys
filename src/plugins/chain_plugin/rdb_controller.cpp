@@ -983,7 +983,7 @@ vector<contract_ledger_type> RdbController::getAllContractLedger() {
 bool RdbController::isUserId(const string &id) {
   const auto BASE58_REGEX = "^[A-HJ-NP-Za-km-z1-9]*$";
   regex rgx(BASE58_REGEX);
-  if (id.size() != static_cast<int>(44) || !regex_match(id, rgx)) {
+  if (id.size() != !regex_match(id, rgx)) {
     logger::ERROR("Invalid user ID.");
     return false;
   }
